@@ -1,0 +1,85 @@
+%use pegstaged.
+%use lmcomp.
+%use envlift.
+
+isemaction : peg A -> lm_arrow A B -> peg B.
+peginline_parse  (isemaction P C) (semaction P C') <- lm_forward C C'.
+peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) <- lm_backward C C'.
+
+term : type.
+app  : term -> term -> term.
+lam  : (term -> term) -> term.
+unit : term.
+vars : ctx term.
+
+pterm : peg (inenv term).
+pbaseterm : peg (inenv term).
+pterm_let : peg (inenv term).
+
+ctx_guess S (X : term) vars.
+
+`( pegdeclare pterm ).
+`( pegdeclare pterm_let ).
+`( pegdeclare pbaseterm ).
+
+`( pegrule pterm (isemaction (concat (concat (concat (
+                          (token (exactstr "λ")))
+			  (repplus (prefw (token ident))))
+			  (token (exactstr ".")))
+			  (token pterm))
+			  
+			 (lm_fun (fun input =>
+			  lm_match input
+			  (lm_patt_newunif (fun t1 => lm_patt_newunif (fun t2_idhd => lm_patt_newunif (fun t3_idtl => lm_patt_newunif (fun t4 => lm_patt_newunif (fun t5_body =>
+ 			  lm_patt_end
+			  (tuple (tuple (tuple t1 (tuple t2_idhd t3_idtl)) t4) t5_body)
+			  (lm_let (lm_val (cons t2_idhd t3_idtl))
+			  (fun ids =>
+ 			  (lm_foldr (lm_fun (fun elmcur =>
+			             lm_match elmcur (lm_patt_newunif (fun elm => lm_patt_newunif (fun cur =>
+				     lm_patt_end (tuple elm cur) (lm_valenv lam (inenv_nu vars elm cur))))) lm_fail))
+				     ids t5_body)))))))))
+			  lm_fail))) ).
+
+`( pegrule pterm pterm_let ).
+`( pegrule pterm (isemaction (concat pbaseterm (rep (prefw pbaseterm)))
+                         (lm_fun (fun input =>
+			  lm_match input
+			  (lm_patt_newunif (fun t1_fun => lm_patt_newunif (fun t2_args =>
+			   lm_patt_end (tuple t1_fun t2_args)
+			   (lm_foldl (lm_fun (fun curelm =>
+			              lm_match curelm (lm_patt_newunif (fun cur => lm_patt_newunif (fun elm =>
+				      lm_patt_end (tuple cur elm) (lm_valenv app cur elm)))) lm_fail)) t1_fun t2_args))))
+			  lm_fail))) ).
+
+`( pegrule pbaseterm (isemaction (token ident)
+                             (lm_fun (fun ID =>
+			      lm_valenvget vars ID))) ).
+
+`( pegrule pbaseterm (isemaction (token (exactstr "()"))
+                             (lm_fun (fun any => lm_valenv unit))) ).
+
+
+`( pegrule pbaseterm (parenthesized pterm) ).
+
+
+
+
+pclosedterm : peg term.
+peginline pclosedterm (isemaction pterm (lm_fun (fun in => lm_envrun in))).
+
+`( pegexport pclosedterm ).
+
+test3 : A -> prop.
+test3 X <-
+   pclosedterm_parse "λx.λy.λz.y x" (some (tuple "" X)).
+
+test4 : string -> prop.
+test4 R <- 
+   eq X "x",
+   eq Y "y",
+   eq Z "z",
+   pclosedterm_pretty (some (tuple "" (lam (fun x^nX => lam (fun y^nY => lam (fun z^nZ => app y^nY x^nX)))))) R.
+
+
+

@@ -1,0 +1,821 @@
+%use utils.
+%use bindutils.
+
+(* kinds *)
+knd     : type.
+
+ktype   : knd.
+karrow  : list knd -> knd -> knd.
+
+(* types *)
+typ       : type.
+typconstr : type.
+tarrow    : typ -> typ -> typ .
+tprod     : list typ -> typ.
+tapp      : typ -> list typ -> typ.
+tpi       : knd -> (typ -> typ) -> typ.
+typconstr : bindmany typ typ -> typconstr.
+
+(* terms *)
+term        : type.
+patt        : type.
+constructor : type.
+field       : type.
+
+lam      : typ -> (term -> term) -> term.
+app      : term -> term -> term .
+lamt     : knd -> (typ -> term) -> term.
+appt     : term -> typ -> term.
+let      : term -> (term -> term) -> term.
+letrec   : bindmutrec term term -> bindmany term term -> term.
+constr   : constructor -> term -> term.
+construn : constructor -> term.
+ascribe  : term -> typ -> term.
+match    : term -> list (bindmany term (tuple patt term)) -> term.
+tuple    : list term -> term.
+raise    : term -> term.
+trycatch : term -> list (bindmany term (tuple patt term)) -> term.
+record   : list (tuple field term) -> term.
+projrec  : term -> field -> term.
+
+(* patterns *)
+ptuple    : list patt -> patt.
+pconstr   : constructor -> patt -> patt.
+pconstrun : constructor -> patt.
+pvar      : term -> patt.
+pwild     : patt.
+pas       : term -> patt -> patt.
+precord   : list (tuple field patt) -> patt.
+
+
+(* structure items *)
+
+stritem        : type.
+bindanystritem : type.
+sigitem        : type.
+bindanysigitem : type.
+
+typdef         : type.
+typdefblock    : type.
+constrdef      : type.
+fielddef       : type.
+
+csdef     : typconstr -> constrdef.
+csdefunit : constrdef.
+
+modstruct : type.
+modstruct : listbindany stritem -> modstruct.
+modsig    : type.
+modsig    : listbindany sigitem -> modsig.
+
+strlet    : term -> stritem.
+strlet_   : term -> stritem.
+strletrec : bindmutrec term term -> stritem.
+strtype   : typconstr -> stritem.
+strdata   : typdefblock -> stritem.
+strexn    : constrdef -> stritem.
+
+(* signature items *)
+sigval    : typ -> sigitem.
+sigtype   : typconstr -> sigitem.
+sigdata   : typdefblock -> sigitem.
+sigexn    : constrdef -> sigitem.
+
+
+(*
+typdefblock:
+
+type ('a, 'b) Type1 = Constrs1
+and  ('c, 'd) Type2 = Constrs2
+and  ('e)     Type3 = { ... }
+
+must bind all type constructor names together
+then must bind all parameters
+then must have constructors.
+
+*)
+
+typdefblock : bindmutrec typ typdef -> list knd -> typdefblock.
+
+typdefvar   : list constrdef -> typdef.
+typdefrecrd : list typconstr -> typdef.
+
+
+(* type system. *)
+
+(* kinds *)
+kindof       : typ -> knd -> prop .
+kindofall    : list typ -> knd -> prop.
+kindofconstr : typconstr -> knd -> prop.
+guardkindof  : typ -> knd -> prop.
+
+kindof T ktype              <- (isunif T; failure).
+kindof (tarrow T1 T2) ktype <- guardkindof T1 ktype, guardkindof T2 ktype.
+kindof (tpi K TF)     ktype <- (x:typ -> kindof x K -> guardkindof (TF x) ktype).
+kindof (tprod TS)     ktype <- kindofall TS ktype.
+kindof (tapp T TS)    K     <- guardkindof T (karrow KS K), map guardkindof TS KS.
+kindof T ktype              <- not (isunif T), kindof T (karrow nil ktype).
+
+kindofall TS K <- map (fun t res => guardkindof t K) TS _.
+
+kindofconstraux : typconstr -> list knd -> knd -> prop.
+kindofconstraux (typconstr TC) KS K <-
+  bindmany_map kindof kindof TC KS K.
+    
+exn : typ.
+kindof exn (karrow nil ktype).
+
+(* normal form of types *)
+typapply : typconstr -> list typ -> typ -> prop.
+typapply (typconstr TC) TS T <- bindmany_apply TC TS T.
+
+tappmany : typ -> list typ -> typ -> prop.
+tappmany T nil T.
+tappmany T (cons T' TS) (tapp T (cons T' TS)).
+
+tconstrdef : typ -> typconstr -> knd -> prop.
+kindof X K <- tconstrdef X _ K.
+
+nf         : typ -> typ -> prop.
+nf X X <- isunif X.
+nf (tapp TypConstr TypArgs) (tapp TypConstr TypArgs') <-
+  map nf TypArgs TypArgs'.
+nf (tapp TypConstr TypArgs) T <-
+  tconstrdef TypConstr Def _,
+  typapply Def TypArgs T.
+nf (tapp TypConstr TypArgs) T <-
+  tconstrdef TypConstr Def _,
+  typapply Def TypArgs T0,
+  nf T0 T.
+nf TypConstr T <-
+  tconstrdef TypConstr Def _,
+  typapply Def nil T.
+nf TypConstr T <-
+  tconstrdef TypConstr Def _,
+  typapply Def nil T0,
+  nf T0 T.
+nf (tarrow T1 T2) (tarrow T1' T2') <- nf T1 T1', nf T2 T2'.
+nf (tpi K TF)     (tpi K TF')      <- (x:typ -> nf x x -> nf (TF x) (TF' x)).
+nf (tprod TS)     (tprod TS')      <- map nf TS TS'.
+
+
+
+(* term typing *)
+
+guardkindof T K <- guard T (kindof T K).
+
+typeof    : term -> typ -> prop.
+constrdef : constructor -> constrdef -> typ -> list knd -> prop.
+fielddef  : field -> typconstr -> typ -> list knd -> prop.
+recorddef : typ -> list knd -> list (tuple field typconstr) -> prop.
+recordtypcheck : list (tuple field term) -> list (tuple field typconstr) -> list typ -> prop.
+recordtypmatch : list (tuple field typ) -> typ -> list typ -> list (tuple field typconstr) -> prop.
+
+typeof (lam T1 E) (tarrow T1 T2) <-
+  (x:term -> typeof x T1 -> typeof (E x) T2 ), guardkindof T1 ktype.
+
+typeof (app E1 E2) T2 <-
+  typeof E1 (tarrow T1 T2), typeof E2 T1.
+
+typeof (lamt K E) (tpi K TF) <-
+  (x:typ -> kindof x K -> typeof (E x) (TF x)).
+
+typeof (appt E T) (TF T) <-
+  typeof E (tpi K TF), guardkindof T K.
+
+typeof (tuple ES) (tprod TS) <- map typeof ES TS.
+
+typeof (ascribe E T) T <- typeof E T.
+
+typeof (raise E) T     <- typeof E exn, guardkindof T ktype.
+
+(* implicit generalization/instantiation and so on *)
+typinst : typ -> typ -> prop.
+typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
+typinst T T <- not(eq T (tpi _ _)).
+
+typgen : typ -> typ -> prop.
+typgen T T <- not(getunif T (X: typ)).
+typgen T (tpi K F') <-
+  getunif T (X : typ), absunif T X F,
+  (x:typ -> kindof x K -> typgen (F x) (F' x)).
+
+tpimany : knd -> (typ -> list typ) -> list typ -> prop.
+tpimany K (fun x => nil) nil.
+tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
+  tpimany K TS TS'.
+
+typgenlist : list typ -> list typ -> prop.
+typgenlist TS TS' <-
+   (if getunif TS (X : typ),
+     (absunif TS X F,
+      (x:typ -> kindof x K -> typgenlist (F x) (F' x)),
+      tpimany K F' TS'),
+     (eq TS TS')).
+
+gentypeof : term -> typ -> prop.
+typeof X T <- gentypeof X T.
+typeof X T' <- gentypeof X T, typinst T T'.
+
+typeof (app E1 E2) T2 <-
+  typeof E1 T,
+  typinst T (tarrow T1 T2),
+  typeof E2 T1.
+
+valrestr : term -> prop.
+valrestr (constr _ _).
+valrestr (construn _).
+valrestr (lam    _ _).
+valrestr (lamt   _ _).
+valrestr (tuple _).
+valrestr (record _).
+valrestr (ascribe E _) <- valrestr E.
+
+typeof (let E E') T' <-
+  typeof E T, 
+  (if valrestr E,
+     (typgen T Tgen, guardkindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T')),
+     (guardkindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
+
+(* let rec *)
+typeof_recdef          : bindmutrec term term -> list typ -> prop.
+typeof_recbody         : list typ -> bindmany   term term -> typ -> prop.
+gentypeof_recbody      : list typ -> bindmany   term term -> typ -> prop.
+
+typeof_recdef  ES TS <- bindmutrec_map typeof typeof ES TS TS.
+typeof_recbody TS E T' <- bindmany_map typeof typeof E TS T'.
+gentypeof_recbody TS E T' <- bindmany_map gentypeof typeof E TS T'.
+
+typeof (letrec ES E') T' <-
+  typeof_recdef ES TS, 
+  (if (bindmutrec_endmap (fun elm res => valrestr elm) ES _),
+    (typgenlist TS TSgen, kindofall TSgen ktype, gentypeof_recbody TSgen E' T'),
+    (kindofall TS ktype, typeof_recbody TS E' T')).
+
+
+(* constructors *)
+typeof (construn C) T' <-
+  constrdef C csdefunit T KS,
+  map guardkindof TS KS,
+  tappmany T TS T'.
+
+typeof (constr C E) T'' <-
+  constrdef C (csdef TC') T KS,
+  map guardkindof TS KS,
+  typapply TC' TS T',
+  typeof E T',
+  tappmany T TS T''.
+
+(* records *)
+typeof (projrec E Field) T' <-
+  fielddef Field TC T KS,
+  map guardkindof TS KS,
+  tappmany T TS T'',
+  once (typeof E T''),
+  typapply TC TS T'.
+
+typeof (record FieldsTerms) T' <-
+  map (map eq typeof) FieldsTerms FieldsTypes,
+  recordtypmatch FieldsTypes Rectyp TS FieldsTypes',
+  tappmany Rectyp TS T'.
+
+
+fieldget : list (tuple field typconstr) -> field -> typconstr -> list (tuple field typconstr) -> prop.
+fieldget (cons (tuple F TC) Rest) F TC Rest.
+fieldget (cons (tuple F' TC') Rest) F T (cons (tuple F' TC') Rest') <-
+  not(eq F F'), fieldget Rest F T Rest'.
+
+recordtypcheck nil nil Targs.
+recordtypcheck (cons (tuple F E) Rest) FieldSpec Targs <-
+  fieldget FieldSpec F TC FieldSpec',
+  typapply TC Targs T,
+  typeof E T,
+  recordtypcheck Rest Fieldspec' Targs.
+
+teq : typ -> typ -> prop.
+teq X Y <- (eq X Y; (nf X Y; nf Y X)).
+
+recordtypmatchaux : list (tuple field typ) -> list typ -> list (tuple field typconstr) -> prop.
+recordtypmatch (cons (tuple F T) Rest) Rectyp TS FS <-
+  fielddef F TC Rectyp KS,
+  recorddef Rectyp KS FS,
+  map guardkindof TS KS,
+  recordtypmatchaux (cons (tuple F T) Rest) TS FS.
+recordtypmatch nil Rectyp TS nil <-
+  recorddef Rectyp KS nil,
+  map guardkindof TS KS.
+recordtypmatchaux (cons (tuple F T) Rest) TS FS <-
+  fieldget FS F TC FS',
+  typapply TC TS T',
+  teq T T',
+  recordtypmatchaux Rest TS FS'.
+recordtypmatchaux nil TS nil.
+
+(* matching. *)
+
+typebranch   : list term -> bindmany term (tuple patt term) -> typ -> typ -> prop.
+typebranches : list (bindmany term (tuple patt term)) -> typ -> typ -> prop.
+typeofpatt   : patt -> list term -> list term -> typ -> prop.
+typeofpattlist : list patt -> list term -> list term -> list typ -> prop.
+typeofpattrecord : list (tuple field patt) -> list term -> list term -> typ -> prop.
+
+typeofpattlist nil Unifs Unifs nil.
+typeofpattlist (cons P PS) Unifs Unifs'' (cons T TS) <-
+  typeofpatt P Unifs Unifs' T,
+  typeofpattlist PS Unifs' Unifs'' TS.
+
+
+typeofpatt (ptuple PS) Unifs Unifs' (tprod TS) <- typeofpattlist PS Unifs Unifs' TS.
+typeofpatt (pconstr C P) Unifs Unifs' T'TS <-
+  constrdef C (csdef TC) T' KS,
+  typapply TC TS T'',
+  tappmany T' TS T'TS,
+  typeofpatt P Unifs Unifs' T''.
+typeofpatt (pconstrun C) Unifs Unifs T'TS <-
+  constrdef C csdefunit T' KS,
+  map guardkindof TS KS,
+  tappmany T' TS T'TS.
+typeofpatt (pvar X) (cons X Rest) Rest T <-
+  typeof X T.
+typeofpatt pwild Unifs Unifs T.
+typeofpatt (pas X P) (cons X Rest) Unifs' T <-
+  typeof X T,
+  typeofpatt P Rest Unifs' T.
+typeofpatt (precord FP) Unifs Unifs' T <-
+  typeofpattrecord FP Unifs Unifs' T.
+
+typeofpattrecord nil Unifs Unifs TTS <-
+  recorddef T KS nil,
+  map guardkindof TS KS,
+  tappmany T TS TTS.
+pattrecordaux : list (tuple field patt) -> list (tuple field typconstr) -> list typ -> list term -> list term -> prop.
+typeofpattrecord (cons (tuple F P) Rest) Unifs Unifs' TTS <-
+  fielddef F TC T KS,
+  map guardkindof TS KS,
+  tappmany T TS TTS,
+  recorddef T KS FS,
+  pattrecordaux (cons (tuple F P) Rest) FS TS Unifs Unifs'.
+pattrecordaux (cons (tuple F P) Rest) FS TS Unifs Unifs'' <-
+  fieldget FS F TC FS',
+  typapply TC TS T,
+  typeofpatt P Unifs Unifs' T,
+  pattrecordaux Rest FS' TS Unifs' Unifs''.
+pattrecordaux nil nil TS Unifs Unifs.
+
+
+
+typebranch Unifs (bnil (tuple Patt Body)) T T' <-
+  typeofpatt Patt Unifs nil T,
+  typeof Body T'.
+typebranch Unifs (bcons F) T T' <-
+  (x:term -> typeof x Tx -> 
+  newmeta (fun Unifs' =>
+  (and (snoc Unifs x Unifs')
+       (typebranch Unifs' (F x) T T')))).
+
+typebranches BS T T' <- map (fun branch res => typebranch nil branch T T') BS _ .
+
+typeof (match E Branches) T' <-
+  typeof E T,
+  not(isunif T),
+  typebranches Branches T T'.
+
+typeof (match E Branches) T' <-
+  typeof E T,
+  not(isunif T),
+  nf T Tnf,
+  typebranches Branches Tnf T'.
+
+typeof (match E Branches) T' <-
+  typebranches Branches T T',
+  typeof E T.
+
+typeof (trycatch E Handlers) T <-
+  typeof E T,
+  typebranches Handlers exn T.
+
+
+(* conversion *)
+typeof E T <- not (isunif T), once(typeof E T'), (nf T T'; nf T' T).
+
+
+(* built-in datatypes *)
+list  : typ.
+Nil  : constructor.
+Cons : constructor.
+kindof list (karrow (cons ktype nil) ktype).
+constrdef Nil  csdefunit list (cons ktype nil).
+constrdef Cons (csdef (typconstr (bcons (fun a => bnil (tprod (cons a (cons (tapp list (cons a nil)) nil)))))))
+                list (cons ktype nil).
+
+unit : typ.
+Unit : constructor.
+kindof unit (karrow nil ktype).
+constrdef Unit csdefunit unit nil.
+
+int : typ.
+intconst : int -> term.
+kindof int (karrow nil ktype).
+typeof (intconst N) int.
+
+string : typ.
+stringconst : string -> term.
+kindof string (karrow nil ktype).
+typeof (stringconst S) string.
+
+bool : typ.
+True : constructor.
+False : constructor.
+kindof bool (karrow nil ktype).
+constrdef True csdefunit bool nil.
+constrdef False csdefunit bool nil.
+
+
+
+(* module structures/signatures *)
+sigof : modstruct -> modsig -> prop.
+sigof_item : stritem -> bindany (list prop) -> listbindany sigitem -> prop.
+
+sigof_item_cast : stritem -> X -> listbindany sigitem -> prop.
+sigof_item X Y Z <-
+  sigof_item_cast X Y' Z,
+  bindany_cast Y' Y.
+
+
+sigof (modstruct lbnil) (modsig lbnil).
+sigof (modstruct (lbcons HD BTL)) (modsig Sig) <-
+
+  sigof_item HD HDBinds SigHD,
+  listbindany_append SigHD BSigTL Sig,
+  bindany_newvars HDBinds (fun vars =>
+
+  newmeta (fun tl => newmeta (fun sigTL => newmeta (fun assumptions =>
+   and (bindany_apply BTL     vars tl)
+  (and (bindany_apply BSigTL  vars sigTL)
+  (and (bindany_apply HDBinds vars assumptions)
+
+  (assumemany assumptions
+    (sigof (modstruct tl) (modsig sigTL))))))))).
+
+
+sigof_item_cast
+      (strlet E)          (fun (x : term) => cons (typeof x T) nil)
+      (lbcons (sigval T') (bcons (fun (x : term) => bnil lbnil))) <-
+  typeof (let E (fun y => y)) T, teq T T'.
+
+sigof_item_cast
+      (strlet_ E) (nil)
+      (lbnil) <-
+  typeof (let E (fun x => x)) T.
+
+
+sigof_item
+      (strletrec (bindmutrec ES)) BAssumptions
+      Sig <-
+  bindmany_newvars ES (fun (xs : list term) =>
+
+  newmeta (fun assumptions => newmeta (fun mkSig =>
+   and (bindmany_apply BXS xs (tuple xs))
+  (and (typeof (letrec (bindmutrec ES) BXS) (tprod TS))
+  (and (bindany_apply_sametype BAssumptions xs assumptions)
+  (and (map2 (fun x t res => eq res (gentypeof x t)) xs TS assumptions)
+  (and (map2 (fun x t res => eq res (tuple (dyn x) (sigval t))) xs TS mkSig)
+       (mklistbindany mkSig Sig)))))
+
+  ))).
+
+
+sigof_item_cast
+    (strtype TC) (fun (x : typ) => cons (tconstrdef x TC (karrow KS KRes)) nil)
+    (lbcons (sigtype TC) (bcons (fun (x : typ) => bnil lbnil))) <-
+  kindofconstr TC (karrow KS KRes).
+  
+(* datatypes *)
+(* TODO. fix this finally... *)
+
+wf_typdef       : typdef -> knd -> prop.
+wf_typdef_var   : constrdef -> list knd -> prop.
+wf_typdef_recrd : typconstr -> list knd -> prop.
+
+wf_typdef_var   csdefunit  KS.
+wf_typdef_var   (csdef (typconstr TC)) KS <- bindmany_map kindof kindof TC KS ktype.
+wf_typdef_recrd (typconstr TC)         KS <- bindmany_map kindof kindof TC KS ktype.
+
+wf_typdef (typdefvar TS)   (karrow KS ktype) <- map (fun t res => wf_typdef_var t KS) TS _.
+wf_typdef (typdefrecrd TS) (karrow KS ktype) <- map (fun t res => wf_typdef_recrd t KS) TS _.
+
+(* type (('a, 'b) : KParams) T = (...) Constructor of (Csdef) (...) *)
+
+typdef_bindsandassumptions_var : typ -> constrdef -> list knd -> bindany prop -> prop.
+typdef_bindsandassumptions_recrd : typ -> typconstr -> list knd -> bindany prop -> prop.
+typdef_bindsandassumptions : typdef -> typ -> knd -> list (bindany prop) -> prop.
+
+typdef_bindsandassumptions_var   T Csdef KParams
+				 (bcons (fun (x : constructor) => bnil (constrdef x Csdef T KParams))).
+typdef_bindsandassumptions_recrd T Tdef  KParams
+				 (bcons (fun (x : field) => bnil (fielddef x Tdef T KParams))).
+typdef_bindsandassumptions (typdefvar TS) T (karrow KS ktype) Res <-
+  map (fun c res => typdef_bindsandassumptions_var T c KS res) TS Res.
+typdef_bindsandassumptions (typdefrecrd TS) T (karrow KS ktype) Res <-
+  map (fun c res => typdef_bindsandassumptions_recrd T c KS res) TS Res.
+
+	    
+
+sigof_item (strdata (typdefblock BTypDefs Kinds)) BindsAndAssumptions
+	   (lbcons (sigdata (typdefblock BTypDefs Kinds)) Sig) <-
+
+  bindmutrec_newvars BTypDefs (fun typs =>
+  newmeta (fun typdefs => newmeta (fun typAssumptions =>
+  newmeta (fun llcba => newmeta (fun lcba => newmeta (fun cba => newmeta (fun cbafull =>
+
+  (and (bindmutrec_apply BTypDefs typs typdefs)
+  (and (map2 (fun t k res => eq res (kindof t k)) typs Kinds typAssumptions)
+  (and (assumemany typAssumptions (map wf_typdef typdefs Kinds))
+
+  (and (bindany_apply_sametype BTyps typs nil)
+  (and (map3 (fun typdef t k res => typdef_bindsandassumptions typdef t k res) typdefs typs Kinds llcba)
+  (and (flatten llcba lcba)
+  (and (bindany_list_flatten lcba cba)
+  (and (bindany_modifybody (append typAssumptions) cba cbafull)
+  (and (bindany_apply_partial_sametype BindsAndAssumptions typs cbafull)
+  (and (bindany_modifybody (fun _ res => eq res lbnil) BindsAndAssumptions Sig)
+       success))))))))))))))))) .
+
+
+sigof_item_cast
+     (strexn CS) (fun (x : constructor) => cons (constrdef x CS exn nil))
+     (lbcons (sigexn CS) (bcons (fun (x : constructor) => bnil lbnil))) <-
+ wf_typdef_var CS nil.
+
+
+
+
+
+
+
+(* ------------------------------------------------------------------------- *)
+
+
+
+
+
+
+
+
+
+
+(* extensibility support *)
+(*
+termext : termext -> term -> term.
+typext  : typext  -> typ -> typ.
+strext  : stritemext -> stritem -> stritem.
+
+typeof (termext extE baseE) t <- not(isunif baseE), typeof baseE t.
+kindof (typext extT baseT) k <-  not(isunif baseT), kindof baseT k.
+sigof  (strext extS baseS) s <-  not(isunif baseS), sigof baseS s.
+valrestr (termext extE baseE) <- not(isunif baseE), valrestr baseE.
+*)
+
+typeof (let
+         (lam #_ (fun f => lam #_ (fun g => lam #_ (fun x =>
+	  app f (app g x)))))
+	 (fun compose => compose)) X ?
+
+typeof (letrec
+         (bindmutrec
+	 (bcons (fun compose => bnil (cons
+         (lam #_ (fun f => lam #_ (fun g => lam #_ (fun x =>
+	  app f (app g x)))))
+	 nil))))
+	 (bcons (fun compose => bnil compose))) X ?
+
+typeof (letrec
+         (bindmutrec
+	   (bcons (fun 
+	   append =>    bnil (cons(
+	   lam #_ (fun x => lam #_ (fun y =>
+	   match x (cons (
+	     (bcons (fun hd => bcons (fun tl => bnil 
+	     (tuple
+	     (pconstr Cons (ptuple (cons (pvar hd) (cons (pvar tl) nil)))) (* -> *)
+	     (constr Cons (tuple (cons hd (cons (app (app append tl) y) nil))))
+	     ) )))) (cons (
+	     (bnil
+	     (tuple 
+	     (pconstrun Nil) (* -> *) y
+	     ) )) nil))
+	  ))) nil))))
+	(bcons (fun append => bnil append)))
+   Y ?
+
+sigof (modstruct
+       (lbcons
+         (strletrec
+         (bindmutrec 
+	   (bcons (fun 
+	   append => bnil (cons(
+	   lam #_ (fun x => lam #_ (fun y =>
+	   match x (cons (
+	     (bcons (fun hd => bcons (fun tl => bnil 
+	     (tuple
+	     (pconstr Cons (ptuple (cons (pvar hd) (cons (pvar tl) nil)))) (* -> *)
+	     (constr Cons (tuple (cons hd (cons (app (app append tl) y) nil))))
+	     ) )))) (cons (
+	     (bnil
+	     (tuple 
+	     (pconstrun Nil) (* -> *) y
+	     ) )) nil))
+	  ))) nil)))))
+	 (bcons (fun append =>
+	  bnil (lbcons
+	 (strlet append)
+	 (bcons (fun g => bnil lbnil))))))) S ?
+
+sigof (modstruct
+        (lbcons
+	  (strdata (typdefblock
+	    (bindmutrec (bcons (fun tree => bnil
+	    (cons (typdefvar (* tree *)
+	            (cons ( (* Leaf *)
+		            csdefunit
+		          )
+		    (cons ( (* Node *)
+		            csdef (typconstr (bcons (fun a => bnil (
+			          tprod (cons (tapp tree (cons a nil)) (cons a (cons (tapp tree (cons a nil)) nil)))))))
+		          )
+		    nil))
+	          )
+	     nil)))) (cons (karrow (cons ktype nil) ktype) nil)))
+	  (bcons (fun tree => bcons (fun Leaf => bcons (fun Node =>
+	  bnil
+       (lbcons
+	 (strlet
+	    (lam #_ (fun t => match t
+	    	              (cons (bcons (fun top => bnil
+			            (tuple (pconstr Node (ptuple (cons pwild (cons (pvar top) (cons pwild nil)))))
+				           (top)))) nil)))
+	 ) (bcons (fun isempty => bnil lbnil))))))))) S ?
+
+
+
+(* tests *)
+(*
+typeof
+
+(letrec
+  (tmblcons (fun (f:term) =>
+   tmblcons (fun (g:term) =>
+   tmblnil  (
+   tmcons (lam _ (fun x => app g x))
+   (tmcons (lam _ (fun x => app f x))
+           tmnil)))))
+  (tmbcons (fun (f:term) =>
+   tmbcons (fun (g:term) =>
+   tmbnil  (
+   app f (construn Unit)
+   )))))
+
+T ?
+
+sigof
+
+(strletrec
+  (tmblcons (fun (f:term) =>
+   tmblcons (fun (g:term) =>
+   tmblnil  (
+   tmcons (lam _ (fun x => app g x))
+   (tmcons (lam _ (fun x => app f x))
+           tmnil)))))
+  (bastrterm (fun (f:term) =>
+   bastrterm (fun (g:term) =>
+   bastrbase  (
+   
+   strnil
+   
+   )))))
+
+T ?
+
+
+typeof
+
+(letrec
+  (tmblcons (fun (f:term) =>
+   tmblcons (fun (g:term) =>
+   tmblnil  (
+   tmcons (lam _ (fun x =>  x))
+   (tmcons (lam _ (fun x => x))
+           tmnil)))))
+  (tmbcons (fun (f:term) =>
+   tmbcons (fun (g:term) =>
+   tmbnil  (
+   g
+   )))))
+
+T ?
+
+
+typeof
+  (let
+    (constr Cons (tuple (tmcons (construn Nil) (tmcons (construn Nil) tmnil))))
+    (fun x => x))
+  A ?
+
+
+
+
+%mlgrammar "Base".
+%mlgrammar "Unparsed".
+%mlgrammar "OCaml".
+%mlparser term    "OCaml.parse_term".
+%mlparser stritem "OCaml.parse_stritem".
+
+typeof 
+  (fun l1 l2 -> match l1 with [] -> l2)
+  t
+  ?
+
+
+typeof {{
+  let rec append l1 l2 =
+     match l1 with
+       [] -> l2
+     | hd :: tl -> hd :: (append tl l2)
+     in
+     append
+}}
+t ?
+
+sigof {{
+
+  let rec append l1 l2 =
+    match l1 with 
+      [] -> l2
+    | hd :: tl -> hd :: (append tl l2)
+  ;;
+
+  let rec foldl f a l =
+    match l with
+      [] -> a
+    | hd :: tl -> foldl f (f a hd) tl
+  ;;
+
+  let reverse l =
+    let rec aux acc l =
+       match l with
+          [] -> acc
+        | hd :: tl -> aux (hd :: acc) tl
+    in
+    aux [] l
+  ;;
+
+  let map f l =
+    let revmap = foldl (fun cur elm -> f elm :: cur) [] l in
+    reverse revmap
+
+}} T ?
+
+
+sigof {{
+
+  type ('a, 'b) test1 = ('a list) * ( ('b * 'a) list list) ;;
+  type 'a test2 = ('a, 'a) test1 ;;
+  let f (x : unit test2) = x ;;
+  let g = f ([], [[(),()];[]])
+
+}} T ?
+
+
+sigof {{
+
+  type 'a tree = Leaf | Node of 'a tree * 'a * 'a tree ;;
+  let rec append l1 l2 =
+    match l1 with 
+      [] -> l2
+    | hd :: tl -> hd :: (append tl l2)
+  ;;
+  let rec flatten t = match t with Leaf -> [] | Node(left,a,right) -> append (flatten left) (a :: (flatten right))
+
+}} T ?
+
+sigof {{
+
+  type 't monad = {
+    return : forall 'a. 'a -> 'a 't ;
+    bind   : forall 'a 'b. 'a 't -> ('a -> 'b 't) -> 'b 't
+  } ;;
+
+  type 'a option = Some of 'a | None ;;
+  
+  let optionmonad =
+    { return = (tfun 'a -> fun (x : 'a) -> Some x) ;
+      bind   = (tfun 'a -> tfun 'b ->
+	       fun (x : 'a option) ->
+	       fun (f : 'a -> 'b option) ->
+	       match x with
+		   Some y -> f y
+		 | None   -> None) }
+
+}}
+t ?
+*)

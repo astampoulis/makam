@@ -1,0 +1,12 @@
+syntax:glob
+_build/*
+pegs/*.gen.ml
+generated/*
+*.byte
+*/*.orig
+*.~*~
+*.native
+*.byte
+*.glob
+*.vo
+\#*\#

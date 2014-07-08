@@ -1,0 +1,104 @@
+%benchmark+.
+%use veriml.
+
+typeof (lamhol cctxwf (fun phi =>
+        lamhol (ctype (ctxparam phi (fun idphi => lbnil (hol.sort hol.stype)))) (fun T =>
+        lamhol (ctype (ctxparam phi (fun idphi => lbnil (mvar T (substparam idphi nil))))) (fun t =>
+        tuple [ packhol
+                   (cterm (ctxparam phi (fun idphi => lbnil (hol.refl (mvar t (substparam idphi nil))))))
+		   (construn "Unit")
+		   #TYP,
+		intconst 5 ])))) X ?
+
+(* matchhyp tactic:
+   λφ.λH : [φ]Prop.λH' : [φ]Prop.λx : [φ]H.
+   holapp
+   (holmatch H return H.(Πx:H.option <[φ]H'>) with
+	[φ]H'/id_φ |-> λx.some < x >
+      | [φ]H''/id_φ |-> λx.none) x *)
+
+typeof 
+    (lamhol cctxwf (fun phi =>
+    (lamhol (ctype (ctxparam phi (fun idphi => lbnil (hol.sort hol.sprop)))) (fun H =>
+    (lamhol (ctype (ctxparam phi (fun idphi => lbnil (hol.sort hol.sprop)))) (fun H' =>
+    (lamhol (ctype (ctxparam phi (fun idphi => lbnil (mvar H (substparam idphi nil))))) (fun pf =>
+    (apphol
+       (matchhol (cterm (ctxparam phi (fun idphi => lbnil (mvar H (substparam idphi nil)))))
+	(fun H'' => pihol (ctype (ctxparam phi (fun idphi => lbnil (mvar H'' (substparam idphi nil))))) (fun x => tbase "option" [ sighol (ctype (ctxparam phi (fun idphi => lbnil (mvar H' (substparam idphi nil))))) (fun hh => tbase "unit" []) ]))
+
+       [  bindrel (bnil (
+	    (cterm (ctxparam phi (fun idphi => lbnil (mvar H' (substparam idphi []))))),
+	    (lamhol (ctype (ctxparam phi (fun idphi => lbnil (mvar H' (substparam idphi []))))) (fun pf' =>
+	    (constr "Some" (packhol (cterm (ctxparam phi (fun idphi => lbnil (mvar pf' (substparam idphi []))))) (construn "Unit") #_)
+	    ))))),
+	  bindrel (bcons (fun h'' => bnil (
+	    (cterm (ctxparam phi (fun idphi => lbnil (mvar h'' (substparam idphi []))))),
+	    (lamhol (ctype (ctxparam phi (fun idphi => lbnil (mvar h'' (substparam idphi []))))) (fun pf' =>
+	    (construn "None")))))) ])
+
+     (cterm (ctxparam phi (fun idphi => lbnil (mvar pf (substparam idphi nil))))) ))))))))) X ?
+
+
+
+(* the following is the --very useful-- tactic:
+
+   letrec auto φ (P : [φ]Prop) =
+	holmatch P return P.< [φ]P > with
+	   ∀x:T/id_φ.P'/[id_φ, x] |-> unpack < pf, _ > = auto [φ, x] [φ, x]P'/[id_φ, x] in
+	                               < [φ]λx:T.pf/[id_φ, x], () >
+	| P₁/id_φ -> P₂/id_φ |-> unpack < pf, _ > = auto [φ, x] [φ, x]P'/[id_φ] in
+	                          < [φ]λx:P1.pf/[id_φ, x], () >
+        | True |-> < [φ]triv, () >
+*)
+
+(* %trace+ typeof. *)
+
+typeof
+  (letrec (bindmutrec (bcons (fun auto => bnil [
+	lamhol cctxwf (fun phi =>
+        lamhol (ctype (ctxparam phi (fun idphi => lbnil (hol.sort hol.sprop)))) (fun P =>
+
+	matchhol (cterm (ctxparam phi (fun idphi => lbnil (mvar P (substparam idphi nil)))))
+	(fun P' => sighol (ctype (ctxparam phi (fun idphi => lbnil (mvar P' (substparam idphi nil))))) (fun x => tbase "unit" []))
+	[bindrel (bcons (fun T => bcons (fun Body => bnil (
+	   (cterm (ctxparam phi (fun idphi => lbnil (
+            hol.pi hol.stype (mvar T (substparam idphi []))
+		   (fun x => mvar Body (substparam idphi [x])))))),
+
+           unpackhol (apphol (apphol auto (cctx
+		                            (ctxparam phi (fun idphi => lbcons (mvar T (substparam idphi nil)) (fun x => lbnil unit))))
+			     ) (cterm (ctxparam phi (fun idphi => lbcons (mvar T (substparam idphi nil)) (fun x =>
+				  lbnil (mvar Body (substparam idphi [x])))))))
+		     (fun pf u =>
+		      packhol (cterm (ctxparam phi (fun idphi => lbnil (
+			       hol.lam #_ (fun x => mvar pf (substparam idphi [x]) )))))
+		              (construn "Unit")
+			      #_
+			      ))))),
+
+
+	  bindrel (bcons (fun P1 => bcons (fun P2 => bnil (
+	   (cterm (ctxparam phi (fun idphi => lbnil (
+            hol.pi hol.sprop (mvar P1 (substparam idphi []))
+		   (fun x => mvar P2 (substparam idphi [])))))),
+
+           unpackhol (apphol (apphol auto (cctx
+		                            (ctxparam phi (fun idphi => lbcons (mvar P1 (substparam idphi nil)) (fun x => lbnil unit))))
+			     ) (cterm (ctxparam phi (fun idphi => lbcons (mvar P1 (substparam idphi nil)) (fun x =>
+				  lbnil (mvar P2 (substparam idphi [])))))))
+		     (fun pf u =>
+		      packhol (cterm (ctxparam phi (fun idphi => lbnil (
+			       hol.lam #_ (fun x => mvar pf (substparam idphi [x]) )))))
+		              (construn "Unit")
+			      #_
+			      ))))),
+
+          bindrel (bnil
+	    (cterm (ctxparam phi (fun idphi => lbnil hol.true)),
+	     packhol (cterm (ctxparam phi (fun idphi => lbnil hol.triv)))
+	             (construn "Unit")
+		     #_
+		     )) ]))])))
+          (bcons (fun auto => bnil auto))) Tresult ?
+
+

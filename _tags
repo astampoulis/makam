@@ -1,0 +1,30 @@
+true: -traverse
+<{parsing,bootstrap,utils,termlang,grammars,toploop}/**>: traverse
+<parsing> or <bootstrap> or <utils> or <termlang> or <grammars> or <toploop>: include
+
+<**/*.ml{,i}>: package(findlib), package(batteries), package(camomile), package(oclock), \
+	       package(camlp4), syntax(camlp4o), package(monad-custom)
+
+<parsing/*.ml{,i}>: package(syntax_xtype)
+
+
+<parsing/peg.ml>: package(camlp4.quotations.o)
+<bootstrap/*.ml>: package(camlp4.quotations.o)
+<utils/toploopTools.ml>: package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
+<parsing/pegQuote.ml>: package(camlp4.fulllib), package(camlp4.extend), package(camlp4.quotations.o)
+
+
+<bootstrap/dumpBootParser.byte>: package(compiler-libs.toplevel), package(camlp4.quotations.o)
+<bootstrap/bootPegParserGen.byte>: package(compiler-libs.toplevel)
+<bootstrap/boot2PegParserGen.byte>: package(compiler-libs.toplevel)
+<parsing/pegParserGen.byte>: package(compiler-libs.toplevel)
+<parsing/pegParserGenFunctor.ml>: syntax(camlp4o), package(camlp4.quotations.o)
+<toploop/topAux.ml>: syntax(camlp4o), package(camlp4.quotations.o)
+<toploop/*.ml>: package(compiler-libs.toplevel)
+
+<toploop/byterepl.byte>: package(compiler-libs.toplevel), package(unix)
+
+
+<**/*.{byte,native,top}>: package(unix), package(dynlink), package(camomile), package(oclock)
+<**/*.{byte,native}>: thread, package(batteries), package(camlp4.fulllib)
+<**/parser.top>: package(batteries), package(camlp4.fulllib)

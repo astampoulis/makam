@@ -1,0 +1,63 @@
+%use pegstaged.
+%use lmcomp.
+%use envlift.
+
+
+isemaction : peg A -> lm_arrow A B -> peg B.
+peginline_parse  (isemaction P C) (semaction P C') <- lm_forward C C'.
+peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) <- lm_backward C C'.
+
+ppeg : string -> peg (peg A).
+
+`( pegdeclare (ppeg X) ).
+
+`( pegrule (ppeg "top") (isemaction (repsep (ppeg "concat") "/")
+                                    (lm_fun (fun in =>
+				       lm_match in
+				        (lm_patt_newunif (fun hd => lm_patt_newunif (fun tl =>
+					 lm_patt_end (hd :: tl)
+					     (lm_foldl (lm_fun (fun tup =>
+					         lm_match tup
+					         (lm_patt_newunif (fun cur =>
+						  lm_patt_newunif (fun elm =>
+						  lm_patt_end (cur, elm) (lm_val (choice cur elm)))))
+						 (lm_fail)))
+					        hd tl))))
+				        (lm_val failp))))).
+
+dynp : peg A -> peg dyn.
+peginline (dynp P) (semaction P (fun a b => eq b (dyn a))).
+
+concatpegfw : list dyn -> peg A -> prop.
+concatpegbw : peg A -> list dyn -> prop.
+
+concatpegfw nil epsilon.
+concatpegfw (cons (dyn HD) nil) HD.
+concatpegfw (cons (dyn HD) TL) (concat HD TL') <- concatpegfw TL TL'.
+concatpegbw epsilon nil.
+concatpegbw (concat HD TL') (cons (dyn HD) TL) <- concatpegbw TL' TL.
+concatpegbw HD (cons (dyn HD) nil).
+
+`( pegrule (ppeg "concat") (isemaction (rep (dynp (ppeg "prim")))
+                                    (lm_fun (fun in =>
+				       lm_let (lm_liftbi concatpegfw concatpegbw in)
+				       (fun res => lm_val res))))).
+
+`( pegrule (ppeg "prim") (semaction (token (exactchar ".")) (fun a => eq any)) ).
+`( pegrule (ppeg "prim") (semaction (token (concati1 (exactchar "\"") (concati2 any (exactchar "\""))))
+			            (fun a => eq (exactchar a))) ).
+`( pegrule (ppeg "prim") (isemaction (token ident)
+			 	     (lm_fun (fun in => lm_let (lm_liftbi lookup headname in)
+					                (fun res =>
+							lm_let (lm_lift (fun a b => and (not(pegbuiltin a)) (eq b unit)) res)
+							(fun u =>
+							 lm_val res)))))).
+`( pegrule (ppeg "prim") (parenthesized (ppeg "top")) ).
+
+ppegtop : peg (peg A).
+peginline ppegtop (ppeg "top").
+
+`( pegexport ppegtop ).
+
+test1 : peg int.
+test2 : peg int.

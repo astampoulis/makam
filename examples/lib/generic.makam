@@ -1,0 +1,68 @@
+%use utils.
+
+structural : (dyn -> dyn -> prop) -> dyn -> dyn -> prop.
+
+(* defer if both input and output are uninstantiated metavariables *)
+(structural Rec (dyn (X : A)) (dyn (Y : A))) when isunif X, isunif Y <-
+  guardmany [ dyn X , dyn Y ] (Rec (dyn X) (dyn Y)).
+
+(* deal with built-in types *)
+structural Rec (dyn (X : string)) (dyn (X : string)).
+structural Rec (dyn (X : int)) (dyn (X : int)).
+structural Rec (dyn (X : A -> B)) (dyn (Y : A -> B)) <-
+  (x:A -> Rec (dyn (X x)) (dyn (Y x))).
+
+(* the essence: forward and backward destructuring *)
+
+(structural Rec (dyn (X : A)) (dyn (Y : A)))
+when not(typeq X (B : C -> D)), not(isunif X) <-
+  headargs X Hd Args,
+  map Rec Args Args',
+  headargs Y Hd Args'.
+
+(structural Rec (dyn (X : A)) (dyn (Y : A)))
+when not(typeq X (B : C -> D)), isunif X, not(isunif Y) <-
+  headargs Y Hd Args',
+  map Rec Args Args',
+  headargs X Hd Args.
+
+
+(* eq_benign: no instantiation goes on. *)
+eq_benign : [A]A -> A -> prop.
+eq_benign_aux : dyn -> dyn -> prop.
+
+eq_benign X Y <- eq_benign_aux (dyn X) (dyn Y).
+
+(eq_benign_aux (dyn (X : A)) (dyn (Y : A))) when isunif X, isunif Y, decomposeunif X I Xargs, decomposeunif Y I Yargs <-
+  map eq_benign_aux Xargs Yargs.
+(eq_benign_aux (dyn (X : string)) (dyn (Y : string))) when not(isunif X), not(isunif Y) <- eq X Y.
+(eq_benign_aux (dyn (X : int)) (dyn (Y : int))) when not(isunif X), not(isunif Y) <- eq X Y.
+(eq_benign_aux (dyn (X : A -> B)) (dyn (Y : A -> B))) when not(isunif X), not(isunif Y) <-
+  (x:A -> eq_benign_aux (dyn (X x)) (dyn (Y x))).
+
+builtintyp : A -> prop.
+builtintyp (X : A -> B).
+builtintyp (X : string).
+builtintyp (X : int).
+
+(eq_benign_aux (dyn X) (dyn Y)) when not(isunif X), not(isunif Y), not(builtintyp X) <-
+  headargs X Hd Args,
+  headargs Y Hd Args',
+  map eq_benign_aux Args Args'.
+
+
+
+(* gather_all_unifs *)
+gather_all_unifs : [A] dyn -> A -> list A -> prop.
+
+(gather_all_unifs (dyn (X : A)) (Y : A) [X]) when isunif X.
+gather_all_unifs (dyn (X : string)) (Y : A) [].
+gather_all_unifs (dyn (X : int)) (Y : A) [].
+gather_all_unifs (dyn (X : A -> B)) (Y : C) Res <-
+  (x:A -> gather_all_unifs (dyn (X x)) Y Res).
+(gather_all_unifs (dyn (X : A)) (Y : B) Res)
+when not(typeq X (Z : C -> D)), not(isunif X) <-
+  headargs X HD Args,
+  map (fun elm => gather_all_unifs elm Y) Args Results,
+  foldl append [] Results Res.
+  

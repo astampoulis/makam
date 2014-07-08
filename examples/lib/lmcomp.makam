@@ -1,0 +1,110 @@
+%use utils.
+%use ipred.
+
+(* (A -> B -> ipred) ~ (LMarrow A B) ~ (A -> LMcomp B) *)
+
+lm_arrow : type -> type -> type.
+lm_comp  : type -> type.
+lm_pattbody : type -> type -> type.
+
+lm_fun      : (A -> lm_comp B) -> lm_arrow A B.
+
+lm_forward  : [A B] lm_arrow A B -> (A -> B -> prop) -> prop.
+lm_backward : [A B] lm_arrow A B -> (B -> A -> prop) -> prop.
+
+lm_lift     : (A -> B -> prop) -> A -> lm_comp B.
+lm_liftback : (A -> B -> prop) -> B -> lm_comp A.
+lm_liftbi   : (A -> B -> prop) -> (B -> A -> prop) -> A -> lm_comp B.
+lm_app      : (lm_arrow A B) -> A -> lm_comp B.
+lm_match    : A -> lm_pattbody A B -> lm_comp B -> lm_comp B.
+lm_fail     : lm_comp A.
+
+lm_val       : B -> lm_comp B.
+lm_let       : lm_comp A -> (A -> lm_comp B) -> lm_comp B.
+
+lm_patt_newunif : (X -> lm_pattbody A B) -> lm_pattbody A B.
+lm_patt_end     : A -> lm_comp B -> lm_pattbody A B.
+
+lm_recarrow     : type -> type -> type.
+lm_recapp       : (lm_recarrow A B) -> A -> lm_comp B.
+lm_recdef       : lm_recarrow A B -> lm_arrow A B -> prop.
+
+
+(* Compile from lmcomp's into ipred's        *)
+(* ----------------------------------------- *)
+
+lm_to_ipred         : lm_arrow A B -> (A -> B -> ipred) -> prop.
+lmcomp_to_ipred     : lm_comp B -> (B -> ipred) -> prop.
+lmpattbody_to_ipred : [A B] lm_pattbody A B -> lm_comp B -> (A -> B -> ipred) -> prop.
+
+lm_to_ipred (lm_fun (Comp : A -> lm_comp B)) IPred <-
+  (input:A -> lmcomp_to_ipred (Comp inputⁿ_) (IPred inputⁿ_)).
+
+lmcomp_to_ipred (lm_val X)    (fun output => ilift (eq output X)).
+lmcomp_to_ipred (lm_lift P X) (fun output => ilift (P X outputⁿ_)).
+lmcomp_to_ipred (lm_liftback P X) (fun output => ilift (P outputⁿ_ X)).
+lmcomp_to_ipred (lm_liftbi P P' X) (fun output => iliftbi (P X outputⁿ_) (P' output^n_ X)).
+lmcomp_to_ipred (lm_let (E : lm_comp A) K)
+		              (fun output => inewmeta (fun intermⁿ_ =>
+			        iand (IPredE intermⁿ_) (Rest intermⁿ_ outputⁿ_))) <-
+  lmcomp_to_ipred E IPredE,
+  (x:A -> lmcomp_to_ipred (K xⁿ_) (Rest xⁿ_)).
+lmcomp_to_ipred (lm_fail) (fun output => ilift (failure)).
+lmcomp_to_ipred (lm_match Scrutinee PattBody OtherWise) Result' <-
+  lmpattbody_to_ipred PattBody OtherWise Res,
+  eq Result' (Res Scrutinee).
+lmpattbody_to_ipred (lm_patt_newunif (F : X -> lm_pattbody A B)) OtherWise
+		    (fun scr output =>
+		     inewmeta (fun (x^n_ : X) => Rest x^n_ scr output)) <-
+  (x:X -> lmpattbody_to_ipred (F x^n_) OtherWise (Rest x^n_)).
+lmpattbody_to_ipred (lm_patt_end Patt Body) Otherwise
+		    (fun scr output => iifte (ilift (eq scr Patt))
+		                             (Body' output)
+					     (Otherwise' output)) <-
+  lmcomp_to_ipred Body Body',
+  lmcomp_to_ipred Otherwise Otherwise'.
+
+lm_forward : [A B] lm_arrow A B -> (A -> B -> prop) -> prop.
+lm_forward (Comp : lm_arrow A B) (P : A -> B -> prop) <-
+  lm_to_ipred Comp IP,
+  (input:A -> (output:B -> ipred_forward (IP inputⁿ_ outputⁿ_) (P inputⁿ_ outputⁿ_))).
+
+lm_backward : [A B] lm_arrow A B -> (B -> A -> prop) -> prop.
+lm_backward Comp (P : B -> A -> prop) <-
+  lm_to_ipred Comp IP,
+  (input:A -> (output:B -> ipred_backward (IP inputⁿ_ outputⁿ_) (P outputⁿ_ inputⁿ_))).
+
+lmcomp_to_ipred (lm_app F X) Res <-
+  lm_forward F P, lm_backward F P',
+  eq Res (fun output => iliftbi (P X output) (P' output X)).
+
+lmcomp_to_ipred (lm_recapp F X) Res <-
+  lm_recdef F F',
+  eq Res (fun output => inewmeta (fun P =>
+                        inewmeta (fun P' =>
+			iliftbi (and (lm_forward F' P) (P X output))
+			        (and (lm_backward F' P') (P' output X))))).
+
+lm_foldl : (lm_arrow (tuple A B) A) -> A -> list B -> lm_comp A.
+lmcomp_to_ipred (lm_foldl F Start List) (fun output => iliftbi (foldl P Start List output)
+		                                               (foldlinv P' output List Start)) <-
+  lm_forward F PF, lm_backward F PB,
+  eq P  (fun cur elm res => PF (tuple cur elm) res),
+  eq P' (fun cur elm res => PB res (tuple cur elm)).
+
+lm_foldr : (lm_arrow (tuple B A) A) -> list B -> A -> lm_comp A.
+lmcomp_to_ipred (lm_foldr F List End) (fun output => iliftbi (foldr P List End output)
+		                                             (foldrinv P' output List End)) <-
+  lm_forward F PF, lm_backward F PB,
+  eq P  (fun elm cur res => PF (tuple elm cur) res),
+  eq P' (fun elm cur res => PB res (tuple elm cur)).
+
+lm_map : (lm_arrow A B) -> list A -> lm_comp (list B).
+lmcomp_to_ipred (lm_map F List) (fun output => iliftbi (map P List output)
+		                                       (map P' output List)) <-
+  lm_forward F P, lm_backward F P'.
+
+lm_split : list (tuple A B) -> lm_comp (tuple (list A) (list B)).
+lmcomp_to_ipred (lm_split List) (fun output => ilift (split List output)).
+
+

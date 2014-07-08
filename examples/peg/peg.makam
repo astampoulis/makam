@@ -1,0 +1,221 @@
+%use utils.
+
+peg : type -> type.
+
+exactchar : string -> peg string.
+
+any       : peg string.
+concat    : peg A -> peg B -> peg (tuple A B).
+choice    : peg A -> peg A -> peg A.
+lookahd   : peg A -> peg A.
+notp      : peg A -> peg unit.
+epsilon   : peg unit.
+failp     : peg A.
+
+externalclass : (string -> prop) -> peg string.
+semaction : peg A -> (A -> B -> prop) -> peg B.
+
+pegdef : peg A -> peg A -> prop.
+pegdefpretty : peg A -> peg A -> prop.
+
+pegdefpretty_real : peg A -> peg A -> prop.
+pegbuiltin : peg A -> prop.
+
+xparse  : peg A -> list string -> option (tuple (list string) A) -> prop.
+xpretty : peg A -> list string -> option (tuple (list string) A) -> prop.
+
+parse : peg A -> string -> option (tuple string A) -> prop.
+parse P S Res' <-
+  explode S Chars,
+  xparse P Chars Res,
+  (if (eq Res (some (tuple RestChars RealRes))),
+   (explode S' RestChars, eq Res' (some (tuple S' RealRes))),
+   (eq Res' none)).
+
+pretty : peg A -> option (tuple string A) -> string -> prop.
+pretty P (some (tuple Output Res)) Input <-
+  explode Output OutputC,
+  xpretty P InputC (some (tuple OutputC Res)),
+  explode Input InputC.
+	  
+
+pegbuiltin (exactchar _).
+xparse (exactchar S) Input Result <-
+   (if (eq Input (cons S Output)),
+    eq Result (some (tuple Output S)),
+    eq Result none).
+xpretty (exactchar S) (cons S Output) (some (tuple Output _)).
+
+
+pegbuiltin (any).
+xparse (any) Input Result <-
+   (if (eq Input (cons Hd Output)),
+    eq Result (some (tuple Output Hd)),
+    eq Result none).
+xpretty (any) (cons Hd Output) (some (tuple Output Hd)).
+
+
+pegbuiltin (concat _ _).
+xparse (concat P1 P2) Input Result <-
+   (if (xparse P1 Input (some (tuple Input1 Res1)),
+        xparse P2 Input1 (some (tuple Input2 Res2))),
+     eq Result (some (tuple Input2 (tuple Res1 Res2))),
+     eq Result none).
+xpretty (concat P1 P2) Input (some (tuple Input2 (tuple Res1 Res2))) <-
+   xpretty P2 Input1 (some (tuple Input2 Res2)),
+   xpretty P1 Input  (some (tuple Input1 Res1)).
+
+
+pegbuiltin (choice _ _).
+xparse (choice P1 P2) Input Result <-
+  (if (xparse P1 Input Res1, eq Res1 (some _)),
+      (eq Result Res1),
+      (xparse P2 Input Result)).
+xpretty (choice P1 P2) Input (some (tuple Input' Res)) <-
+  (if xpretty P1 Input (some (tuple Input' Res)),
+   success,
+   xpretty P2 Input (some (tuple Input' Res))).
+
+
+pegbuiltin (lookahd _).
+xparse (lookahd P) Input Result <-
+  (if (xparse P Input (some (tuple _ Res))),
+      (eq Result (some (tuple Input Res))),
+      (eq Result none)).
+xpretty (lookahd P) Input (some (tuple Input Res)) <-
+  xparse P Input (some (tuple _ Res)).
+
+
+pegbuiltin (notp _).
+xparse (notp P) Input Result <-
+  (if xparse P Input none,
+      eq Result (some (tuple Input unit)),
+      eq Result none).
+xpretty (notp P) Input (some (tuple Input _)) <-
+  xparse P Input none.
+
+
+pegbuiltin (semaction _ _).
+xparse (semaction P F) Input Result <-
+  (if xparse P Input (some (tuple Input' Res)),
+      (F Res Res', eq Result (some (tuple Input' Res'))),
+      (eq Result none)).
+xpretty (semaction P F) Input (some (tuple Input' Res')) <-
+  F Res Res',
+  xpretty P Input (some (tuple Input' Res)).
+
+
+pegbuiltin (externalclass _).
+xparse (externalclass P) Input Result <-
+  (if (eq Input (cons Hd Tl), P Hd),
+   eq Result (some (tuple Tl Hd)),
+   eq Result none).
+xpretty (externalclass P) (cons Hd Tl) (some (tuple Tl Hd)) <-
+  P Hd.
+
+
+
+pegbuiltin (epsilon).
+xparse (epsilon) Input (some (tuple Input unit)).
+xpretty (epsilon) Input (some (tuple Input unit)).
+
+pegbuiltin (failp).
+xparse (failp)   Input none.
+xpretty (failp)  Input none.
+
+
+xparse P Input Result <- 
+  not(pegbuiltin P),
+  (if (once( (pegdef P P', xparse P' Input Result, eq Result (some _))) ),
+   success,
+   eq Result none).
+xpretty P Input Result <-
+  not(pegbuiltin P),
+  once( (pegdefpretty_real P P', xpretty P' Input Result) ).
+
+pegdefpretty_real P P' <- (if pegdefpretty P P', success, pegdef P P').
+
+
+
+(* useful parsers *)
+class : string -> peg string.
+pegdef (class S) P <-
+  explode S Chars,
+  foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
+        failp Chars P.
+
+ignorep : peg A -> peg unit.
+pegdef (ignorep P) (semaction P (fun a res => eq res unit)).
+
+exactstr : string -> peg unit.
+pegdef (exactstr S) P <-
+  explode S Chars,
+  foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
+        Chars epsilon P.
+
+rep : peg A -> peg (list A).
+pegdef (rep P) (choice
+                  (semaction
+		    (concat P (rep P))
+		    (fun a b => and ( eq a (tuple HD TL) ) ( eq b (cons HD TL ) )) )
+		  (semaction
+		    epsilon
+		    (fun a b => eq b nil))).
+
+
+repplus : peg A -> peg (tuple A (list A)).
+pegdef (repplus P)
+                (choice
+                  (semaction
+		    (concat P (rep P))
+		    (fun a b => and ( eq a (tuple HD TL) ) ( eq b (tuple HD TL ) )) )
+		  (semaction
+		    P
+		    (fun a b => eq b (tuple a nil)))).
+
+
+whitechar   : peg unit.
+commentchar : peg unit.
+white       : peg unit.
+pegdef commentchar whitechar.
+pegdef commentchar
+       (ignorep (concat (notp (lookahd (exactstr "*)")))
+                	any)).
+pegdef whitechar
+       (ignorep (class " \n\r\t")).
+pegdef whitechar
+       (ignorep (concat (concat
+                   (exactstr "(*")
+		   (rep(commentchar)))
+		   (exactstr "*)"))).
+                
+pegdef white (ignorep(rep(whitechar))).
+pegdefpretty white (choice epsilon (exactstr " ")).
+
+prefw : peg A -> peg A.
+pegdef (prefw P) P.
+pegdefpretty (prefw P) (semaction (concat (exactchar " ") P)
+	                          (fun a b => and (eq a (tuple X Y)) (eq b Y))).
+
+token : peg A -> peg A.
+pegdef (token P) (semaction
+                    (concat white (concat P white))
+		    (fun a b => eq a (tuple _ (tuple b _)))).
+
+
+
+identfstchar : peg string.
+identrstchar : peg string.
+ident : peg string.
+pegdef (identfstchar) (semaction (concat (lookahd (externalclass char_latin1))
+                                         (externalclass char_letter))
+		       (fun a b => eq a (tuple _ b))).
+pegdef (identrstchar) (choice identfstchar (class "0123456789")).
+pegdef (ident) (semaction
+                 (concat identfstchar (rep identrstchar))
+		 (fun a b => and (eq a (tuple HD TL)) (explode b (cons HD TL)))).
+
+parenthesized : peg A -> peg A.
+pegdef (parenthesized P) (semaction (concat (concat
+                                      (token (exactchar "(")) P) (token (exactchar ")")))
+				    (fun a b => eq a (tuple (tuple _ b) _))).

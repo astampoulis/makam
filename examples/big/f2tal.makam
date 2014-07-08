@@ -1,0 +1,903 @@
+%use utils.
+%use bindutils.
+
+
+useexample : string -> prop.
+(* useexample "fact". *)
+(* useexample "twice". *)
+useexample "id".
+
+(* --------------
+   Phase 1.
+   System F
+   -------------- *)
+
+
+typ   : type.
+bterm : type.
+term  : type.
+prim  : type.
+
+tint   : typ.
+tarrow : typ -> typ -> typ.
+tpi    : (typ -> typ) -> typ.
+ttup   : list typ -> typ.
+
+term  : bterm -> typ -> term.
+
+iconst : int -> bterm.
+fix    : typ -> typ -> (bterm -> bterm -> term) -> bterm.
+app    : term -> term -> bterm.
+lamt   : (typ -> term) -> bterm.
+appt   : term -> typ -> bterm.
+tup    : list term -> bterm.
+
+nat   : type.
+nzero : nat.
+nsucc : nat -> nat.
+
+proj   : nat -> term -> bterm.
+op     : prim -> term -> term -> bterm.
+if0    : term -> term -> term -> bterm.
+
+pplus  : prim.
+pminus : prim.
+pmult  : prim.
+
+typeof : term -> typ -> prop.
+typeof_ : bterm -> typ -> prop.
+typeof (term X T) T <- typeof_ X T.
+
+typeof_ (iconst _) tint.
+typeof_ (fix T1 T2 (fun x => fun x1 => E x x1)) (tarrow T1 T2) <-
+  (x:bterm -> x1:bterm ->
+   typeof_ x (tarrow T1 T2) ->
+   typeof_ x1 T1 ->
+   typeof (E x x1) T2).
+typeof_ (app E1 E2) T2 <-
+  typeof E1 (tarrow T1 T2),
+  typeof E2 T1.
+typeof_ (lamt (fun a => E a)) (tpi (fun a => T a)) <-
+  (a:typ ->
+   typeof (E a) (T a)).
+typeof_ (appt E T) (T' T) <-
+  typeof E (tpi (fun a => T' a)).
+typeof_ (tup ES) (ttup TS) <-
+  map typeof ES TS.
+
+nth : [A] list A -> nat -> A -> prop.
+nth (HD :: TL) nzero HD.
+nth (HD :: TL) (nsucc N) R <- nth TL N R.
+
+typeof_ (proj I ES) Ti <-
+  typeof ES (ttup TS),
+  nth TS I Ti.
+
+typeof_ (op P E1 E2) tint <-
+  typeof E1 tint,
+  typeof E2 tint.
+
+typeof_ (if0 E1 E2 E3) T <-
+  typeof E1 tint,
+  typeof E2 T,
+  typeof E3 T.
+
+
+(* --------------
+   Phase 2.
+   λ^K (CPS)
+   -------------- *)
+
+typk  : type.
+valk  : type.
+bvalk : type.
+declk : type.
+termk : type.
+
+tint  : typk.
+tpi   : bindmany typk (list typk) -> typk.
+ttup  : list typk -> typk.
+
+dkval  : valk -> declk.
+dkproj : nat -> valk -> declk.
+dkop   : prim -> valk -> valk -> declk.
+
+valk : bvalk -> typk -> valk.
+
+iconst : int -> bvalk.
+fixk   : bindmany typk (tuple (list typk) (bvalk -> bindmany bvalk termk)) ->
+         bvalk.
+tupk   : list valk -> bvalk.
+
+letk : declk -> (bvalk -> termk) -> termk.
+appk : valk -> list typk -> list valk -> termk.
+if0k : valk -> termk -> termk -> termk.
+haltk : typk -> valk -> termk.
+
+(* typing *)
+
+typeofk_ : valk -> typk -> prop.
+typeofk : bvalk -> typk -> prop.
+typeofk : termk -> prop.
+
+typeofk_ (valk U T) T <- typeofk U T.
+typeofk (iconst _) tint.
+typeofk (fixk F) (tpi T) <-
+  bindmany_newvars F (fun as => {prop| [TS Decls]
+  bindmany_apply F as (tuple TS Decls),
+  bindmany_apply T as TS,
+  (x:bvalk ->
+   typeofk x (tpi T) ->
+   bindmany_newvars (Decls x) (fun xs => {prop| [E]
+   bindmany_apply (Decls x) xs E,
+   many_assume typeofk xs TS
+   (typeofk E) |})) |}).
+
+typeofk (tupk VS) (ttup TS) <-
+  map typeofk_ VS TS.
+
+typeofk (letk (dkval V) E) <-
+  typeofk_ V T,
+  (x:A -> typeofk x T -> typeofk (E x)).
+
+typeofk (letk (dkproj I V) E) <-
+  typeofk_ V (ttup TS),
+  nth TS I T,
+  (x:A -> typeofk x T -> typeofk (E x)).
+
+typeofk (letk (dkop P V1 V2) E) <-
+  typeofk_ V1 tint,
+  typeofk_ V2 tint,
+  (x:A -> typeofk x tint -> typeofk (E x)).
+
+typeofk (appk V TS VS) <-
+  typeofk_ V (tpi T),
+  bindmany_apply T TS TS',
+  map typeofk_ VS TS'.
+
+typeofk (if0k V E1 E2) <-
+  typeofk_ V tint,
+  typeofk E1, typeofk E2.
+
+typeofk (haltk T V) <-
+  typeofk_ V T.
+
+
+(* translation : System F -> λ^K *)
+
+translate : typ -> typk -> prop.
+translatecont : typ -> typk -> prop.
+
+translate tint tint.
+translate (tarrow T1 T2) (tpi (bnil [T1', T2'])) <-
+  translate T1 T1', translatecont T2 T2'.
+translate (tpi (fun a => T a)) (tpi (bcons (fun a => bnil [T' a]))) <-
+  (a:typ -> a':typk ->
+   translate a a' ->
+   translatecont (T a) (T' a')).
+translate (ttup TS) (ttup TS') <-
+  map translate TS TS'.
+translatecont T (tpi (bnil [T'])) <-
+  translate T T'.
+
+
+sugarlam : typk -> (bvalk -> termk) -> bvalk -> prop.
+sugarlam T (fun x => E x) (fixk (bnil ([T], (fun u => bcons (fun x => bnil (E x)))))).
+
+translateprog : term -> termk -> prop.
+translateexpr : term -> valk -> termk -> prop.
+translateexpr_var : bterm -> bvalk -> prop.
+translateexpr_lam : term -> typk -> (bvalk -> (termk -> prop)) -> typk -> termk -> prop.
+
+translateexpr_lam E T (fun x => P x) T' E' <-
+  (x:bvalk -> P x (Res x)),
+  sugarlam T Res K,
+  translateexpr E (valk K T') E'.
+
+
+translateprog (term U T) E <-
+  translatecont T Tcont,
+  translate T T',
+  translateexpr_lam (term U T) T' (fun x => eq (haltk T' (valk x T'))) Tcont E.
+
+translateexpr (term Y T) K (appk K [] [valk Y' T']) <-
+  translateexpr_var Y Y',
+  translate T T'.
+
+translateexpr (term (iconst I) T) K (appk K [] [valk (iconst I) T']) <-
+  translate T T'.
+
+translateexpr (term (fix T1 T2 (fun x x1 => E x x1)) T) K
+              (appk K []
+	       [valk (fixk (bnil ([T1', T2cont], (fun x => FixDecls x)))) T']) <-
+
+  translate T1 T1', translate T2 T2', translatecont T2 T2cont, translate T T',
+  (x:bterm -> x1:bterm -> x':bvalk -> x1':bvalk -> c:bvalk ->
+
+   translateexpr_var x x' ->
+   translateexpr_var x1 x1' -> {prop| [FixBody]
+   bindmany_apply (FixDecls x') [x1',c] FixBody,
+   translateexpr (E x x1) (valk c T2cont) FixBody |}).
+
+	
+translateexpr (term (app (term U1 T1) (term U2 T2)) T) K
+              E <-
+  translate T1 T1', translate T2 T2', translatecont T1 T1cont, translatecont T2 T2cont,
+  translateexpr_lam (term U1 T1) T1' (fun x1 =>
+    translateexpr_lam (term U2 T2) T2' (fun x2 =>
+     eq (appk (valk x1 T1') [] [valk x2 T2', K])) T2cont) T1cont E.
+
+translateexpr (term (lamt (fun a => term (U a) (T a))) T') K
+              (appk K [] [valk (fixk (bcons (fun a => bnil (FixBody a)))) T'c]) <-
+  translate T' T'c,
+  (a:typ -> a':typk ->
+   translate a a' ->
+   (translatecont (T a) (Tcont a'),
+   (c:bvalk ->
+    translateexpr (term (U a) (T a)) (valk c (Tcont a')) (Body a' c)),
+   sugarlam (Tcont a') (Body a') (fixk (bnil (FixBody a')))) ).
+
+translateexpr (term (appt (term U T) S) T') K E <-
+  translate T Tc, translatecont T Tcont, translate S Sc,
+  translateexpr_lam (term U T) Tc
+    (fun x => eq (appk (valk x Tc) [Sc] [K]))
+    Tcont E.
+
+translateexpr_tup : list term -> valk -> list valk -> typk -> termk -> prop.
+
+translateexpr_tup nil K VS T (appk K [] [valk (tupk VS') T]) <- reverse VS VS'.
+translateexpr_tup (cons (term Ui Ti) Rest) K VS T E <-
+  translate Ti Ti', translatecont Ti Ticont,
+  translateexpr_lam 
+   (term Ui Ti) Ti'
+   (fun xi => translateexpr_tup Rest K ((valk xi Ti') :: VS) T)
+   Ticont E.
+
+translateexpr (term (tup VS) T) K E <-
+  translate T T',
+  translateexpr_tup VS K [] T' E.
+
+translateexpr (term (proj I (term U T)) T') K E <-
+  translate T Tc, translate T' T'c, translatecont T Tcont,
+  translateexpr_lam (term U T) Tc
+    (fun x => eq (letk (dkproj I (valk x Tc)) (fun y => appk K [] [valk y T'c])))
+    Tcont E.
+
+translateexpr (term (op O E1 E2) T) K E <-
+  translatecont tint Intcont,
+  translateexpr_lam E1 tint (fun x1 =>
+    translateexpr_lam E2 tint (fun x2 =>
+      eq (letk (dkop O (valk x1 tint) (valk x2 tint))
+	       (fun y => appk K [] [valk y tint]))) Intcont) Intcont E.
+
+translateexpr (term (if0 E1 E2 E3) T) K E <-
+  translatecont tint Intcont,
+  translateexpr E2 K E2',
+  translateexpr E3 K E3',
+  translateexpr_lam E1 tint (fun x =>
+   eq (if0k (valk x tint) E2' E3')) Intcont E.
+
+
+(* optimization: get rid of administrative redeces *) 
+
+optkT : termk -> termk -> prop.
+optkV : valk  -> valk  -> prop.
+optkB : bvalk -> bvalk -> prop.
+
+optkV (valk U T) (valk U' T) <- optkB U U'.
+
+optkB (iconst I) (iconst I).
+optkB (fixk F)   (fixk F') <-
+  bindmany_newvars F (fun as => {prop| [TS Decls Decls']
+  (x:bvalk -> optkB x x -> 
+   (bindmany_apply F  as (TS, Decls),
+    bindmany_apply F' as (TS, Decls'),
+    bindmany_newvars (Decls x) (fun xs => {prop| [Body Body']
+    bindmany_apply (Decls x) xs Body,
+    bindmany_apply (Decls' x) xs Body',
+    many_assume optkB xs xs (optkT Body Body') |}))) |}).
+
+optkB (tupk VS) (tupk VS') <-
+  map optkV VS VS'.
+
+optkT (letk D (fun x => E x)) (letk D (fun x => E' x)) <-
+  (x:bvalk -> optkB x x ->
+   optkT (E x) (E' x)).
+
+optkT (if0k V E1 E2) (if0k V' E1' E2') <-
+  optkV V V', optkT E1 E1', optkT E2 E2'.
+
+optkT (haltk T V) (haltk T V') <-
+  optkV V V'.
+  
+optkT (appk (valk (fixk F) _) TS VS) E' <-
+  bindmany_apply F TS (tuple _ (fun x => Body)),
+  map (fun a b => {prop| [T] optkV a (valk b T) |}) VS VS',
+  bindmany_apply Body VS' E,
+  optkT E E'.
+
+optkT (appk V TS VS) (appk V' TS VS') <-
+  (if eq V (valk (fixk F) _), not(bindmany_apply F TS (_, (fun x => Body))), success),
+  optkV V V', map optkV VS VS'.
+
+(* examples *)
+
+example : term -> prop.
+
+
+
+example
+  (term (app
+        (term (fix tint tint (fun f n => term (if0 (term n #_)
+                                                   (term (iconst 1) #_)
+                                                   (term (op pmult
+						             (term n #_)
+							     (term (app (term f #_)
+							                (term (op pminus (term n #_)
+									                 (term (iconst 1) #_))
+									      #_)) #_)) #_)) #_)) #_)
+        (term (iconst 6) #_)) #_)
+<- useexample "fact".
+
+example
+ (term (lamt (fun a =>
+       term (fix (tarrow a a) #_ (fun unused1 => fun f =>
+       term (fix a            #_ (fun unused2 => fun x =>
+       term (app (term f #_) (term (app (term f #_) (term x #_)) #_)) #_)) #_)) #_)) #_)
+<- useexample "twice".
+
+example
+ (term (lamt (fun a =>
+       term (fix a #_ (fun unused1 => fun x => term x #_)) #_)) #_)
+<- useexample "id".
+
+
+
+examplek : termk -> prop.
+
+`( define examplek (fun res => {prop| example X, typeof X T, translateprog X E, optkT E res, typeofk E |}) ).
+
+([X] examplek X, typeofk X, print "System F ~~> λK", print X) ?
+
+(* after some beautification: 
+appk
+ (valk 
+ (fixk anon1015_0.f (tuple [anon1093_1.n : tint, anon1099_2.k : tint -> void])
+  
+  if0k(n,
+     appk k [iconst 1],
+     (letk (pminus n 1)
+	   (fun x_3.x =>
+		appk f [x,
+			lamk (tuple [anon1318_5.y : tint])
+                             (letk (pmult n y)
+				   (fun x_6.z =>
+					appk k z))])))))
+
+[iconst 6, lamk [ anon1604_0.n : tint ] (haltk tint n) ]
+*)
+
+(* TIME: about 3 hours so far *)
+
+
+(* ------------------------
+   Phase 3.
+   λ^C (closure conversion)
+   ------------------------ *)
+
+typc  : type.
+valc  : type.
+bvalc : type.
+declc : type -> type.
+termc : type.
+
+tint  : typc.
+tpi   : bindmany typc (list typc) -> typc.
+ttup  : list typc -> typc.
+tex   : (typc -> typc) -> typc.
+
+dcval    : valc -> (bvalc -> A) -> declc A.
+dcproj   : nat -> valc -> (bvalc -> A) -> declc A.
+dcop     : prim -> valc -> valc -> (bvalc -> A) -> declc A.
+dcunpack : valc -> (typc -> bvalc -> A) -> declc A.
+
+valc : bvalc -> typc -> valc.
+
+iconst : int -> bvalc.
+fixc   : bindmany typc (tuple (list typc) (bvalc -> bindmany bvalc termc)) ->
+         bvalc.
+tupc   : list valc -> bvalc.
+apptc  : valc -> typc -> bvalc.
+packc  : typc -> valc -> typc -> bvalc.
+
+letc : declc termc -> termc.
+appc : valc -> list valc -> termc.
+if0c : valc -> termc -> termc -> termc.
+haltc : typc -> valc -> termc.
+
+(* typing *)
+
+wftypc   : typc -> unit -> prop.
+typeofc_ : valc -> typc -> prop.
+typeofc  : bvalc -> typc -> prop.
+typeofc  : termc -> prop.
+
+wftypc tint unit.
+wftypc (tpi T) unit <-
+  bindmany_newvars T (fun as => {prop|
+  many_assume wftypc as US {prop| [TS US']
+  bindmany_apply T as TS,
+  map wftypc TS US' |} |}).
+wftypc (ttup TS) unit <- map wftypc TS US.
+wftypc (tex T) unit <-
+  (x:typc -> wftypc x unit -> wftypc (T x) unit).
+
+
+typeofc_ (valc U T) T <- typeofc U T, wftypc T unit.
+
+typeofvarc : bvalc -> typc -> prop.
+
+(*
+typeofc X Y <- print "entering", cheapprint 3 X, cheapprint 10 Y, failure.
+typeofc X Y <- typeofvarc X R, print "found for var", print R, print Y, eq R Y, print "is good".
+*)
+typeofc X Y <- typeofvarc X Y.
+typeofc (iconst _) tint.
+typeofc (fixc F) (tpi T) <-
+  bindmany_newvars F (fun as => {prop| [TS Decls]
+  bindmany_apply F as (tuple TS Decls),
+  bindmany_apply T as TS,
+  resetknown (typeofc : bvalc -> typc -> prop) {prop|
+  (x:bvalc ->
+   typeofvarc x (tpi T) ->
+   bindmany_newvars (Decls x) (fun xs => {prop| [E]
+   bindmany_apply (Decls x) xs E,
+   many_assume typeofvarc xs TS
+   (typeofc E) |})) |} |}),
+  resetknown wftypc (wftypc (tpi T) unit).
+
+typeofc (tupc VS) (ttup TS) <-
+  map typeofc_ VS TS.
+
+(*
+typeofc X <- print "entering", cheapprint 3 X, failure.
+*)
+typeofc X <- (if isunif X, print "parapatem!", success), failure.
+typeofc (letc (dcval V E)) <-
+  typeofc_ V T,
+  (x:bvalc -> typeofvarc x T -> typeofc (E x)).
+
+typeofc (letc (dcproj I V E)) <-
+  typeofc_ V (ttup TS),
+  nth TS I T,
+  (x:bvalc -> typeofvarc x T -> typeofc (E x)).
+
+typeofc (letc (dcop P V1 V2 E)) <-
+  typeofc_ V1 tint,
+  typeofc_ V2 tint,
+  (x:bvalc -> typeofvarc x tint -> typeofc (E x)).
+
+typeofc (letc (dcunpack V E)) <-
+  typeofc_ V (tex (fun a => T a)),
+  (a:typc -> x:bvalc ->
+   wftypc a unit -> typeofvarc x (T a) ->
+   typeofc (E a x)).
+
+typeofc (appc V VS) <-
+  typeofc_ V (tpi (bnil TS)),
+  map typeofc_ VS TS.
+
+typeofc (apptc V S) (tpi (Rest S)) <-
+  wftypc S unit,
+  typeofc_ V (tpi (bcons (fun a => Rest a))).
+
+typeofc (packc T1 V (tex (fun a => T2 a))) (tex (fun a => T2 a)) <-
+  wftypc T1 unit,
+  typeofc_ V (T2 T1).
+
+typeofc (if0c V E1 E2) <-
+  typeofc_ V tint,
+  typeofc E1, typeofc E2.
+
+typeofc (haltc T V) <-
+  typeofc_ V T.
+
+(*
+typeofc X Y <- print "failed", cheapprint 0 X, print Y, failure.
+typeofc X <- print "FAILED FOR::", cheapprint 3 X, failure.
+*)
+
+
+sugarapp : valc -> list typc -> valc -> prop.
+sugarapp V [] V.
+sugarapp (valc U T0) (cons T TS) R <-
+  eq T0 (tpi (bcons (fun a => Rest a))),
+  sugarapp (valc (apptc (valc U T0) T) (tpi (Rest T))) TS R.
+
+
+translatec_typ : typk -> typc -> prop.
+translatec_typ tint tint.
+translatec_typ (tpi T) (tex (fun b => ttup [ tpi (T' b), b ])) <-
+  bindmany_changetype T (Ttemp : bindmany typc unit),
+  (b:typc ->
+  bindmany_newvars T (fun as =>
+  bindmany_newvars Ttemp (fun as' =>
+  many_assume translatec_typ as as' {prop| [TS TS']
+  bindmany_apply T as TS,
+  map translatec_typ TS TS',
+  bindmany_apply (T' b) as' (b :: TS') |}))).
+
+translatec_typ (ttup TS) (ttup TS') <-
+  map translatec_typ TS TS'.
+
+(* TIME: about +1 hour *)
+
+translatec_prog : termk -> termc -> prop.
+translatec_expr : termk -> termc -> prop.
+translatec_val  : valk -> valc -> prop.
+translatec_var  : bvalk -> bvalc -> prop.
+translatec_decl : declk -> (bvalk -> termk) -> declc termc -> prop.
+
+translatec_prog E E' <- translatec_expr E E'.
+
+translatec_let_aux : ( (bvalc -> termc) -> declc termc ) ->
+                     ( bvalc -> termc -> prop ) -> termc -> prop.
+translatec_let_aux DC Rest (letc (DC (fun x => Term' x))) <-
+  (x:bvalc -> Rest x (Term' x)).
+
+translatec_letunpack_aux : ( (typc -> bvalc -> termc) -> declc termc ) ->
+                     ( typc -> bvalc -> termc -> prop ) -> termc -> prop.
+translatec_letunpack_aux DC Rest (letc (DC (fun a x => Term' a x))) <-
+  (a:typc -> x:bvalc -> Rest a x (Term' a x)).
+
+
+translatec_expr (letk D E) (letc D') <- translatec_decl D E D'.
+
+translatec_expr (if0k V E1 E2) (if0c V' E1' E2') <-
+  translatec_val V V', translatec_expr E1 E1', translatec_expr E2 E2'.
+
+translatec_expr (haltk T V) (haltc T' V') <-
+  translatec_typ T T', translatec_val V V'.
+
+translatec_expr (appk (valk U T) SS VS) E <-
+  
+  translatec_val (valk U T) V',
+  translatec_typ T (tex (fun g => ttup [ Tcode g, g ])),
+  map translatec_typ SS SS',
+  map translatec_val VS VS',
+
+  translatec_letunpack_aux (dcunpack V') (fun g z =>
+  translatec_let_aux       (dcproj nzero (valc z (ttup [Tcode g, g]))) (fun zcode =>
+  translatec_let_aux       (dcproj (nsucc nzero) (valc z (ttup [Tcode g, g]))) (fun zenv res => {prop| [Res0]
+  
+  sugarapp (valc zcode (Tcode g)) SS' Res0,
+  eq res (appc Res0 ( (valc zenv g) :: VS' )) |}))) E.
+
+
+translatec_decl (dkval V) E (dcval V' (fun x => E' x)) <-
+  translatec_val V V',
+  (x:bvalk -> x':bvalc -> translatec_var x x' -> translatec_expr (E x) (E' x')).
+
+translatec_decl (dkproj I V) E (dcproj I V' (fun x => E' x)) <-
+  translatec_val V V',
+  (x:bvalk -> x':bvalc -> translatec_var x x' -> translatec_expr (E x) (E' x')).
+
+translatec_decl (dkop P V1 V2) E (dcop P V1' V2' (fun x => E' x)) <-
+  translatec_val V1 V1', translatec_val V2 V2',
+  (x:bvalk -> x':bvalc -> translatec_var x x' -> translatec_expr (E x) (E' x')).
+
+
+
+translatec_val (valk X T) (valc X' T') <-
+  translatec_var X X', translatec_typ T T'.
+translatec_val (valk (iconst I) T) (valc (iconst I) T') <-
+  translatec_typ T T'.
+translatec_val (valk (tupk VS) T) (valc (tupc VS') T') <-
+  map translatec_val VS VS',
+  translatec_typ T T'.
+
+
+(* ----------------- fv.
+   TODO this is pretty hacky and slow; replace with non-generic code later. *)
+valfv : A -> list B -> prop.
+valfv_aux : list dyn -> list B -> prop.
+valfv_seenalready : B -> prop.
+
+valfv X Result <- valfv_aux [ dyn X ] Result.
+valfv_aux [] [].
+valfv_aux ( (dyn (valk U T)) :: Queue ) Result <-
+  headargs U (X : A) Args,
+  newnmeta (fun x => eq x X),
+  append Args Queue Queue',
+  (if valfv_seenalready X,
+      valfv_aux Queue' Result,
+      (eq Result ((valk U T) :: Result'),
+	(valfv_seenalready X -> valfv_aux Queue' Result'))).
+
+valfv_aux ( (dyn T) :: Queue ) (Result : list A) <-
+  headargs T (X : B) Args,
+  newnmeta (fun x => eq x X),
+  append Args Queue Queue',
+  valfv_aux Queue' Result.
+
+valfv_aux ( (dyn T) :: Queue ) Result <-
+  headargs T (X : A) Args,
+  newfmeta (fun x => eq x X),
+  append Args Queue Queue',
+  valfv_aux Queue' Result.
+
+valfv_aux ( (dyn (fun (x : A) => (T x : B))) :: Queue ) Result <-
+  (x:A ->
+   valfv_seenalready x ->
+   valfv_aux ((dyn (T x)) :: Queue) Result).
+
+valfv_aux ( (dyn (X : int)) :: Queue ) Result <-
+  valfv_aux Queue Result.
+
+valfv_aux ( (dyn (X : string)) :: Queue ) Result <-
+  valfv_aux Queue Result.
+
+(* ------------------ fv *)
+
+foldr_inat : [A B] (nat -> A -> B -> B -> prop) -> list A -> B -> B -> prop.
+foldr_inat_aux : [A B] (nat -> A -> B -> B -> prop) -> nat -> list A -> B -> B -> prop.
+
+foldr_inat_aux P N nil S S.
+foldr_inat_aux P N (cons HD TL) S S'' <- foldr_inat_aux P (nsucc N) TL S S', P N HD S' S''.
+foldr_inat P L S S' <- foldr_inat_aux P nzero L S S'.
+
+
+translatec_val (valk (fixk Fix) T)
+               (valc (packc Tenv_ (valc (tupc [ Vcode_, Venv_ ]) (ttup [ Tcode_, Tenv_ ]))  T'_) T'_) <-
+
+  valfv (fixk Fix) (YS : list valk),
+  fv (fixk Fix) (BS : list typk),
+
+  map (fun yi si => {prop| [Ui] eq yi (valk Ui si) |}) YS SS,
+  map (fun yi si => {prop| [Ui] eq yi (valk si Ui) |}) YS YSvars,
+
+
+  bindmany_changetype Fix (FixAS : bindmany typc unit),
+  bindmany_fromlist BS (BStemp : bindmany typc unit),
+  map translatec_val YS YS'closure,
+
+  (* Tenv_    *) translatec_typ (ttup SS) Tenv_ ,
+  (* T'_      *) translatec_typ T T'_ ,
+  (* Trawcode *) eq Trawcode (tpi Trawcode0),
+  (* Vcode    *) eq Vcode    (valc (fixc Vcode0) Trawcode),
+  (* Vcode_   *) map translatec_typ BS BS',
+                 sugarapp Vcode BS' Vcode_ ,
+  (* Tcode_   *) eq Vcode_   (valc _ Tcode_),
+  (* Venv_    *) eq Venv_    (valc (tupc YS'closure) Tenv_),
+
+
+  resetknown translatec_typ (
+
+  bindmany_newvars Fix (fun as => {prop| [TS FixFun]
+  bindmany_newvars BStemp (fun bs' => {prop| [Tcode]
+  bindmany_newvars FixAS (fun as' =>
+
+  many_assume translatec_typ BS bs' (
+  many_assume translatec_typ as as' {prop| 
+                                     [TS' FixFun' Fix'Params BS'AS' T' Tenv]
+
+  (* T        *) translatec_typ T T',
+  (* Tenv     *) translatec_typ (ttup SS) Tenv,
+  
+  bindmany_apply Fix as (TS, (fun x => FixFun x)),
+
+  map translatec_typ TS TS',
+ 
+  append bs' as' BS'AS',
+  bindmany_apply Trawcode0 BS'AS' (Tenv :: TS'),
+
+  bindmany_apply Vcode0 BS'AS' ( Tenv :: TS', (fun zcode => FixFun' zcode) ),
+
+  (x:bvalk -> zcode:bvalc ->
+   
+  (bindmany_changetype (FixFun x) (Fix'Params : bindmany bvalc unit),
+  bindmany_newvars (FixFun x) (fun xs => {prop|
+
+  (zenv:bvalc ->
+  bindmany_newvars Fix'Params (fun xs' =>
+  
+  resetknown translatec_var (
+  many_assume translatec_var xs xs' ( {prop| [FixBody FixBody'
+	                                      ZcodeInst ZenvVal ZUnused]
+  
+  bindmany_apply (FixFun x) xs FixBody,
+  bindmany_apply (FixFun' zcode) (zenv :: xs') FixBody',
+
+  sugarapp (valc zcode Trawcode) bs' ZcodeInst,
+  eq ZcodeInst (valc ZUnused Tcode),
+  eq ZenvVal (valc zenv Tenv),	 
+
+  translatec_let_aux
+          (dcval (valc (packc Tenv
+	    (valc (tupc [ ZcodeInst, ZenvVal ])
+	          (ttup [ Tcode, Tenv ]))
+	    T') T'))
+  (fun x' e' => {prop| [LetYS](translatec_var x x' ->
+
+    (foldr_inat
+        (fun idx yi cur =>
+	 eq (translatec_let_aux (dcproj idx ZenvVal) (fun yi' ei => {prop| (translatec_var yi yi' -> cur ei) |})))
+        YSvars
+        (translatec_expr FixBody)
+        LetYS,
+    LetYS e')) |}
+
+  ) FixBody' |} )))) |} ) )) |})) |}) |})).
+
+
+(* time: about +2 hours *)
+(* debugging: +1 hour (problem in valfv, boxed types not handled right)  *)
+
+examplec : termc -> prop.
+
+`( define examplec (fun res => {prop| examplek E, translatec_prog E res |}) ).
+
+
+erasetypes : A -> A -> prop.
+erasetypes (X : typc) (X : typc).
+erasetypes (dcval X Y) (dcval X' Y') <- erasetypes X X', (x:bvalc -> erasetypes (Y x) (Y' x)).
+erasetypes (dcproj I V Y) (dcproj I V' Y') <- erasetypes V V', (x:bvalc -> erasetypes (Y x) (Y' x)).
+erasetypes (dcop P V1 V2 Y) (dcop P V1' V2' Y') <- erasetypes V1 V1', erasetypes V2 V2', (x:bvalc -> erasetypes (Y x) (Y' x)).
+erasetypes (dcunpack V Y) (dcunpack V' Y') <- erasetypes V V', (a:typc -> x:bvalc -> erasetypes (Y a x) (Y' a x)).
+
+v : bvalc -> valc.
+erasetypes (valc E _) (v E') <- erasetypes E E'.
+erasetypes (iconst I) (iconst I).
+erasetypes (fixc ES) (fixc ES') <-
+  bindmany_newvars ES (fun as => {prop| [TS Decls Decls']
+  bindmany_apply ES  as (TS, Decls),
+  bindmany_apply ES' as (TS, Decls'),
+  (x:bvalc -> bindmany_newvars (Decls x) (fun xs => {prop| [Body Body']
+  bindmany_apply (Decls x) xs Body,
+  bindmany_apply (Decls' x) xs Body',
+  erasetypes Body Body' |})) |}).
+erasetypes (tupc ES) (tupc ES') <- map erasetypes ES ES'.
+erasetypes (apptc E T) (apptc E' T) <- erasetypes E E'.
+erasetypes (packc T E T') (packc T E' T') <- erasetypes E E'.
+erasetypes (letc E) (letc E') <- erasetypes E E'.
+erasetypes (appc E ES) (appc E' ES') <- map erasetypes (E :: ES) (E' :: ES').
+erasetypes (if0c V E E') (if0c V' E2 E2') <- erasetypes V V', map erasetypes [E,E'] [E2,E2'].
+erasetypes (haltc T E) (haltc T E') <- erasetypes E E'.
+erasetypes (X : bvalc) X <- newnmeta (fun x => eq x X).
+
+([R R']examplec R, erasetypes R R', print R') ?
+
+
+(* %debug+. *)
+([R]examplec R, typeofc R, print "λK ~~> λC", print R) ?
+(* %debug-. *)
+
+
+(* ------------------------
+   Phase 4.
+   λ^H (hoisting)
+   ------------------------ *)
+
+typh  : type.
+valh  : type.
+bvalh : type.
+declh : type -> type.
+termh : type.
+hvalh : type.
+progh : type.
+
+tint  : typh.
+tpi   : bindmany typh (list typh) -> typh.
+ttup  : list typh -> typh.
+tex   : (typh -> typh) -> typh.
+
+dhval    : valh -> (bvalh -> A) -> declh A.
+dhproj   : nat -> valh -> (bvalh -> A) -> declh A.
+dhop     : prim -> valh -> valh -> (bvalh -> A) -> declh A.
+dhunpack : valh -> (typh -> bvalh -> A) -> declh A.
+
+valh : bvalh -> typh -> valh.
+
+iconst : int -> bvalh.
+tuph   : list valh -> bvalh.
+appth  : valh -> typh -> bvalh.
+packh  : typh -> valh -> typh -> bvalh.
+
+leth : declh termh -> termh.
+apph : valh -> list valh -> termh.
+if0h : valh -> termh -> termh -> termh.
+halth : typh -> valh -> termh.
+
+codeh : bindmany typh (tuple (list typh) (bvalh -> bindmany bvalh termh)) -> hvalh.
+
+letrech : bindmutrec bvalh hvalh -> bindmany bvalh termh -> progh.
+
+(* typing *)
+
+wftyph   : typh -> unit -> prop.
+typeofh_ : valh -> typh -> prop.
+typeofh  : bvalh -> typh -> prop.
+typeofh  : termh -> prop.
+typeofhvalh : hvalh -> typh -> prop.
+typeofprogh : progh -> prop.
+
+wftyph tint unit.
+wftyph (tpi T) unit <-
+  bindmany_newvars T (fun as => {prop|
+  many_assume wftyph as US {prop| [TS US']
+  bindmany_apply T as TS,
+  map wftyph TS US' |} |}).
+wftyph (ttup TS) unit <- map wftyph TS US.
+wftyph (tex T) unit <-
+  (x:typh -> wftyph x unit -> wftyph (T x) unit).
+
+
+typeofh_ (valh U T) T <-  typeofh U T, wftyph T unit.
+typeofh (iconst _) tint.
+
+typeofhvalh (codeh F) (tpi T) <-
+  bindmany_newvars F (fun as => {prop| [TS Decls]
+  bindmany_apply F as (tuple TS Decls),
+  bindmany_apply T as TS,
+  (x:bvalh ->
+   typeofh x (tpi T) ->
+   bindmany_newvars (Decls x) (fun xs => {prop| [E]
+   bindmany_apply (Decls x) xs E,
+   many_assume typeofh xs TS
+   (typeofh E) |})) |}),
+  wftyph (tpi T) unit.
+
+typeofh (tuph VS) (ttup TS) <-
+  map typeofh_ VS TS.
+
+typeofh (leth (dhval V E)) <-
+  typeofh_ V T,
+  (x:bvalh -> typeofh x T -> typeofh (E x)).
+
+typeofh (leth (dhproj I V E)) <-
+  typeofh_ V (ttup TS),
+  nth TS I T,
+  (x:bvalh -> typeofh x T -> typeofh (E x)).
+
+typeofh (leth (dhop P V1 V2 E)) <-
+  typeofh_ V1 tint,
+  typeofh_ V2 tint,
+  (x:bvalh -> typeofh x tint -> typeofh (E x)).
+
+typeofh (leth (dhunpack V E)) <-
+  typeofh_ V (tex (fun a => T a)),
+  (a:typh -> x:bvalh ->
+   wftyph a unit -> typeofh x (T a) ->
+   typeofh (E a x)).
+
+typeofh (apph V VS) <-
+  typeofh_ V (tpi (bnil TS)),
+  map typeofh_ VS TS.
+
+typeofh (appth V S) (tpi (Rest S)) <-
+  wftyph S unit,
+  typeofh_ V (tpi (bcons (fun a => Rest a))).
+
+typeofh (packh T1 V (tex (fun a => T2 a))) (tex (fun a => T2 a)) <-
+  wftyph T1 unit,
+  typeofh_ V (T2 T1).
+
+typeofh (if0h V E1 E2) <-
+  typeofh_ V tint,
+  typeofh E1, typeofh E2.
+
+typeofh (halth T V) <-
+  typeofh_ V T.
+
+typeofprogh (letrech DeclHS DeclE) <-
+
+  bindmutrec_newvars DeclHS (fun xs =>
+  many_assume typeofh xs TS {prop| [HS E]
+  
+  bindmutrec_apply DeclHS xs HS,
+  map typeofhvalh HS TS,
+  bindmany_apply DeclE xs E,
+  typeofh E
+
+  |}),
+  map wftyph TS US.

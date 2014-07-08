@@ -1,0 +1,81 @@
+%use urweb.
+
+hnf (tapp (tapp (trowmap ktype ktype) (tlam ktype (fun x => tarrow x x))) (trowunion (trowsingleton (tname "test") (tpi ktype (fun x => x))) C)) X ?
+
+(rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) (trowsingleton X1 T2))) ?
+
+%constraints+.
+(rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) X3), eq X3 (trowsingleton X4 T1)) ?
+
+(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
+ teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
+     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') Z))) ?
+
+(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
+ teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
+     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q)))) ?
+
+(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
+ teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
+     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q))),
+ eq Z (trowempty ktype)) ?
+
+
+(*
+fun proj [nm :: Name] [t :: Type] [r :: {Type}]
+[[nm] ~ r] (x : $([nm = t] ++ r)) = x.nm
+*)
+
+typeof 
+   (lamt (kname)      (fun nm =>
+   (lamt (ktype)      (fun t =>
+   (lamt (krow ktype) (fun r =>
+   (rowneedcon (trowsingleton nm tunit) r
+   (lam  (trowtype (trowunion (trowsingleton nm t) r)) (fun x =>
+   rowproject x nm))))))))) T ?
+
+typeof 
+   (lamt (kname)      (fun nm =>
+   (lamt (ktype)      (fun t =>
+   (lamt (krow ktype) (fun r =>
+   (rowneedcon (trowsingleton nm tunit) r
+   (lam  (trowtype (trowunion r (trowsingleton nm t))) (fun x =>
+   rowproject x nm))))))))) T ?
+
+`( letdef "proj"
+   (lamt (kname)      (fun nm =>
+   (lamt (ktype)      (fun t =>
+   (lamt (krow ktype) (fun r =>
+   (rowneedcon (trowsingleton nm tunit) r
+   (lam  (trowtype (trowunion (trowsingleton nm t) r)) (fun x =>
+   rowproject x nm))))))))) ).
+
+`( letdef "extend"
+   (lamt (kname)      (fun nm =>
+   (lamt (ktype)      (fun t =>
+   (lamt (krow ktype) (fun r =>
+   (rowneedcon (trowsingleton nm tunit) r
+   (lam  (trowtype r) (fun x =>
+   (lam  t            (fun a =>
+   rowunion x (rowsingleton nm a)))))))))))) ).
+
+typeof extend T ?
+
+(*
+fun weird [nm :: Name] [t :: Type] [r :: {Type}]
+[[nm] ~ r] (x : $r) (a : t) = rowproject (rowunion x (rowsingleton nm a)) nm
+*)
+typeof 
+   (lamt (kname)      (fun nm =>
+   (lamt (ktype)      (fun t =>
+   (lamt (krow ktype) (fun r =>
+   (rowneedcon (trowsingleton nm tunit) r
+   (lam  (trowtype r) (fun x =>
+   (lam  (t)          (fun a =>
+   rowproject (rowunion x (rowsingleton nm a)) nm))))))))))) T ?
+
+
+(* the following, but unfortunately type inference is not robust yet in the presence of metas -- so not all modifications that should work do work. *)
+
+typeof (app (magic (appt proj (tname "test1"))) (rowunion (rowsingleton (tname "test1") eunit) (rowsingleton (tname "test2") eunit))) X ?
+

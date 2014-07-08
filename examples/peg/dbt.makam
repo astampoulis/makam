@@ -1,0 +1,120 @@
+%use utils.
+%use generic.
+%use bindutils.
+
+(* Dynamically-typed binding trees.
+
+   (A generic syntax for Makam terms.) *)
+
+
+dbt : type.
+
+dbt_lam     : (A -> dbt) -> dbt.
+dbt_int     : int -> dbt.
+dbt_string  : string -> dbt.
+dbt_nu      : string -> dbt -> dbt.
+dbt_magicnu : dbt -> dbt.
+dbt_list    : list dbt -> dbt.
+
+dbt_constr  : A -> list dbt -> dbt.
+dbt_comp    : A -> list dbt -> dbt.
+dbt_lookup  : string -> list dbt -> dbt.
+dbt_auto    : A -> list dbt -> dbt.
+
+dbtrun : dbt -> dyn -> prop.
+dbtrun (dbt_constr HD ARGS) (dyn E) <-
+  map dbtrun ARGS ARGS',
+  headargs E HD ARGS'.
+
+dbtrun (dbt_comp F ARGS) (dyn E) <-
+  map dbtrun ARGS ARGS',
+  applymany F ARGS' (F' : A -> prop),
+  F' E.
+
+dbtrun (dbt_lam (F : A -> dbt)) (dyn E) <-
+  (x:A -> dbtrun (F x) (dyn (E x))).
+
+dbtrun (dbt_int I) (dyn (I : int)).
+dbtrun (dbt_string S) (dyn (S : string)).
+
+dbtenv : string -> A -> prop.
+dbtmagicenv : list string -> prop.
+dbtmagic : list dyn -> A.
+
+findbenign : [A] list A -> A -> prop.
+findbenign L HD <-
+  (if isunif L, failure,
+      (eq L (HD' :: TL),
+       ifte (eq_benign HD HD')
+	 (success)
+	 (findbenign TL HD))).
+
+dbtenv X dbtmagic <-
+  dbtmagicenv XS,
+  ifte (findbenign XS X)
+       (success)
+       {prop| 
+	getunif XS (Last : list string),
+	eq Last (X :: Last') |}.
+
+headargs' : A -> B -> list dyn -> prop.
+headargs' E HD ARGS <-
+  (if eq (dyn HD) (dyn dbtmagic),
+      eq E (dbtmagic ARGS),
+      headargs E HD ARGS).
+
+dbtrun (dbt_lookup S ARGS) (dyn E) <-
+  dbtenv S HD,
+  map dbtrun ARGS ARGS',
+  headargs' E HD ARGS'.
+
+dbtrun (dbt_nu X D) (dyn E) <-
+  (x:A -> dbtenv X x -> 
+     (eq ^nx X, dbtrun D (dyn (E x)))).
+
+dbtrun (dbt_magicnu D) E <-
+  (dbtmagicenv XS -> dbtrun D _),
+  getunif XS (Last : list string),
+  eq Last [],
+  foldr (fun elm cur => eq (dbt_nu elm cur)) XS D D',
+  dbtrun D' E.
+
+argtyps : A -> list dyn -> prop.
+argtyps (X : unit -> B) TL <-
+  (x:unit -> argtyps (X x) TL).
+argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) <-
+  not(eq (Z : A) (W : unit)), (x:A -> argtyps (X x) TL).
+argtyps (X : A) ( dyn [] ) <- not(eq X (Z : B -> C)).
+
+
+
+dbtguess : dyn -> dbt -> dbt -> prop.
+
+
+dbtrun (dbt_auto HD ARGS) E <-
+  argtyps HD TYPS,
+  map2 dbtguess TYPS ARGS ARGS',
+  dbtrun (dbt_constr HD ARGS') E.
+
+dbtrun (dbt_list ARGS) (dyn ARGS') <-
+  map dbtrun ARGS ARGS'.
+
+
+(* dbtguess *)
+dbtguess (dyn (X : A -> B)) D D.
+
+dbt_mk_bindmany : C -> bindmany A B -> prop.
+dbt_mk_bindmany (X : C) (B : bindmany A B) <-
+  (if eq (X : C) (Z : A -> C'),
+      (eq B (bcons R), (x:A -> dbt_mk_bindmany (Z x) (R x))),
+      eq B (bnil X)).
+
+dbtguess (dyn (X : bindmany A B)) D (dbt_comp dbt_mk_bindmany [ D ]).
+
+
+dbtguess (dyn (X : bindmutrec A B)) (dbt_list L)
+  (dbt_constr bindmutrec [ L' ]) <-
+  map3 (fun elm x body => eq elm (dbt_nu x body)) L XS Bodies,
+  foldr (fun elm cur => eq (dbt_constr bcons [ dbt_nu elm cur ]))
+        XS (dbt_constr bnil [ dbt_list Bodies ]) L'.
+

@@ -1,0 +1,6 @@
+name = "syntax_xtype"
+version = "0.1"
+description = "Extensible datatypes"
+requires = "camlp4"
+archive(syntax, preprocessor) = "syntax_xtype.cma"
+archive(syntax, toploop) = "syntax_xtype.cma"

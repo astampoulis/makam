@@ -1,0 +1,489 @@
+%use utils.
+%use bindutils.
+%use subbindutils.
+%use maps.
+
+(* kinds *)
+knd     : type.
+
+ktype   : knd.
+karrow  : list knd -> knd -> knd.
+
+(* types *)
+typ       : type.
+typconstr : type.
+tarrow    : typ -> typ -> typ .
+tprod     : list typ -> typ.
+tbase     : string -> list typ -> typ.
+tpi       : knd -> (typ -> typ) -> typ.
+typconstr : bindmany typ typ -> typconstr.
+
+constrdef   : type.
+csdef       : typconstr -> constrdef.
+csdefunit   : constrdef.
+
+(* terms *)
+term        : type.
+patt        : type.
+field       : type.
+
+lam      : typ -> (term -> term) -> term.
+app      : term -> term -> term .
+lamt     : knd -> (typ -> term) -> term.
+appt     : term -> typ -> term.
+let      : term -> (term -> term) -> term.
+letrec   : bindmutrec term term -> bindmany term term -> term.
+constr   : string -> term -> term.
+construn : string -> term.
+ascribe  : term -> typ -> term.
+match    : term -> list (bindrel (tuple patt term)) -> term.
+tuple    : list term -> term.
+raise    : term -> term.
+trycatch : term -> list (bindrel (tuple patt term)) -> term.
+record   : map string term -> term.
+projrec  : term -> string -> term.
+named    : string -> term.
+
+(* patterns *)
+ptuple    : list patt -> patt.
+pconstr   : string -> patt -> patt.
+pconstrun : string -> patt.
+pvar      : term -> patt.
+pwild     : patt.
+pas       : patt -> patt -> patt.
+precord   : map string patt -> patt.
+
+
+(* ----------------------------------------------------------- *)
+(* type system. *)
+
+
+(* context declarations *)
+kindofbase         : string -> knd -> prop. (* base constructor *)
+
+type_eq_def        : string -> list knd -> typconstr -> prop.
+type_variant_def   : string -> list knd -> list (tuple string constrdef) -> prop.
+type_record_def    : string -> list knd -> map string typconstr -> prop.
+
+constructor_def : string -> constrdef -> string -> prop.
+field_def       : string -> typconstr -> string -> prop.
+
+named_gentypeof : string -> typ -> prop.
+
+
+(* kinds *)
+kindof       : typ -> knd -> prop .
+kindofg      : typ -> knd -> prop .
+kindofall    : list typ -> knd -> prop.
+kindofconstr : typconstr -> knd -> prop.
+
+
+kindof T K <- guard T (kindofg T K).
+kindofg (tarrow T1 T2) ktype <- kindof T1 ktype, kindof T2 ktype.
+kindofg (tpi K TF)     ktype <- (x:typ -> kindofg x K -> kindof (TF x) ktype).
+kindofg (tprod TS)     ktype <- kindofall TS ktype.
+kindofg (tbase T TS)   K     <- guard T (kindofbase T (karrow KS K)), map kindof TS KS.
+
+kindofall TS K <- map (fun t res => kindof t K) TS _.
+
+(* normal form of types *)
+typapply : typconstr -> list typ -> typ -> prop.
+typapply (typconstr TC) TS T <- bindmany_apply TC TS T.
+
+nf         : typ -> typ -> prop.
+nf_        : typ -> typ -> prop.
+
+nf X Y <- (if (isunif X; isunif Y), eq X Y, nf_ X Y).
+
+(nf_ X X) when newnmeta (fun x => eq x X).
+nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') <-
+  map nf TypArgs TypArgs'.
+nf_ (tbase TypConstr TypArgs) T <-
+  type_eq_def TypConstr _ Def,
+  typapply Def TypArgs T.
+nf_ (tbase TypConstr TypArgs) T <-
+  type_eq_def TypConstr _ Def,
+  typapply Def TypArgs T0,
+  nf T0 T.
+nf_ (tarrow T1 T2) (tarrow T1' T2') <- nf T1 T1', nf T2 T2'.
+nf_ (tpi K TF)     (tpi K TF')      <- (x:typ -> nf (TF x) (TF' x)).
+nf_ (tprod TS)     (tprod TS')      <- map nf TS TS'.
+
+
+(* term typing *)
+
+typeof    : term -> typ -> prop.
+
+
+typeof (lam T1 E) (tarrow T1 T2) <-
+  (x:term -> typeof x T1 -> typeof (E x) T2), kindof T1 ktype.
+
+typeof (app E1 E2) T2 <-
+  typeof E1 (tarrow T1 T2), typeof E2 T1.
+
+typeof (lamt K E) (tpi K TF) <-
+  (x:typ -> kindofg x K -> typeof (E x) (TF x)).
+
+typeof (appt E T) (TF T) <-
+  typeof E (tpi K TF), kindof T K.
+
+typeof (tuple ES) (tprod TS) <- map typeof ES TS.
+
+typeof (ascribe E T) T <- typeof E T.
+
+typeof (raise E) T     <- typeof E (tbase "exn" nil), kindof T ktype.
+
+(* implicit generalization/instantiation and so on *)
+typinst : typ -> typ -> prop.
+typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
+typinst T T' <- not(eq T (tpi _ _)), (eq T T'; nf T T').
+
+typgen : typ -> typ -> prop.
+typgen T T <- not(getunif T (X: typ)).
+typgen T (tpi K F') <-
+  getunif T (X : typ), absunif T X F,
+  (x:typ -> kindofg x K -> typgen (F x) (F' x)).
+
+tpimany : knd -> (typ -> list typ) -> list typ -> prop.
+tpimany K (fun x => nil) nil.
+tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
+  tpimany K TS TS'.
+
+typgenlist : list typ -> list typ -> prop.
+typgenlist TS TS' <-
+   (if getunif TS (X : typ),
+     (absunif TS X F,
+      (x:typ -> kindofg x K -> typgenlist (F x) (F' x)),
+      tpimany K F' TS'),
+     (eq TS TS')).
+
+gentypeof : term -> typ -> prop.
+(typeof X T) when newvmeta (fun x => eq x X), gentypeof X T.
+(typeof X T') when newvmeta (fun x => eq x X), gentypeof X T <- typinst T T'.
+
+typeof (named X) T <- named_gentypeof X T.
+typeof (named X) T' <- named_gentypeof X T, typinst T T'.
+
+typeof (app E1 E2) T2 <-
+  typeof E1 T,
+  typinst T (tarrow T1 T2),
+  typeof E2 T1.
+
+valrestr : term -> prop.
+valrestr (constr _ _).
+valrestr (construn _).
+valrestr (lam    _ _).
+valrestr (lamt   _ _).
+valrestr (tuple _).
+valrestr (record _).
+valrestr (ascribe E _) <- valrestr E.
+
+typeof (let E E') T' <-
+  typeof E T, 
+  (if valrestr E,
+     (typgen T Tgen, kindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T')),
+     (kindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
+
+(* let rec *)
+typeof (letrec ES E') T' <-
+
+  bindmutrec_newvars ES (fun xs => {prop| [Bodies Rest Assumption]
+    many_assume typeof xs TS ({prop|
+
+     bindmutrec_apply ES xs Bodies,
+     bindmany_apply E' xs Rest,
+
+     map typeof Bodies TS,
+
+     (if (map0 valrestr Bodies),
+
+        (typgenlist TS TSgen, kindofall TSgen ktype,
+	   eq Assumption (many_assume gentypeof xs TSgen)),
+
+        (kindofall TS ktype,
+   	   eq Assumption (many_assume typeof xs TS))) |}),
+
+    Assumption (typeof Rest T') |}).
+     
+(* constructors *)
+typeof (construn C) (tbase Tbase TS) <-
+  constructor_def C csdefunit Tbase,
+  type_variant_def Tbase KS _,
+  map kindof TS KS.
+
+typeof (constr C Params) (tbase Tbase TS) <-
+  constructor_def C (csdef PolyParamsT) Tbase,
+  type_variant_def Tbase KS _,
+  map kindof TS KS,
+  typapply PolyParamsT TS ParamsT,
+  typeof Params ParamsT.
+
+(* records *)
+typeof (projrec E Field) T <-
+
+  field_def Field PolyT Tbase,
+  type_record_def Tbase KS _,
+  map kindof TS KS,
+  typapply TC TS T,
+  once (typeof E (tbase Tbase TS)).
+
+guess_type : [A] map string A -> string -> prop.
+guess_type (map ( (Key, _) :: _ )) Tbase <-
+  field_def Key _ Tbase.
+
+teq : typ -> typ -> prop.
+teq X Y <- (eq X Y; (nf X Z, nf Y Z)).
+
+typeof (record FieldsTerms) (tbase Tbase TS) <-
+
+  guess_type FieldsTerms Tbase,
+  type_record_def Tbase KS FieldsSpec,
+  map kindof TS KS,
+
+  map_map (fun a => typapply a TS) FieldsSpec FieldsTypes',
+  map_param_eq teq FieldsTypes FieldsTypes',
+
+  map_map typeof FieldsTerms FieldsTypes.
+
+
+
+(* matching. *)
+
+typebranch   : typ -> typ -> bindrel (tuple patt term) -> prop.
+typeofpatt   : patt -> typ -> prop.
+
+
+typeofpatt (pvar X) T <- bindrel_wf X, typeof X T.
+
+typeofpatt (ptuple PS) (tprod TS) <- map typeofpatt PS TS.
+
+typeofpatt (pconstr C P) (tbase Tbase TS) <-
+
+  constructor_def C (csdef PolyParamsT) Tbase,
+  type_variant_def Tbase KS _,
+  map kindof TS KS,
+
+  typapply PolyParamsT TS T',
+  typeofpatt P T'.
+
+typeofpatt (pconstrun C) (tbase Tbase TS) <-
+
+  constructor_def C csdefunit Tbase,
+  type_variant_def Tbase KS _,
+  map kindof TS KS.
+
+typeofpatt pwild T.
+
+typeofpatt (pas P P') T <- typeofpatt P T, typeofpatt P' T.
+
+typeofpatt (precord FieldsPatts) (tbase Tbase TS) <-
+  
+  guess_type FP Tbase,
+  type_record_def Tbase KS FieldsSpec,
+  map_map typeofpatt FieldsPatts FieldsTypes,
+  map kindof TS KS,
+  map_map (fun a => typapply a TS) FieldsSpec FieldsTypes',
+  map_param_eq teq FieldsTypes FieldsTypes'.
+
+
+dynamic_assumption : dyn -> list prop -> list prop -> prop.
+dynamic_assumptions : list dyn -> list prop -> list prop -> prop.
+
+dynamic_assumption (dyn (X : term)) [typeof X T] [typeof X T].
+dynamic_assumptions Vars PS QS <-
+  map2 dynamic_assumption Vars PattAssume BodyAssume,
+  flatten PattAssume PS, flatten BodyAssume QS.
+
+typebranch T T' Branch <-
+
+  bindrel_newvars Branch (fun unifs => {prop| [Patt Body PattAssume BodyAssume]
+    bindrel_apply Branch unifs (Patt, Body),
+    dynamic_assumptions unifs PattAssume BodyAssume,
+    assumemany PattAssume (typeofpatt Patt T),
+    assumemany BodyAssume (typeof Body T') |}).
+  
+
+typeof (match E Branches) T' <-
+  typeof E T, not(isunif T),
+  map0 (typebranch T T') Branches.
+
+typeof (match E Branches) T' <-
+  typeof E T, not(isunif T), nf T Tnf,
+  map0 (typebranch Tnf T') Branches.
+
+typeof (match E Branches) T' <-
+  map0 (typebranch T T') Branches,
+  typeof E T.
+
+typeof (trycatch E Handlers) T <-
+  typeof E T,
+  map0 (typebranch (tbase "exn" []) T) Handlers.
+
+
+(* conversion *)
+(typeof X Tnf) when (newnmeta (fun x => eq X x)) <- nf T Tnf.
+(typeof E T) when not (isunif T), once(typeof E T') <- nf T' Z, nf T Z.
+
+
+(* ---------------------------- *)
+(* module structures/signatures *)
+
+stritem        : type.
+sigitem        : type.
+
+
+(* type definitions *)
+typdef         : type.
+
+typdef_variant : list (tuple string constrdef) -> typdef.
+typdef_record  : list (tuple string typconstr) -> typdef.
+typdef_eq      : typconstr -> typdef.
+
+(* structure items *)
+strlet    : string -> term -> stritem.
+strlet_   : term -> stritem.
+strletrec : bindmutrec term term -> stritem.
+strtype   : list string -> list (list knd) -> list typdef -> stritem.
+strtypesingle : string -> list knd -> typdef -> stritem.
+strexn    : string -> constrdef -> stritem.
+strmany   : list stritem -> stritem.
+
+(* signature items *)
+sigval    : string -> typ -> sigitem.
+sigtypedecl : string -> list knd -> sigitem.
+sigtype   : list string -> list (list knd) -> list typdef -> sigitem.
+sigexn    : string -> constrdef -> sigitem.
+sigmany   : list sigitem -> sigitem.
+
+
+(* signature of structure item *)
+
+sigof : stritem -> sigitem -> prop.
+sigitem_new_assumptions : sigitem -> list prop -> prop.
+typdef_new_assumptions  : string -> list knd -> typdef -> list prop -> prop.
+
+sigof (strlet Name E)
+      (sigval Name T') <- typeof (let E (fun y => y)) T, teq T T'.
+
+sigof (strlet_ E)
+      (sigmany [])     <- typeof (let E (fun y => y)) T.
+
+sigof (strletrec ES)
+      (sigmany Vals) <-
+  bindmutrec_newvars ES (fun xs => {prop|
+   bindmany_apply BXS xs (tuple xs),
+   map (fun x n => eq n ⁿx) xs Names,
+   typeof (letrec ES BXS) (tprod TS) |}),
+  map2 (fun n t => eq (sigval n t)) Names TS Vals.
+
+
+typdef_wf : typdef -> list knd -> prop.
+typconstr_wf   : typconstr -> list knd -> prop.
+constructor_wf : constrdef -> list knd -> prop.
+
+typconstr_wf (typconstr TC) KS <-
+  bindmany_newvars TC (fun ts =>
+    many_assume kindof ts KS {prop| [T]
+	bindmany_apply TC ts T,
+	kindof T ktype |}).
+
+constructor_wf csdefunit KS.
+constructor_wf (csdef TC) KS <- typconstr_wf TC KS.
+
+typdef_wf (typdef_variant Constructors) KS <-
+  map0 (fun nc => {prop| [Name Constr] eq nc (Name, Constr), constructor_wf Constr KS |}) Constructors.
+
+typdef_wf (typdef_record Fields) KS <-
+  map0 (fun nc => {prop| [Name TConstr] eq nc (Name, TConstr), typconstr_wf TConstr KS |}) Fields.
+
+typdef_wf (typdef_eq TC) KS <-
+  typconstr_wf TC KS.
+
+sigof (strtype Names Arities Defs)
+      (sigtype Names Arities Defs) <-
+  
+  map (fun ks => eq (karrow ks ktype)) Arities Kinds,
+  many_assume kindofbase Names Kinds (map typdef_wf Defs Arities).
+
+sigof (strtypesingle Name Arity Def) S' <- sigof (strtype [Name] [Arity] [Def]) S'.
+      
+
+sigof (strexn Name Constrdef) (sigexn Name Constrdef) <-
+  constructor_wf Constrdef [].
+
+sigof (strmany []) (sigmany []).
+sigof (strmany (HD :: TL)) (sigmany (HDs :: TLs)) <-
+  sigof HD HDs, sigitem_new_assumptions HDs Assum,
+  assumemany Assum (sigof (strmany TL) (sigmany TLs)).
+
+(* assumptions based on signature items *)
+
+sigitem_new_assumptions (sigval Name T) [ named_gentypeof Name T ].
+
+sigitem_new_assumptions (sigtypedecl Name Arity) [ kindofbase Name (karrow Arity ktype) ].
+
+sigitem_new_assumptions (sigtype Names Arities Defs) Assumptions <-
+
+  map (fun ks => eq (karrow ks ktype)) Arities Kinds,
+  map2 (fun n k => eq (kindofbase n k)) Names Kinds Assume_Types,
+  map3 typdef_new_assumptions Names Arities Defs Assume_Typdefs,
+  flatten (Assume_Types :: Assume_Typdefs) Assumptions.
+
+sigitem_new_assumptions (sigexn Name Def) [ constructor_def Name Def "exn" ].
+
+sigitem_new_assumptions (sigmany Sigs)  Flattened <-
+  map sigitem_new_assumptions Sigs Assums,
+  flatten Assums Flattened.
+
+typdef_new_assumptions TName KS (typdef_variant Constructors) ( (type_variant_def TName KS Constructors) ::
+                                                                ConstrAssumptions ) <-
+
+  map (fun nc res => {prop| [Name Csdef] eq nc (Name, Csdef), eq res (constructor_def Name Csdef TName) |})
+      Constructors ConstrAssumptions.
+
+typdef_new_assumptions TName KS (typdef_record Fields) ( (type_record_def TName KS (map Fields)) ::
+                                                         FieldAssumptions ) <-
+
+  map (fun nt res => {prop| [Name Tconstr] eq nt (Name, Tconstr), eq res (field_def Name Tconstr TName) |})
+      Fields FieldAssumptions.
+
+typdef_new_assumptions TName KS (typdef_eq TypConstr) [ type_eq_def TName KS TypConstr ].
+
+
+(* adding assumptions to global environment *)
+
+ocamldo_sig : sigitem -> cmd -> prop.
+ocamldo_sig S (cmd_many Cmds) <-
+   sigitem_new_assumptions S Assumptions,
+   map (fun g => eq (cmd_newclause (clause g success))) Assumptions Cmds.
+
+ocamldo : stritem -> cmd -> prop.
+ocamldo S C <- sigof S S', ocamldo_sig S' C.
+
+(* ------------------------------------------------------------------------- *)
+
+
+(* Built-in types *)
+
+`( ocamldo_sig (sigtypedecl   "exn"  []) ).
+type_variant_def "exn" [] ExnConstructors.
+
+`( ocamldo_sig (sigtypedecl   "int"  []) ).
+intconst : int -> term.
+typeof (intconst N) (tbase "int" []).
+
+`( ocamldo_sig (sigtypedecl   "string" []) ).
+stringconst : string -> term.
+typeof (stringconst S) (tbase "string" []).
+
+`( ocamldo (strtypesingle "unit" [] (typdef_variant [ ( "Unit", csdefunit ) ])) ).
+`( ocamldo (strtypesingle "list" [ktype] (typdef_variant
+     [ ( "Nil", csdefunit ),
+       ( "Cons", csdef (typconstr (bcons (fun a => bnil (tprod [ a, tbase "list" [a] ])))) ) ])) ).
+`( ocamldo (strtypesingle "bool" [] (typdef_variant
+     [ ( "True", csdefunit ),
+       ( "False", csdefunit ) ])) ).
+
+`( ocamldo (strtypesingle "option" [ktype] (typdef_variant
+     [ ( "None", csdefunit ),
+       ( "Some", csdef (typconstr (bcons (fun a => bnil a))) ) ])) ).

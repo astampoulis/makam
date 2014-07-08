@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#,s=16M,i=2M,o=200
+function runmain {
+    OCAMLRUNPARAM="l=100M,s=16M,i=2M,o=200" ./nativerepl.native $* ;
+};
+
+pushd . >/dev/null
+cd `dirname $0`
+runmain $*
+popd >/dev/null
+

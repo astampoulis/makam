@@ -1,0 +1,159 @@
+(*
+
+The Makam metalanguage -- a tool for rapid language prototyping
+Copyright (C) 2011- Antonis Stampoulis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*)
+
+<<
+
+open Batteries;;
+open Peg;;
+open PegBuiltins;;
+
+>>
+
+(* -------------------------------------- *)
+(* Main definition                        *)
+(* -------------------------------------- *)
+
+peg     -> preamble:?ocamltopquote defs:repSEPnowhite(def, defsep) postamble:?ocamltopquote repV(white)
+	   << PEGshort.pegNoDefProds preamble defs postamble >>
+def     -> nt:token(ident) params:paramdef token(to) prod:choices << (nt, params, prod) >>
+choices -> productions:repSEP(production, "/") << PEGshort.choices productions >>
+prim -> 
+	  token(".")                           << PEGshort.wild >>
+	/ token("\"") str:rep(strchar) "\""    << PEGshort.s (str |> (String.concat "")) >>
+	/ token("[") str:rep(classchar) "]"    << PEGshort.c (str |> (String.concat "")) >>
+	/ token("!") p:prim                    << PEGshort.neg p >>
+	/ token("&&") token("(") p:prim test:ocamlquote token(")")
+	                                       << PEGshort.test p test >>
+	/ token("&") p:prim                    << PEGshort.ahd p >>
+	/ token("?") p:prim                    << PEGshort.opt p >>
+	/ token("#") p:number mem:?token("^")  << PEGshort.optmemo mem (PEGshort.p p) >>
+	/ token("fail")                        << PEGshort.void >>
+	/ id:token(ident) params:params mem:?token("^")
+                                               << PEGshort.optmemo mem (PEGshort.nP id params) >>
+	/ p:parenthesized(innerchoice^) mem:?token("^")
+	                                       << PEGshort.optmemo mem p >>
+	/ p:parenthesized(choices^) mem:?token("^")
+	                                       << PEGshort.optmemo mem p >>
+namedprim -> 
+	  name:token(ident)^ token(":") prim:prim << (name, prim) >>
+	/ prim:prim                               << ("_", prim) >>
+
+production -> 
+	  namedprim:(repWHITE(namedprim))^ ocamlaction:ocamlquote
+             << let (names, primlist) = List.split namedprim in
+                PEGshort.concats (primlist, (String.concat " " names), `A ocamlaction) >>
+	    
+	/ namedprim:(repWHITE(namedprim))^ 
+             << let (names, primlist) = List.split namedprim in
+	     	PEGshort.concats (primlist, (String.concat " " names), `V) >>
+
+paramdef -> token("(") params:repSEP(ident, ",") token(")") << params |> String.concat " " >>
+	   /                                                << "" >>
+params ->   token("(") params:repSEP(prim, ",") token(")") << params >>
+	   /                                               << [] >>
+innerchoice ->  primlist:repSEP(prim, "/")     << PEGshort.choices primlist >>
+
+
+
+(* -------------------------------------- *)
+(* Utility definitions: character classes *)
+(* -------------------------------------- *)
+latin1char -> &&( . << fun c -> try (ignore (UChar.char_of c); true) with | _ -> false >> ) a:. << a >>
+letterchar -> &&( .
+		  << fun c -> match UString.category c with
+                     | `Ll | `Lm | `Lo | `Lt | `Lu -> true | _ -> false >> )
+              a:. << a >>
+symnumchar -> &&( .
+	          << fun c -> match UString.category c with
+                     | `Mc | `Me | `Mn | `Nd | `Nl | `No | `Pc | `Pd | `Pe | `Pf | `Pi | `Po
+		     | `Sc | `Sk | `Sm | `So -> true
+		     | _ -> false >> )
+	      a:. << a >>
+eof -> !. ;
+
+(* string characters must include the escape characters allowed by ocaml, so that bootstrapping works properly *)
+digitchar ->     a:[0123456789]              << a >>
+hexdigitchar ->  a:[0123456789abcdefABCDEF]  << a >>
+escapechar -> 
+     s:[\\] c:[\\"'ntbr]
+           << ([ s; c ] |> UString.implode) |> UString.to_string >> 
+   / s:[\\] n1:digitchar n2:digitchar n3:digitchar
+           << ([ s; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar n3:hexdigitchar 
+           << ([ s; x; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+strchar ->  s:escapechar << Utils.unescape s >>
+	 / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
+str -> cs:repplus(strchar) << cs |> (String.concat "") >>
+
+
+(* whitespace *)
+commentchar ->  !"*)" .  ;
+white ->  &&( . << UString.is_whitespace >> ) . / "(*" repV(commentchar) "*)" ;
+whiteNoNewline -> ![\n] white ;
+
+(* quoting ocaml (rudimentary support) *)
+ocamlchar  -> !">>" c:. << c >>
+ocamltext  -> cs:repplus(ocamlchar) << (cs |> UString.implode) |> UString.to_string >>
+ocamlquote -> token("<<") ocamltext:ocamltext token(">>") 
+                << ToploopTools.parseAST ocamltext >>
+ocamltopquote -> token("<<") ocamltext:ocamltext token(">>") 
+                 << ToploopTools.parseAST_stritem ocamltext >>
+
+(* characters allowed in class of characters parsing combinator e.g. [abc] *)
+classchar -> 
+	  !"]" s:strchar << s >>
+	/ "\"" << "\"" >>
+	/ "]" &"]" << "]" >> (* if the bracket is contained in the class, it needs to be last! *)
+
+
+(* identifiers must be latin-1 since they are copied verbatim into the generated OCaml AST as
+   OCaml identifiers *)
+identfstchar -> &latin1char c:letterchar    << c >>
+identrstchar -> &latin1char c:(letterchar / digitchar / [_']) << c >>
+ident        -> c:identfstchar cs:rep(identrstchar)  << ((c :: cs) |> UString.implode) |> UString.to_string >>
+
+(* Grammar-specific characters *)
+(* we allow the unicode right-arrow for the 'produces' token *)
+to ->  "->" / "→" ;
+defsep -> repV(whiteNoNewline)^ token(";")
+       /  repV(whiteNoNewline)^ "\n" &(token(ident) paramdef token(to) / token(eof) ) ;
+
+
+(* -------------------------------------- *)
+(* Utility definitions: others            *)
+(* -------------------------------------- *)
+number           -> i:repplus(digitchar) << ((i |> UString.implode) |> UString.to_string) |> int_of_string >>
+token(p)         -> repV(white)^ a:p     << a >>
+parenthesized(p) ->  token("(") p:p token(")") << p >>
+
+rep(p) ->  l:fastrep(p) << l >> ;
+repV(p) -> fastrepV(p) ;
+repplus(p) ->  hd:p tl:rep(p) << hd :: tl >>
+repplusV(p) ->  p repV(p) ;
+repSEP(p, sep) -> 
+	  hd:p tl:rep( ( token(sep) repV(white) x:p << x >> ) )  << hd :: tl >>
+
+repWHITE(p) -> 
+	  hd:p tl:rep( ( repplusV(white) x:p << x >> ) ) repV(white) << hd :: tl >>
+	/ repV(white) << [] >>
+
+repSEPnowhite(p, sep) -> 
+	  hd:p^  (sep repV(white))^ tl:repSEPnowhite(p, sep)  << hd :: tl >>
+	/ hd:p^ ?(sep repV(white))^                           << [ hd ] >>

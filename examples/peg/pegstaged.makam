@@ -1,0 +1,418 @@
+%use utils.
+%use bindutils.
+
+
+peg : type -> type.
+
+exactchar : string -> peg string.
+
+any       : peg string.
+concat    : peg A -> peg B -> peg (tuple A B).
+choice    : peg A -> peg A -> peg A.
+lookahd   : peg A -> peg A.
+notp      : peg A -> peg unit.
+epsilon   : peg unit.
+failp     : peg A.
+
+externalclass : (string -> prop) -> peg string.
+semaction : peg A -> (A -> B -> prop) -> peg B.
+compiled  : (list string -> option (tuple (list string) A) -> prop) ->
+	    (list string -> option (tuple (list string) A) -> prop) ->
+	    peg A.
+
+peginline        : peg A -> peg A -> prop.
+peginline_parse  : peg A -> peg A -> prop.
+peginline_pretty : peg A -> peg A -> prop.
+
+pegrule        : peg A -> peg A -> cmd -> prop.
+pegrule_parse  : peg A -> peg A -> cmd -> prop.
+pegrule_pretty : peg A -> peg A -> cmd -> prop.
+
+xparse  : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xxparse  : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xuparse  : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xpretty : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xxpretty : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xupretty : peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+
+pegbuiltin : peg A -> prop.
+
+parse : peg A -> (string -> option (tuple string A) -> prop) -> prop.
+parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
+        explode S Chars,
+	P' Chars Res,
+        (if (eq Res (some (tuple RestChars RealRes))),
+	   (explode S' RestChars, eq Res' (some (tuple S' RealRes))),
+	   (eq Res' none)) |}
+	) <-
+  xparse P P'.
+
+pretty : peg A -> (option (tuple string A) -> string -> prop) -> prop.
+pretty P (fun FullRes Input => {prop| [Output Res OutputC InputC]
+  eq FullRes (some (tuple Output Res)),
+  explode Output OutputC,
+  P' InputC (some (tuple OutputC Res)),
+  explode Input InputC |}) <-
+  xpretty P P'.
+
+
+xxparse X Y  <- (if isunif X, (if xuparse X Y, success, success), xparse X Y).
+xxpretty X Y <- (if isunif X, (if xupretty X Y, success, success), xpretty X Y).
+
+pegbuiltin (exactchar _).
+xparse (exactchar S) (fun Input Result => {prop| [Output]
+   (if (eq Input (cons S Output)),
+    eq Result (some (tuple Output S)),
+    eq Result none) |}).
+xpretty (exactchar S) (fun Input Result => {prop| [Output]
+    eq Input (cons S Output),
+    eq Result (some (tuple Output S)) |}).
+
+
+pegbuiltin (any).
+xparse (any) (fun Input Result => {prop| [Hd Output]
+   (if (eq Input (cons Hd Output)),
+    eq Result (some (tuple Output Hd)),
+    eq Result none) |}).
+xpretty (any) (fun Input Result => {prop| [Hd Output]
+    eq Input (cons Hd Output),
+    eq Result (some (tuple Output Hd)) |}).
+
+pegbuiltin (concat _ _).
+xparse (concat P1 P2) (fun Input Result => {prop| [Input1 Input2 Res1 Res2]
+   (if (P1' Input (some (tuple Input1 Res1)),
+        P2' Input1 (some (tuple Input2 Res2))),
+     eq Result (some (tuple Input2 (tuple Res1 Res2))),
+     eq Result none) |}) <-
+  xxparse P1 P1', xxparse P2 P2'.
+xpretty (concat P1 P2) (fun Input Result => {prop| [Input1 Input2 Res1 Res2]
+   eq Result (some (tuple Input2 (tuple Res1 Res2))),
+   P2' Input1 (some (tuple Input2 Res2)),
+   P1' Input  (some (tuple Input1 Res1)) |}) <-
+   xxpretty P1 P1', xxpretty P2 P2'.
+
+pegbuiltin (choice _ _).
+xparse (choice P1 P2) (fun Input Result => {prop| [Res1 U0]
+  (if (P1' Input Res1, eq Res1 (some U0)),
+      (eq Result Res1),
+      (P2' Input Result)) |}) <-
+  xxparse P1 P1', xxparse P2 P2'.
+xpretty (choice P1 P2) (fun Input Result => {prop| [Input' Res]
+  eq Result (some (tuple Input' Res)),
+  (if P1' Input (some (tuple Input' Res)),
+   success,
+   P2' Input (some (tuple Input' Res))) |}) <-
+  xxpretty P1 P1', xxpretty P2 P2'.
+
+pegbuiltin (lookahd _).
+xparse (lookahd P) (fun Input Result => {prop| [Res U0]
+  (if (P' Input (some (tuple U0 Res))),
+      (eq Result (some (tuple Input Res))),
+      (eq Result none)) |}) <-
+  xxparse P P'.
+xpretty (lookahd P) (fun Input Result => {prop| [Res U0]
+  eq Result (some (tuple Input Res)),
+  P' Input (some (tuple U0 Res)) |}) <-
+  xxparse P P'.
+
+pegbuiltin (notp _).
+xparse (notp P) (fun Input Result => {prop|
+  (if P' Input none,
+      eq Result (some (tuple Input unit)),
+      eq Result none) |}) <-
+  xxparse P P'.
+xpretty (notp P) (fun Input Result => {prop| [U0]
+  eq Result (some (tuple Input U0)),
+  P' Input none |}) <-
+  xxparse P P'.
+
+pegbuiltin (semaction _ _).
+xparse (semaction P F) (fun Input Result => {prop| [Input' Res Res']
+  (if P' Input (some (tuple Input' Res)),
+      (F Res Res', eq Result (some (tuple Input' Res'))),
+      (eq Result none)) |}) <-
+  xxparse P P'.
+xpretty (semaction P F) (fun Input Result => {prop| [Input' Res Res']
+  eq Result (some (tuple Input' Res')),
+  F Res Res',
+  P' Input (some (tuple Input' Res)) |}) <-
+  xxpretty P P'.
+
+pegbuiltin (externalclass _).
+xparse (externalclass P) (fun Input Result => {prop| [Hd Tl]
+  (if (eq Input (cons Hd Tl), P Hd),
+   eq Result (some (tuple Tl Hd)),
+   eq Result none) |}).
+xpretty (externalclass P) (fun Input Result => {prop| [Hd Tl]
+  eq Input (cons Hd Tl),
+  eq Result (some (tuple Tl Hd)),
+  P Hd |}).
+
+pegbuiltin (epsilon).
+xparse (epsilon) (fun Input Result => eq Result (some (tuple Input unit))).
+xpretty (epsilon) (fun Input Result => eq Result (some (tuple Input unit))).
+
+pegbuiltin (failp).
+xparse (failp) (fun Input Result => eq Result none).
+xpretty (failp) (fun Input Result => eq Result none).
+
+pegbuiltin (compiled _ _).
+xparse  (compiled Parse Pretty) Parse.
+xpretty (compiled Parse Pretty) Pretty.
+
+peginline_xparse  : peg A -> peg A -> prop.
+peginline_xpretty : peg A -> peg A -> prop.
+
+peginline_xparse  P Def <- (if peginline_parse P Def, success, peginline P Def).
+peginline_xpretty P Def <- (if peginline_pretty P Def, success, peginline P Def).
+
+xparse (P : peg A) Prop <-
+  not(pegbuiltin P), peginline_xparse P Def, xxparse Def Prop.
+xpretty (P : peg A) Prop <-
+  not(pegbuiltin P), peginline_xpretty P Def, xxpretty Def Prop.
+
+
+(* the difficult part starts: user-defined PEGs with
+   recursion and parameters *)
+
+
+pegcompile_parse : dyn -> dyn -> prop.
+pegcompile_pretty : dyn -> dyn -> prop.
+
+pegcompile_parse (dyn (X : peg A)) (dyn Y) <- xxparse X Y.
+pegcompile_pretty (dyn (X : peg A)) (dyn Y) <- xxpretty X Y.
+
+pegcompile_parse (dyn (X : string)) (dyn X).
+pegcompile_pretty (dyn (X : string)) (dyn X).
+
+pegknowns_parse : dyn -> dyn -> option prop -> prop.
+pegknowns_pretty : dyn -> dyn -> option prop -> prop.
+
+pegknowns_parse (dyn (X : peg A)) (dyn Y) (some (xuparse X Y)).
+pegknowns_pretty (dyn (X : peg A)) (dyn Y) (some (xupretty X Y)).
+
+pegknowns_parse (dyn (X : string)) (dyn Y) (none).
+pegknowns_pretty (dyn (X : string)) (dyn Y) (none).
+
+xparse (Peg : peg A) (fun Input Result => {prop| [U0]
+             (if (once( P'' Input Result, eq Result (some U0) )),
+	      success,
+	      eq Result none)
+         |}) <-
+  not(pegbuiltin Peg), not(peginline Peg _),
+  headname Peg Name,
+  headargs Peg _ Args,
+  append Name "~xparse" XParseName,
+  lookup XParseName P',
+  map pegcompile_parse Args Args',
+  appmany P' Args' P''.
+
+xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) <-
+  not(pegbuiltin Peg), not(peginline Peg _),
+  headname Peg Name,
+  headargs Peg _ Args,
+  append Name "~xpretty" XPrettyName,
+  lookup XPrettyName P',
+  map pegcompile_pretty Args Args',
+  appmany P' Args' P''.
+
+mkclause : A -> A -> clause -> prop.
+mkclause (G : prop) (P : prop) (clause G P).
+mkclause (G : A -> B) (P : A -> B) X <- mkclause (G Y) (P Y) X.
+
+mkclausecmd : string -> A -> cmd -> prop.
+mkclausecmd GName P (cmd_newclause Clause) <- lookup GName G, mkclause G P Clause.
+
+mkclausecmd2 : string -> list dyn -> list prop -> (B -> prop) -> cmd -> prop.
+mkclausecmd2 GName Args Knowns Proc (cmd_newclause Clause) <-
+  lookup GName G,
+  appmany G Args G',
+  assumemany Knowns (Proc X),
+  mkclause G' X Clause.
+
+weirdappmanyrev : A -> list dyn -> B -> prop.
+weirdappmanyrev (X : A) nil (Y : A).
+weirdappmanyrev (X : A) (cons (dyn (HD : B)) TL) Z <- weirdappmanyrev (Y : B -> A) TL Z.
+weirdappmanyrevreal : A -> list dyn -> B -> prop.
+weirdappmanyrevreal X L Y <- reverse L L', weirdappmanyrev X L' Y.
+
+
+pegdeclare   : peg A -> cmd -> prop.
+pegdeclare (Peg : peg A) Cmd <-
+  headname Peg Name,
+  headargs Peg _ Args,
+  append Name "~xparse" XParseName,
+  append Name "~xpretty" XPrettyName,
+
+  eq (Parse  : list string -> option (tuple (list string) A) -> prop) Parse,
+  eq (Pretty : list string -> option (tuple (list string) A) -> prop) Pretty,
+
+  map pegcompile_parse Args ArgsParse, (* this is to get the right type *)
+  map pegcompile_pretty Args ArgsPretty, 
+
+  weirdappmanyrevreal Parse ArgsParse Parse',
+  weirdappmanyrevreal Pretty ArgsPretty Pretty',
+
+  (if (lookup XParseName Parse', lookup XPrettyName Pretty'),
+      eq CmdPredDef cmd_none,
+      eq CmdPredDef (cmd_many [ cmd_newterm XParseName  Parse' ,
+                                cmd_newterm XPrettyName Pretty' ])),
+
+  eq Cmd CmdPredDef.
+
+pegrule_full : bool -> bool -> peg A -> peg A -> cmd -> prop.
+pegrule_full GenParse GenPretty (Peg : peg A) Def Cmd <-
+
+  headname Peg Name,
+  headargs Peg _ Args,
+  append Name "~xparse" XParseName,
+  append Name "~xpretty" XPrettyName,
+
+  eq (Parse  : list string -> option (tuple (list string) A) -> prop) Parse,
+  eq (Pretty : list string -> option (tuple (list string) A) -> prop) Pretty,
+
+  map pegcompile_parse Args ArgsParse, (* this is to get the right type *)
+  map pegcompile_pretty Args ArgsPretty, 
+
+  weirdappmanyrevreal Parse ArgsParse Parse',
+  weirdappmanyrevreal Pretty ArgsPretty Pretty',
+
+  map2 pegknowns_parse Args ArgsParse KnownsParse0,
+  map2 pegknowns_pretty Args ArgsPretty KnownsPretty0,
+
+  filterlist KnownsParse0 KnownsParse,
+  filterlist KnownsPretty0 KnownsPretty,
+
+  (if (lookup XParseName Parse', lookup XPrettyName Pretty'),
+      eq CmdPredDef cmd_none,
+      eq CmdPredDef (cmd_many [ cmd_newterm XParseName  Parse' ,
+                                cmd_newterm XPrettyName Pretty' ])),
+  eq CmdList [ CmdPredDef ],
+
+  (if (eq GenParse true),
+     append CmdList [ cmd_stage (mkclausecmd2 XParseName ArgsParse KnownsParse (xparse Def)) ] CmdList2,
+     eq CmdList CmdList2 ),
+
+  (if (eq GenPretty true),
+     append CmdList2 [ cmd_stage (mkclausecmd2 XPrettyName ArgsPretty KnownsPretty (xpretty Def)) ] CmdList3,
+     eq CmdList2 CmdList3 ), 
+
+  eq Cmd (cmd_many CmdList3).
+
+pegrule        Peg Def Cmd <- pegrule_full true true  Peg Def Cmd.
+pegrule_parse  Peg Def Cmd <- pegrule_full true false Peg Def Cmd.
+pegrule_pretty Peg Def Cmd <- pegrule_full false true Peg Def Cmd.
+
+
+pegexport : peg A -> cmd -> prop.
+pegexport (Peg : peg A) Cmd <-
+  parse Peg Prop1,
+  pretty Peg Prop2,
+  headname Peg Name,
+  append Name "_parse" ParseName,
+  append Name "_pretty" PrettyName,
+  eq Cmd (cmd_many [ cmd_newterm ParseName  (X : string -> option (tuple string A) -> prop),
+                     cmd_newterm PrettyName (Y : option (tuple string A) -> string -> prop),
+	             cmd_stage (mkclausecmd ParseName Prop1),
+	             cmd_stage (mkclausecmd PrettyName Prop2) ]).
+
+pegexport : string -> peg A -> cmd -> prop.
+pegexport Name (Peg : peg A) Cmd <-
+  parse Peg Prop1,
+  pretty Peg Prop2,
+  append Name "_parse" ParseName,
+  append Name "_pretty" PrettyName,
+  eq Cmd (cmd_many [ cmd_newterm ParseName  (X : string -> option (tuple string A) -> prop),
+                     cmd_newterm PrettyName (Y : option (tuple string A) -> string -> prop),
+	             cmd_stage (mkclausecmd ParseName Prop1),
+	             cmd_stage (mkclausecmd PrettyName Prop2) ]).
+
+
+
+(* useful parsers *)
+class : string -> peg string.
+peginline (class S) P <-
+   explode S Chars,
+   foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
+         failp Chars P.
+
+ignorep : peg A -> peg unit.
+peginline (ignorep P) (semaction P (fun a res => eq res unit)).
+
+exactstr : string -> peg unit.
+peginline (exactstr S) P <-
+  explode S Chars,
+  foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
+        Chars epsilon P.
+
+rep : peg A -> peg (list A).
+`( pegrule (rep P)
+                (choice
+                  (semaction
+		    (concat P (rep P))
+		    (fun a b => and ( eq a (tuple HD TL) ) ( eq b (cons HD TL ) )) )
+		  (semaction
+		    epsilon
+		    (fun a b => eq b nil))) ).
+
+repplus : peg A -> peg (tuple A (list A)).
+peginline (repplus P) (concat P (rep P)).
+
+whitechar   : peg unit.
+commentchar : peg unit.
+white       : peg unit.
+
+`( pegdeclare whitechar ).
+`( pegdeclare commentchar ).
+
+`( pegrule commentchar whitechar ).
+`( pegrule commentchar 
+           (ignorep (concat (notp (lookahd (exactstr "*)")))
+                	any)) ).
+
+`( pegrule whitechar (ignorep(class " \n\r\t")) ).
+`( pegrule whitechar
+           (ignorep (concat (concat
+                    (exactstr "(*")
+ 		    (rep(commentchar)))
+ 		    (exactstr "*)")))).
+
+peginline_parse white (ignorep(rep(whitechar))).
+peginline_pretty white (choice epsilon (exactstr " ")).
+
+prefw : peg A -> peg A.
+peginline_parse (prefw P) P.
+peginline_pretty (prefw P) (semaction (concat (exactchar " ") P)
+		                      (fun a b => {prop| [X Y] eq a (X, Y), eq b Y |})).
+
+token : peg A -> peg A.
+peginline (token P) (semaction (concat white (concat P white))
+	                       (fun a b => {prop| [U0 U1] eq a (U0, (b, U1)) |} )).
+
+identfstchar : peg string.
+identrstchar : peg string.
+ident        : peg string.
+peginline (identfstchar) (semaction (concat (lookahd (externalclass char_latin1))
+                                            (externalclass char_letter))
+	     	           (fun a b => {prop| [U0] eq a (U0, b) |})).
+peginline (identrstchar) (choice identfstchar (class "0123456789")).
+peginline (ident) 
+	     (semaction
+               (concat identfstchar (rep identrstchar))
+	       (fun a b => {prop| [HD TL] eq a (HD, TL), explode b (cons HD TL) |})).
+
+parenthesized : peg A -> peg A.
+peginline (parenthesized P) (semaction (concat (concat
+                                       (token (exactchar "(")) P) (token (exactchar ")")))
+	   			       (fun a b => {prop| [U0 U1] eq a ((U0, b), U1) |})).
+
+concati1 : peg A -> peg B -> peg B.
+concati2 : peg A -> peg B -> peg A.
+peginline (concati1 P Q) (semaction (concat P Q) (fun a b => {prop| [U0] eq a (U0, b) |})).
+peginline (concati2 P Q) (semaction (concat P Q) (fun a b => {prop| [U0] eq a (b, U0) |})).
+
+repsep : peg A -> string -> peg (list A).
+peginline (repsep P S) (choice (semaction (concat P (rep (concati1 (token (exactstr S)) P)))
+					  (fun a b => {prop| [HD TL] eq a (HD, TL), eq b (HD :: TL) |}))
+			       (semaction epsilon (fun a b => {prop| eq b [] |}))).
+

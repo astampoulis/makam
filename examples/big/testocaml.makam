@@ -1,0 +1,70 @@
+%use ocaml.
+
+(* examples *)
+
+typeof (let
+         (lam #_ (fun f => lam #_ (fun g => lam #_ (fun x =>
+	  app f (app g x)))))
+	 (fun compose => compose)) X ?
+
+typeof (letrec
+         (bindmutrec
+	 (bcons (fun compose => bnil (cons
+         (lam #_ (fun f => lam #_ (fun g => lam #_ (fun x =>
+	  app f (app g x)))))
+	 nil))))
+	 (bcons (fun compose => bnil compose))) X ?
+
+typeof (letrec
+         (bindmutrec
+	   (bcons (fun 
+	   append => bnil [
+	   lam #_ (fun x => lam #_ (fun y =>
+	   match x
+             [ bindrel (bcons (fun hd => bcons (fun tl => bnil 
+	       (pconstr "Cons" (ptuple [ pvar hd, pvar tl ]),
+		constr "Cons" (tuple [ hd, app (app append tl) y ]))))),
+
+	       bindrel (bnil
+	       (pconstrun "Nil", y)) ]))])))
+          (bcons (fun append => bnil append))) Y?
+
+sigof (strmany
+	 [ strletrec
+	   (bindmutrec (bcons (fun append => bnil [
+	   lam #_ (fun x => lam #_ (fun y =>
+	   match x
+	     [ bindrel (bcons (fun hd => bcons (fun tl => bnil
+		( pconstr "Cons" (ptuple [pvar hd, pvar tl]),
+		  constr "Cons" (tuple [hd, app (app append tl) y]) )))),
+	       bindrel (bnil
+		( pconstrun "Nil",
+		  y )) ]))]))),
+           strlet "g" (named "append") ]) S ?
+
+sigof (strmany
+        [strtypesingle "tree" [ktype] (typdef_variant
+           [ ("Leaf", csdefunit),
+	     ("Node", csdef (typconstr (bcons (fun a => bnil (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
+	 strlet "isempty"
+           (lam #_ (fun t => match t
+	      [ bindrel (bcons (fun top => bnil
+		   ( pconstr "Node" (ptuple [pwild, pvar top, pwild]),
+		     top ))) ]))]) S ?
+
+sigof (strmany
+         [ strtypesingle "test1" [ktype, ktype] (typdef_eq
+	    (typconstr (bcons (fun a => bcons (fun b => bnil (
+		   tprod [ tbase "list" [a],
+		           tbase "list" [ tbase "list" [ tprod [b, a] ] ] ])))))),
+	   strtypesingle "test2" [ktype] (typdef_eq
+	    (typconstr (bcons (fun a => bnil (
+		   tbase "test1" [a, a]))))),
+	   strlet "f" (lam (tbase "test2" [tbase "unit" []])
+	                   (fun x => x)),
+	   strlet "g" (app (named "f")
+			  (tuple [ construn "Nil",
+			          constr "Cons" (tuple [ (constr "Cons" (tuple [tuple [construn "Unit", construn "Unit"], construn "Nil"])) ,
+				                         constr "Cons" (tuple [construn "Nil", construn "Nil"])])])) ]) S ?
+
+

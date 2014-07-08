@@ -1,0 +1,409 @@
+(*
+
+The Makam metalanguage -- a tool for rapid language prototyping
+Copyright (C) 2011- Antonis Stampoulis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*)
+
+<<
+open Termlangcanon;;
+open Termlangbuiltin;;
+open Termlangprolog;;
+open Batteries;;
+open PegBuiltins;;
+
+type 'a located = { content : 'a ; span : UChannel.span } ;;
+let (--->) x1 x2 = UChannel.combine_span x1.span x2.span ;;
+let autospan_bin f a b =
+    let span = a ---> b in
+    { content = f ?loc:(Some span) a.content b.content ;
+      span    = span }
+;;
+let autospan_un f a =
+    { content = f ?loc:(Some a.span) a.content ;
+      span    = a.span }
+;;
+let autospan_fold f a xs =
+    List.fold_left (fun cur elm -> autospan_bin f cur elm) a xs
+;;
+let mkTm v ls =
+    let span = 
+      match ls with
+        hd :: _ -> hd.span
+      | [] -> None
+    in
+    autospan_fold mkApp (autospan_un mkVar { content = v ; span = span }) ls ;;
+let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
+
+let lambda_prolog_toplevel_parser : ((unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ -> None) ;;
+
+exception Forget of string ;;
+
+>>
+
+(* term language *)
+
+epsilon  -> << () >> ;
+loced(p) -> startloc:(epsilon << UChannel.loc _input >>)
+	    res:p
+	    endloc:(epsilon << UChannel.loc _input >>)
+	    << { content = res ; span = UChannel.mk_span startloc endloc } >>
+ltoken(p) -> r:token(loced(p)) << r >>
+
+lexpr -> fn:ltoken("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
+        << let bindings = List.flatten bindings in
+	   let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
+	   List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
+
+      / hd:baseexpr^ token("::") tl:lexpr
+        << mkTm "cons" [ hd ; tl ] >>
+
+      / f:baseexpr^ args:repWHITE(baseexpr)
+        << List.fold_left (autospan_bin mkApp) f args >> 
+
+namepref -> "^n" / "ⁿ" ;
+
+baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
+	  / id:ltoken(identnamed)  << autospan_un mkVar id >>
+	  / x:ltoken( ( namepref id:ident << id >>) ) << autospan_un mkNameVar x >>
+	  / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>
+	  / s:loced( ( token(["]) str:rep(strchar) ["] << str |> String.concat "" >> ) )
+	    << autospan_un mkString s >>
+
+	  (* lists *)
+	  / token("[") es:repSEP(lexpr, ",") token("]")
+	    << List.fold_left
+	       (fun cur elm -> mkTm "cons" [ elm ; cur ])
+	       (mkTm "nil" [])
+	       (List.rev es) >>
+
+	  (* tuples *)
+	  / token("(") hd:lexpr^ token(",") es:repplusSEP(lexpr, ",") token(")")
+	    << let (hd :: tl) = List.rev (hd::es) in
+	       List.fold_left
+	       (fun cur elm -> mkTm "tuple" [ elm ; cur ])
+	       hd
+	       tl >>
+	  
+	  / i:ltoken(num)                       << autospan_un mkInt i >>
+	  / token("{prop|") p:prop token("|}")  << p >>
+	  / e:lparenthesized(annotexpr)         << e >>
+	  / e:lparenthesized(lexpr^)             << e >> 
+
+identnamed -> x:ident^ namepref nmeta:identany << toVarWithNamedMeta x nmeta >>
+	    / x:identany << x >>
+identany   -> x:ident^ << x >> / "_" << "_" >>
+qualident  -> ms:repplus( (x:ident^ "." &ident^) ) x:ident^ << let prefix = String.join "." ms in prefix ^ "." ^ x >>
+
+annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >> 
+
+typ  -> t:ltyp << t.content >>
+
+ltyp  -> s:ltoken("[") parametric:repWHITE(token(ident)) e:ltoken("]") t:lmonotyp
+        << let param = { content = parametric ; span = s ---> e } in 
+	   autospan_bin _tForall param t >>
+      / t:lmonotyp << t >>
+lmonotyp -> t:apptyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
+          / t:apptyp^ << t >>
+
+apptyp -> x:loced(typconstr)
+          << let id, args = x.content in
+	     let args = List.map (fun y -> y.content) args in
+	     { content = _tVar ~args:args ~loc:x.span id.content ; span = x.span } >>
+        / b:basetyp << b >>
+
+typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
+
+basetyp -> id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
+	 / id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+	 / t:lparenthesized(lmonotyp)   << t >>
+
+binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")
+	   << List.fold_right
+	       (fun id cur -> { content = (id.content, Some t.content) ; span = id ---> t } :: cur)
+	       ids [] >>
+	 / id:ltoken(identnamed) <<  [ { content = (id.content, None) ; span = id.span } ] >>
+
+(* Lambda Prolog part *)
+
+clause   -> goal:baseexpr^ token("when") cond:prop token("<-") premise:prop
+	     << mkTm "whenclause" [ goal ; cond ; premise ] >>
+	  / goal:baseexpr^ token("when") cond:prop
+	     << mkTm "whenclause" [ goal ; cond ; mkTm "success" [] ] >>
+	  / goal:lexpr^ x:token("<-") premise:prop
+	    << mkTm "clause" [ goal ; premise ] >>
+	  / goal:lexpr^
+	    << mkTm "clause" [ goal ; mkTm "success" [] ] >>
+
+prop     -> bf:newmetas ps:repplusSEP(hyp, ",") 
+	    << let p = Utils.ExtList.foldnonempty (fun q1 q2 -> mkTm "and" [ q1 ; q2 ]) (mkTm "success" [])
+	               (fun x -> x) ps in
+	       bf p >>
+
+newmetas -> s:ltoken("[") bindings:repplusWHITE(binding) token("]")
+	    << fun body ->
+	         let bindings = List.flatten bindings in
+		 let bindings = match bindings with hd :: tl -> { hd with span = s ---> hd } :: tl | _ -> bindings in
+		 List.fold_right
+		   (fun binding body -> mkTm "newmeta" [ autospan_bin mkLamO binding body ])
+		   bindings body >>
+	  / epsilon << fun x -> x >>
+
+hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh:hyp token(")")
+	    << mkTm "ifte" [ ifh ; thenh ; elseh ] >>
+	  / token("once") token("(") o:prop token(")")
+	    << mkTm "once" [ o ] >>
+	  / token("(") newvars:repWHITE(newvar) 
+	    knowns:rep( (x:assumption token("->") << x >>) )
+	    req:hyp token(")")
+	     << req |>
+		    fun x -> List.fold_left
+		    (fun r elm -> mkTm "known" [ elm ; r ]) x
+		    (List.rev knowns)
+		    |>
+		    List.fold_right
+		    (fun binding r -> mkTm "newvar" [ autospan_bin mkLamO binding r ])
+		    newvars >>
+	  / token("(") p:prop token(")") << p >>
+(*                     mult:repplusSEP(hyp^, ",")
+	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "and" [ r ; elm ]) (mkTm "success" [])
+	       (fun x -> x) mult >>
+*)
+	  / token("(") mult:repplusSEP(hyp^, ";") token(")")
+	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTm "failure" [])
+	       (fun x -> x) mult >>
+          / p:lexpr^ << p >>
+
+assumption -> x:lexpr^ << mkTm "clause" [ x ; mkTm "success" [] ] >>
+	    / token("(") c:clause token(")") << c >>
+
+newvar   -> id:ltoken(ident^) token(":") t:basetyp token("->") << { content = (id.content, Some t.content) ; span = id ---> t } >>
+
+
+(* commands *)
+def       -> ids:repplusSEP(token(ident^), ",")  token(":") t:typ
+	     << List.map (fun x -> x, t) ids >>
+
+(* base version *)
+(*
+prologcmd -> d:def tokenW(".") << fun () -> List.iter (uncurry global_define) ds >>
+	   / c:clause tokenW(".") << fun () -> Termlangprolog.global_new_clause c.content >>
+	   / p:hyp tokenW("?") << fun () -> Termlangprolog.global_query p.content >>
+	   / token("%") d:directive tokenW(".") << d () >>
+	   / o:ocamlrevquote  << fun () -> !(Termlangprolog.meta_do) o >>
+	   / repplusV(white)^ << fun () -> () >>
+*)
+
+(* profiling versions *)
+
+prologcmd1 -> (* c:consumeBM << fun () -> () >> / *)
+	      (* p:prologcmdvoid << p >>  / *)
+	     d:defBM token(".") << fun () ->
+	        Benchmark.cumulative "total defs"
+	        (lazy(List.iter (uncurry global_define) d)) >>
+	   / c:clauseBM token(".") << fun () -> if !_ONLY_TYPECHECK then
+					         (Benchmark.cumulative "total clauses"
+ 	                                          (lazy(global_typecheck_silent c.content)))
+	                                        else 
+					         (Benchmark.cumulative "total clauses"
+ 	                                          (lazy(Termlangprolog.global_new_clause c.content))) >>
+	   / token("`(") p:hyp token(")") token(".")
+	     << fun () -> if !_ONLY_TYPECHECK then
+	                     (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
+			  else
+			     (Benchmark.cumulative "total staged commands"
+			        (lazy(Termlangrefl.global_staged_command p.content))) >>
+	   / p:hyp token("?") << fun () -> if !_ONLY_TYPECHECK then
+					     (Benchmark.cumulative "total queries"
+ 	                                      (lazy(global_typecheck_silent p.content)))
+	                                   else
+					     (Benchmark.cumulative "total queries"
+					      (lazy(Termlangprolog.global_query p.content))) >>
+	   / token("%") d:directive token(".") << d () >>
+	   / o:ocamlrevquote  << fun () -> !(Termlangprolog.meta_do) o >>
+	   / repplusV(white)^ << fun () -> () >>
+
+prologcmd  -> p:prologcmd1 << fun () -> Benchmark.cumulative "total" (lazy(p ())) >>
+
+prologcmdvoid ->
+	     d:defBM token(".") << fun () -> () >> 
+	   / c:clauseBM token(".") << fun () -> () >>
+	   / p:hyp token("?") << fun () -> () >>
+	   / token("%") d:directive token(".") << fun () -> () >>
+	   / o:ocamlrevquote  << fun () -> () >>
+	   / repplusV(white)^ << fun () -> () >>
+
+
+consumeBM -> fastrepV( ( . ) )  << () >>
+
+(* benchmarking *)
+defBM -> d:def ;
+clauseBM -> c:clause ;
+
+ident_or_str -> s:ident << s >> / s:str << s >>
+
+directive -> "use" repplus(white) s:token(ident_or_str)
+	     << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
+	   / "import" repplus(white) s:token(ident_or_str) token("as") m:token(ident)
+	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s ~modul:m >>
+	   / "import" repplus(white) s:token(ident)
+	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s ~modul:s >>
+	   / "extend" s:token(ident)
+	   << fun () () -> Termlangcanon.global_enter_module s >>
+	   / "end"
+	   << fun () () -> Termlangcanon.global_leave_module () >>
+	   / "directory" repplus(white) s:token(str)
+	   << fun () () -> Termlangcanon.global_add_directory s >>
+	   / "typenorm" repplus(white) e:baseexpr
+	   << fun () () -> global_typecheck_and_normalize (e.content) >>
+	   / "type" repplus(white) e:baseexpr 
+	   << fun () () -> global_typecheck (e.content) >>
+	   / "reset"
+	   << fun () () -> global_reset () >>
+	   / "usenew" repplus(white) s:token(ident_or_str)
+	     << fun () -> global_reset () ;
+	                  Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
+	   / "curmodule"
+	   << fun () () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
+
+	  / b:flag("debug") << fun () () -> _DEBUG_DEMAND := b >>
+	  / b:flag("debugfull") << fun () () -> _DEBUG := b >>
+	  / b:flag("debugnames") << fun () () -> _DEBUG_NAMES := b >>
+	  / b:flag("debugtypes") << fun () () -> _DEBUG_TYPES := b >>
+	  / b:flag("debugstage") << fun () () -> Termlangrefl._DEBUG_STAGING := b >>
+	  / b:flag("constraints") << fun () () -> _DEBUG_CONSTRAINTS := b >>
+	  / b:flag("benchmark")  << fun () () -> _BENCHMARK := b >>
+	  / b:flag("log")	 << fun () () -> _LOGGING := b >>
+	  / b:flag("only_typecheck") << fun () () -> _ONLY_TYPECHECK := b >>
+	  / b:flag("trace") es:repplusSEP(baseexpr, ",") << fun () () -> List.iter (fun e -> global_trace b (e.content)) es >>
+	  / "forget" s:token(cmdname)  << fun () () -> raise (Forget s) >>
+
+flag(p) -> p token("+") << true  >>
+	 / p token("-") << false >>
+
+
+cmdflushed -> c:prologcmd << fun () -> c () ; flush IO.stdout >>
+toplevel   -> c:rep(cmdflushed) repV(white) << c >>
+
+
+(* -------------------------------------- *)
+(* Dynamic binding trees parsing          *)
+(* -------------------------------------- *)
+
+(*
+   top:  a.top | n | 'a | "..." | `a.top | `_.top
+         | [ seq ] | head seq
+   head: a | @a | `a | *a
+   seq:  elm seq | epsilon
+   elm:  head | (top) | {whiteblock}elm{/whiteblock}
+*)
+
+
+(* -------------------------------------- *)
+(* Utility definitions: character classes *)
+(* -------------------------------------- *)
+latin1char -> &&( . << fun c -> try (ignore (UChar.char_of c); true) with | _ -> false >> ) a:. << a >>
+letterchar -> &&( .
+		  << fun c -> match UString.category c with
+                     | `Ll | `Lm | `Lo | `Lt | `Lu -> true | _ -> false >> )
+              a:. << a >>
+digitchar -> a:[0123456789]              << a >>
+num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> int_of_string >>
+eof -> !. ;
+
+
+(* whitespace *)
+comment -> "(*" repV(commentchar) "*)" ;
+commentchar -> !"*)" . ;
+white ->  &&( . << UString.is_whitespace >> ) . / comment ;
+whiteNoComment -> &&( . << UString.is_whitespace >>) . ;
+whiteNoNewline -> ![\n] white ;
+
+
+(* identifiers must be latin-1 since they are copied verbatim into the generated OCaml AST as
+   OCaml identifiers *)
+identfstchar -> &latin1char c:letterchar    << c >>
+identrstchar -> &latin1char c:(letterchar / digitchar / [_']) << c >>
+ident        -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
+
+cmdnamefstchar -> &latin1char c:letterchar    << c >>
+cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
+cmdname        -> c:cmdnamefstchar cs:rep(cmdnamerstchar) << UString.implode (c :: cs) |> UString.to_string >>
+
+tident       -> m:ident^ "." &ident^ x:tident << m ^ "." ^ x >>
+	   / &&( ident^ << fun s -> not (s = "type") >>) x:ident^ << x >>
+
+(* string characters must include the escape characters allowed by ocaml, so that bootstrapping works properly *)
+hexdigitchar ->  a:[0123456789abcdefABCDEF]  << a >>
+escapechar -> 
+     s:[\\] c:[\\"'ntbr]
+           << ([ s; c ] |> UString.implode) |> UString.to_string >> 
+   / s:[\\] n1:digitchar n2:digitchar n3:digitchar
+           << ([ s; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar n3:hexdigitchar 
+           << ([ s; x; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+strchar ->  s:escapechar << Utils.unescape s >>
+	 / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
+str     -> token(["]) str:rep(strchar) ["] << str |> String.concat "" >>
+
+
+ocamlrevchar  -> !"<<" c:. << c >>
+ocamlrevtext  -> cs:repplus(ocamlrevchar) << (cs |> UString.implode) |> UString.to_string >>
+ocamlrevquote -> token(">>") ocamltext:ocamlrevtext token("<<") 
+                << ocamltext >>
+
+
+(* -------------------------------------- *)
+(* Utility definitions: others            *)
+(* -------------------------------------- *)
+token(p)         -> repV(white)^ a:p        << a >>
+tokenW(p)        -> repV(white)^ a:p white  << a >>
+
+rep(p) ->  l:fastrep(p) << l >> ;
+repV(p) -> fastrepV(p) ;
+repplus(p) ->  hd:p tl:rep(p) << hd :: tl >>
+repplusV(p) ->  p repV(p) ;
+repplusSEP(p, sep) -> 
+	  hd:p tl:rep( ( token(sep) repV(white) x:p << x >> ) )  << hd :: tl >>
+repSEP(p, sep) -> l:repplusSEP(p, sep) << l >>
+	        / epsilon << [] >>
+
+repWHITE(p) -> 
+	  hd:p tl:rep( ( repplusV(white) x:p << x >> ) ) repV(white) << hd :: tl >>
+	/ repV(white) << [] >>
+
+repplusWHITE(p) -> 
+          hd:p tl:rep( ( repplusV(white) x:p << x >> ) ) repV(white) << hd :: tl >>
+
+
+lparenthesized(p) ->  x:ltoken("(")^ p:p y:ltoken(")") << { content = p.content ; span = x ---> y } >> ;
+
+
+<<
+
+lambda_prolog_toplevel_parser :=
+  (fun memocells resetmemo input ->
+   let oldmemo = !_memotable in
+   let oldlr   = LRHash.copy _lrinfo in
+   let res     = parse_toplevel memocells resetmemo input in
+   _memotable := oldmemo ;
+   LRHash.clear _lrinfo ;
+   LRHash.iter (fun k v -> LRHash.add _lrinfo k v) oldlr ;
+   res)
+;;
+
+
+>>

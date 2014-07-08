@@ -1,0 +1,12 @@
+(* These are built-in commands; just included here for documentation. *)
+
+(*
+
+cmd : type.
+cmd_newclause : clause -> cmd.
+cmd_newterm   : string -> A -> cmd.
+cmd_many      : list cmd -> cmd.
+cmd_stage     : (cmd -> prop) -> cmd.
+cmd_none      : cmd.
+
+*)

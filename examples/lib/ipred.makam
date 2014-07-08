@@ -1,0 +1,60 @@
+ipred : type.
+
+ipred_forward  : ipred -> prop -> prop.
+ipred_backward : ipred -> prop -> prop.
+
+iand : ipred -> ipred -> ipred.
+ipred_forward  (iand P1 P2) (and P1' P2') <- ipred_forward P1 P1', ipred_forward P2 P2'.
+ipred_backward (iand P1 P2) (and P2' P1') <- ipred_backward P1 P1', ipred_backward P2 P2'.
+
+ior : ipred -> ipred -> ipred.
+ipred_forward  (ior P1 P2) (or P1' P2') <- ipred_forward P1 P1', ipred_forward P2 P2'.
+ipred_backward (ior P1 P2) (or P1' P2') <- ipred_backward P1 P1', ipred_backward P2 P2'.
+
+ilift : prop -> ipred.
+ipred_forward  (ilift P) P.
+ipred_backward (ilift P) P.
+
+iliftbi : prop -> prop -> ipred.
+ipred_forward  (iliftbi F B) F.
+ipred_backward (iliftbi F B) B.
+
+iifte : ipred -> ipred -> ipred -> ipred.
+ipred_forward (iifte P1 P2 P3) (ifte P1' P2' P3') <- ipred_forward P1 P1', ipred_forward P2 P2', ipred_forward P3 P3'.
+ipred_backward (iifte P1 P2 P3) (ifte P2' P1' P3') <- ipred_backward P1 P1', ipred_backward P2 P2', ipred_backward P3 P3'.
+(*
+The following is more accurate: 
+
+ipred_backward (iifte P1 P2 P3)
+	       (or (and P2' P1') (and P3' (once(not P1')))) <-
+   ipred_backward P1 P1', ipred_backward P2 P2', ipred_backward P3 P3'.
+*)
+
+
+isuccess : ipred.
+ipred_forward  (isuccess) (success).
+ipred_backward (isuccess) (success).
+
+ifailure : ipred.
+ipred_forward  (ifailure) (failure).
+ipred_backward (ifailure) (failure).
+
+inewmeta : (A -> ipred) -> ipred.
+ipred_forward  (inewmeta F) (newmeta Result) <-
+  (x:A -> ipred_forward (F xⁿ_) (Result xⁿ_)).
+ipred_backward (inewmeta F) (newmeta Result) <-
+  (x:A -> ipred_backward (F xⁿ_) (Result xⁿ_)).
+
+inewvar : (A -> ipred) -> ipred.
+ipred_forward  (inewvar F) (newvar Result) <-
+  (x:A -> ipred_forward (F xⁿ_) (Result xⁿ_)).
+ipred_backward (inewvar F) (newvar Result) <-
+  (x:A -> ipred_backward (F xⁿ_) (Result xⁿ_)).
+
+iknown : prop -> ipred -> ipred.
+ipred_forward  (iknown W I) (known (clause W success) P') <- ipred_forward I P'.
+ipred_backward (iknown W I) (known (clause W success) P') <- ipred_backward I P'.
+
+ionce : ipred -> ipred.
+ipred_forward  (ionce I) (once P) <- ipred_forward I P.
+ipred_backward (ionce I) (once P) <- ipred_backward I P.
