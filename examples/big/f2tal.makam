@@ -3,9 +3,9 @@
 
 
 useexample : string -> prop.
-(* useexample "fact". *)
+useexample "fact". 
 (* useexample "twice". *)
-useexample "id".
+(* useexample "id". *)
 
 (* --------------
    Phase 1.
@@ -772,6 +772,9 @@ erasetypes (X : bvalc) X <- newnmeta (fun x => eq x X).
 ([R]examplec R, typeofc R, print "λK ~~> λC", print R) ?
 (* %debug-. *)
 
+
+(* unfortunately twice doesn't work as expected -- the problem seems to be that no
+   tail call optimization as called in the paper is done. *)
 
 (* ------------------------
    Phase 4.

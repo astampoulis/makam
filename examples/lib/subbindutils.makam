@@ -18,3 +18,20 @@ bindrel_apply : bindrel A -> list dyn -> A -> prop.
 bindrel_apply (bindrel Bind) Vars Body <- bindany_apply Bind Vars Body.
 
   
+bindlin : type -> type.
+
+bindlin : bindany A -> bindlin A.
+
+bindlin_wf : A -> prop.
+
+bindlin_newvars : bindlin A -> (list dyn -> prop) -> prop.
+bindlin_newvars (bindlin Bind) Q <-
+  bindany_newvars Bind (fun vars => {prop| [Props]
+  map (fun v (u : unit) => newmeta (fun u' => eq u u')) vars Unifs,
+  map2 (fun v u res => {prop| [v'] eq v (dyn v'), eq res (clause (bindlin_wf v') (and (isunif u) (eq u unit))) |}) vars Unifs Props,
+  assumemanyclauses Props (and (Q vars) (map0 (fun u => not(isunif u)) Unifs)) |}).
+
+bindlin_apply : bindlin A -> list dyn -> A -> prop.
+bindlin_apply (bindlin Bind) Vars Body <- bindany_apply Bind Vars Body.
+
+  

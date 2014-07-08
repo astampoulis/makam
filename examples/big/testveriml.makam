@@ -1,4 +1,3 @@
-%benchmark+.
 %use veriml.
 
 typeof (lamhol cctxwf (fun phi =>

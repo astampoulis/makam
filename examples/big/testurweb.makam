@@ -79,3 +79,42 @@ typeof
 
 typeof (app (magic (appt proj (tname "test1"))) (rowunion (rowsingleton (tname "test1") eunit) (rowsingleton (tname "test2") eunit))) X ?
 
+
+
+(*
+type folder
+(r :: {Type}) = tf :: ({Type} -> Type)
+-> (nm :: Name -> t :: Type -> r :: {Type}
+-> [[nm] ~ r] => tf r -> tf ([nm = t] ++ r))
+-> tf [] -> tf r
+
+*)
+
+`( typedef "folder"
+      (tlam (krow ktype) (fun r =>
+      (tpi  (karrow (krow ktype) ktype) (fun tf =>
+      (tarrow (tpi kname (fun nm =>
+	      (tpi ktype (fun t =>
+	      (tpi (krow ktype) (fun r =>
+	      (trowconstraint (trowsingleton nm tunit) r
+	      (tarrow (tapp tf r) (tapp tf (trowunion (trowsingleton nm t) r))))))))))
+      (tarrow (tapp tf (trowempty _))
+      (tapp tf r))))))) ).
+
+      
+
+(* 
+fun countFields [ts :: {Type}] (fl : folder ts) : int =
+    @fl [fn _ => int] (fn [nm ::_] [v ::_] [r ::_] [[nm] ~ r] n => n + 1) 0 fl
+*)
+
+(typeof (lamt (krow ktype) (fun ts =>
+       (lam  (tapp folder ts) (fun fl =>
+       app (appt fl (tlam #_ (fun x => tint)))
+	   (lamt #_ (fun nm =>
+	   (lamt #_ (fun v =>
+	   (lamt #_ (fun r =>
+	   (rowneedcon (trowsingleton nm tunit) r
+	   (lam  #_ (fun n => intplus n (intconst 1)))))))))))))) T,
+teq T (tpi (krow ktype) (fun ts => tarrow (tapp folder ts) (tarrow tint tint)))) ?
+

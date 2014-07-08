@@ -27,6 +27,7 @@ trowunion      : typ -> typ -> typ.
 trowmap        : knd -> knd -> typ.
 trowconstraint : typ -> typ -> typ -> typ.
 tunit          : typ.
+tint           : typ.
 
 (* terms *)
 term           : type.
@@ -39,6 +40,7 @@ let            : term -> typ -> (term -> term) -> term.
 lett           : typ  -> knd -> (typ -> term) -> term.
 letrec         : bindmutrec term term -> bindmany term term -> term.
 eunit          : term.
+intconst       : int -> term.
 
 rowempty       : term.
 rowsingleton   : typ -> term -> term.
@@ -69,7 +71,7 @@ kindof T K                   	       <- guard T (kindof_ T K).
 kindof_ (tarrow T1 T2) ktype 	       <- kindof T1 ktype, kindof T2 ktype.
 kindof_ (tbase T)      K     	       <- kindof_var T K.
 kindof_ (tpi K TF)     ktype 	       <- (x:typ -> kindof_ x K -> kindof (TF x) ktype).
-kindof_ (tlam K TF)    (karrow K K')   <- (x:typ -> kindof_ x K -> kindof (TF x) K).
+kindof_ (tlam K TF)    (karrow K K')   <- (x:typ -> kindof_ x K -> kindof (TF x) K').
 kindof_ (tapp T1 T2)   K'    	       <- kindof T1 (karrow K K'), kindof T2 K.
 kindof_ (tname N)      kname.
 kindof_ (trowtype C)   ktype 	       <- kindof C (krow ktype).
@@ -79,6 +81,7 @@ kindof_ (trowunion C1 C2) (krow K)     <- kindof C1 (krow K), kindof C2 (krow K)
 kindof_ (trowmap K1 K2) (karrow (karrow K1 K2) (karrow (krow K1) (krow K2))).
 kindof_ (trowconstraint C1 C2 T) ktype <- kindof C1 (krow K1), kindof C2 (krow K2), rows_disjoint_assume C1 C2 (kindof T ktype).
 kindof_ (tunit) ktype.
+kindof_ (tint) ktype.
 
 teq : typ -> typ -> prop.
 
@@ -135,6 +138,10 @@ typeof_ (rowprovcon E) T <-
   typeof E (trowconstraint C1 C2 T), rows_disjoint_prove C1 C2.
 
 typeof_ (eunit) (tunit).
+typeof_ (intconst _) tint.
+
+intplus : term -> term -> term.
+typeof_ (intplus E1 E2) tint <- typeof E1 tint, typeof E2 tint.
 
 magic : term -> term.
 expandmagic : term -> typ -> term -> prop.
@@ -167,8 +174,9 @@ typeof_ (enil) (tlist T) <- kindof T ktype.
 
 (* head-normal forms, row summarization, etc. *)
 hnf : typ -> typ -> prop.
-
 hnf_ : typ -> typ -> prop.
+hnfvar : typ -> typ -> prop.
+
 (hnf_ T Res) when not(isunif T) <- hnf T Res.
 
 hnf T Res <-
@@ -192,7 +200,12 @@ hnf T Res <-
 	                                 hnf_ MAP2' (trowmap K1 K2) |},
 	                          {prop| hnf (tapp (tapp (trowmap K1 K3) (tlam K1 (fun a => tapp F (tapp F' a))))
 				                   C) Res |}),
+	 (_, hnfvar T T', or (eq Res T) (eq Res T')),
 	 (_, success, eq Res T) ]).
+
+
+(typeof_ X T') when (newnmeta (fun x => eq x X)) <- once(typeof_ X T), hnf T T'.
+
 
 row_summary : typ -> map typ unit -> list typ -> prop.
 row_summary T Res Unifs <-
@@ -366,15 +379,15 @@ teq T1 T2 <-
   caseguard (T1', T2')
    [ ( (X1, X2), {prop| once( (isunif X1; isunif X2) ) |}, eq T1' T2'),
      ( (trowtype R1, trowtype R2), success, troweq R1 R2 ),
-     ( _, {prop| once( (isrowtyp X1; isrowtyp X2) ) |}, troweq T1' T2'),
-     ( _, success, structural dynteq (dyn T1') (dyn T2')) ].
+     ( _, {prop| once( (isrowtyp T1'; isrowtyp T2') ) |}, troweq T1' T2'),
+     ( _, success, {prop| headargs T1' HD ARGS1,
+	                  headargs T2' HD ARGS2,
+	                  map (structural dynteq) ARGS1 ARGS2 |}) ].
 
 dynteq (dyn T) (dyn T') <-
-  (if eq (dyn T) (dyn (X : typ)),
-      (teq X Y, eq (dyn Y) (dyn T')),
+  (if (eq (dyn T) (dyn (X : typ)), eq (dyn T') (dyn (Y : typ))),
+      teq X Y,
       structural dynteq (dyn T) (dyn T')).
-
-
 
 letdef : string -> E -> cmd -> prop.
 letdef X E (cmd_many [ cmd_newterm X (_ : term),
@@ -383,4 +396,12 @@ letdef X E (cmd_many [ cmd_newterm X (_ : term),
 	                  eq res (cmd_newclause (clause (typeof_ C T) success)) |}) ]) <-
   typeof E T.
 
-	 
+
+typedef : string -> T -> cmd -> prop.
+typedef X T (cmd_many [ cmd_newterm X (_ : typ),
+                        cmd_stage (fun res => {prop|
+	                  lookup X C,
+	                  eq res (cmd_many
+	                    [ cmd_newclause (clause (kindof_ C K) success),
+			      cmd_newclause (clause (hnfvar C T) success) ]) |}) ]) <-
+  kindof T K.
