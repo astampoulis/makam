@@ -3130,7 +3130,7 @@ module BuiltinProps = struct
   ;;
 
   (* (c -> p) *)
-  let _eiKnown = new_builtin_predicate "known"  (_tClause **> _tProp **> _tProp)
+  let _eiAssume = new_builtin_predicate "assume"  (_tClause **> _tProp **> _tProp)
     (fun _ -> function [ c; { term = `LamMany([], p) } ] -> begin perform
 	
          (* the check below would not work, even though it's disabled elsewhere anyway *)
@@ -3207,7 +3207,7 @@ module BuiltinProps = struct
     end | _ -> assert false)
   ;;
 
-  let _eiResetknown = new_builtin_predicate "resetknown" ( ~* "A" **> _tProp **> _tProp )
+  let _eiAssumeReset = new_builtin_predicate "assume_reset" ( ~* "A" **> _tProp **> _tProp )
     (fun _ -> function [ pred ; { term = `LamMany([], p) } ] -> begin perform
 
 	pred <-- chasePattcanon [] pred ;

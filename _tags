@@ -5,10 +5,7 @@ true: -traverse
 <**/*.ml{,i}>: package(findlib), package(batteries), package(camomile), package(oclock), \
 	       package(camlp4), syntax(camlp4o), package(monad-custom)
 
-<parsing/*.ml{,i}>: package(syntax_xtype)
 
-
-<parsing/peg.ml>: package(camlp4.quotations.o)
 <bootstrap/*.ml>: package(camlp4.quotations.o)
 <utils/toploopTools.ml>: package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
 <parsing/pegQuote.ml>: package(camlp4.fulllib), package(camlp4.extend), package(camlp4.quotations.o)

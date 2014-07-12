@@ -7,6 +7,10 @@ function runmain {
 
 pushd . >/dev/null
 cd `dirname $0`
+if [ ! -e nativerepl.native ]; then
+    echo "Please run 'make' first."
+    exit 0
+fi
 runmain $*
 popd >/dev/null
 

@@ -171,7 +171,7 @@ hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh
 	    req:hyp token(")")
 	     << req |>
 		    fun x -> List.fold_left
-		    (fun r elm -> mkTm "known" [ elm ; r ]) x
+		    (fun r elm -> mkTm "assume" [ elm ; r ]) x
 		    (List.rev knowns)
 		    |>
 		    List.fold_right

@@ -110,7 +110,7 @@ assumemany (cons HD TL) P <- (HD -> assumemany TL P).
 assumemany nil P <- P.
 
 assumemanyclauses : list clause -> prop -> prop.
-assumemanyclauses (cons HD TL) P <- known HD (assumemanyclauses TL P).
+assumemanyclauses (cons HD TL) P <- assume HD (assumemanyclauses TL P).
 assumemanyclauses nil P <- P.
 
 define : [A] (A -> prop) -> (A -> prop) -> cmd -> prop.

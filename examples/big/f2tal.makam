@@ -447,14 +447,14 @@ typeofc (fixc F) (tpi T) <-
   bindmany_newvars F (fun as => {prop| [TS Decls]
   bindmany_apply F as (tuple TS Decls),
   bindmany_apply T as TS,
-  resetknown (typeofc : bvalc -> typc -> prop) {prop|
+  assume_reset (typeofc : bvalc -> typc -> prop) {prop|
   (x:bvalc ->
    typeofvarc x (tpi T) ->
    bindmany_newvars (Decls x) (fun xs => {prop| [E]
    bindmany_apply (Decls x) xs E,
    many_assume typeofvarc xs TS
    (typeofc E) |})) |} |}),
-  resetknown wftypc (wftypc (tpi T) unit).
+  assume_reset wftypc (wftypc (tpi T) unit).
 
 typeofc (tupc VS) (ttup TS) <-
   map typeofc_ VS TS.
@@ -671,7 +671,7 @@ translatec_val (valk (fixk Fix) T)
   (* Venv_    *) eq Venv_    (valc (tupc YS'closure) Tenv_),
 
 
-  resetknown translatec_typ (
+  assume_reset translatec_typ (
 
   bindmany_newvars Fix (fun as => {prop| [TS FixFun]
   bindmany_newvars BStemp (fun bs' => {prop| [Tcode]
@@ -701,7 +701,7 @@ translatec_val (valk (fixk Fix) T)
   (zenv:bvalc ->
   bindmany_newvars Fix'Params (fun xs' =>
   
-  resetknown translatec_var (
+  assume_reset translatec_var (
   many_assume translatec_var xs xs' ( {prop| [FixBody FixBody'
 	                                      ZcodeInst ZenvVal ZUnused]
   

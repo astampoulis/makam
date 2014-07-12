@@ -35,12 +35,11 @@ You first need to install OPAM, the OCaml Package Manager. Instructions are avai
 
 We have been testing using the OCaml 4.01.0 configuration.
 
-After you have OPAM installed, you need to install a few OPAM packages, plus compile and
-install an extra local package. The script:
+After you have OPAM installed, you need to install a few OPAM packages:
 
-    ./preinstall
+    opam install batteries oclock camomile pa_monad_custom
 
-will do these for you. You are now ready to run make:
+You are now ready to run make:
 
     make
 
@@ -54,7 +53,12 @@ You are all done! Now, when you want to run Makam, just issue:
 `----
 
 Unfortunately we do not have a Makam tutorial yet -- one will be out soon though.
+The closest thing to a proper tutorial is a technical overview paper which you can
+find on our websites. However, note that some identifiers are different in the
+actual implementation compared to the paper.
+
 Look into the files in the examples/ directory for sample developments in Makam.
+
 
 Recommendations:
 
