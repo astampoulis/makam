@@ -1,0 +1,159 @@
+(* These are all the built-in types and predicates for Makam.
+   Included here for documentation. *)
+
+(* ----- Builtin types. *)
+
+(*
+
+int : type.
+(integer literal) : int.
+
+string : type.
+(string literal) : string.
+
+list : type -> type.
+nil : list A.
+cons : A -> list A -> list A.
+
+unit : type.
+unit : unit.
+
+bool : type.
+true : bool.
+false : bool.
+
+dyn : type.
+dyn : A -> dyn.
+
+*)
+
+(* ----- Logic programming engine. *)
+
+(*
+
+prop : type.
+
+clause : type.
+
+clause : prop -> prop -> clause. (* P <- Q. where P is goal and Q is premise *)
+whenclause : prop -> prop -> prop -> clause.
+                                 (* (P) when P' <- Q. P is the goal, P' is an
+                                    extra premise to see if the rule applies,
+                                    and Q is the actual premise.
+                                    behaves exactly like P <- and P' Q, but the
+                                    tracing behavior is different, so just useful for
+                                    debugging *)
+
+
+success : prop.
+failure : prop.
+and : prop -> prop -> prop.
+or  : prop -> prop -> prop.
+newvar : (A -> prop) -> prop.  (* allocate fresh variable of type A locally *)
+newmeta : (A -> prop) -> prop. (* allocate fresh metavariable of type A (globally) *)
+newfmeta : (A -> prop) -> prop. (* allocate parameter metavariable of type A (globally),
+                                   matching only free variables (top-level constants) *)
+newnmeta : (A -> prop) -> prop. (* allocate parameter metavariable of type A (globally),
+                                   matching only locally introduced variables *)
+assume : clause -> prop -> prop. (* assume C P adds a local rule C while evaluating P *)
+ifte : prop -> prop -> prop -> prop.
+         (* logical conditional. ifte P Q R first attempts to find a solution for P.
+            if any solution exists, then continues with Q, preserving backtracking
+            points for P (so additional solutions will still be tried out).
+            if no solution for P is found, then continues with R *)
+once : prop -> prop.
+         (* once P continues with evaluation of P. if successful, all backtracking
+            points spawned while evaluating P are discarded. *)
+guard : A -> prop -> prop.
+         (* guard X P executes P if X is concrete; if it is an uninstantiated
+            metavariable, it defers P until X actually becomes instantiated. *)
+removableguard : unit -> A -> prop -> prop.
+         (* removableguard Trigger X P is like guard, but allows you to remove
+            the guard through the Trigger metavariable: forcing instantiation
+            of Trigger removes the deferred predicate P even if X is uninstantiated.
+            useful as a building block, e.g. for implementing guarding on multiple
+            variables. *)
+assume_reset : A -> prop -> prop.
+         (* assume_reset P Q expects that P is a predicate (has a type of the form
+            ... -> prop). It removes all local assumptions (introduced through assume)
+            for the P predicate; this happens locally while evaluating Q. This predicate
+            is useful for implementing modal typing and related type system features. *)
+
+*)
+
+(* ----- External predicates. *)
+
+(*
+
+plus : int -> int -> int -> prop.
+mult : int -> int -> int -> prop.
+       (* integer operations. these are bidirectional, so work like minus and div as well. *)
+
+lessthan : int -> int -> bool -> prop.
+
+
+append : string -> string -> string -> prop.
+explode : string -> list string -> prop.
+          (* explode a string into a list of characters. we don't have a specialized char type; the strings in the second list are guaranteed to be single UTF8 characters. works bidirectionally *)
+
+print : A -> prop.
+          (* generic printing predicate *)
+*)
+
+
+
+(* ----- Reflective predicates. *)
+
+(*
+
+isunif : A -> prop.
+         (* isunif X succeeds if X is an uninstantiated metavariable *)
+
+getunif : A -> B -> prop.
+         (* getunif E (X : B) unifies X with one uninstantiated metavariable of type
+            B found within E. fails if no such metavariable exists. *)
+
+absunif : A -> B -> (B -> A) -> prop.
+         (* absunif E X F returns the function F by abstracting E over the
+            uninstantiated metavariable X -- that is, all occurrences of X within
+            E are replaced by the bound variable x to form F := fun x => ... x ... *)
+
+lookup : string -> A -> prop.
+         (* lookup S C looks up the constant C with name S. works bidirectionally. *)
+
+headargs : A -> B -> list dyn -> prop.
+           (* headargs E HD ARGS splits the term E, presumed to be of base type,
+              and of the form (constant) A1 A2 ... An, into its head and
+              arguments (A1 through An).
+              works bidirectionally for term formation. *)
+
+decomposeunif : A -> int -> list dyn -> prop.
+                (* decomposeunif E ID ARGS splits the term E, which is supposed to
+                   be a use of an uninstantiated metavariable of the form X A1 .. An,
+                   into a unique identifier for X and a list of arguments -- understood
+                   to be the explicit substitution X is used with. Useful for figuring
+                   out whether two metavariables refer to the same uninstantiated meta.
+                   Works in one direction only, as the other direction would lead to
+                   all sorts of trouble. *)
+
+decomposeunif : A -> list dyn -> A -> prop.
+                (* recomposeunif E ARGS' E' assumes that E is a use of an uninstantiated
+                   metavariable of the form X A1 .. An. It changes the explicit
+                   substitution A1 .. An into ARGS' to form E' := X A'1 ... A'n *)
+
+*)
+
+(* ----- Staging. *)
+
+(*
+
+cmd : type.
+(* top-level Makam commands. *)
+
+cmd_newclause : clause -> cmd.
+cmd_newterm   : string -> A -> cmd.
+cmd_many      : list cmd -> cmd.
+cmd_stage     : (cmd -> prop) -> cmd.
+cmd_none      : cmd.
+
+*)

@@ -72,6 +72,7 @@ big/testocaml.makam
 big/testveriml.makam 
 big/testurweb.makam  -- files containing sample queries
 
+lib/builtins.makam   -- the builtin types and constants of Makam
 
 Some commands:
 
