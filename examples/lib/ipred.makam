@@ -52,8 +52,8 @@ ipred_backward (inewvar F) (newvar Result) <-
   (x:A -> ipred_backward (F xⁿ_) (Result xⁿ_)).
 
 iknown : prop -> ipred -> ipred.
-ipred_forward  (iknown W I) (known (clause W success) P') <- ipred_forward I P'.
-ipred_backward (iknown W I) (known (clause W success) P') <- ipred_backward I P'.
+ipred_forward  (iknown W I) (assume (clause W success) P') <- ipred_forward I P'.
+ipred_backward (iknown W I) (assume (clause W success) P') <- ipred_backward I P'.
 
 ionce : ipred -> ipred.
 ipred_forward  (ionce I) (once P) <- ipred_forward I P.

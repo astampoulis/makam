@@ -24,7 +24,7 @@ dbt_auto    : A -> list dbt -> dbt.
 dbtrun : dbt -> dyn -> prop.
 dbtrun (dbt_constr HD ARGS) (dyn E) <-
   map dbtrun ARGS ARGS',
-  headargs E HD ARGS'.
+  applymany HD ARGS' E.
 
 dbtrun (dbt_comp F ARGS) (dyn E) <-
   map dbtrun ARGS ARGS',
@@ -68,7 +68,7 @@ dbtrun (dbt_lookup S ARGS) (dyn E) <-
   map dbtrun ARGS ARGS',
   headargs' E HD ARGS'.
 
-dbtrun (dbt_nu X D) (dyn E) <-
+dbtrun (dbt_nu X D) (dyn (E : A -> B)) <-
   (x:A -> dbtenv X x -> 
      (eq ^nx X, dbtrun D (dyn (E x)))).
 
@@ -83,8 +83,8 @@ argtyps : A -> list dyn -> prop.
 argtyps (X : unit -> B) TL <-
   (x:unit -> argtyps (X x) TL).
 argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) <-
-  not(eq (Z : A) (W : unit)), (x:A -> argtyps (X x) TL).
-argtyps (X : A) ( dyn [] ) <- not(eq X (Z : B -> C)).
+  not(typeq X (W : unit)), (x:A -> argtyps (X x) TL).
+argtyps (X : A) [] <- not(typeq (X : A) (Z : B -> C)).
 
 
 
@@ -96,8 +96,10 @@ dbtrun (dbt_auto HD ARGS) E <-
   map2 dbtguess TYPS ARGS ARGS',
   dbtrun (dbt_constr HD ARGS') E.
 
-dbtrun (dbt_list ARGS) (dyn ARGS') <-
-  map dbtrun ARGS ARGS'.
+
+dbtrun (dbt_list ARGS) (dyn ARGS'') <-
+  map dbtrun ARGS ARGS',
+  map (fun elm res => eq (dyn res) elm) ARGS' ARGS''.
 
 
 (* dbtguess *)
@@ -105,16 +107,18 @@ dbtguess (dyn (X : A -> B)) D D.
 
 dbt_mk_bindmany : C -> bindmany A B -> prop.
 dbt_mk_bindmany (X : C) (B : bindmany A B) <-
-  (if eq (X : C) (Z : A -> C'),
-      (eq B (bcons R), (x:A -> dbt_mk_bindmany (Z x) (R x))),
-      eq B (bnil X)).
+  (if isunif X,
+      eq (dyn B) (dyn X),
+      (if typeq (X : C) (Z : A -> C'),
+        (eq B (bcons R), eq (dyn X) (dyn Z'), (x:A -> dbt_mk_bindmany (Z' x) (R x))),
+	(eq (dyn X) (dyn (X' : B)), eq B (bnil X')))).
 
 dbtguess (dyn (X : bindmany A B)) D (dbt_comp dbt_mk_bindmany [ D ]).
 
 
 dbtguess (dyn (X : bindmutrec A B)) (dbt_list L)
   (dbt_constr bindmutrec [ L' ]) <-
-  map3 (fun elm x body => eq elm (dbt_nu x body)) L XS Bodies,
-  foldr (fun elm cur => eq (dbt_constr bcons [ dbt_nu elm cur ]))
-        XS (dbt_constr bnil [ dbt_list Bodies ]) L'.
+  map2 (fun elm x body => eq elm (dbt_nu x body)) L XS Bodies,
+  foldr (fun elm cur => eq (dbt_constr (bcons : (A -> bindmany A (list B)) -> bindmany A (list B)) [ dbt_nu elm cur ]))
+        XS (dbt_constr (bnil : list B -> bindmany A (list B)) [ dbt_list Bodies ]) L'.
 
