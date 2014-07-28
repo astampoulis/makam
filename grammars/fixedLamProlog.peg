@@ -313,7 +313,7 @@ toplevel   -> c:rep(cmdflushed) repV(white) << c >>
    head: a            -- constant or normal variables
 	 | `a         -- first-order variable
          | @a         -- the result is computed through the predicate 'a'. also written: ▷a
-	 | *a         -- use dbtguess for transforming each argument based on its type. also writen: ⋯a
+	 | !a         -- use dbtguess for transforming each argument based on its type. also writen: ⋯a
    base: n            -- integer
 	 | 'a | "..." -- string literals
          | [ seq ]    -- list
@@ -321,32 +321,33 @@ toplevel   -> c:rep(cmdflushed) repV(white) << c >>
    elm:  head | base | (top) | {whiteblock}elm{/whiteblock}
 *)
 
-dbt_top -> var:ltoken(ident) token(".") d:dbt_top
+dbt_top -> var:ltoken(ident)^ "." d:dbt_top
 	   << mkTm "dbt_lam" [ autospan_bin mkLam var d ] >>
 	 / token("`") token("_") token(".") d:dbt_top
 	   << mkTm "dbt_magicnu" [ d ] >>
 	 / token("`") var:ltoken(ident) token(".") d:dbt_top
 	   << mkTm "dbt_nu" [ autospan_un mkString var ; d ] >>
-	 / h:dbt_head seq:dbt_seq << h seq >>
-	 / b:dbt_base << b >>
-	 / eof d:dbt_elm << d >> (* this is unfortunate: the cycle is not detected otherwise; there's some bug I need to fix in the cyclic topo sorting *)
+	 / h:dbt_head^ seq:dbt_seq << h seq >>
+	 / b:dbt_elm << b >>
 dbt_seq  -> es:repWHITE(dbt_elm)
 	    << List.fold_left 
 	                     (fun cur elm -> mkTm "cons" [ elm ; cur ])
 			     (mkTm "nil" []) (List.rev es) >>
-dbt_head -> var:ltoken(ident) << fun l -> mkTm "dbt_constr" [ autospan_un mkVar var ; l ] >>
+dbt_head -> var:ltoken(ident)^ << fun l -> mkTm "dbt_constr" [ autospan_un mkVar var ; l ] >>
 	  / token("`") var:loced(ident) << fun l -> mkTm "dbt_lookup" [ autospan_un mkString var ; l ] >>
 	  / token("@") var:loced(ident) << fun l -> mkTm "dbt_comp" [ autospan_un mkVar var ; l ] >>
-          / token("*") var:loced(ident) << fun l -> mkTm "dbt_auto" [ autospan_un mkVar var ; l ] >>
+	  / token("▷") var:loced(ident) << fun l -> mkTm "dbt_comp" [ autospan_un mkVar var ; l ] >>
+          / token("!") var:loced(ident) << fun l -> mkTm "dbt_auto" [ autospan_un mkVar var ; l ] >>
+          / token("⋯") var:loced(ident) << fun l -> mkTm "dbt_auto" [ autospan_un mkVar var ; l ] >>
 dbt_base -> i:ltoken(num) << mkTm "dbt_int" [ autospan_un mkInt i ] >>
           / s:loced( ( token(["]) str:rep(strchar) ["] << str |> String.concat "" >> ) )
 	    << mkTm "dbt_string" [ autospan_un mkString s ] >>
 	  / ltoken("'") s:loced(ident) << mkTm "dbt_string" [ autospan_un mkString s ] >>
 	  / token("[") l:dbt_seq token("]") << mkTm "dbt_list" [ l ] >>
 
-dbt_elm -> h:dbt_head << h (mkTm "nil" []) >>
-	 / b:dbt_base << b >>
-	 / token("(") t:dbt_top token(")") << t >>
+dbt_elm -> h:dbt_head^ << h (mkTm "nil" []) >>
+	 / b:dbt_base^ << b >>
+	 / t:lparenthesized(dbt_top) << t >>
 
 dbt -> d:dbt_top repV(white) << d >>
 

@@ -2,7 +2,7 @@ The Makam metalanguage -- a tool for rapid language prototyping
 Copyright (C) 2012-2014 Antonis Stampoulis
 This program is free software, licensed under the GPLv3 (see LICENSE).
 
-Version 0.5 -- the POPL submission release.
+Version 0.5.
 
 ,----
 | Introduction.

@@ -159,6 +159,7 @@ let _eiCmdNewTerm   = new_builtin "cmd_newterm"   (_tString **> ( ~* "A" ) **> _
 let _eiCmdMany      = new_builtin "cmd_many"      (_tList _tCmd **> _tCmd) ;;
 let _eiCmdStage     = new_builtin "cmd_stage"     ( (_tCmd **> _tProp) **> _tCmd ) ;;
 let _eiCmdNone      = new_builtin "cmd_none"      _tCmd ;;
+let _eiCmdQuery     = new_builtin "cmd_query"     ( _tProp **> _tCmd ) ;;
 
 
 let exprRemoveUnresolved (e : expr) : exprU =
@@ -267,7 +268,13 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
   | `Var(_, Some (`Free, idx)), [] when idx = _eiCmdNone ->
     
     return ()
+
+  | `Var(_, Some (`Free, idx)), [ query ] when idx = _eiCmdQuery ->
     
+    (perform
+	   _ <-- queryGoal ~print:true query ;
+           return ()) // (lazy(return ()))
+
   | _ -> mzero
   end
 

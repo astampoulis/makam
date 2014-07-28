@@ -101,7 +101,6 @@ dbtrun (dbt_list ARGS) (dyn ARGS'') <-
   map dbtrun ARGS ARGS',
   map (fun elm res => eq (dyn res) elm) ARGS' ARGS''.
 
-
 (* dbtguess *)
 dbtguess (dyn (X : A -> B)) D D.
 
@@ -122,3 +121,7 @@ dbtguess (dyn (X : bindmutrec A B)) (dbt_list L)
   foldr (fun elm cur => eq (dbt_constr (bcons : (A -> bindmany A (list B)) -> bindmany A (list B)) [ dbt_nu elm cur ]))
         XS (dbt_constr (bnil : list B -> bindmany A (list B)) [ dbt_list Bodies ]) L'.
 
+
+
+dbtquery : dbt -> cmd -> prop.
+dbtquery D (cmd_query P) <- dbtrun D (dyn P).
