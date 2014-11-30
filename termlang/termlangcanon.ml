@@ -660,7 +660,7 @@ let findMeta loc ?(makeNameMeta = false) s =
   let state = !termstate in
   try  Dict.find s state.name_to_meta
   with Not_found ->
-    if not (makeNameMeta || validTPolyName s || s ="_") then raise (Not_found);
+    if not (makeNameMeta || validTPolyName s || s ="_" || String.starts_with s "_") then raise (Not_found);
     let newmeta = state.metas in
     let tp      = if makeNameMeta then !(builtinStringType) else newTMeta loc in
     let state   = !termstate in

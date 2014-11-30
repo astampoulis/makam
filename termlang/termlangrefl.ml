@@ -168,7 +168,7 @@ let exprRemoveUnresolved (e : expr) : exprU =
     let e = { e with classifier = taux e.classifier } in
     match e.term with
     | `Var(`Concrete(s), (`Meta, i)) ->
-	let s = if s = "" || String.starts_with s "_" then "X" else s in
+	let s = if s = "" then "X" else s in
 	{ e with term = `Var(`Concrete(s ^ "~" ^ (string_of_int i)), None) }
     | `Var(_, (`Meta, i)) -> assert false
     | `App(e1,e2)  -> { e with term = `App(eaux e1, eaux e2) }
