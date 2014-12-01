@@ -328,7 +328,7 @@ wf_patt (app E1 K E2) <-
    wf_patt E1,
    wf_patt E2.
 
-wf_patt (eq T1 T2) <-
+wf_patt (eqp T1 T2) <-
    tmof T1 T',
    tmof T' (sort stype),
    wf_patt T1,
