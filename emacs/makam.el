@@ -5,7 +5,7 @@
 
 (proof-easy-config 'makam "Makam"
 
- proof-prog-name		     "/home/antonis/work/mit/makam/makam"
+ proof-prog-name		     "makam"
  proof-script-command-end-regexp     "\\.[ \n\r\t]\\|\\?[ \n\r\t]"        ;; end of commands
  proof-script-comment-start          "(*"	;; comments
  proof-script-comment-end            "*)"	;; comments
