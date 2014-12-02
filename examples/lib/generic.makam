@@ -26,6 +26,20 @@ when not(typeq X (B : C -> D)), isunif X, not(isunif Y) <-
   map Rec Args Args',
   headargs X Hd Args.
 
+(* Generic fold *)
+
+generic_fold : (dyn -> A -> A -> prop) -> dyn -> A -> A -> prop.
+(generic_fold F (dyn (X : A)) Cur Res) when isunif X <-
+  guard X (F (dyn X) Cur Res).
+generic_fold F (dyn (X : string)) Cur Cur.
+generic_fold F (dyn (X : int)) Cur Cur.
+generic_fold F (dyn (X : A -> B)) Cur Res <-
+  (x:A -> F (dyn (X x)) Cur Res).
+(generic_fold F (dyn (X : A)) Cur Res)
+when not(typeq X (B : C -> D)), not(isunif X) <-
+  headargs X Hd Args,
+  foldl (fun cur elm res => F elm cur res) Cur Args Res.  
+
 
 (* eq_benign: no instantiation goes on. *)
 eq_benign : [A]A -> A -> prop.
@@ -50,19 +64,3 @@ builtintyp (X : int).
   headargs Y Hd Args',
   map eq_benign_aux Args Args'.
 
-
-
-(* gather_all_unifs *)
-gather_all_unifs : [A] dyn -> A -> list A -> prop.
-
-(gather_all_unifs (dyn (X : A)) (Y : A) [X]) when isunif X.
-gather_all_unifs (dyn (X : string)) (Y : A) [].
-gather_all_unifs (dyn (X : int)) (Y : A) [].
-gather_all_unifs (dyn (X : A -> B)) (Y : C) Res <-
-  (x:A -> gather_all_unifs (dyn (X x)) Y Res).
-(gather_all_unifs (dyn (X : A)) (Y : B) Res)
-when not(typeq X (Z : C -> D)), not(isunif X) <-
-  headargs X HD Args,
-  map (fun elm => gather_all_unifs elm Y) Args Results,
-  foldl append [] Results Res.
-  

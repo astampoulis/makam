@@ -149,6 +149,16 @@ new_builtin_predicate "recomposeunif" ( ( ~* "A" ) **> (_tList _tDyn) **> ( ~* "
        | _ -> mzero)
 ;;
 
+new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
+  (fun _ -> fun [ p ] ->
+    (let open RunCtx.Monad in
+     perform
+       state  <-- getstate ;
+       p      <-- chasePattcanon ~deep:true [] p ;
+       _      <-- setstate state ;
+       let isunif = match p.term with `LamMany(_, { term = `Meta _ }) -> true | _ -> false in
+       moneOrMzero isunif))
+;;
 
 
 

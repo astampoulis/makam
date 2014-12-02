@@ -1,0 +1,74 @@
+%use generic.
+
+find_benign : [A]A -> list A -> prop.
+find_benign Elm (HD :: TL) <-
+  ifte (eq_benign Elm HD)
+       (success)
+       (find_benign Elm TL).
+
+unique : [A]list A -> list A -> prop.
+unique Input Output <-
+ foldl (fun cur elm res =>
+        ifte (find_benign elm cur)
+             (eq res cur)
+             (eq res (elm :: cur)))
+       [] Input Output', reverse Output' Output.
+
+fv : A -> list B -> prop.
+fv_aux : dyn -> list B -> list B -> prop.
+fv_avoid : A -> prop.
+
+fv_aux Root Cur Res <-
+  caseguard Root
+    [ (dyn X, {prop| headargs X V Args, isnvar V, not(fv_avoid V) |}, generic_fold fv_aux (dyn Args) (V :: Cur) Res),
+      (dyn (fun (x : A) => Body x), {prop| success |}, {prop| (x:A -> fv_avoid x -> generic_fold fv_aux (dyn (Body x)) Cur Res)  |}),
+      (_, success, generic_fold fv_aux Root Cur Res) ].
+  
+fv Root FV <-
+  generic_fold fv_aux (dyn Root) [] FV', unique FV' FV.
+
+
+
+getunif : A -> B -> prop.
+
+getunif_aux : dyn -> option B -> option B -> prop.
+getunif_aux Root Cur (Res : option T) <-
+  caseguard (Cur, Root)
+    [ ( (some Cur', _), success, (eq Res Cur) ),
+      ( (none, (dyn X)), isunif X,
+        (ifte (typeq (some X) Res)
+              (eq (dyn Res) (dyn (some X)))
+              (eq Res none)) ),
+      ( (_, _), success, generic_fold getunif_aux Root Cur Res ) ].
+
+getunif Root Unif <- getunif_aux (dyn Root) none (some Unif).
+
+absunif : A -> B -> (B -> A) -> prop.
+absunif_aux : B -> B -> dyn -> dyn -> prop.
+absunif_aux Unif Replace Root Res <-
+  caseguard Root
+    [ ( (dyn X), {prop| isunif X, decomposeunif X I _ |},
+                 {prop| ifte (decomposeunif Unif I _) (eq Res (dyn Replace)) (eq Res (dyn X)) |}),
+      ( _, success, structural (absunif_aux Unif Replace) Root Res) ].
+
+absunif Root (Unif : A) Res <-
+  (x:A -> absunif_aux Unif x (dyn Root) (dyn (Res x))).
+
+
+
+(* gather_all_unifs *)
+gather_all_unifs : [A] dyn -> A -> list A -> prop.
+
+gather_all_unifs_aux : A -> dyn -> list A -> list A -> prop.
+
+gather_all_unifs_aux (Typ : A) Root Cur Res <-
+  caseguard Root
+   [ ( (dyn X), isunif X,
+                {prop| ifte (typeq Typ X) (and (dyneq X Y) (eq Res (Y :: Cur))) (eq Res Cur) |} ),
+     ( _, success, generic_fold (gather_all_unifs_aux Typ) Root Cur Res ) ].
+
+
+gather_all_unifs Root Typ Res <-
+  gather_all_unifs_aux Typ Root [] Res.
+
+

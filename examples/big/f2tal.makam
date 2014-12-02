@@ -1,5 +1,7 @@
 %use utils.
 %use bindutils.
+%use generic.
+%use extutils.
 
 
 useexample : string -> prop.
@@ -597,45 +599,20 @@ translatec_val (valk (tupk VS) T) (valc (tupc VS') T') <-
   translatec_typ T T'.
 
 
-(* ----------------- fv.
-   TODO this is pretty hacky and slow; replace with non-generic code later. *)
 valfv : A -> list B -> prop.
-valfv_aux : list dyn -> list B -> prop.
-valfv_seenalready : B -> prop.
+valfv_aux : dyn -> list B -> list B -> prop.
+valfv_avoid : A -> prop.
 
-valfv X Result <- valfv_aux [ dyn X ] Result.
-valfv_aux [] [].
-valfv_aux ( (dyn (valk U T)) :: Queue ) Result <-
-  headargs U (X : A) Args,
-  newnmeta (fun x => eq x X),
-  append Args Queue Queue',
-  (if valfv_seenalready X,
-      valfv_aux Queue' Result,
-      (eq Result ((valk U T) :: Result'),
-	(valfv_seenalready X -> valfv_aux Queue' Result'))).
+valfv_aux Input Cur Res <-
+  caseguard Input
+    [ (dyn (fun (x : A) => (T x : B)), success,
+       {prop| (x:A -> valfv_avoid x -> generic_fold valfv_aux (dyn (T x)) Cur Res) |}),
+      (dyn (valk U S), {prop| headargs U X Args, isnvar X, not(valfv_avoid X) |}, 
+       {prop| eq Res ((valk U S) :: Cur) |}),
+      (_, success, {prop| generic_fold valfv_aux Input Cur Res |}) ].
 
-valfv_aux ( (dyn T) :: Queue ) (Result : list A) <-
-  headargs T (X : B) Args,
-  newnmeta (fun x => eq x X),
-  append Args Queue Queue',
-  valfv_aux Queue' Result.
-
-valfv_aux ( (dyn T) :: Queue ) Result <-
-  headargs T (X : A) Args,
-  newfmeta (fun x => eq x X),
-  append Args Queue Queue',
-  valfv_aux Queue' Result.
-
-valfv_aux ( (dyn (fun (x : A) => (T x : B))) :: Queue ) Result <-
-  (x:A ->
-   valfv_seenalready x ->
-   valfv_aux ((dyn (T x)) :: Queue) Result).
-
-valfv_aux ( (dyn (X : int)) :: Queue ) Result <-
-  valfv_aux Queue Result.
-
-valfv_aux ( (dyn (X : string)) :: Queue ) Result <-
-  valfv_aux Queue Result.
+valfv X Res' <-
+  valfv_aux (dyn X) [] Res, unique Res Res'.
 
 (* ------------------ fv *)
 

@@ -1,6 +1,7 @@
 %use utils.
 %use bindutils.
 %use subbindutils.
+%use extutils.
 %use maps.
 
 (* kinds *)
@@ -27,9 +28,9 @@ term        : type.
 patt        : type.
 field       : type.
 
-lam      : typ -> (term -> term) -> term.
+lam      : (term -> term) -> term.
 app      : term -> term -> term .
-lamt     : knd -> (typ -> term) -> term.
+lamt     : (typ -> term) -> term.
 appt     : term -> typ -> term.
 let      : term -> (term -> term) -> term.
 letrec   : bindmutrec term term -> bindmany term term -> term.
@@ -115,13 +116,13 @@ nf_ (tprod TS)     (tprod TS')      <- map nf TS TS'.
 typeof    : term -> typ -> prop.
 
 
-typeof (lam T1 E) (tarrow T1 T2) <-
+typeof (lam E) (tarrow T1 T2) <-
   (x:term -> typeof x T1 -> typeof (E x) T2), kindof T1 ktype.
 
 typeof (app E1 E2) T2 <-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
-typeof (lamt K E) (tpi K TF) <-
+typeof (lamt E) (tpi K TF) <-
   (x:typ -> kindofg x K -> typeof (E x) (TF x)).
 
 typeof (appt E T) (TF T) <-
@@ -172,8 +173,8 @@ typeof (app E1 E2) T2 <-
 valrestr : term -> prop.
 valrestr (constr _ _).
 valrestr (construn _).
-valrestr (lam    _ _).
-valrestr (lamt   _ _).
+valrestr (lam      _).
+valrestr (lamt     _).
 valrestr (tuple _).
 valrestr (record _).
 valrestr (ascribe E _) <- valrestr E.
