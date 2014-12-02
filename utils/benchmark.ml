@@ -5,7 +5,7 @@ let loglist : (float * string * string * int) list ref = ref [] ;;
 let enabled : bool ref = ref false ;;
 (* let pausetimes : (float * float) list ref = ref [] ;; *)
 let pausedtimeelapsed = ref 0.0 ;;
-  
+
 let time =
   let clock = match Oclock.process_cputime with Some x -> x | _ -> assert false in
   fun () -> (Int64.to_float (Oclock.gettime clock)) *. 1e-9 -. !pausedtimeelapsed

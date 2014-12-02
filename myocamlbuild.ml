@@ -5,6 +5,8 @@ dispatch begin function
 
   | After_rules ->
 
+    Ocamlbuild_js_of_ocaml.dispatcher After_rules ;
+
     let parsers = [ A"-I"; A"+camlp4/Camlp4Parsers"] in
     flag ["ocaml"; "compile"; "parsers"] (S parsers);
 
@@ -114,5 +116,8 @@ dispatch begin function
           Cmd(S[!ocamlweb; T tags; P ml; A"-o"; Px tex])
         end;
 *)
-  | _ -> ()
+  | hook ->
+
+    Ocamlbuild_js_of_ocaml.dispatcher hook
+
 end;;

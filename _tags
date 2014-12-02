@@ -1,9 +1,12 @@
-true: -traverse
+true: -traverse, debug
 <{parsing,bootstrap,utils,termlang,grammars,toploop}/**>: traverse
 <parsing> or <bootstrap> or <utils> or <termlang> or <grammars> or <toploop>: include
 
-<**/*.ml{,i}>: package(findlib), package(batteries), package(camomile), package(oclock), \
+<**/*.ml{,i}>: package(findlib), package(batteries), package(uucp), package(oclock), \
 	       package(camlp4), syntax(camlp4o), package(monad-custom)
+
+<js/*.ml>: package(js_of_ocaml), package(js_of_ocaml.syntax)
+<js/*>: package(js_of_ocaml)
 
 
 <bootstrap/*.ml>: package(camlp4.quotations.o)
@@ -22,6 +25,6 @@ true: -traverse
 <toploop/byterepl.byte>: package(compiler-libs.toplevel), package(unix)
 
 
-<**/*.{byte,native,top}>: package(unix), package(dynlink), package(camomile), package(oclock)
+<**/*.{byte,native,top}>: package(unix), package(dynlink), package(uucp), package(oclock)
 <**/*.{byte,native}>: thread, package(batteries), package(camlp4.fulllib)
 <**/parser.top>: package(batteries), package(camlp4.fulllib)

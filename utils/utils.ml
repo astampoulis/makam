@@ -16,6 +16,14 @@ module ConstStringHash = StdHashtbl.Make(struct
   let hash = Hashtbl.hash ;;
 end) ;;
 
+(* make printf go through print_string, so as to work for js_of_ocaml *)
+module Printf = struct
+  include BatPrintf;;
+  let printf fmt =
+    ksprintf2 (fun s -> print_string s; flush stdout) fmt
+  ;;
+end;;
+
 
 let (++) = List.append
 let (||>) o1 o2 =

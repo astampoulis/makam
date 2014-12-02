@@ -37,7 +37,7 @@ We have been testing using the OCaml 4.01.0 configuration.
 
 After you have OPAM installed, you need to install a few OPAM packages:
 
-    opam install batteries oclock camomile pa_monad_custom
+    opam install batteries oclock uucp pa_monad_custom
 
 You are now ready to run make:
 

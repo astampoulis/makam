@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="http://terminal.jcubic.pl/js/jquery.terminal-0.8.8.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://terminal.jcubic.pl/css/jquery.terminal.css">
+    <!-- <script type="text/javascript" src="makam.js"></script> -->
+    <script type="text/javascript">
+
+      var worker = new Worker('makam.js');
+      var terminal = null;
+     
+      $(function() {
+
+        terminal = $('#terminal').terminal(function(command, term) {
+          worker.postMessage(command);
+        }, { prompt: "# ", greetings: "\tMakam(js) version 0.5\n" });
+
+        worker.addEventListener('message', function(e) {
+          terminal.echo(e.data);
+        });
+
+       });
+
+    </script>
+    <style>
+      body { margin: 0px; padding: 0px; }
+      #terminal { position: absolute; top: 0px; left: 0px; right: 0px; bottom: 0px; 
+		  overflow: hidden; }
+      #terminal * { font-family: mono; font-size: 14px; color: white; }
+    </style>
+
+  </head>
+  <body>
+    <div id="terminal">
+    </div>
+  </body>
+</html>

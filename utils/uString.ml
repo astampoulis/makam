@@ -222,8 +222,9 @@ let mkempty bstart bend =
   true
 ;;
   
-module Camo = CamomileLibrary.UCharInfo.Make(CamomileLibrary.DefaultConfig) ;;
-type general_category_type = Camo.general_category_type ;;
-let category u = Camo.general_category (Obj.magic u) ;;
+(* module Camo = CamomileLibrary.UCharInfo.Make(CamomileLibrary.DefaultConfig) ;; *)
+type general_category_type = Uucp.Gc.t;;
+
+let category u = Uucp.Gc.general_category (Obj.magic u) ;;
 let is_whitespace u = try Char.is_whitespace(UChar.char_of u) with _ -> false ;;
 let is_uppercase u = try Char.is_uppercase(UChar.char_of u) with _ -> false ;;
