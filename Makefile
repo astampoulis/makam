@@ -7,7 +7,7 @@ all:
 
 js:
 	$(OCAMLBUILD) -no-links js/browser.byte
-	js_of_ocaml -pretty -debuginfo -I ./ $(MAKAMFILES) -noruntime +js_of_ocaml/runtime.js +weak.js +toplevel.js js/myruntime.js _build/js/browser.byte -o js/makam.js
+	js_of_ocaml -I ./ $(MAKAMFILES) -noruntime +js_of_ocaml/runtime.js +weak.js +toplevel.js js/myruntime.js _build/js/browser.byte -o js/makam.js
 
 clean:
 	ocamlbuild -clean
