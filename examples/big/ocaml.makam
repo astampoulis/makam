@@ -166,8 +166,7 @@ typeof (named X) T <- named_gentypeof X T.
 typeof (named X) T' <- named_gentypeof X T, typinst T T'.
 
 typeof (app E1 E2) T2 <-
-  typeof E1 T,
-  typinst T (tarrow T1 T2),
+  typeof E1 (tarrow T1 T2),
   typeof E2 T1.
 
 valrestr : term -> prop.
@@ -322,8 +321,8 @@ typeof (trycatch E Handlers) T <-
 
 
 (* conversion *)
-(typeof X Tnf) when (newnmeta (fun x => eq X x)) <- nf T Tnf.
-(typeof E T) when not (isunif T), once(typeof E T') <- nf T' Z, nf T Z.
+(typeof X Tnf) when isnvar X, once(typeof X T) <- nf T Tnf.
+(typeof E T) when not (isnvar E), not (isunif T), once(typeof E T') <- nf T' Z, nf T Z.
 
 
 (* ---------------------------- *)
