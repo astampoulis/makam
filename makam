@@ -10,7 +10,7 @@ SCRIPTPATH=$(readlink -f $0 | xargs dirname)
 pushd . >/dev/null
 cd $SCRIPTPATH
 if [ ! -e nativerepl.native ]; then
-    echo "Please run 'make' first."
+    echo "Please run 'make' first. The makam binary was not found in $SCRIPTPATH."
     exit 0
 fi
 runmain $*
