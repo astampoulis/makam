@@ -1,6 +1,7 @@
 %use utils.
 %use generic.
 %use bindutils.
+%use extutils.
 
 (* Dynamically-typed binding trees.
 

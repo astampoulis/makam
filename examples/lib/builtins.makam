@@ -109,15 +109,6 @@ print : A -> prop.
 isunif : A -> prop.
          (* isunif X succeeds if X is an uninstantiated metavariable *)
 
-getunif : A -> B -> prop.
-         (* getunif E (X : B) unifies X with one uninstantiated metavariable of type
-            B found within E. fails if no such metavariable exists. *)
-
-absunif : A -> B -> (B -> A) -> prop.
-         (* absunif E X F returns the function F by abstracting E over the
-            uninstantiated metavariable X -- that is, all occurrences of X within
-            E are replaced by the bound variable x to form F := fun x => ... x ... *)
-
 lookup : string -> A -> prop.
          (* lookup S C looks up the constant C with name S. works bidirectionally. *)
 
@@ -136,7 +127,7 @@ decomposeunif : A -> int -> list dyn -> prop.
                    Works in one direction only, as the other direction would lead to
                    all sorts of trouble. *)
 
-decomposeunif : A -> list dyn -> A -> prop.
+recomposeunif : A -> list dyn -> A -> prop.
                 (* recomposeunif E ARGS' E' assumes that E is a use of an uninstantiated
                    metavariable of the form X A1 .. An. It changes the explicit
                    substitution A1 .. An into ARGS' to form E' := X A'1 ... A'n *)

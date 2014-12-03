@@ -1,5 +1,6 @@
 %use utils.
 %use bindutils.
+%use extutils.
 
 (* kinds *)
 knd     : type.
