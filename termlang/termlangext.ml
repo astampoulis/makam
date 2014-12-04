@@ -215,7 +215,7 @@ new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tStri
     (* Const, Meta, Const *)
     convertfunc (fun strHD strFULL ->
       if String.starts_with strFULL strHD then
-	let strTL = String.sub strFULL (String.length strHD) (String.length strFULL - 1) in
+	let strTL = String.sub strFULL (String.length strHD) (String.length strFULL - String.length strHD) in
 	Some strTL
       else
 	None) ;
