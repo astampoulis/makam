@@ -1623,6 +1623,13 @@ let global_module_do m f =
   reflectexn res
 ;;
 
+let global_restore_module fn state' =
+  let state = !globalstate in
+  globalstate := { state with current_module = state'.current_module ;
+                              module_extension_stack = state'.module_extension_stack }
+;;
+  
+
 let global_load_file_resolved ?modul
     (pars : string -> (unit -> unit) list) (filename : string) =
 
@@ -1649,7 +1656,7 @@ let global_load_file_resolved ?modul
        with _ -> false)
   in
   if already_loaded then (fun () -> ())
-  else begin
+  else fun () -> begin
 
     let res = pars filename in
     let updateLoadedModules () =
@@ -1672,7 +1679,7 @@ let global_load_file_resolved ?modul
       match modul with
 
       | None -> begin
-	f () ; updateLoadedModules ()
+       f () ; updateLoadedModules ()
       end
 
       | Some m -> begin
@@ -1682,8 +1689,10 @@ let global_load_file_resolved ?modul
 
     in
 
-    fun () ->
-      doit (fun () -> List.iter (fun f -> f ()) res)
+    let module_state = !globalstate in
+    let res = reifyexn (fun () -> doit (fun () -> List.iter (fun f -> f ()) res)) in
+    global_restore_module filename module_state ;
+    reflectexn res
 
   end
 ;;
