@@ -1,0 +1,56 @@
+%use utils.
+%use testing.
+%use generic.
+
+
+getrules : A -> list clause -> prop.
+
+clausegoal : clause -> (prop -> prop) -> prop.
+clausegoal (clause Goal Premise) (eq Goal).
+clausegoal (whenclause Goal When Premise) (fun g => and (eq Goal g) (When)).
+
+clausepremise : clause -> prop -> prop.
+clausepremise (clause Goal Premise) Premise.
+clausepremise (whenclause Goal When Premise) Premise.
+
+
+
+demand_otherwise : prop -> prop -> prop -> prop.
+demand_otherwise P OW Res <-
+  headargs P Predicate _,
+  getrules Predicate Rules,
+  foldr (fun elm cur res => {prop| [G Pr]
+        clausegoal elm G, 
+        clausepremise elm Pr,
+        eq res (ifte (G P) Pr cur) |}) Rules OW Res.
+
+
+test : string -> prop.
+
+test X <- demand_otherwise (test X)
+                           (and (print ("test did not work for", X)) failure) P, P.
+
+(* fake reflection of rules. still need to figure out a way to differentiate between demand rules and real rules. *)
+getrules test [ clause (test "aaa") success,
+                clause (test Z) {prop| eq X "b", append (X : string) Y Z |}
+              ].
+
+`( testing.expect success (test "aaa") ).
+`( testing.expect success (test "baa") ).
+`( testing.expect failure (test "caa") ).
+
+
+
+stringsof : dyn -> dyn -> prop.
+
+getrules stringsof [ clause (stringsof (dyn (X : string)) (dyn "q")) success ].
+
+stringsof X Y <-
+  demand_otherwise ( stringsof X Y )
+                   ( structural stringsof X Y ) P,
+  P.
+
+
+`( testing.expect success (stringsof (dyn [ "lala", "dada" ]) (dyn [ "q", "q" ])) ).
+
+stringsof (dyn [ "lala", "dada" ]) X ?
