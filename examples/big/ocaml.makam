@@ -140,9 +140,9 @@ typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
 typinst T T' <- not(eq T (tpi _ _)), (eq T T'; nf T T').
 
 typgen : typ -> typ -> prop.
-typgen T T <- not(getunif T (X: typ)).
+typgen T T <- not(builtin.getunif T (X: typ)).
 typgen T (tpi K F') <-
-  getunif T (X : typ), absunif T X F,
+  builtin.getunif T (X : typ), builtin.absunif T X F,
   (x:typ -> kindofg x K -> typgen (F x) (F' x)).
 
 tpimany : knd -> (typ -> list typ) -> list typ -> prop.
@@ -152,8 +152,8 @@ tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
 
 typgenlist : list typ -> list typ -> prop.
 typgenlist TS TS' <-
-   (if getunif TS (X : typ),
-     (absunif TS X F,
+   (if builtin.getunif TS (X : typ),
+     (builtin.absunif TS X F,
       (x:typ -> kindofg x K -> typgenlist (F x) (F' x)),
       tpimany K F' TS'),
      (eq TS TS')).
