@@ -1,0 +1,225 @@
+%use utils.
+%use bindutils.
+
+expr : type.
+
+intconst : int -> expr.
+plus : expr -> expr -> expr.
+minus : expr -> expr -> expr.
+mult : expr -> expr -> expr.
+lt : expr -> expr -> expr.
+
+boolconst : bool -> expr.
+ifthenelse : expr -> expr -> expr -> expr.
+
+stringconst : string -> expr.
+printstring : expr -> expr.
+
+
+
+
+%type (ifthenelse (lt (intconst 15) (intconst 20)) (printstring (stringconst "less")) (printstring (stringconst "greater"))).
+
+
+
+
+eval : expr -> expr -> prop.
+
+eval (intconst N) (intconst N).
+eval (boolconst B) (boolconst B).
+eval (stringconst S) (stringconst S).
+
+eval (plus E1 E2) (intconst N) <-
+  eval E1 (intconst N1), eval E2 (intconst N2), plus N1 N2 N.
+
+eval (minus E1 E2) (intconst N) <-
+  eval E1 (intconst N1), eval E2 (intconst N2), plus N N2 N1.
+
+eval (mult E1 E2) (intconst N) <-
+  eval E1 (intconst N1), eval E2 (intconst N2), mult N1 N2 N.
+
+eval (lt E1 E2) (boolconst B) <-
+  eval E1 (intconst N1), eval E2 (intconst N2), lessthan N1 N2 B.
+
+eval (ifthenelse Cond If Else) V <-
+  eval Cond (boolconst true),
+  eval If V.
+
+eval (ifthenelse Cond If Else) V <-
+  eval Cond (boolconst false),
+  eval Else V.
+
+eval (printstring E) (boolconst true) <-
+  eval E (stringconst S),
+  print S.
+
+
+
+
+
+(* let's add let: *)
+let : expr -> (expr -> expr) -> expr.
+(* let x = e in e'
+   let e (fun x => e' x)
+*)
+
+eval (let Def Body) V <-
+  eval Def V',
+  eval (Body V') V.
+
+
+(* let's add multiple-argument non-recursive functions: *)
+nrfunction : bindmany expr expr -> expr.
+(* function (a, b, c...) => e  is written as
+   function (bcons (fun a => bcons (fun b => bcons (fun c => bnil e)))) *)
+
+call : expr -> (list expr -> expr).
+
+eval (nrfunction FDef) (nrfunction FDef).
+
+eval (call F Args) V <-
+  eval F (nrfunction FDef),
+  map eval Args VArgs,
+  bindmany_apply FDef VArgs Body',
+  eval Body' V.
+
+
+(* let's add multiple-argument recursive functions: *)
+
+function : (expr -> bindmany expr expr) -> expr.
+(* function f(a, b, c...) => e  is written as
+   function (fun f => bcons (fun a => bcons (fun b => bcons (fun c => bnil e)))) *)
+
+eval (function FDef) (function FDef).
+
+eval (call F Args) V <-
+  eval F (function FDef),
+  map eval Args VArgs,
+  (frec:expr -> 
+   eval frec (function FDef) ->
+   (bindmany_apply (FDef frec) VArgs (E frec),
+    eval (E frec) V)).
+
+
+
+eval (let (function (fun fact => bcons (fun n => bnil (
+              ifthenelse (lt n (intconst 1))
+                         (intconst 1)
+                         (mult n (call fact [minus n (intconst 1)]))))))
+      (fun fact => call fact [intconst 5])) X ?
+
+
+
+
+
+(* how about a type system? *)
+typ : type.
+
+typeof : expr -> typ -> prop.
+
+tint : typ.
+tstring : typ.
+tbool : typ.
+
+typeof (intconst I) tint.
+typeof (stringconst S) tstring.
+typeof (boolconst B) tbool.
+
+typeof (plus E1 E2) tint <- typeof E1 tint, typeof E2 tint.
+typeof (minus E1 E2) tint <- typeof E1 tint, typeof E2 tint.
+typeof (mult E1 E2) tint <- typeof E1 tint, typeof E2 tint.
+
+typeof (lt E1 E2) tbool <- typeof E1 tint, typeof E2 tint.
+
+
+typeof (ifthenelse Cond If Else) T <- typeof Cond tbool, typeof If T, typeof Else T.
+
+typeof (printstring S) tbool.
+
+typeof (let E E') T' <-
+  typeof E T,
+  (x:expr -> typeof x T -> typeof (E' x) T').
+
+
+(* ok now something harder: *)
+
+tfun : list typ -> typ -> typ.
+
+(* e.g. (int, int, string) returns bool *)
+
+
+(* ok, let's do the easy part first: function call. *)
+typeof (call F Args) TReturn <-
+  typeof F (tfun TArgs TReturn),
+  map typeof Args TArgs.
+
+(* now for the hard thing. *)
+typeof (function FDef) TFun <-
+  eq TFun (tfun TArgs TReturn),
+  (f:expr ->
+    typeof f TFun ->
+    bindmany_newvars (FDef f) (fun args =>
+      many_assume typeof args TArgs {prop| [Body]
+        bindmany_apply (FDef f) args Body,
+        typeof Body TReturn |})).
+
+
+typeof (function (fun fact => bcons (fun n => bnil (
+              ifthenelse (lt n (intconst 1))
+                         (intconst 1)
+                         (mult n (call fact [minus n (intconst 1)])))))) T ?
+
+
+
+
+
+
+
+
+(* ok, what about a function with generics? :-) *)
+
+
+(* first, let's have a type that actually uses generics. *)
+(*
+list : list expr -> expr.
+tlist : typ -> typ.
+
+eval (list ES) (list VS) <- map eval ES VS.
+
+typeof (list ES) (tlist T) <- map0 (fun expr => typeof expr T) ES.
+
+listcase : expr -> expr -> (expr -> expr -> expr) -> expr.
+
+eval (listcase E NilCase ConsCase) V <- eval E (list []), eval NilCase V.
+eval (listcase E NilCase ConsCase) V <- eval E (list (HD :: TL)), eval (ConsCase HD TL) V.
+
+typeof (listcase E NilCase ConsCase) T <-
+  typeof E (tlist A),
+  typeof NilCase T,
+  (hd:expr -> tl:expr ->
+   typeof hd A -> typeof tl (tlist A) ->
+   typeof (ConsCase hd tl) T).
+*)
+(* ok, now let's move on to functions. *)
+(*
+genfunction : (expr -> (bindmany expr expr)) ->
+              typ ->
+              expr.
+
+tgen : bindmany typ typ -> typ.
+*)
+(* function f<A, B>(a : A -> B, b : list A) : list B => e   is written as
+    genfunction (fun f => bcons (fun a => bcons (fun b => bnil e)))
+                <A, B>(A -> B, list A) -> list B *)
+
+(*
+eval (genfunction FDef Typ) (genfunction FDef Typ).
+
+typeof (call GF Args) TRet <-
+  typeof GF (tgen GenTyp),
+  map typeof Args TArgs,
+  bindmany_apply GenTyp Instantiations (tfun TArgs TRet).
+
+
+
+*)
