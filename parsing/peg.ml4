@@ -454,7 +454,6 @@ module PegPrint =
   struct
     let exprAST_to_string expr =
       let module ExportAst = struct
-	open Camlp4_import.Parsetree;;
 	open Lexing;;
 	open Camlp4;;
 	open PreCast;;

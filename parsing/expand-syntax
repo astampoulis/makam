@@ -1,6 +1,6 @@
 #!/bin/bash
 
-camlp4 "-I" "$HOME/.opam/4.01.0/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.01.0/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.01.0/lib/syntax_xtype" "-I" "$HOME/.opam/4.01.0/lib/monad-custom" "-parser" "o" "-parser" "op" "-parser" "Camlp4QuotationCommon" "-parser" "Camlp4OCamlOriginalQuotationExpander" "syntax_xtype.cma" "pa_monad.cmo" -impl peg.ml4 -printer Camlp4OCamlPrinter > peg.ml
+camlp4 "-I" "$HOME/.opam/4.02.1/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.02.1/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.02.1/lib/syntax_xtype" "-I" "$HOME/.opam/4.02.1/lib/monad-custom" "-parser" "o" "-parser" "op" "-parser" "Camlp4QuotationCommon" "-parser" "Camlp4OCamlOriginalQuotationExpander" "syntax_xtype.cma" "pa_monad.cmo" -impl peg.ml4 -printer Camlp4OCamlPrinter > peg.ml
 
-camlp4 "-I" "$HOME/.opam/4.01.0/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.01.0/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.01.0/lib/syntax_xtype" "-I" "$HOME/.opam/4.01.0/lib/monad-custom" "-parser" "o" "-parser" "op" "-parser" "Camlp4QuotationCommon" "-parser" "Camlp4OCamlOriginalQuotationExpander" "syntax_xtype.cma" "pa_monad.cmo" -intf peg.mli4 -printer Camlp4OCamlPrinter > peg.mli
+camlp4 "-I" "$HOME/.opam/4.02.1/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.02.1/lib/ocaml/camlp4" "-I" "$HOME/.opam/4.02.1/lib/syntax_xtype" "-I" "$HOME/.opam/4.02.1/lib/monad-custom" "-parser" "o" "-parser" "op" "-parser" "Camlp4QuotationCommon" "-parser" "Camlp4OCamlOriginalQuotationExpander" "syntax_xtype.cma" "pa_monad.cmo" -intf peg.mli4 -printer Camlp4OCamlPrinter > peg.mli
 

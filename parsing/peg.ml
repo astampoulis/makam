@@ -897,8 +897,6 @@ module PegPrint =
     let exprAST_to_string expr =
       let module ExportAst =
         struct
-          open Camlp4_import.Parsetree
-            
           open Lexing
             
           open Camlp4
@@ -2590,7 +2588,7 @@ let (parseGen : pegGrammar -> Ast.str_item) =
       (updateExternalMemocellsInfo needed_external;
        Ast.StSem (_loc, preamble,
          (Ast.StSem (_loc,
-            (Ast.StOpn (_loc, (Ast.IdUid (_loc, "PegRuntime")))),
+            (Ast.StOpn (_loc, Ast.OvNil, (Ast.IdUid (_loc, "PegRuntime")))),
             (Ast.StSem (_loc,
                (Ast.StVal (_loc, Ast.ReNil,
                   (Ast.BiEq (_loc,
