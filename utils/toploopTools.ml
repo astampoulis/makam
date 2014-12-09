@@ -1,6 +1,5 @@
 let returnAST str_item =
   let module ExportAst = struct
-    open Camlp4_import.Parsetree;;
     open Lexing;;
     open Camlp4;;
     open PreCast;;
@@ -23,7 +22,6 @@ let parseAST s =
   with _ ->
     (let module ParseAst =
 	 struct
-	   open Camlp4_import.Parsetree;;
 	   open Lexing;;
 	   open Camlp4;;
 	   open PreCast;;
@@ -47,7 +45,6 @@ let parseAST_stritem s =
   with _ -> 
     (let module ParseAst =
 	 struct
-	   open Camlp4_import.Parsetree;;
 	   open Lexing;;
 	   open Camlp4;;
 	   open PreCast;;
@@ -72,7 +69,6 @@ let parseAST_stritem s =
 
 let dumpAST str_item =
   let module ExportAst = struct
-    open Camlp4_import.Parsetree;;
     open Lexing;;
     open Camlp4;;
     open PreCast;;
@@ -96,7 +92,6 @@ let saveAST filename str_item =
 
 let defAST str_item =
   let module Staging = struct
-    open Camlp4_import.Parsetree;;
     open Lexing;;
     open Camlp4;;
     open PreCast;;
