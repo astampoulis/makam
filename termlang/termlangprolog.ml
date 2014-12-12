@@ -567,9 +567,9 @@ let pattcanonShift, pattneutShift, pattheadShift =
 	  `Subst(List.map (pattcanonShift n c) subst, None, typs, names)
 
   in
-  (fun n -> if n = 0 then id else pattcanonShift n 0),
-  (fun n -> if n = 0 then id else pattneutShift n 0),
-  (fun n -> if n = 0 then id else pattheadShift n 0)
+  (fun ?(start=0) n -> if n = 0 then id else pattcanonShift n start),
+  (fun ?(start=0) n -> if n = 0 then id else pattneutShift n start),
+  (fun ?(start=0) n -> if n = 0 then id else pattheadShift n start)
 ;;
 
 let pattheadToCanon (p : patthead) : pattcanon =
@@ -1370,6 +1370,7 @@ let rec pattneutSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p 
 	  (* TODO missing name unification *)
 	  let sigma' = List.map (fun x -> lazy(pattcanonSubstAux curbound substbound sigma x)) substargs in
 	  let res = pattneutSubstAux (curbound + n) curbound sigma' body in
+	  let res = pattneutShift ~start:curbound (-n) res in
 	  if List.length appargs <> 0 then
 	    reapplyAppsPatt appargs appargsinfo res
 	  else
