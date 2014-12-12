@@ -22,6 +22,17 @@ isterm : A -> prop.
 
 %end.
 
+%extend type.
+
+result : A -> B -> prop.
+(result X Y) when refl.isfun X <- (x:A -> result (X x) Y).
+(result X Y) when not(refl.isfun X) <- typeq X Y.
+
+ispred : A -> prop.
+ispred X <- result X (Z : prop).
+
+%end.
+
 
 dup_head : A -> B -> prop.
 (dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
@@ -30,4 +41,18 @@ dup_head : A -> B -> prop.
 dyncall : (A -> prop) -> dyn -> prop.
 dyncall P (dyn X) <- dup_head P P', P' X.
 
+dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
+dyncall P (dyn X) (dyn Y) <- dup_head P P', P' X Y.
+
 ([X]allheads X, map0 (dyncall printhead) X) ?
+
+
+filter : (A -> prop) -> list A -> list A -> prop.
+filter P (HD :: TL) (HD :: TL') <- P HD, filter P TL TL'.
+filter P (HD :: TL) TL' <- not(P HD), filter P TL TL'.
+filter P nil nil.
+
+allrules : list clause -> prop.
+allrules Rules <- allheads XS, filter (dyncall type.ispred) XS PS, map (dyncall getrules) PS RulesCD,
+                  map (fun x y => eq x (dyn y)) RulesCD RulesC,
+                  foldl append [] RulesC Rules.
