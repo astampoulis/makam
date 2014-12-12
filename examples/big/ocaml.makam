@@ -134,15 +134,29 @@ typeof (ascribe E T) T <- typeof E T.
 
 typeof (raise E) T     <- typeof E (tbase "exn" nil), kindof T ktype.
 
+gentypeof : term -> typ -> prop.
+
 (* implicit generalization/instantiation and so on *)
 typinst : typ -> typ -> prop.
 typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
 typinst T T' <- not(eq T (tpi _ _)), (eq T T'; nf T T').
 
+notinenv : typ -> prop.
+notinenv X <- assume_get typeof Assumptions,
+	      assume_get gentypeof MoreAssumptions,
+	      append Assumptions MoreAssumptions AS,
+	      gather_all_unifs (dyn AS) (X : typ) (XS : list typ),
+	      not(find_benign X XS).
+
+next_typgen : typ -> (typ -> typ) -> prop.
+next_typgen T F <- builtin.getunif T (X : typ),
+	           notinenv X,
+	           builtin.absunif T X F.
+
 typgen : typ -> typ -> prop.
-typgen T T <- not(builtin.getunif T (X: typ)).
+typgen T T <- not(next_typgen T _).
 typgen T (tpi K F') <-
-  builtin.getunif T (X : typ), builtin.absunif T X F,
+  next_typgen T F,
   (x:typ -> kindofg x K -> typgen (F x) (F' x)).
 
 tpimany : knd -> (typ -> list typ) -> list typ -> prop.
@@ -151,14 +165,8 @@ tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
   tpimany K TS TS'.
 
 typgenlist : list typ -> list typ -> prop.
-typgenlist TS TS' <-
-   (if builtin.getunif TS (X : typ),
-     (builtin.absunif TS X F,
-      (x:typ -> kindofg x K -> typgenlist (F x) (F' x)),
-      tpimany K F' TS'),
-     (eq TS TS')).
+typgenlist TS TS' <- map typgen TS TS'.
 
-gentypeof : term -> typ -> prop.
 (typeof X T) when newvmeta (fun x => eq x X), gentypeof X T.
 (typeof X T') when newvmeta (fun x => eq x X), gentypeof X T <- typinst T T'.
 
@@ -177,6 +185,7 @@ valrestr (lamt     _).
 valrestr (tuple _).
 valrestr (record _).
 valrestr (ascribe E _) <- valrestr E.
+(valrestr X) when newnmeta (fun x => eq x X).
 
 typeof (let E E') T' <-
   typeof E T, 
@@ -195,13 +204,15 @@ typeof (letrec ES E') T' <-
 
      map typeof Bodies TS,
 
-     (if (map0 valrestr Bodies),
+     (if (map0 valrestr Bodies), (eq DoGen true), (eq DoGen false))
+    |}),
+    (if eq DoGen true,
 
         (typgenlist TS TSgen, kindofall TSgen ktype,
 	   eq Assumption (many_assume gentypeof xs TSgen)),
 
         (kindofall TS ktype,
-   	   eq Assumption (many_assume typeof xs TS))) |}),
+   	   eq Assumption (many_assume typeof xs TS))),
 
     Assumption (typeof Rest T') |}).
      
