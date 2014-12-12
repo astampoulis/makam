@@ -42,6 +42,26 @@ new_builtin_predicate "lookup" ( _tString **> ( ~* "A" ) **> _tProp )
        | _ -> mzero)
 ;;
 
+new_builtin_predicate "allheads" ( (_tList _tDyn) **> _tProp )
+  (let open RunCtx.Monad in
+   fun _ -> fun [ res ] -> perform
+       vars <-- intermlang (fun _ ->
+         let idxs  = increasing !termstate.fvars in
+         let names = List.map nameOfFVar idxs in
+         let exprus = List.map2 (fun name idx -> mkIndexedVar ~name:(`Concrete(name)) (`Free, idx) ()) names idxs in
+         let exprs = List.map typeof exprus in
+         let patts = List.map (function
+                                | ({ term = `Var(`Concrete(name), (`Free, idx)) } as e) ->
+                                   { e with term = `Var(`Concrete(name), (`Free, idx)) }
+                                   |> pattheadToCanon |> _PofDyn
+                                | _ -> assert false)
+                              exprs
+         in
+         let list = _PofList _tDyn patts in
+         list);
+       pattcanonUnifyFull res vars)
+;;       
+
 new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
   (let open RunCtx.Monad in
    fun _ -> fun [ patt ; res ] -> perform

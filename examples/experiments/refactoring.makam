@@ -1,0 +1,33 @@
+%use utils.
+
+%extend refl.
+
+(* nice reflective predicates *)
+
+builtin_isunif : A -> prop.
+builtin_isunif X <- isunif X.
+
+isunif : A -> prop.
+isunif X <- builtin_isunif X.
+
+isconst : A -> prop.
+isconst (X : string).
+isconst (X : int).
+
+isfun : A -> prop.
+isfun (X : A -> B).
+
+isterm : A -> prop.
+(isterm X) when not(isconst X), not(isfun X), headargs X _ _.
+
+%end.
+
+
+dup_head : A -> B -> prop.
+(dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
+(dup_head P P') when refl.isterm P <- headargs P Head _, headname P PName, lookup PName P'.
+
+dyncall : (A -> prop) -> dyn -> prop.
+dyncall P (dyn X) <- dup_head P P', P' X.
+
+([X]allheads X, map0 (dyncall printhead) X) ?

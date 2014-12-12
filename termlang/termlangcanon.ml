@@ -1515,9 +1515,9 @@ let mkApp ?(loc = None) e1 e2 () =
   let uA  = newTMeta loc in
   { term = `App(e1, e2) ; classifier = uA ; loc = loc ; extra = ExprExtras.empty () }
 
-let mkIndexedVar ?(loc = None) i () =
+let mkIndexedVar ?(loc = None) ?(name = `Anon) i () =
   let uA = newTMeta loc in
-  { term = `Var(`Anon, Some i) ; classifier = uA ; loc = loc ; extra = ExprExtras.empty () }
+  { term = `Var(name, Some i) ; classifier = uA ; loc = loc ; extra = ExprExtras.empty () }
 
 let mkVar ?(loc = None) s () =
   let uA = newTMeta loc in

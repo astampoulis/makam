@@ -1,6 +1,7 @@
 %use utils.
 %use bindutils.
 %use subbindutils.
+%use extutils.
 %use maps.
 
 (* kinds *)
