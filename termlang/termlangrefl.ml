@@ -320,3 +320,20 @@ let global_staged_command cmdcode =
                           l2 = [ (cmd), "X1", "X2" ... ]
                           l3 = [ "X1", "X2", ... , mkIVar (`Bound 0) ]))
 *)
+
+
+exception CompilationFailure ;;
+
+new_builtin_predicate "unsafe.eval_ocaml" ( _tString **> _tProp )
+  (let open RunCtx.Monad in
+   fun _ -> fun [ ocamlcode ] -> perform
+       ocamlcode <-- chasePattcanon [] ocamlcode ;
+       ocamlstring <-- _PtoString ocamlcode ;
+       (try !(Termlangprolog.meta_do) ocamlstring;
+            return ()
+        with CompilationFailure -> begin
+            Printf.printf "In %s:\n  Compilation error.\n"
+                          (UChannel.string_of_span ocamlcode.loc);
+            mzero
+          end))
+;;
