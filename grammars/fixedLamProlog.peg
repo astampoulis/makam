@@ -80,6 +80,8 @@ baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
 	  / id:ltoken(identnamed)  << autospan_un mkVar id >>
 	  / x:ltoken( ( namepref id:ident << id >>) ) << autospan_un mkNameVar x >>
 	  / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>
+	  / s:loced( ( s:multilinestr << s >> ) )
+	    << autospan_un mkString s >>
 	  / s:loced( ( token(["]) str:rep(strchar) ["] << str |> String.concat "" >> ) )
 	    << autospan_un mkString s >>
 
@@ -397,6 +399,11 @@ escapechar ->
 strchar ->  s:escapechar << Utils.unescape s >>
 	 / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
 str     -> token(["]) str:rep(strchar) ["] << str |> String.concat "" >>
+
+
+multilinestrchar ->  s:escapechar << Utils.unescape s >>
+         / !"\"\"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
+multilinestr -> token("\"\"\"") str:rep(multilinestrchar) "\"\"\"" << str |> String.concat "" >>
 
 
 ocamlrevchar  -> !"<<" c:. << c >>

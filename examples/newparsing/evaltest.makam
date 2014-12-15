@@ -1,0 +1,13 @@
+unsafe.eval_ocaml """
+  open Ast_helper;;
+  open Asttypes;;
+  let exp =
+    Exp.apply
+      (Exp.ident
+        { txt = Longident.parse "print_string";
+          loc = !default_loc })
+      [ "", Exp.constant (Const_string  ("hello\n", None)) ];;
+  Printast.expression 0 Format.str_formatter exp ;;
+  let s = (Pprintast.string_of_expression exp) ^ "\n" ;;
+  print_string s ;;
+  !(Termlangprolog.meta_do) s ;; """ ?
