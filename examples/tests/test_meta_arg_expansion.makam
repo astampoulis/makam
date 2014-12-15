@@ -1,0 +1,19 @@
+%use utils.
+
+(dyneq Y (F X),
+ dyneq X not,
+ dyneq Y Z) ?
+
+
+
+(* this needs further minimization: *)
+
+testpred : (string -> string) -> string -> prop.
+
+dup_head : A -> B -> prop.
+dup_head P P' <- headargs P Head _, headname P PName, lookup PName P'.
+
+dyncall : (A -> prop) -> dyn -> prop.
+dyncall P (dyn X) <- dup_head (P _) P', P' X.
+
+dyncall printhead (dyn testpred) ?
