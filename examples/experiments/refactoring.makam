@@ -44,7 +44,7 @@ dyncall P (dyn X) <- dup_head P P', P' X.
 dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
 dyncall P (dyn X) (dyn Y) <- dup_head P P', P' X Y.
 
-([X]allheads X, map0 (dyncall printhead) X) ?
+(* ([X]allheads X, print X, map0 (dyncall printhead) X) ? *)
 
 
 filter : (A -> prop) -> list A -> list A -> prop.
@@ -56,3 +56,33 @@ allrules : list clause -> prop.
 allrules Rules <- allheads XS, filter (dyncall type.ispred) XS PS, map (dyncall getrules) PS RulesCD,
                   map (fun x y => eq x (dyn y)) RulesCD RulesC,
                   foldl append [] RulesC Rules.
+
+%use generic.
+
+printlocsof_aux : A -> dyn -> dyn -> prop.
+printlocsof_aux Head (dyn X) (dyn Y) <-
+  (if headargs X Head' _,
+      (if dyneq Head' Head,
+          (locget X L, print L, structural (printlocsof_aux Head) (dyn X) (dyn Y)),
+	  structural (printlocsof_aux Head) (dyn X) (dyn Y)),
+      (if isunif X,
+          dyneq X Y,
+	  structural (printlocsof_aux Head) (dyn X) (dyn Y))).
+
+printlocsof : A -> B -> prop.
+printlocsof Head What <- printlocsof_aux Head (dyn What) _.
+
+
+printloc : A -> prop.
+printloc X.
+(* printloc X <- print X, locget X L, print L. *)
+
+finduses : A -> prop.
+finduses X <- allrules Rules, 
+	      map0 (printlocsof X) Rules.
+
+finduses not ?
+
+
+
+(* check gatherarrows/countarrows descrep. *)

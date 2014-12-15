@@ -169,6 +169,7 @@ hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh
 	    << mkTm "once" [ o ] >>
 	  / token("(") newvars:repWHITE(newvar) 
 	    knowns:rep( (x:assumption token("->") << x >>) )
+	    &&( epsilon << fun _ -> List.length newvars + List.length knowns > 0 >> )
 	    req:hyp token(")")
 	     << req |>
 		    fun x -> List.fold_left
