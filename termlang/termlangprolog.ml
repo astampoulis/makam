@@ -1383,6 +1383,7 @@ let rec pattneutSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p 
 	  let typ' = (List.hd inforest).classifier in
 	  let sigma' = List.map (fun x -> lazy(pattcanonSubstAux curbound substbound sigma x)) args in
 	  let body' = pattneutSubstAux (curbound + n) curbound sigma' body in
+	  let body' = pattneutShift ~start:curbound (-n) body' in
 	  let res = { p with term = `LamMany(inforest, body') ; classifier = typ' ; extra = PattExtras.empty () } in
 	  raise (NeutToCanon(res))
 
@@ -1636,7 +1637,8 @@ and chaseSubst_mutable ?(deep = false) ?(update = false) (bound : name list) (id
 
     `Subst(s, inv, typs, names) ->
       
-      let s' = List.map (chasePattcanon_mutable ~deep:deep bound) s in
+      let s' = List.map pattcanonRenormalize_mutable s in
+      let s' = List.map (chasePattcanon_mutable ~deep:deep bound) s' in
       if update then updateMetaBoundNames_mutable idx s' ;
       `Subst(s', None, typs, names)
 
@@ -2177,7 +2179,7 @@ let chasedPattUnify_mutable (bound : name list) (p1 : pattneut) (p2 : pattneut) 
 
     | _, _, { term = `Meta( (_, _, `Subst(_, Some _, _, _), _) as m1) }, _ ->
 
-        invertAndUnify m1 bound p1 p2
+      invertAndUnify m1 bound p1 p2
 
     | _, _, { term = `Meta(m1) }, _ ->
 
