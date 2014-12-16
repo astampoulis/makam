@@ -1,0 +1,92 @@
+%use utils.
+
+miniexp : type.
+
+apply  : string -> list miniexp -> miniexp.
+napply : string -> list (tuple string miniexp) -> miniexp.
+str    : string -> miniexp.
+char   : string -> miniexp.
+int    : int -> miniexp.
+constr : string -> list miniexp -> miniexp.
+record : list (tuple string miniexp) -> miniexp.
+tuple  : list miniexp -> miniexp.
+list   : list miniexp -> miniexp.
+deref  : miniexp -> miniexp.
+
+appendmany : list string -> string -> prop.
+appendmany LS S <- foldr append LS "" S.
+
+concatsep : list string -> string -> string -> prop.
+concatsep [] Sep "".
+concatsep (HD :: TL) Sep Res <-
+  foldl (fun cur elm => appendmany [ cur, Sep, elm ]) HD TL Res.
+
+to_ocaml_string : miniexp -> string -> prop.
+
+to_ocaml_string (apply ID Exprs) Res <-
+  map to_ocaml_string Exprs Exprs',
+  concatsep Exprs' " " Exprs'',
+  appendmany [ "(", ID, " ", Exprs'', ")" ] Res.
+	       
+to_ocaml_string (str S) Res <-
+  tostring S Res.
+
+to_ocaml_string (char C) Res <-
+  tostring C S,
+  explode S [ "\"", C', "\"" ],
+  appendmany [ "'", C', "'" ] Res.
+
+to_ocaml_string (int I) Res <-
+  tostring I Res.
+
+to_ocaml_string (constr ID Exprs) Res <-
+  map to_ocaml_string Exprs Exprs',
+  concatsep Exprs' ", " Exprs'',
+  appendmany [ "(", ID, " ", "(", Exprs'', "))" ] Res.
+
+split : list (tuple A B) -> list A -> list B -> prop.
+split [] [] [].
+split (cons (A, B) TL) (A :: TLa) (B :: TLb) <- split TL TLa TLb.
+
+to_ocaml_string (record LSES) Res <-
+  split LSES LS ES,
+  map to_ocaml_string ES ES',
+  map2 (fun l e => appendmany [ l, " = ", e ]) LS ES' LSES',
+  concatsep LSES' "; " LSES'',
+  appendmany [ "{ ", LSES'', " }" ] Res.
+
+to_ocaml_string (napply ID LExprs) Res <-
+  split LExprs LS Exprs,
+  map to_ocaml_string Exprs Exprs',
+  map2 (fun l e => appendmany [ "~", l, ":", e ]) LS Exprs' LExprs',
+  concatsep LExprs' " " LExprs'',
+  appendmany [ "(", ID, " ", LExprs'', ")" ] Res.
+
+to_ocaml_string (tuple ES) Res <-
+
+  map to_ocaml_string ES ES',
+  concatsep ES' ", " ES'',
+  appendmany [ "(", ES'', ")" ] Res.
+
+to_ocaml_string (list ES) Res <-
+
+  map to_ocaml_string ES ES',
+  concatsep ES' "; " ES'',
+  appendmany [ "[", ES'', "]" ] Res.
+
+to_ocaml_string (deref E) Res <-
+
+  to_ocaml_string E E',
+  appendmany [ "!", E' ] Res.
+
+%extend unsafe.
+eval_miniexp : miniexp -> prop.
+eval_miniexp M <-
+  to_ocaml_string M S,
+  print_string "\nOCAML CODE:\n\n",
+  print_string S,
+  unsafe.eval_ocaml S.
+(* weird: we should not require qualification here.
+   oh, I see what's the problem, we do not do the same preprocessing in builtins *)
+%end.
+

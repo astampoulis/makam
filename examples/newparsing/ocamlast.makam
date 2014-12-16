@@ -1,0 +1,42 @@
+lid : type.
+str : type.
+
+lid : string -> lid.
+str : string -> lid.
+
+exp : type.
+constant : type.
+pat : type.
+
+rec_flag : type.
+rec : rec_flag.
+nonrec : rec_flag.
+
+ident    : lid -> exp.
+constant : constant -> exp.
+let      : rec_flag -> list value_binding -> exp.
+
+
+to_miniexp : exp -> miniexp -> prop.
+
+
+%extend unsafe.
+eval_ast : exp -> prop.
+eval_ast E <-
+  to_miniexp E E',
+  to_ocaml_string E' S,
+  appendmany [ """
+    open Ast_helper;;
+    open Asttypes;;
+    let exp = """, S, """;;
+    let s = (Pprintast.string_of_expression exp) ^ "\\n" ;;
+    Printf.printf "REAL OCAML CODE:\n\n%s\n" s ;
+    !(Termlangprolog.meta_do) s ;;
+  """ ] OCamlCode,
+  print_string "\nOCAML CODE:\n\n",
+  print_string OCamlCode,
+  unsafe.eval_ocaml OCamlCode.
+%end.
+
+  
+

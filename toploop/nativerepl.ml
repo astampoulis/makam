@@ -42,8 +42,12 @@ let writeout s =
 meta_do := fun s ->
            
            let file = writeout s in
-           file |> compile |> Dynlink.loadfile ;
-           Sys.remove file
+	   try
+             file |> compile |> Dynlink.loadfile ;
+             Sys.remove file
+	   with Termlangrefl.CompilationFailure ->
+	     Sys.remove file ;
+	     raise Termlangrefl.CompilationFailure
 
 ;;
 

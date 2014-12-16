@@ -281,6 +281,28 @@ new_builtin_predicate "print" ( ~* "A" **> _tProp )
      return ()))
 ;;
 
+new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedPrint p in
+     pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
+;;
+
+new_builtin_predicate "print_string" ( _tString **> _tProp )
+  (fun _ -> fun [ e ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     s <-- _PtoString p ;
+     let _ = Printf.printf "%s%!" s in
+     return ()))
+;;
+
+
 new_builtin_predicate "cheapprint" ( _tInt **> ~* "A" **> _tProp )
   (fun _ -> fun [ depth ; e ] ->
     (let open RunCtx.Monad in
