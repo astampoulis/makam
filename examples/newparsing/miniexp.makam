@@ -4,6 +4,7 @@ miniexp : type.
 
 apply  : string -> list miniexp -> miniexp.
 napply : string -> list (tuple string miniexp) -> miniexp.
+var    : string -> miniexp.
 str    : string -> miniexp.
 char   : string -> miniexp.
 int    : int -> miniexp.
@@ -11,10 +12,9 @@ constr : string -> list miniexp -> miniexp.
 record : list (tuple string miniexp) -> miniexp.
 tuple  : list miniexp -> miniexp.
 list   : list miniexp -> miniexp.
+nil    : miniexp.
+cons   : miniexp -> miniexp -> miniexp.
 deref  : miniexp -> miniexp.
-
-appendmany : list string -> string -> prop.
-appendmany LS S <- foldr append LS "" S.
 
 concatsep : list string -> string -> string -> prop.
 concatsep [] Sep "".
@@ -27,6 +27,9 @@ to_ocaml_string (apply ID Exprs) Res <-
   map to_ocaml_string Exprs Exprs',
   concatsep Exprs' " " Exprs'',
   appendmany [ "(", ID, " ", Exprs'', ")" ] Res.
+
+to_ocaml_string (var ID) Res <-
+  appendmany [ "(", ID, ")" ] Res.
 	       
 to_ocaml_string (str S) Res <-
   tostring S Res.
@@ -39,7 +42,10 @@ to_ocaml_string (char C) Res <-
 to_ocaml_string (int I) Res <-
   tostring I Res.
 
-to_ocaml_string (constr ID Exprs) Res <-
+to_ocaml_string (constr ID []) Res <-
+  appendmany [ "(", ID, ")" ] Res.
+
+(to_ocaml_string (constr ID Exprs) Res) when not(eq Exprs []) <-
   map to_ocaml_string Exprs Exprs',
   concatsep Exprs' ", " Exprs'',
   appendmany [ "(", ID, " ", "(", Exprs'', "))" ] Res.
@@ -73,6 +79,15 @@ to_ocaml_string (list ES) Res <-
   map to_ocaml_string ES ES',
   concatsep ES' "; " ES'',
   appendmany [ "[", ES'', "]" ] Res.
+
+to_ocaml_string (nil) "[]".
+
+to_ocaml_string (cons E ES) Res <-
+
+  to_ocaml_string E E',
+  to_ocaml_string ES ES',
+  appendmany [ "(", E', "::", ES', ")" ] Res.
+  
 
 to_ocaml_string (deref E) Res <-
 

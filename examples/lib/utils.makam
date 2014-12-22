@@ -94,6 +94,12 @@ filterlist (cons (some HD) TL) (cons HD TL') <- filterlist TL TL'.
 filterlist (cons none TL) TL' <- filterlist TL TL'.
 
 
+
+(* string stuff *)
+
+appendmany : list string -> string -> prop.
+appendmany LS S <- foldr append LS "" S.
+
 (* other predicates *)
 
 is_constructor : A -> prop.

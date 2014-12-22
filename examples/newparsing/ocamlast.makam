@@ -1,29 +1,168 @@
+(* Manually converted from ocaml-4.02.1/parsing/ast_helper *)
+(* Names of constants are important: they need to correspond to
+   the original functions *)
+
+%use utils.
+%use "examples/newparsing/miniexp".
+
 lid : type.
 str : type.
 
 lid : string -> lid.
-str : string -> lid.
+str : string -> str.
 
-exp : type.
 constant : type.
-pat : type.
+const_int : int -> constant.
+const_char : string -> constant.
+const_string : string -> option string -> constant.
 
 rec_flag : type.
-rec : rec_flag.
-nonrec : rec_flag.
+nonrecursive, recursive : rec_flag.
 
-ident    : lid -> exp.
-constant : constant -> exp.
-let      : rec_flag -> list value_binding -> exp.
+direction_flag : type.
+upto, downto : direction_flag.
+
+private_flag : type.
+private, public : private_flag.
+
+mutable_flag : type.
+mutable, immutable : private_flag.
+
+virtual_flag : type.
+virtual, concerete : virtual_flag.
+
+override_flag : type.
+override, fresh : override_flag.
+
+closed_flag : type.
+closed, open : closed_flag.
+
+core_type : type.
+any: unit -> core_type.
+var: string -> core_type.
+arrow: string -> core_type -> core_type -> core_type.
+tuple: list core_type -> core_type.
+constr: lid -> list core_type -> core_type.
+class_: lid -> list core_type -> core_type.
+alias: core_type -> string -> core_type.
+poly: list string -> core_type -> core_type.
+package: lid -> list (tuple lid core_type) -> core_type.
+force_poly: core_type -> core_type.
 
 
-to_miniexp : exp -> miniexp -> prop.
+pattern : type.
+
+any: unit -> pattern.
+var: str -> pattern.
+alias: pattern -> str -> pattern.
+constant: constant -> pattern.
+interval: constant -> constant -> pattern.
+tuple: list pattern -> pattern.
+construct: lid -> option pattern -> pattern.
+variant: string -> option pattern -> pattern.
+record: list (tuple lid pattern) -> closed_flag -> pattern.
+array: list pattern -> pattern.
+or_: pattern -> pattern -> pattern.
+lazy_: pattern -> pattern.
+unpack: str -> pattern.
+exception_: pattern -> pattern.
+
+expression : type.
+case : type.
+
+value_binding : type.
+
+mk : pattern -> expression -> value_binding.
+
+ident: lid -> expression.
+constant: constant -> expression.
+let_: rec_flag -> list value_binding -> expression -> expression.
+fun_: string -> option expression -> pattern -> expression -> expression.
+function_: list case -> expression.
+apply: expression -> list (tuple string expression) -> expression.
+match_: expression -> list case -> expression.
+try_: expression -> list case -> expression.
+tuple: list expression -> expression.
+construct: lid -> option expression -> expression.
+variant: string -> option expression -> expression.
+record: list (tuple lid expression) -> option expression -> expression.
+field: expression -> lid -> expression.
+setfield: expression -> lid -> expression -> expression.
+array: list expression -> expression.
+ifthenelse: expression -> expression -> option expression -> expression.
+sequence: expression -> expression -> expression.
+while_: expression -> expression -> expression.
+for_: pattern -> expression -> expression -> direction_flag -> expression -> expression.
+coerce: expression -> option core_type -> core_type -> expression.
+constraint_: expression -> core_type -> expression.
+send: expression -> string -> expression.
+new_: lid -> expression.
+setinstvar: str -> expression -> expression.
+override: list (tuple str expression) -> expression.
+assert_: expression -> expression.
+lazy_: expression -> expression.
+poly: expression -> option core_type -> expression.
+newtype: string -> expression -> expression.
+open_: override_flag -> lid -> expression -> expression.
+case: pattern -> expression -> case.
+
+
+
+(* Actual conversion *)
+
+to_miniexp : dyn -> miniexp -> prop.
+
+to_miniexp (dyn (lid L)) (record [ ("loc", deref (var "default_loc")),
+	                                   ("txt", apply "Longident.parse" [ str L ]) ]).
+
+to_miniexp (dyn (str S)) (record [ ("loc", deref (var "default_loc")),
+	                                   ("txt", str S )]).
+
+to_miniexp (dyn (S : string)) (str S).
+
+to_miniexp (dyn ( (some X) : option A))
+	   (constr "Some" [ X' ]) <-
+  to_miniexp (dyn X) X'.
+
+to_miniexp (dyn ( (none) : option A))
+	   (constr "None" []).
+
+to_miniexp (dyn ( (cons HD TL) : list A ))
+	   (cons HD' TL') <-
+  to_miniexp (dyn HD) HD',
+  to_miniexp (dyn TL) TL'.
+
+to_miniexp (dyn (nil : list A)) (nil).
+
+to_miniexp (dyn (tuple A B)) (tuple [A', B']) <-
+  to_miniexp (dyn A) A',
+  to_miniexp (dyn B) B'.
+
+to_miniexp_aux_function : string -> dyn -> miniexp -> prop.
+to_miniexp_aux_function Prefix (dyn X) (apply F Args') <-
+  headargs X HD Args,
+  headname HD HDName,
+  appendmany [ Prefix, ".", HDName ] F,
+  map to_miniexp Args Args'.
+
+to_miniexp_aux_constructor : dyn -> miniexp -> prop.
+to_miniexp_aux_constructor (dyn X) (constr F Args') <-
+  headargs X HD Args,
+  headname HD HDName,
+  (* capitalize HDName F, *)
+  eq HDName F,
+  map to_miniexp Args Args'.
+
+to_miniexp (dyn ((const_string S OS) : constant)) (constr "Const_string" [ str S, OS' ]) <-
+  to_miniexp (dyn OS) OS'.
+to_miniexp (dyn (E : expression)) Res <- to_miniexp_aux_function "Exp" (dyn E) Res.
+
 
 
 %extend unsafe.
-eval_ast : exp -> prop.
+eval_ast : expression -> prop.
 eval_ast E <-
-  to_miniexp E E',
+  to_miniexp (dyn E) E',
   to_ocaml_string E' S,
   appendmany [ """
     open Ast_helper;;
@@ -40,3 +179,6 @@ eval_ast E <-
 
   
 
+
+
+unsafe.eval_ast (apply (ident (lid "print_string")) [ tuple "" (constant (const_string "hello" none)) ]) ?
