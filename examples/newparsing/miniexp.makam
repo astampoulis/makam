@@ -101,7 +101,5 @@ eval_miniexp M <-
   print_string "\nOCAML CODE:\n\n",
   print_string S,
   unsafe.eval_ocaml S.
-(* weird: we should not require qualification here.
-   oh, I see what's the problem, we do not do the same preprocessing in builtins *)
 %end.
 
