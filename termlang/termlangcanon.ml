@@ -565,13 +565,15 @@ let qualifyName qualset n =
 
   let state = !termstate in
   if state.current_module = None then
-    n
+    [n]
   else begin
     let modules = state.current_module :: state.module_extension_stack in
     let fqnames = List.filter_map (function Some m -> Some (m ^ "." ^ n) | None -> None) modules in
-    try
-      List.find (fun x -> StringSet.mem x qualset) fqnames
-    with Not_found -> n
+    let basename = if Dict.mem n state.name_to_fvar then [n] else [] in
+    let allnames = 
+      List.filter (fun x -> StringSet.mem x qualset) fqnames ++ basename
+    in
+    if List.length allnames = 0 then [n] else allnames
   end
 
 ;;
@@ -579,7 +581,7 @@ let qualifyName qualset n =
 let findTFVar name () =
 
   let state = !termstate in
-  let name' = qualifyName state.qualified_tfvar_exists name in
+  let name' = qualifyName state.qualified_tfvar_exists name |> List.hd in
   let idx   =
     (try Dict.find name' state.name_to_tfvar
      with Not_found -> raise (WrongTypeVar))
@@ -632,8 +634,8 @@ let addFvar s typ =
 let findFvar s =
 
   let state = !termstate in
-  let s' = qualifyName state.qualified_fvar_exists s in
-  try Dict.find s' state.name_to_fvar
+  let ss = qualifyName state.qualified_fvar_exists s in
+  try List.map (fun s -> Dict.find s state.name_to_fvar) ss |> List.flatten
   with Not_found -> raise Not_found
 
 ;;
