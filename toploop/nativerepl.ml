@@ -24,7 +24,7 @@ let read_process command =
 let compile filename = 
   let (res, outputname) = String.replace filename ".ml" ".cmxs" in
   let _ = assert res in
-  let ret = Sys.command ("ocamlbuild -use-ocamlfind " ^ outputname) in
+  let ret = Sys.command ("ocamlbuild -use-ocamlfind " ^ outputname ^ " 2>&1 >/dev/null") in
   if ret = 0 then
     "_build/" ^ outputname
   else

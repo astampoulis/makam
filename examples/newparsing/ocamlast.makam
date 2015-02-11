@@ -1,13 +1,16 @@
-(* Manually converted from ocaml-4.02.1/parsing/ast_helper *)
-(* Names of constants are important: they need to correspond to
-   the original functions *)
+(* Manually converted from ocaml-4.02.1/parsing/ast_helper
+   
+   For the time being, only expressions, patterns and types are converted.
+   Modules and module signatures are still todo.
+   
+   Names of constants are important: they need to correspond to
+   the original functions or constructors *)
 
 %use utils.
 %import "examples/newparsing/miniexp" as miniexp.
 
-lid : type.
-str : type.
-
+(* Base types from asttypes *)
+lid, str : type.
 lid : string -> lid.
 str : string -> str.
 
@@ -16,27 +19,17 @@ const_int : int -> constant.
 const_char : string -> constant.
 const_string : string -> option string -> constant.
 
-rec_flag : type.
+rec_flag, direction_flag, private_flag, mutable_flag, virtual_flag, override_flag, closed_flag : type.
 nonrecursive, recursive : rec_flag.
-
-direction_flag : type.
 upto, downto : direction_flag.
-
-private_flag : type.
 private, public : private_flag.
-
-mutable_flag : type.
 mutable, immutable : private_flag.
-
-virtual_flag : type.
-virtual, concerete : virtual_flag.
-
-override_flag : type.
+virtual, concrete : virtual_flag.
 override, fresh : override_flag.
-
-closed_flag : type.
 closed, open : closed_flag.
 
+
+(* Type expressions *)
 core_type : type.
 any: unit -> core_type.
 var: string -> core_type.
@@ -50,8 +43,8 @@ package: lid -> list (tuple lid core_type) -> core_type.
 force_poly: core_type -> core_type.
 
 
+(* Patterns *)
 pattern : type.
-
 any: unit -> pattern.
 var: str -> pattern.
 alias: pattern -> str -> pattern.
@@ -67,13 +60,9 @@ lazy_: pattern -> pattern.
 unpack: str -> pattern.
 exception_: pattern -> pattern.
 
-expression : type.
-case : type.
 
-value_binding : type.
-
-mk : pattern -> expression -> value_binding.
-
+(* Expressions *)
+expression, case, value_binding : type.
 ident: lid -> expression.
 constant: constant -> expression.
 let_: rec_flag -> list value_binding -> expression -> expression.
@@ -104,8 +93,8 @@ lazy_: expression -> expression.
 poly: expression -> option core_type -> expression.
 newtype: string -> expression -> expression.
 open_: override_flag -> lid -> expression -> expression.
+mk : pattern -> expression -> value_binding.
 case: pattern -> expression -> case.
-
 
 
 (* Actual conversion *)
@@ -113,22 +102,22 @@ case: pattern -> expression -> case.
 to_miniexp : dyn -> miniexp.miniexp -> prop.
 
 to_miniexp (dyn (lid L)) (miniexp.record [ ("loc", miniexp.deref (miniexp.var "default_loc")),
-	                                   ("txt", miniexp.apply "Longident.parse" [ miniexp.str L ]) ]).
+                                           ("txt", miniexp.apply "Longident.parse" [ miniexp.str L ]) ]).
 
 to_miniexp (dyn (str S)) (miniexp.record [ ("loc", miniexp.deref (miniexp.var "default_loc")),
-	                                   ("txt", miniexp.str S )]).
+                                           ("txt", miniexp.str S )]).
 
 to_miniexp (dyn (S : string)) (miniexp.str S).
 
-to_miniexp (dyn ( (some X) : option A))
-	   (miniexp.constr "Some" [ X' ]) <-
+to_miniexp (dyn ((some X) : option A))
+           (miniexp.constr "Some" [ X' ]) <-
   to_miniexp (dyn X) X'.
 
-to_miniexp (dyn ( (none) : option A))
-	   (miniexp.constr "None" []).
+to_miniexp (dyn ((none) : option A))
+           (miniexp.constr "None" []).
 
-to_miniexp (dyn ( (cons HD TL) : list A ))
-	   (miniexp.cons HD' TL') <-
+to_miniexp (dyn ((cons HD TL) : list A ))
+           (miniexp.cons HD' TL') <-
   to_miniexp (dyn HD) HD',
   to_miniexp (dyn TL) TL'.
 
@@ -149,13 +138,27 @@ to_miniexp_aux_constructor : dyn -> miniexp.miniexp -> prop.
 to_miniexp_aux_constructor (dyn X) (miniexp.constr F Args') <-
   headargs X HD Args,
   headname HD HDName,
-  (* capitalize HDName F, *)
-  eq HDName F,
+  capitalize HDName F,
   map to_miniexp Args Args'.
 
-to_miniexp (dyn ((const_string S OS) : constant)) (miniexp.constr "Const_string" [ miniexp.str S, OS' ]) <-
-  to_miniexp (dyn OS) OS'.
+to_miniexp (dyn (C : constant)) Res <- to_miniexp_aux_constructor (dyn C) Res.
+
+to_miniexp (dyn (F : rec_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+to_miniexp (dyn (F : direction_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+to_miniexp (dyn (F : private_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+to_miniexp (dyn (F : mutable_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+to_miniexp (dyn (F : override_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+to_miniexp (dyn (F : closed_flag)) Res <- to_miniexp_aux_constructor (dyn F) Res.
+
+to_miniexp (dyn (T : core_type)) Res <- to_miniexp_aux_function "Typ" (dyn T) Res.
+
 to_miniexp (dyn (E : expression)) Res <- to_miniexp_aux_function "Exp" (dyn E) Res.
+
+to_miniexp (dyn (P : expression)) Res <- to_miniexp_aux_function "Pat" (dyn P) Res.
+
+to_miniexp (dyn (C : case)) Res <- to_miniexp_aux_function "Exp" (dyn C) Res.
+
+to_miniexp (dyn (V : value_binding)) Res <- to_miniexp_aux_function "Vb" (dyn V) Res.
 
 
 
@@ -169,11 +172,8 @@ eval_ast E <-
     open Asttypes;;
     let exp = """, S, """;;
     let s = (Pprintast.string_of_expression exp) ^ "\\n" ;;
-    Printf.printf "REAL OCAML CODE:\n\n%s\n" s ;
     !(Termlangprolog.meta_do) s ;;
   """ ] OCamlCode,
-  print_string "\nOCAML CODE:\n\n",
-  print_string OCamlCode,
   unsafe.eval_ocaml OCamlCode.
 %end.
 

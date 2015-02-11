@@ -247,6 +247,17 @@ new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **>
 end
 ;;
 
+new_builtin_predicate "capitalize" ( _tString **> _tString **> _tProp ) begin
+
+  let open RunCtx.Monad in
+  (fun _ -> fun [ str; res ] -> perform
+    str  <-- chasePattcanon [] str ;
+    str' <-- _PtoString str ;
+    pattcanonUnifyFull res (_PofString (String.capitalize str') ~loc:str.loc))
+  
+end;;
+
+
 
 (* --------------
    Character classes. 

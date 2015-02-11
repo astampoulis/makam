@@ -10,4 +10,5 @@ generated/*
 *.glob
 *.vo
 \#*\#
+.\#*
 js/makam.js
