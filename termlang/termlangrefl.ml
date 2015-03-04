@@ -33,12 +33,12 @@ new_builtin_predicate "lookup" ( _tString **> ( ~* "A" ) **> _tProp )
        varname <-- _PtoString varname ;
        let expr = pattcanonToExpr (-1) res in
        varidx  <-- intermlang (fun _ ->
-	 try Some (findUnifiableVar `Free (findFvar varname) (exprAsExprU expr))
-	 with _ -> None) ;
+         try Some (findUnifiableVar `Free (findFvar varname) (exprAsExprU expr))
+         with _ -> None) ;
        match varidx with
        | Some (`Free, varidx) ->
-	 let patt = pattheadToCanon { expr with term = `Var(`Concrete(varname), (`Free, varidx)) } in
-	 pattcanonUnifyFull res patt
+         let patt = pattheadToCanon { expr with term = `Var(`Concrete(varname), (`Free, varidx)) } in
+         pattcanonUnifyFull res patt
        | _ -> mzero)
 ;;
 
@@ -68,9 +68,9 @@ new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
        patt <-- pattcanonRenormalize patt ;
        patt <-- chasePattcanon [] patt ;
        match patt.term with
-	 | `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(s), (`Free, _)) }, _, _ ) }) ->
-	   pattcanonUnifyFull res (_PofString ~loc:patt.loc s)
-	 | _ -> mzero)
+         | `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(s), (`Free, _)) }, _, _ ) }) ->
+           pattcanonUnifyFull res (_PofString ~loc:patt.loc s)
+         | _ -> mzero)
 ;;
 
 new_builtin_predicate "headargs" ( ( ~* "A" ) **> ( ~* "B" ) **> (_tList _tDyn) **> _tProp)
@@ -83,40 +83,40 @@ new_builtin_predicate "headargs" ( ( ~* "A" ) **> ( ~* "B" ) **> (_tList _tDyn) 
        (* deconstruct *)
        | `LamMany([], { term = `AppMany(hd, args', args'info) }) ->
 
-	 perform
-	   hd <-- pattcanonRenormalize (pattheadToCanon hd) ;
-	   pattcanonUnifyFull head hd ;
-	   let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
-	   let args'list = _PofList ~loc:term.loc _tDyn args' in
-	   pattcanonUnifyFull args args'list
+         perform
+           hd <-- pattcanonRenormalize (pattheadToCanon hd) ;
+           pattcanonUnifyFull head hd ;
+           let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
+           let args'list = _PofList ~loc:term.loc _tDyn args' in
+           pattcanonUnifyFull args args'list
 
        (* reconstruct *)
        | `LamMany([], { term = `Meta(_) }) ->
-	 perform
-	   args <-- _PtoList args ;
-	   ps <-- mapM pattcanonRenormalize (head :: args) ;
-	   ps <-- mapM (chasePattcanon []) ps ;
-	   let (head' :: args') = ps in
-	   (head'', argsinfo, typ) <--
-	     (match head'.term with
-		 `LamMany(_, { term = `AppMany(hd, _, argsinfo) ;
-			       classifier = typ }) ->
-		   return (hd, argsinfo, typ)
-	       | _ -> mzero) ;
+         perform
+           args <-- _PtoList args ;
+           ps <-- mapM pattcanonRenormalize (head :: args) ;
+           ps <-- mapM (chasePattcanon []) ps ;
+           let (head' :: args') = ps in
+           (head'', argsinfo, typ) <--
+             (match head'.term with
+                 `LamMany(_, { term = `AppMany(hd, _, argsinfo) ;
+                               classifier = typ }) ->
+                   return (hd, argsinfo, typ)
+               | _ -> mzero) ;
 
-	   (* check types *)
-	   argstyps <-- intermlang (fun _ -> gatherArrowTyps head''.classifier) ;
-	   if (List.length args' <> List.length argstyps) then mzero else return () ;
-	   args' <-- mapM (uncurry _PtoDyn) (List.combine args' argstyps) ;
+           (* check types *)
+           argstyps <-- intermlang (fun _ -> gatherArrowTyps head''.classifier) ;
+           if (List.length args' <> List.length argstyps) then mzero else return () ;
+           args' <-- mapM (uncurry _PtoDyn) (List.combine args' argstyps) ;
 
-	   let term' =
-	     pattneutToCanon
-	       { term = `AppMany(head'', args', argsinfo) ;
-		 classifier = typ ;
-		 loc = head.loc ;
-		 extra = PattExtras.empty () }
-	   in
-	   pattcanonUnifyFull term term'
+           let term' =
+             pattneutToCanon
+               { term = `AppMany(head'', args', argsinfo) ;
+                 classifier = typ ;
+                 loc = head.loc ;
+                 extra = PattExtras.empty () }
+           in
+           pattcanonUnifyFull term term'
 
        | _ -> mzero)
 ;;
@@ -131,7 +131,7 @@ new_builtin_predicate "assume_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
       match pred.term with
           `LamMany(_, body) -> 
             perform
-	        let idx  =   headPredicate body in
+                let idx  =   headPredicate body in
                 env      <-- getenv ;
                 let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
                 cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
@@ -150,7 +150,7 @@ new_builtin_predicate "getrules" ( ~* "A" **> (_tList _tClause) **> _tProp )
       match pred.term with
           `LamMany(_, body) -> 
             perform
-	        let idx  =   headPredicate body in
+                let idx  =   headPredicate body in
                 cs       <-- findConstructors idx ;
                 cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
                 pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
@@ -168,11 +168,11 @@ new_builtin_predicate "decomposeunif" ( ( ~* "A" ) **> _tInt **> (_tList _tDyn) 
        (* deconstruct *)
        | `LamMany([], { term = `Meta(_, idx, `Subst(args', _, args'info, _), _) }) ->
 
-	 perform
-	   pattcanonUnifyFull index (pattcanonInt idx) ;
-	   let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
-	   let args'list = _PofList ~loc:term.loc _tDyn args' in
-	   pattcanonUnifyFull args args'list
+         perform
+           pattcanonUnifyFull index (pattcanonInt idx) ;
+           let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
+           let args'list = _PofList ~loc:term.loc _tDyn args' in
+           pattcanonUnifyFull args args'list
 
        | _ -> mzero)
 ;;
@@ -186,22 +186,22 @@ new_builtin_predicate "recomposeunif" ( ( ~* "A" ) **> (_tList _tDyn) **> ( ~* "
 
        (* reconstruct *)
        | `LamMany([], ({ term = `Meta(s, idx, `Subst(_, _, argsinfo, names), typ) } as neut)) ->
-	 perform
-	   args <-- _PtoList args ;
-	   ps <-- mapM pattcanonRenormalize args ;
-	   ps <-- mapM (chasePattcanon []) ps ;
+         perform
+           args <-- _PtoList args ;
+           ps <-- mapM pattcanonRenormalize args ;
+           ps <-- mapM (chasePattcanon []) ps ;
 
-	   (* check types *)
-	   argstyps <-- intermlang (fun _ -> gatherArrowTyps typ) ;
-	   if (List.length ps <> List.length argstyps) then mzero else return () ;
-	   args' <-- mapM (uncurry _PtoDyn) (List.combine ps argstyps) ;
+           (* check types *)
+           argstyps <-- intermlang (fun _ -> gatherArrowTyps typ) ;
+           if (List.length ps <> List.length argstyps) then mzero else return () ;
+           args' <-- mapM (uncurry _PtoDyn) (List.combine ps argstyps) ;
 
-	   let term' =
-	     pattneutToCanon
-	       { neut with
-		 term = `Meta(s, idx, `Subst(args', None, argsinfo, names), typ) }
-	   in
-	   pattcanonUnifyFull term' result
+           let term' =
+             pattneutToCanon
+               { neut with
+                 term = `Meta(s, idx, `Subst(args', None, argsinfo, names), typ) }
+           in
+           pattcanonUnifyFull term' result
 
        | _ -> mzero)
 ;;
@@ -232,26 +232,26 @@ new_builtin_predicate "builtin.getunif" ( ~* "A" **> ~* "B" **> _tProp )
     (let open RunCtx.Monad in
      let combine r1 r2 =
        match r1, r2 with
-	 Some r, None | None, Some r -> Some r
+         Some r, None | None, Some r -> Some r
        | Some (l1, u1), Some (l2, u2) -> if l1 < l2 then Some (l1, u1) else Some (l2, u2)
        | None, None -> None
      in
      let rec auxneut cur (p : pattneut) =
        match p.term with
-	 `Meta(m1) ->
-	   perform
-	     ifte (perform
-		     b <-- intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) ;
-	             moneOrMzero b)
-	          (fun () -> perform
-		     level <-- getMetaLevel (metaindex m1) ;
-		     return (combine cur (Some (level, p))))
-	          (lazy(foldM auxcanon cur (metasubstmain m1)))
+         `Meta(m1) ->
+           perform
+             ifte (perform
+                     b <-- intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) ;
+                     moneOrMzero b)
+                  (fun () -> perform
+                     level <-- getMetaLevel (metaindex m1) ;
+                     return (combine cur (Some (level, p))))
+                  (lazy(foldM auxcanon cur (metasubstmain m1)))
        | `AppMany(hd, args, _) ->
-	   foldM auxcanon cur args
+           foldM auxcanon cur args
      and auxcanon cur (p : pattcanon) =
        match p.term with
-	 `LamMany(lamsinfo, p) -> auxneut cur p
+         `LamMany(lamsinfo, p) -> auxneut cur p
      in
      perform
        _     <-- mapM ensure_concrete_type [ input ; output ] ;
@@ -259,9 +259,9 @@ new_builtin_predicate "builtin.getunif" ( ~* "A" **> ~* "B" **> _tProp )
        p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
        unif  <-- auxneut None p ;
        match unif, output.term with
-	 Some (_, unif), `LamMany([], { term = `Meta(o) }) ->
-	   (* pattUnifyFull output unif *)
-	   setMetaParent (metaindex o) unif
+         Some (_, unif), `LamMany([], { term = `Meta(o) }) ->
+           (* pattUnifyFull output unif *)
+           setMetaParent (metaindex o) unif
        | _           -> mzero))
 ;;
 
@@ -272,50 +272,50 @@ new_builtin_predicate "builtin.absunif" ( ~* "A" **> ~* "B" **> (~* "B" **> ~* "
      let getmetaindexneut p = match p.term with `Meta(m) -> Some (metaindex m) | _ -> None in
      let chaseWithConstraints uvar =
        let rec aux visited tovisit tovisit_set =
-	 match tovisit with
-	   [] -> return visited
-	 | uvar :: tl when ISet.mem uvar visited -> aux visited tl (ISet.remove uvar tovisit_set)
-	 | uvar :: tl ->
-	   (perform 
-	      let visited = ISet.add uvar visited in
-	      let tovisit_set = ISet.remove uvar tovisit_set in
-	      cs  <-- getConstraints uvar ;
-	      cs' <-- mapM (fun elm ->
-		            match elm with
-		              `UnifCanon(bound, p1, p2) -> perform
-				                             state <-- getbacktrackstate ;
-				                             p1 <-- chasePattcanon bound p1 ;
-				                             p2 <-- chasePattcanon bound p2 ;
-							     setstate state ;
-							     return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
-			    | `Unif(bound, p1, p2) -> perform
-			                                state <-- getbacktrackstate ;
-			                                p1 <-- chasePattneut bound p1 ;
-							p2 <-- chasePattneut bound p2 ;
-							setstate state ;
-							return (List.filter_map getmetaindexneut [ p1 ; p2 ])
-			    | _ -> return []) cs;
-	      let cs' = List.flatten cs' in
-	      let newones = List.filter (fun elm -> not (ISet.mem elm visited || ISet.mem elm tovisit_set)) cs' in
-	      aux visited (newones ++ tl) (ISet.union (newones |> List.enum |> ISet.of_enum) tovisit_set))
+         match tovisit with
+           [] -> return visited
+         | uvar :: tl when ISet.mem uvar visited -> aux visited tl (ISet.remove uvar tovisit_set)
+         | uvar :: tl ->
+           (perform 
+              let visited = ISet.add uvar visited in
+              let tovisit_set = ISet.remove uvar tovisit_set in
+              cs  <-- getConstraints uvar ;
+              cs' <-- mapM (fun elm ->
+                            match elm with
+                              `UnifCanon(bound, p1, p2) -> perform
+                                                             state <-- getbacktrackstate ;
+                                                             p1 <-- chasePattcanon bound p1 ;
+                                                             p2 <-- chasePattcanon bound p2 ;
+                                                             setstate state ;
+                                                             return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
+                            | `Unif(bound, p1, p2) -> perform
+                                                        state <-- getbacktrackstate ;
+                                                        p1 <-- chasePattneut bound p1 ;
+                                                        p2 <-- chasePattneut bound p2 ;
+                                                        setstate state ;
+                                                        return (List.filter_map getmetaindexneut [ p1 ; p2 ])
+                            | _ -> return []) cs;
+              let cs' = List.flatten cs' in
+              let newones = List.filter (fun elm -> not (ISet.mem elm visited || ISet.mem elm tovisit_set)) cs' in
+              aux visited (newones ++ tl) (ISet.union (newones |> List.enum |> ISet.of_enum) tovisit_set))
        in
        aux ISet.empty [uvar] (ISet.singleton uvar)
      in
      let rec auxneut bound uvars p : pattneut =
        match p.term with
-	 `Meta(m1) when ISet.mem (metaindex m1) uvars ->
-	   let head = { p with term = `Var(`Anon, (`Bound, bound)) } in
-	   let neut = { p with term = `AppMany(head, [], []) } in
-	   neut
+         `Meta(m1) when ISet.mem (metaindex m1) uvars ->
+           let head = { p with term = `Var(`Anon, (`Bound, bound)) } in
+           let neut = { p with term = `AppMany(head, [], []) } in
+           neut
        | `Meta(s,idx,`Subst(subst,substinv,ts,names),t) ->
-	 let subst = List.map (auxcanon bound uvars) subst in
-	 let substinv = invertSubst subst in
-	 { p with term = `Meta(s,idx,`Subst(subst,substinv,ts,names),t) }
+         let subst = List.map (auxcanon bound uvars) subst in
+         let substinv = invertSubst subst in
+         { p with term = `Meta(s,idx,`Subst(subst,substinv,ts,names),t) }
        | `AppMany(hd, args, argsinfo) ->
-	 { p with term = `AppMany(hd, List.map (auxcanon bound uvars) args, argsinfo) }
+         { p with term = `AppMany(hd, List.map (auxcanon bound uvars) args, argsinfo) }
      and auxcanon bound uvars p : pattcanon =
        match p.term with
-	 `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }
+         `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }
      in
      perform
        _    <-- mapM ensure_concrete_type [ term ; meta ] ;
@@ -327,8 +327,8 @@ new_builtin_predicate "builtin.absunif" ( ~* "A" **> ~* "B" **> (~* "B" **> ~* "
        let ctx = auxneut 0 uvars p in
        let restyp = meta.classifier **> term.classifier in
        let res = { term = `LamMany( [ { term = (`Anon, meta.classifier) ; classifier = restyp ; loc = p.loc ; extra = PattExtras.empty () } ], ctx ) ;
-		   classifier = restyp ;
-		   loc = p.loc ; extra = PattExtras.empty () }
+                   classifier = restyp ;
+                   loc = p.loc ; extra = PattExtras.empty () }
        in
        pattcanonUnifyFull output res))
 ;;
@@ -352,8 +352,8 @@ let exprRemoveUnresolved (e : expr) : exprU =
     let e = { e with classifier = taux e.classifier } in
     match e.term with
     | `Var(`Concrete(s), (`Meta, i)) ->
-	let s = if s = "" then "X" else s in
-	{ e with term = `Var(`Concrete(s ^ "~" ^ (string_of_int i)), None) }
+        let s = if s = "" then "X" else s in
+        { e with term = `Var(`Concrete(s ^ "~" ^ (string_of_int i)), None) }
     | `Var(_, (`Meta, i)) -> assert false
     | `App(e1,e2)  -> { e with term = `App(eaux e1, eaux e2) }
     | `Lam(s,t,e') -> { e with term = `Lam(s, taux t, eaux e') }
@@ -362,8 +362,8 @@ let exprRemoveUnresolved (e : expr) : exprU =
   and taux t =
     match t.term with
       `TVar(s, Some (`Meta, i), args) ->
-	let s = if s = "" then "X" else s in
-	{ t with term = `TVar(s ^ "~" ^ (string_of_int i), None, args) }
+        let s = if s = "" then "X" else s in
+        { t with term = `TVar(s ^ "~" ^ (string_of_int i), None, args) }
     | `TVar(s, idx, args) -> { t with term = `TVar(s, idx, List.map taux args) }
     | `Arrow(t1, t2) -> { t with term = `Arrow(taux t1, taux t2) }
     | `TypeSort -> t
@@ -380,16 +380,16 @@ let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
   let open RunCtx.Monad in
   perform
     code   <-- intermlang (let code' = mkAnnot ~loc:code.loc (fun _ -> code) (t **> _tProp) in
-			   mkApp ~loc:code.loc code' (mkVar "Result~~")) ;
+                           mkApp ~loc:code.loc code' (mkVar "Result~~")) ;
     metas  <-- ifte (queryGoal ~print:false code) (fun x -> return (Some x))
       (lazy(Printf.printf "Error in staged code at %s.\n" (UChannel.string_of_span code.loc); return None)) ;
     result <-- (match metas with Some metas -> intermlang (fun _ ->
       let result = List.assoc "Result~~" metas in
       let result = 
-	try
-	  result |> pattcanonToExpr (-1) |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true |>
-	            alphaSanitize |> exprRemoveUnresolved
-	with NewVarUsed -> assert false
+        try
+          result |> pattcanonToExpr (-1) |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true |>
+                    alphaSanitize |> exprRemoveUnresolved
+        with NewVarUsed -> assert false
       in
       Some result) | None -> return None);
     state  <-- getstate ;
@@ -403,7 +403,7 @@ let _EUtoList  (xs : exprU) : exprU list =
     match s.term with
       `Var(_, Some (`Free, idx)) when idx = _eiNil -> List.rev acc
     | `App({ term = `App({ term =
-	`Var(_, Some (`Free, idx)) }, hd)}, tl)
+        `Var(_, Some (`Free, idx)) }, hd)}, tl)
         when idx = _eiCons ->
       aux tl (hd :: acc)
     | _ -> assert false
@@ -456,7 +456,7 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
   | `Var(_, Some (`Free, idx)), [ query ] when idx = _eiCmdQuery ->
     
     (perform
-	   _ <-- queryGoal ~print:true query ;
+           _ <-- queryGoal ~print:true query ;
            return ()) // (lazy(return ()))
 
   | _ -> mzero
@@ -472,7 +472,7 @@ let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
     cmd <-- getQueryResult _tCmd code ;
     ifte (doCommand cmd) return
       (lazy(Printf.printf "Error in staged code at %s.\n"
-	      (UChannel.string_of_span code.loc); mzero))
+              (UChannel.string_of_span code.loc); mzero))
 
 ;;
     
@@ -482,7 +482,7 @@ let global_staged_command cmdcode =
   let open RunCtx.Monad in
   globalprolog_do (perform
                     cmdcode <-- intermlang cmdcode ;
-		    doStagedCommand cmdcode)
+                    doStagedCommand cmdcode)
 
 ;;
 

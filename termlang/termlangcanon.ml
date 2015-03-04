@@ -86,44 +86,44 @@ let _DEBUG_NAMES = ref false ;;
 
 
 type ctxEnv = { name_to_bvar : (int list) Dict.t ;
-		bvars        : int ;
-		bvarnames    : string list ;
-		typ_of_bvar  : typ IMap.t ;
-		name_to_tpvar  : int Dict.t ;
-		tpvars         : int ;
-		tpvarnames     : string list ;
-		term_focus     : [ `E of exprU | `T of typ | `None ] ;
-		concrete_bound_names : bool 
-	      }
+                bvars        : int ;
+                bvarnames    : string list ;
+                typ_of_bvar  : typ IMap.t ;
+                name_to_tpvar  : int Dict.t ;
+                tpvars         : int ;
+                tpvarnames     : string list ;
+                term_focus     : [ `E of exprU | `T of typ | `None ] ;
+                concrete_bound_names : bool 
+              }
 type ctxState = { name_to_fvar : (int list) Dict.t ;
-		  fvar_to_name : string IMap.t ;
-		  fvars        : int ;
-		  typ_of_fvar  : typ IMap.t ;
-		  name_to_meta : int Dict.t ;
-		  meta_to_name : string IMap.t ;
-		  metas        : int ;
-		  typ_of_meta  : typ IMap.t ;
-		  name_to_tfvar  : int Dict.t ;
-		  tfvars         : int ;
-		  arity_of_tfvar : int IMap.t ;
-		  tmetas          : int ;
-		  tmetanames      : string list ;
-		  name_to_tmeta   : int Dict.t ;
-		  tmeta_to_name   : string IMap.t ;
-		  named_tmetas    : int ;
-		  polytmetas      : int ;
-		  tmeta_to_polytmeta : int IMap.t ;
-		  parent_of_tmeta : typ IMap.t ;
-		  treesize_of_tmeta : int IMap.t ;
-		  tmeta_is_poly   : bool IMap.t;
-		  current_module : string option ;
-		  qualified_fvar_exists : StringSet.t ;
-		  qualified_tfvar_exists : StringSet.t ;
-		  globally_loaded_modules : StringSet.t ;
-		  modules_loaded_in_modules : StringSet.t Dict.t ;
-		  module_extension_stack : string option list ;
-		  included_directories : string list
-		} ;;
+                  fvar_to_name : string IMap.t ;
+                  fvars        : int ;
+                  typ_of_fvar  : typ IMap.t ;
+                  name_to_meta : int Dict.t ;
+                  meta_to_name : string IMap.t ;
+                  metas        : int ;
+                  typ_of_meta  : typ IMap.t ;
+                  name_to_tfvar  : int Dict.t ;
+                  tfvars         : int ;
+                  arity_of_tfvar : int IMap.t ;
+                  tmetas          : int ;
+                  tmetanames      : string list ;
+                  name_to_tmeta   : int Dict.t ;
+                  tmeta_to_name   : string IMap.t ;
+                  named_tmetas    : int ;
+                  polytmetas      : int ;
+                  tmeta_to_polytmeta : int IMap.t ;
+                  parent_of_tmeta : typ IMap.t ;
+                  treesize_of_tmeta : int IMap.t ;
+                  tmeta_is_poly   : bool IMap.t;
+                  current_module : string option ;
+                  qualified_fvar_exists : StringSet.t ;
+                  qualified_tfvar_exists : StringSet.t ;
+                  globally_loaded_modules : StringSet.t ;
+                  modules_loaded_in_modules : StringSet.t Dict.t ;
+                  module_extension_stack : string option list ;
+                  included_directories : string list
+                } ;;
 
 let empty_env () = 
   { name_to_bvar  = Dict.empty ;  bvars = 0; bvarnames = [] ; typ_of_bvar  = IMap.empty ;
@@ -197,21 +197,21 @@ module Const =
 
     let string_of obj (expr : exprU) =
       match expr.classifier.term with
-	`TVar(s, Some (`Free, idx), _) ->
-	  (try
-	     let module TypMod = (val IMap.find idx !builtin_types) in
-	     TypMod.printer (Obj.obj obj) expr
-	   with Not_found -> failwith ("TermLangCanon Error: Builtin type " ^ s ^ " not properly initialized.\n"))
+        `TVar(s, Some (`Free, idx), _) ->
+          (try
+             let module TypMod = (val IMap.find idx !builtin_types) in
+             TypMod.printer (Obj.obj obj) expr
+           with Not_found -> failwith ("TermLangCanon Error: Builtin type " ^ s ^ " not properly initialized.\n"))
       | _ -> failwith "TermLangCanon Error: Constant of unknown type.\n"
     ;;
 
     let eq o1 o2 e1 e2 =
       match e1.classifier.term with
-	`TVar(s, Some(`Free, idx), _) -> 
-	  (try
-	     let module TypMod = (val IMap.find idx !builtin_types) in
-	     TypMod.eq (Obj.obj o1) (Obj.obj o2) e1 e2
-	   with Not_found -> failwith ("TermLangCanon Error: Builtin type " ^ s ^ " not properly initialized.\n"))
+        `TVar(s, Some(`Free, idx), _) -> 
+          (try
+             let module TypMod = (val IMap.find idx !builtin_types) in
+             TypMod.eq (Obj.obj o1) (Obj.obj o2) e1 e2
+           with Not_found -> failwith ("TermLangCanon Error: Builtin type " ^ s ^ " not properly initialized.\n"))
       | _ -> failwith "TermLangCanon Error: Constant of unknown type.\n"
     ;;
 
@@ -222,29 +222,29 @@ module Typ =
   struct
     let (print : 'a BatInnerIO.output -> typ -> unit) oc (typ : typ) = 
       let indexprint oc idx =
-	if !_DEBUG then
-	match idx with
-	    Some (`Meta, i) -> Printf.fprintf oc "[t?%d]" i
-	  | Some (`Free, i) -> Printf.fprintf oc "[tf%d]" i
-	  | None            -> Printf.fprintf oc "[t??]"
-	else
-	  Printf.fprintf oc ""
+        if !_DEBUG then
+        match idx with
+            Some (`Meta, i) -> Printf.fprintf oc "[t?%d]" i
+          | Some (`Free, i) -> Printf.fprintf oc "[tf%d]" i
+          | None            -> Printf.fprintf oc "[t??]"
+        else
+          Printf.fprintf oc ""
       in
       let printargs f oc args =
-	if List.length args = 0 then Printf.fprintf oc ""
-	else Printf.fprintf oc "%a" (List.print ~first:" " ~last:"" ~sep:" " f) args
+        if List.length args = 0 then Printf.fprintf oc ""
+        else Printf.fprintf oc "%a" (List.print ~first:" " ~last:"" ~sep:" " f) args
       in
       let rec aux level oc (typ : typ) =
-	let paren level' = if level < level' then "(", ")" else "", "" in
-	match typ.term with
-	  `Arrow(t1,t2)   ->
-	    let oparen, cparen = paren 3 in
-	    Printf.fprintf oc "%s%a -> %a%s" oparen (aux 2) t1 (aux 3) t2 cparen
-	| `TVar(s,i,args) ->
-	    let oparen, cparen = paren (if List.length args = 0 then 1 else 2) in
-	    Printf.fprintf oc "%s%s%a%a%s" oparen s indexprint i (printargs (aux 1)) args cparen
-	| `Forall(_,body) -> Printf.fprintf oc "%a" (aux level) body
-	| `TypeSort       -> Printf.fprintf oc "type"
+        let paren level' = if level < level' then "(", ")" else "", "" in
+        match typ.term with
+          `Arrow(t1,t2)   ->
+            let oparen, cparen = paren 3 in
+            Printf.fprintf oc "%s%a -> %a%s" oparen (aux 2) t1 (aux 3) t2 cparen
+        | `TVar(s,i,args) ->
+            let oparen, cparen = paren (if List.length args = 0 then 1 else 2) in
+            Printf.fprintf oc "%s%s%a%a%s" oparen s indexprint i (printargs (aux 1)) args cparen
+        | `Forall(_,body) -> Printf.fprintf oc "%a" (aux level) body
+        | `TypeSort       -> Printf.fprintf oc "type"
       in
       aux 3 oc typ
   end;;
@@ -276,17 +276,17 @@ module ExprU =
 
     let rec gatherApp ?(args=[]) e =
       match e with
-	  { term = `App(e1,e2) } -> gatherApp e1 ~args:(e2 :: args)
-	| _ -> e, args ;;
+          { term = `App(e1,e2) } -> gatherApp e1 ~args:(e2 :: args)
+        | _ -> e, args ;;
 
     let rec gatherLam ?(lams=[]) e =
       match e with
-	  { term = `Lam(s,t,e') } -> gatherLam e' ~lams:((s,t) :: lams)
-	| _ -> e, List.rev lams ;;
+          { term = `Lam(s,t,e') } -> gatherLam e' ~lams:((s,t) :: lams)
+        | _ -> e, List.rev lams ;;
 
     let user_string_of_name (n : name) : string = 
       match n with
-	`Concrete(s) -> stripNameMeta s
+        `Concrete(s) -> stripNameMeta s
       | `Abstract(s, _) -> s
       | `Anon -> "x"
     ;;
@@ -296,52 +296,52 @@ module ExprU =
     let print ?(debug=false) oc (expr : exprU) =
       let debug = debug || !_DEBUG in
       let binding oc (s, t) =
-	let s = user_string_of_name s in
-	if debug then
-	  Printf.fprintf oc "(%s : %a)" s Typ.print t
-	else
-	  Printf.fprintf oc "%s" s
+        let s = user_string_of_name s in
+        if debug then
+          Printf.fprintf oc "(%s : %a)" s Typ.print t
+        else
+          Printf.fprintf oc "%s" s
       in
       let rec aux level oc expr =
-	let openparen, closeparen = if level > 0 then "(", ")" else "", "" in
-	let base oc expr = 
-	match expr with
-	    { term = `App( { term = `Const(o) }, e ) } when o == highlight ->
-	      let hlbegin = "\027[33m" in
-	      let hlend = "\027[0m" in
-	      Printf.fprintf oc "%s%a%s" hlbegin (aux level) e hlend
-		
-	  | { term = `App _ } ->
-	      let e, args = gatherApp expr in
-	      Printf.fprintf oc "%s%a%s" openparen (List.print ~first:"" ~last:"" ~sep:" " (aux (level+1))) (e :: args) closeparen
-	  | { term = `Lam(_, _, _)  } ->
-	      let body, lams = gatherLam expr in
-	      Printf.fprintf oc "%s%s %a => %a%s" openparen "fun" (List.print ~first:"" ~last:"" ~sep:" " binding) lams (aux 0) body closeparen
-	  | { term = `Var(n,iv) } ->
-	      let s = user_string_of_name n in
-	      if debug then 
-		(let realvar = 
-		   match iv with
-		       Some(`Bound, i) -> "b"^(string_of_int i)
-		     | Some(`Free, i)  -> "f"^(string_of_int i)
-		     | Some(`Meta, i)  -> "?"^(string_of_int i)
-		     | None            -> "??"
-		 in
-		Printf.fprintf oc "%s[%s]" s realvar)
-	      else
-		Printf.fprintf oc "%s" s
-	  | { term = `Const(o); classifier = t } ->
-	      Printf.fprintf oc "%s" (Const.string_of o expr)
-	  | { term = `Annot(e, t) } ->
-	      Printf.fprintf oc "(%a : %a)" (aux 0) e Typ.print t
-	  | { term = `Unparsed(s) ; classifier = t } ->
-	      Printf.fprintf oc "{{ %s }}" s
-	in
+        let openparen, closeparen = if level > 0 then "(", ")" else "", "" in
+        let base oc expr = 
+        match expr with
+            { term = `App( { term = `Const(o) }, e ) } when o == highlight ->
+              let hlbegin = "\027[33m" in
+              let hlend = "\027[0m" in
+              Printf.fprintf oc "%s%a%s" hlbegin (aux level) e hlend
+                
+          | { term = `App _ } ->
+              let e, args = gatherApp expr in
+              Printf.fprintf oc "%s%a%s" openparen (List.print ~first:"" ~last:"" ~sep:" " (aux (level+1))) (e :: args) closeparen
+          | { term = `Lam(_, _, _)  } ->
+              let body, lams = gatherLam expr in
+              Printf.fprintf oc "%s%s %a => %a%s" openparen "fun" (List.print ~first:"" ~last:"" ~sep:" " binding) lams (aux 0) body closeparen
+          | { term = `Var(n,iv) } ->
+              let s = user_string_of_name n in
+              if debug then 
+                (let realvar = 
+                   match iv with
+                       Some(`Bound, i) -> "b"^(string_of_int i)
+                     | Some(`Free, i)  -> "f"^(string_of_int i)
+                     | Some(`Meta, i)  -> "?"^(string_of_int i)
+                     | None            -> "??"
+                 in
+                Printf.fprintf oc "%s[%s]" s realvar)
+              else
+                Printf.fprintf oc "%s" s
+          | { term = `Const(o); classifier = t } ->
+              Printf.fprintf oc "%s" (Const.string_of o expr)
+          | { term = `Annot(e, t) } ->
+              Printf.fprintf oc "(%a : %a)" (aux 0) e Typ.print t
+          | { term = `Unparsed(s) ; classifier = t } ->
+              Printf.fprintf oc "{{ %s }}" s
+        in
 
-	if !_DEBUG_TYPES then
-	  Printf.fprintf oc "(%a : %a)" base expr Typ.print expr.classifier
-	else
-	  base oc expr
+        if !_DEBUG_TYPES then
+          Printf.fprintf oc "(%a : %a)" base expr Typ.print expr.classifier
+        else
+          base oc expr
       in
       aux 0 oc expr
   end
@@ -407,19 +407,19 @@ let newTMeta ?(isPoly = false) ?(name = "") loc : typ =
   let state = !termstate in
   let newmetaidx = state.tmetas in
   let newmeta = { term = `TVar(name, Some (`Meta, newmetaidx), []) ; classifier = () ; loc = loc ;
-		  extra = TypExtras.empty () }
+                  extra = TypExtras.empty () }
   in
   let state'  =
       if name = "" then
-	{ state with tmetas = state.tmetas + 1 ;
-	             tmeta_is_poly   = IMap.add newmetaidx isPoly state.tmeta_is_poly }
+        { state with tmetas = state.tmetas + 1 ;
+                     tmeta_is_poly   = IMap.add newmetaidx isPoly state.tmeta_is_poly }
       else
-	{ state with tmetas = state.tmetas + 1 ;
-	             tmeta_is_poly   = IMap.add newmetaidx isPoly state.tmeta_is_poly ;
-		     name_to_tmeta   = Dict.add name newmetaidx state.name_to_tmeta ;
-		     tmetanames      = name :: state.tmetanames ;
-		     named_tmetas    = state.named_tmetas + 1 ;
-		     tmeta_to_name   = IMap.add newmetaidx name state.tmeta_to_name }
+        { state with tmetas = state.tmetas + 1 ;
+                     tmeta_is_poly   = IMap.add newmetaidx isPoly state.tmeta_is_poly ;
+                     name_to_tmeta   = Dict.add name newmetaidx state.name_to_tmeta ;
+                     tmetanames      = name :: state.tmetanames ;
+                     named_tmetas    = state.named_tmetas + 1 ;
+                     tmeta_to_name   = IMap.add newmetaidx name state.tmeta_to_name }
   in
   let state' = { state' with parent_of_tmeta = IMap.add newmetaidx newmeta state'.parent_of_tmeta ;
                              treesize_of_tmeta = IMap.add newmetaidx 1 state'.treesize_of_tmeta }
@@ -432,19 +432,19 @@ let newTMeta ?(isPoly = false) ?(name = "") loc : typ =
 let clearMetas state =
   { state with metas = 0 ;
                typ_of_meta = IMap.empty ;
-	       meta_to_name = IMap.empty ;
-	       name_to_meta = Dict.empty ;
-	       (* type metas *)
-	       tmetas = 0;
-	       parent_of_tmeta = IMap.empty ;
-	       treesize_of_tmeta = IMap.empty ;
-	       tmeta_is_poly   = IMap.empty ;
-	       name_to_tmeta   = Dict.empty ;
-	       tmetanames      = [] ;
-	       named_tmetas    = 0 ;
-	       tmeta_to_name   = IMap.empty ;
-	       polytmetas      = 0 ;
-	       tmeta_to_polytmeta = IMap.empty }
+               meta_to_name = IMap.empty ;
+               name_to_meta = Dict.empty ;
+               (* type metas *)
+               tmetas = 0;
+               parent_of_tmeta = IMap.empty ;
+               treesize_of_tmeta = IMap.empty ;
+               tmeta_is_poly   = IMap.empty ;
+               name_to_tmeta   = Dict.empty ;
+               tmetanames      = [] ;
+               named_tmetas    = 0 ;
+               tmeta_to_name   = IMap.empty ;
+               polytmetas      = 0 ;
+               tmeta_to_polytmeta = IMap.empty }
 ;;
 
 let clearMetasInState () = termstate := clearMetas !termstate ;;
@@ -462,7 +462,7 @@ let tmetaToPoly (i : int) : int =
     idx
   end
 ;;
-			   
+                           
 
 let setParent i t =
   let state = !termstate in
@@ -509,7 +509,7 @@ let tmetaName (i : int) : string =
     begin
       let name = generateTMetaName state.named_tmetas in
       termstate := { state with named_tmetas = state.named_tmetas + 1 ;
-	                        tmeta_to_name = IMap.add i name state.tmeta_to_name } ;
+                                tmeta_to_name = IMap.add i name state.tmeta_to_name } ;
       name
     end
 ;;
@@ -550,14 +550,14 @@ let addTFvar name arity =
   let idx = state.tfvars in
   let name, qualified_tfvar =
     match state.current_module with
-	Some m -> (let name' = m ^ "." ^ name in
-		   name', StringSet.add name' state.qualified_tfvar_exists)
+        Some m -> (let name' = m ^ "." ^ name in
+                   name', StringSet.add name' state.qualified_tfvar_exists)
       | None -> name, state.qualified_tfvar_exists
   in
   termstate := { state with tfvars = state.tfvars + 1 ;
                             name_to_tfvar = Dict.add name idx state.name_to_tfvar ;
-			    qualified_tfvar_exists = qualified_tfvar ;
-			    arity_of_tfvar = IMap.add idx arity state.arity_of_tfvar } ;
+                            qualified_tfvar_exists = qualified_tfvar ;
+                            arity_of_tfvar = IMap.add idx arity state.arity_of_tfvar } ;
   idx
 ;;
 
@@ -598,8 +598,8 @@ let addBvar s typ =
   let bvar = env.bvars in
   { env with bvars = env.bvars + 1;
              typ_of_bvar = IMap.add bvar typ env.typ_of_bvar ;
-	     bvarnames   = s :: env.bvarnames ;
-	     name_to_bvar = Dict.modify_def [] s (fun x -> bvar :: x) env.name_to_bvar }
+             bvarnames   = s :: env.bvarnames ;
+             name_to_bvar = Dict.modify_def [] s (fun x -> bvar :: x) env.name_to_bvar }
 ;;
 
 let findBvar s =
@@ -617,16 +617,16 @@ let addFvar s typ =
   let fvar = state.fvars in
   let s, qualified_fvar =
     match state.current_module with
-	Some m -> (let s' = m ^ "." ^ s in
-		   s', StringSet.add s' state.qualified_fvar_exists)
+        Some m -> (let s' = m ^ "." ^ s in
+                   s', StringSet.add s' state.qualified_fvar_exists)
       | None -> s, state.qualified_fvar_exists
   in
   termstate := { state with fvars = state.fvars + 1 ;
-			    name_to_fvar = Dict.modify_def [] s ((++)[fvar]) state.name_to_fvar ;
-			    fvar_to_name = IMap.add fvar s state.fvar_to_name ;
-			    typ_of_fvar  = IMap.add fvar typ state.typ_of_fvar ;
-			    qualified_fvar_exists = qualified_fvar
-	       } ;
+                            name_to_fvar = Dict.modify_def [] s ((++)[fvar]) state.name_to_fvar ;
+                            fvar_to_name = IMap.add fvar s state.fvar_to_name ;
+                            typ_of_fvar  = IMap.add fvar typ state.typ_of_fvar ;
+                            qualified_fvar_exists = qualified_fvar
+               } ;
   fvar
 
 ;;
@@ -668,9 +668,9 @@ let findMeta loc ?(makeNameMeta = false) s =
     let state   = !termstate in
     termstate := { state with metas = state.metas + 1;
                               name_to_meta = (if s = "_" then state.name_to_meta
-				              else Dict.add s newmeta state.name_to_meta) ;
-			      meta_to_name = IMap.add newmeta s state.meta_to_name ;
-			      typ_of_meta  = IMap.add newmeta tp state.typ_of_meta } ;
+                                              else Dict.add s newmeta state.name_to_meta) ;
+                              meta_to_name = IMap.add newmeta s state.meta_to_name ;
+                              typ_of_meta  = IMap.add newmeta tp state.typ_of_meta } ;
     newmeta
 
 ;;
@@ -708,17 +708,17 @@ let instantiateWithTFvars (t : typ) =
       
       let tsubst = List.map (fun (name, parametric) ->
 
-	  if parametric then begin
+          if parametric then begin
 
-	    let i = addTFvar name 0 in
-	    { term = `TVar(name, Some (`Free, i), []) ; classifier = () ; loc = UChannel.span_end t.loc ;
-	      extra = TypExtras.empty () }
+            let i = addTFvar name 0 in
+            { term = `TVar(name, Some (`Free, i), []) ; classifier = () ; loc = UChannel.span_end t.loc ;
+              extra = TypExtras.empty () }
 
-	  end
+          end
 
-	  else newTMeta ~isPoly:true ~name:"" (UChannel.span_end t.loc))
+          else newTMeta ~isPoly:true ~name:"" (UChannel.span_end t.loc))
 
-	quant
+        quant
       in
       substTPolys body tsubst
 
@@ -732,10 +732,10 @@ let lookupIndex (varkind,i) loc =
   let env   = !termenv in
   let result = begin
       match varkind with
-	  `Bound -> IMap.find (env.bvars - i - 1) env.typ_of_bvar
-	| `Free ->  let polytyp = IMap.find i state.typ_of_fvar in
-		    instantiateWithTPolys (UChannel.span_end loc) polytyp
-	| `Meta -> IMap.find i state.typ_of_meta
+          `Bound -> IMap.find (env.bvars - i - 1) env.typ_of_bvar
+        | `Free ->  let polytyp = IMap.find i state.typ_of_fvar in
+                    instantiateWithTPolys (UChannel.span_end loc) polytyp
+        | `Meta -> IMap.find i state.typ_of_meta
   end in
   result
 
@@ -749,7 +749,7 @@ let getExprFocus () =
   match (!termenv).term_focus with
     | `E focus -> focus
     | _ -> { term = `Const(Obj.repr "[unknown]") ; classifier = !builtinStringType ;
-	     loc = None ; extra = ExprExtras.empty () }
+             loc = None ; extra = ExprExtras.empty () }
 
 ;;
 
@@ -758,7 +758,7 @@ let getTypeFocus () =
   match (!termenv).term_focus with
     | `T focus -> focus
     | _ -> { term = `TVar("[unknown]", None, []) ; classifier = () ;
-	     loc = None ; extra = TypExtras.empty () }
+             loc = None ; extra = TypExtras.empty () }
 
 ;;
 
@@ -775,9 +775,9 @@ let withConcreteBoundMode mode f =
 
 let traverseType ?(uninstantiatedMeta = fun (t : typ) -> t)
                  ?(instantiatedMeta   = fun chase (t : typ) -> chase t)
-		 ?(var                = fun chase (t : typ) -> t)
-		 ?(arrow              = fun chase (t : typ) -> t)
-		 (t : typ) =
+                 ?(var                = fun chase (t : typ) -> t)
+                 ?(arrow              = fun chase (t : typ) -> t)
+                 (t : typ) =
 
   let rec chase t =
   match t.term with
@@ -836,19 +836,19 @@ let traverseTypeDeep
 
     ~var:(fun chase -> fun t -> match t.term with
 
-	`TVar(name, idx, args) ->
+        `TVar(name, idx, args) ->
 
-	  let args' = List.map chase args in
-	  { t with term = `TVar(name, idx, args') ; extra = TypExtras.empty () }
+          let args' = List.map chase args in
+          { t with term = `TVar(name, idx, args') ; extra = TypExtras.empty () }
 
     | _ -> assert false)
 
     ~arrow:(fun chase -> fun t -> match t.term with
 
-	`Arrow(t1, t2) ->
+        `Arrow(t1, t2) ->
 
-	  let t1', t2' = chase t1, chase t2 in
-	  { t with term = `Arrow(t1', t2') ; extra = TypExtras.empty () }
+          let t1', t2' = chase t1, chase t2 in
+          { t with term = `Arrow(t1', t2') ; extra = TypExtras.empty () }
 
     | _ -> assert false)
 ;;
@@ -857,26 +857,26 @@ let chaseTypeDeep ?(metasAreFine=false) ?(replaceUninst=false) t () =
   Ctx.bench "chase type deep" (lazy(
   traverseTypeDeep t
                ~uninstantiatedMeta:(fun t' ->
-		 match t'.term with
-		 `TVar(name, Some (`Meta, i), args) ->
+                 match t'.term with
+                 `TVar(name, Some (`Meta, i), args) ->
 
-		     if metasAreFine || tmetaIsPoly i then (
-		       if replaceUninst then
-		         { t' with term = `TVar(name, Some (`Meta, tmetaToPoly i), args) }
-		       else t')
-		     else raise (UnknownType(t))
-		 | _ -> assert false
-	       )))
+                     if metasAreFine || tmetaIsPoly i then (
+                       if replaceUninst then
+                         { t' with term = `TVar(name, Some (`Meta, tmetaToPoly i), args) }
+                       else t')
+                     else raise (UnknownType(t))
+                 | _ -> assert false
+               )))
 ;;
 
 let prepareTypeForUser t =
 
   traverseTypeDeep t
                ~uninstantiatedMeta:(fun t' -> match t'.term with
-		 `TVar(_, Some (`Meta, i), args) ->
-		   let name = tmetaName i in
-		   { t' with term = `TVar(name, Some (`Meta, i), args) }
-		 | _ -> assert false)
+                 `TVar(_, Some (`Meta, i), args) ->
+                   let name = tmetaName i in
+                   { t' with term = `TVar(name, Some (`Meta, i), args) }
+                 | _ -> assert false)
 
 ;;
 
@@ -932,21 +932,21 @@ let typUnify ?(allow_instantiation = true) t1top t2top =
 
     match t1.term, t2.term with
 
-	`Arrow(t1d,t1r), `Arrow(t2d,t2r) ->
+        `Arrow(t1d,t1r), `Arrow(t2d,t2r) ->
 
-	  typUnify t1d t2d ;
-	  typUnify t1r t2r 
+          typUnify t1d t2d ;
+          typUnify t1r t2r 
 
       | `TVar(_, Some idx1, args1), `TVar(_, Some idx2, args2) when idx1 = idx2 ->
 
-	List.iter2 typUnify args1 args2
+        List.iter2 typUnify args1 args2
 
       | `TVar(_, Some (`Meta, i), _), _ when allow_instantiation -> chasedTypUnify t1 t2
 
       | _, `TVar(_, Some (`Meta, i), _) when allow_instantiation -> chasedTypUnify t2 t1
 
       | `TVar(_, (Some (`Meta, i)), _), `TVar(_, (Some (`Meta, j)), _)
-	  when not allow_instantiation && i == j -> ()
+          when not allow_instantiation && i == j -> ()
 
       | _ -> raise (UnifyError (t1top,t2top))
   in
@@ -966,9 +966,9 @@ let chaseTypesInExpr ?(metasAreFine = false) ?(replaceUninst = false) (e : expr)
 
     | `App(e1, e2) ->
 
-	let e1 = chaseTypesInExpr e1 in
-	let e2 = chaseTypesInExpr e2 in
-	{ e with term = `App(e1,e2) }
+        let e1 = chaseTypesInExpr e1 in
+        let e2 = chaseTypesInExpr e2 in
+        { e with term = `App(e1,e2) }
 
     | `Lam(s, t', e') ->
 
@@ -976,7 +976,7 @@ let chaseTypesInExpr ?(metasAreFine = false) ?(replaceUninst = false) (e : expr)
       let e' = chaseTypesInExpr e' in
       { e with term = `Lam(s, t', e') }
 
-	
+        
     | _ -> { e with classifier = t }
 
   in
@@ -995,19 +995,19 @@ let rec findUnifiableVar kind (vars : int list) ({ classifier = tRes } as eFull)
     | i :: [] -> [ i ]
     | _ ->
       (let unifiable = List.map (fun v -> let state = !termstate in
-					  let typ = lookupIndex (kind, v) eFull.loc in
-					  let (//) = Ctx.choice
-					    ~expectedException:begin
-					      function
-					      | UnifyError(_,_) | OccursCheck(_,_) -> true
-					      | _ -> false
-					    end
-					  in
-					  let b = (fun _ -> typUnify typ tRes; true) //
-					          (fun _ -> false)
-					  in
-					  termstate := state ;
-					  b) vars
+                                          let typ = lookupIndex (kind, v) eFull.loc in
+                                          let (//) = Ctx.choice
+                                            ~expectedException:begin
+                                              function
+                                              | UnifyError(_,_) | OccursCheck(_,_) -> true
+                                              | _ -> false
+                                            end
+                                          in
+                                          let b = (fun _ -> typUnify typ tRes; true) //
+                                                  (fun _ -> false)
+                                          in
+                                          termstate := state ;
+                                          b) vars
        in
        let unifvars = List.combine vars unifiable |> List.filter snd |> List.map fst in
        unifvars)
@@ -1016,9 +1016,9 @@ let rec findUnifiableVar kind (vars : int list) ({ classifier = tRes } as eFull)
   match unifvars with
   | [] -> raise (WrongTermVar(eFull))
   | i::_ -> (let index = kind, i in
-	     let typ = lookupIndex index eFull.loc in
-	     typUnify typ tRes ;
-	     index)
+             let typ = lookupIndex index eFull.loc in
+             typUnify typ tRes ;
+             index)
 
 ;;
 
@@ -1063,24 +1063,24 @@ let namesForAnonVars (e : expr) : expr =
 
   let fixName n =
     match n with
-	`Anon -> let state = !termstate in
-		 let i = state.metas in
-		 let s = "anon" ^ (string_of_int i) in
-		 let nmeta = findMeta None ~makeNameMeta:true (getNameMeta s) in
-		 `Abstract(s, nmeta)
+        `Anon -> let state = !termstate in
+                 let i = state.metas in
+                 let s = "anon" ^ (string_of_int i) in
+                 let nmeta = findMeta None ~makeNameMeta:true (getNameMeta s) in
+                 `Abstract(s, nmeta)
       | _ -> n
   in
 
   let rec aux names e =
 
     match e.term with
-	`App(e1, e2) -> let e1' = aux names e1 in
-			let e2' = aux names e2 in
-			{ e with term = `App(e1', e2') }
+        `App(e1, e2) -> let e1' = aux names e1 in
+                        let e2' = aux names e2 in
+                        { e with term = `App(e1', e2') }
 
       | `Lam(n,t,e') -> let n' = fixName n in
-	                let e' = aux (n'::names) e' in
-			{ e with term = `Lam(n',t,e') }
+                        let e' = aux (n'::names) e' in
+                        { e with term = `Lam(n',t,e') }
 
       | `Var(`Anon,(`Bound,i)) -> { e with term = `Var(List.nth names i, (`Bound, i)) }
 
@@ -1091,8 +1091,8 @@ let namesForAnonVars (e : expr) : expr =
   aux [] e
 
 ;;
-	                       
-	           
+                               
+                   
 
 
 (*
@@ -1196,9 +1196,9 @@ let quantifyOverTPolys paramnames (t : typ) : typ =
   if state.tmetas = 0
   then t
   else (let names = List.rev state.tmetanames in
-	let parametric = List.map (fun x -> StringSet.mem x paramnames) names in
-	let binders = List.combine names parametric in
-	{ term = `Forall(binders, t) ; classifier = () ; loc = t.loc ; extra = TypExtras.empty () })
+        let parametric = List.map (fun x -> StringSet.mem x paramnames) names in
+        let binders = List.combine names parametric in
+        { term = `Forall(binders, t) ; classifier = () ; loc = t.loc ; extra = TypExtras.empty () })
 ;;
 
 let type_declaration (s : string) (t : typ) : int =
@@ -1207,14 +1207,14 @@ let type_declaration (s : string) (t : typ) : int =
 
   match tbody.term with
     `TypeSort -> let arity = kindcheck_typeconstr t in
-		 let i     = addTFvar s arity in
+                 let i     = addTFvar s arity in
                  i
 
   | _ -> let paramnames, t = match t.term with `Forall(paramnames, t) -> List.map fst paramnames, t | _ -> [], t in
-	 let t' = kindcheck_type t in
-	 let t' = quantifyOverTPolys paramnames t' in
-	 let i  = addFvar s t' in
-	 i
+         let t' = kindcheck_type t in
+         let t' = quantifyOverTPolys paramnames t' in
+         let i  = addFvar s t' in
+         i
 
 ;;
 
@@ -1251,29 +1251,29 @@ let rec typecheck (e : exprU) : expr =
 
       `App( f, a ) ->
 
-(*	let (f,a) = Ctx.bench "typecheck.app" (lazy( *)
+(*        let (f,a) = Ctx.bench "typecheck.app" (lazy( *)
 
-	  let f  = kindcheck_expr f in
-	  let a  = kindcheck_expr a in
+          let f  = kindcheck_expr f in
+          let a  = kindcheck_expr a in
 
-	  let tD = newTMeta e.loc in
-	  typUnify f.classifier (a.classifier **> tD) ;
-	  typUnify tD tRes ;
-	(*   f,a )) *)
-	(* in *)
-	let f = typecheck f in
-	let a = typecheck a in
-	{ e with term = `App(f, a) }
+          let tD = newTMeta e.loc in
+          typUnify f.classifier (a.classifier **> tD) ;
+          typUnify tD tRes ;
+        (*   f,a )) *)
+        (* in *)
+        let f = typecheck f in
+        let a = typecheck a in
+        { e with term = `App(f, a) }
 
     | `Lam( binder, tD, body ) ->
 
       (* let (binder', tD, body, env') = Ctx.bench "typechecking.lam" (lazy begin *)
-	let body    = kindcheck_expr body in
+        let body    = kindcheck_expr body in
         let tD      = kindcheck_type tD in
-	let _       = typUnify (tD **> body.classifier) tRes in
+        let _       = typUnify (tD **> body.classifier) tRes in
         let env'    = addBvar (string_of_name binder) tD in
-	let binder' = fixAbstractBinder binder in
-      (* 	binder', tD, body, env' *)
+        let binder' = fixAbstractBinder binder in
+      (*         binder', tD, body, env' *)
       (* end) in *)
       let body = Ctx.inenv env' (fun _ -> typecheck body) in
       { e with term = `Lam( binder', tD, body ) }
@@ -1293,22 +1293,22 @@ let rec typecheck (e : exprU) : expr =
 
       (* Ctx.bench "typechecking.var unknown" (lazy begin *)
 
-	let s = string_of_name n in
+        let s = string_of_name n in
         let tryBvar () = findUnifiableVar `Bound (findBvar s) e in
-	let tryFvar () = findUnifiableVar `Free (findFvar s) e  in
-	let tryMeta () = let i = findMeta e.loc s in
-			 let index = `Meta, i in
-			 let typ = lookupIndex index e.loc in
-			 typUnify typ tRes ;
-			 index
-	in
-	let (//) f g () =
-	  Ctx.choice ~expectedException:(function Not_found | WrongTermVar(_) -> true | _ -> false) f g
-	in
+        let tryFvar () = findUnifiableVar `Free (findFvar s) e  in
+        let tryMeta () = let i = findMeta e.loc s in
+                         let index = `Meta, i in
+                         let typ = lookupIndex index e.loc in
+                         typUnify typ tRes ;
+                         index
+        in
+        let (//) f g () =
+          Ctx.choice ~expectedException:(function Not_found | WrongTermVar(_) -> true | _ -> false) f g
+        in
 
-	let i  = (tryBvar // (tryFvar // (tryMeta // (fun _ -> raise (WrongTermVar(e)))))) () in
-	let n' = fixAbstractName n i in
-	{ e with term = `Var(n', i) }
+        let i  = (tryBvar // (tryFvar // (tryMeta // (fun _ -> raise (WrongTermVar(e)))))) () in
+        let n' = fixAbstractName n i in
+        { e with term = `Var(n', i) }
 
       (* end) *)
 
@@ -1324,15 +1324,15 @@ let rec typecheck (e : exprU) : expr =
     | `Unparsed(s) -> raise (NoGenericParsingYet)
 (*
         perform
-	  t <-- deepChaseType tRes ;
+          t <-- deepChaseType tRes ;
           let parser_for_type t' s loc =
             match t with `Unknown(_) -> failwith (Printf.sprintf "Cannot parse %s of unknown type at %s." s (UChannel.string_of_loc loc))
-	    | _ -> try (get_expr_parser t) t' s loc with (Peg.IncompleteParse(_) as e) -> raise e | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc loc))
-	  in
-	  e <-- parser_for_type t s loc ;
-	  env'' <-- setfocus e ;
-	  _ <-- inenv env'' (typUnify e.classifier t) ;
-	  typecheck e
+            | _ -> try (get_expr_parser t) t' s loc with (Peg.IncompleteParse(_) as e) -> raise e | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc loc))
+          in
+          e <-- parser_for_type t s loc ;
+          env'' <-- setfocus e ;
+          _ <-- inenv env'' (typUnify e.classifier t) ;
+          typecheck e
 *)
 
   end
@@ -1355,8 +1355,8 @@ let typing_handler (type a) (code : unit -> a) : a =
       let t1 = prepareTypeForUser t1 in
       let t2 = prepareTypeForUser t2 in
       let s = Printf.sprintf "In %s:\n  Term of type %a,\n  whereas expected a type of form %a.\n"
-	         (UChannel.string_of_span e.loc)
-		 Typ.print t1 Typ.print t2
+                 (UChannel.string_of_span e.loc)
+                 Typ.print t1 Typ.print t2
       in
       Printf.printf "%s" s; raise TypingError
     end
@@ -1365,12 +1365,12 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
       let e  = getExprFocus () in
       let tm = prepareTypeForUser { term = `TVar("", Some (`Meta, i), []) ; classifier = () ;
-				    loc = None ; extra = TypExtras.empty () } 
+                                    loc = None ; extra = TypExtras.empty () } 
       in
       let t  = prepareTypeForUser t in
       let s = Printf.sprintf "In %s:\n  Type %a needs to be unified with %a,\n  which contains it.\n"
-	         (UChannel.string_of_span e.loc)
-		 Typ.print tm Typ.print t
+                 (UChannel.string_of_span e.loc)
+                 Typ.print tm Typ.print t
       in
       Printf.printf "%s" s; raise TypingError
     end
@@ -1382,8 +1382,8 @@ let typing_handler (type a) (code : unit -> a) : a =
 
       let t = prepareTypeForUser x.classifier in
       let s = Printf.sprintf "In %s:\n  Variable %a with type %a does not exist.\n"
-	         (UChannel.string_of_span x.loc)
-		 (ExprU.print ~debug:false) x Typ.print t
+                 (UChannel.string_of_span x.loc)
+                 (ExprU.print ~debug:false) x Typ.print t
       in
       Printf.printf "%s" s; raise TypingError
 
@@ -1395,7 +1395,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let t = getTypeFocus () in
       let t = prepareTypeForUser t in
       let s = Printf.sprintf "In %s:\n  Unknown type variable %a.\n"
-	         (UChannel.string_of_span t.loc) Typ.print t
+                 (UChannel.string_of_span t.loc) Typ.print t
       in
       Printf.printf "%s" s; raise TypingError
     end
@@ -1408,7 +1408,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let t = prepareTypeForUser t in
       let s = match t.term with `TVar(s, _, _) -> s | _ -> assert false in
       let s = Printf.sprintf "In %s:\n  Type %s used with %d arguments instead of %d as defined.\n"
-	         (UChannel.string_of_span t.loc) s actual expected
+                 (UChannel.string_of_span t.loc) s actual expected
       in
       Printf.printf "%s" s; raise TypingError
 
@@ -1421,7 +1421,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let e = getExprFocus () in
       let t = prepareTypeForUser t in
       let s = Printf.sprintf "In %s:\n  Could not fully determine type; got as far as %a.\n"
-	   (UChannel.string_of_span e.loc) Typ.print t
+           (UChannel.string_of_span e.loc) Typ.print t
       in
       Printf.printf "%s" s; raise TypingError
     
@@ -1433,7 +1433,7 @@ let typing_handler (type a) (code : unit -> a) : a =
 
       let t = prepareTypeForUser t in
       let s = Printf.sprintf "In %s:\n  The kind %a is invalid.\n"
-	         (UChannel.string_of_span t.loc) Typ.print t
+                 (UChannel.string_of_span t.loc) Typ.print t
       in
       Printf.printf "%s" s; raise TypingError
 
@@ -1445,10 +1445,10 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
 
       let s = Printf.sprintf "In %s:\n  Abstraction over type is not allowed here.\n"
-	         (UChannel.string_of_span t.loc)
+                 (UChannel.string_of_span t.loc)
       in
       Printf.printf "%s" s; raise TypingError
-	
+        
     end
 
   | RankNPolymorphism(t) ->
@@ -1456,10 +1456,10 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
 
       let s = Printf.sprintf "In %s:\n  Rank-N-polymorphism not supported.\n"
-	         (UChannel.string_of_span t.loc)
+                 (UChannel.string_of_span t.loc)
       in
       Printf.printf "%s" s; raise TypingError
-	
+        
     end
 
   | e ->
@@ -1467,7 +1467,7 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
       let focus = getFocus () in
       let loc = match focus with `E t -> UChannel.string_of_span t.loc | `T t -> UChannel.string_of_span t.loc
-	| _ -> "<unknown>"
+        | _ -> "<unknown>"
       in
       let s = Printf.sprintf "In %s:\n  (Unhandled error during typing.)\n" loc in
       Printf.printf "%s" s; raise e
@@ -1604,7 +1604,7 @@ let global_enter_module m =
   let curmod = match prev_curmod with None -> m | Some prefix -> prefix ^ "." ^ m in
   globalstate := { state with current_module = Some curmod ;
                    module_extension_stack = prev_curmod :: state.module_extension_stack
-		 }
+                 }
 ;;
 
 exception NotInModule;;
@@ -1647,14 +1647,14 @@ let global_load_file_resolved ?modul
     match modul with
     | None ->
       (try
-	 StringSet.mem filename state.globally_loaded_modules
+         StringSet.mem filename state.globally_loaded_modules
        with Not_found -> false) || 
       (try
-	 StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
+         StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
        with _ -> false)
     | Some m ->
       (try
-	 StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
+         StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
        with _ -> false)
   in
   if already_loaded then (fun () -> ())
@@ -1666,13 +1666,13 @@ let global_load_file_resolved ?modul
       let state' = !globalstate in
       match fullmodul with
 
-      |	None ->
-	globalstate := { state' with globally_loaded_modules =
-	    StringSet.add filename state'.globally_loaded_modules }
+      |        None ->
+        globalstate := { state' with globally_loaded_modules =
+            StringSet.add filename state'.globally_loaded_modules }
 
       | Some m ->
-	globalstate := { state' with modules_loaded_in_modules =
-	    Dict.modify_def StringSet.empty filename (StringSet.add m) state'.modules_loaded_in_modules }
+        globalstate := { state' with modules_loaded_in_modules =
+            Dict.modify_def StringSet.empty filename (StringSet.add m) state'.modules_loaded_in_modules }
 
     in
 
@@ -1685,8 +1685,8 @@ let global_load_file_resolved ?modul
       end
 
       | Some m -> begin
-	global_module_do m f;
-	updateLoadedModules ()
+        global_module_do m f;
+        updateLoadedModules ()
       end
 
     in
@@ -1727,11 +1727,11 @@ let global_load_file ?modul
 let global_typecheck eorig = 
   globalterm_do
         (fun () ->
-	  let e   = eorig () in
-	  let e'  = typeof e in
-	  let t   = prepareTypeForUser e'.classifier in
-	  let e'' = exprAsExprU e' in
-	  Printf.printf "%a : %a\n" (ExprU.print ~debug:false) e'' Typ.print t)
+          let e   = eorig () in
+          let e'  = typeof e in
+          let t   = prepareTypeForUser e'.classifier in
+          let e'' = exprAsExprU e' in
+          Printf.printf "%a : %a\n" (ExprU.print ~debug:false) e'' Typ.print t)
 ;;
 
 
@@ -1762,7 +1762,7 @@ type replacement = expr -> int -> expr
 let replace replacement e =
   let rec aux c e =
     match e.term with
-	`App(e1, e2) -> { e with term = `App(aux c e1, aux c e2) }
+        `App(e1, e2) -> { e with term = `App(aux c e1, aux c e2) }
       | `Lam(s,t,e') -> { e with term = `Lam(s,t,aux (c+1) e') }
       | `Var(_, (`Bound, _)) -> replacement e c
       | `Var(_, _)  -> e
@@ -1773,24 +1773,24 @@ let replace replacement e =
 let shift n e =
   replace (fun e c ->
     match e.term with
-	`Var(s, (`Bound, i)) ->
-	  if i >= c then { e with term = `Var(s, (`Bound, i+n)) } else e
+        `Var(s, (`Bound, i)) ->
+          if i >= c then { e with term = `Var(s, (`Bound, i+n)) } else e
       | _ -> assert false) e ;;
 
 let subst esubst e =
   replace (fun e c ->
     match e.term with
-	`Var(s, (_, i)) ->
-	  if i = c then shift c esubst else e
+        `Var(s, (_, i)) ->
+          if i = c then shift c esubst else e
       | _ -> assert false) e ;;
 
 let substmany esubst e =
   replace (fun e c ->
     match e.term with
-	`Var(s, (_, i)) ->
-	  if c <= i && i - c < List.length esubst then
-	    shift c (List.nth esubst (i-c))
-	  else e
+        `Var(s, (_, i)) ->
+          if c <= i && i - c < List.length esubst then
+            shift c (List.nth esubst (i-c))
+          else e
       | _ -> assert false) e ;;
 
 
@@ -1808,9 +1808,9 @@ let incorporateName (n : name) (e : expr) : unit NameUnif.Monad.m =
   let open NameUnif.Monad in
   match e.term with
       `Var(n1, (`Bound, _)) | `Var((`Abstract(_) as n1), (`Free, _)) ->
-	perform
-	  state <-- getstate ;
-	  setstate ( (n1, n) :: state )
+        perform
+          state <-- getstate ;
+          setstate ( (n1, n) :: state )
     | _ -> return ()
 ;;
 
@@ -1820,24 +1820,24 @@ let rec betashort (e : expr) : expr NameUnif.Monad.m =
   match e.term with
 
       `Lam( s, t, ebody ) ->
-	perform
-	  ebody' <-- betashort ebody ;
-	  return { e with term = `Lam( s, t, ebody' ) }
+        perform
+          ebody' <-- betashort ebody ;
+          return { e with term = `Lam( s, t, ebody' ) }
 
     | `App( efun, earg ) ->
 
         (perform
-	   efun <-- betashort efun ;
-	   earg <-- betashort earg ;
-	   match efun.term with
-	    `Lam( s, t', ebody ) ->
-	      perform
-		_ <-- incorporateName s earg ;
-	        let res = shift (-1) (subst (shift 1 earg) ebody) in
-		if is_val res then return res else betashort res
-	  | _ -> return { e with term = `App(efun, earg) })
-	    
-	  
+           efun <-- betashort efun ;
+           earg <-- betashort earg ;
+           match efun.term with
+            `Lam( s, t', ebody ) ->
+              perform
+                _ <-- incorporateName s earg ;
+                let res = shift (-1) (subst (shift 1 earg) ebody) in
+                if is_val res then return res else betashort res
+          | _ -> return { e with term = `App(efun, earg) })
+            
+          
     | _ -> return e
 ;;
 
@@ -1850,39 +1850,39 @@ let etalong (e : expr) : expr =
     let etaexpand argsT e =
       let e' = shift (List.length argsT) e in
       let rec aux types e =
-	if List.is_empty types then e
-	else
-	let hd, tl = match types with hd :: tl -> chaseType hd, tl | _ -> assert false in
-	match hd, tl with
-	  | ({ term = `Arrow(t1, t2) } as t), tl ->
-	    let lam body    = { term = `Lam(`Anon, t1, body) ; classifier = t ; loc = e.loc ; extra = ExprExtras.empty () } in
-	    let prebody var = { term = `App(e, var) ; classifier = t2 ; loc = e.loc ; extra = ExprExtras.empty () } in
-	    let var         = { term = `Var(`Anon, (`Bound, List.length tl)) ; classifier = t1 ; loc = UChannel.span_end e.loc ; extra = ExprExtras.empty () } in
-	    let var'        = etalong var id 0 in
-	    lam (aux tl (prebody var'))
-	  | _ -> assert false
+        if List.is_empty types then e
+        else
+        let hd, tl = match types with hd :: tl -> chaseType hd, tl | _ -> assert false in
+        match hd, tl with
+          | ({ term = `Arrow(t1, t2) } as t), tl ->
+            let lam body    = { term = `Lam(`Anon, t1, body) ; classifier = t ; loc = e.loc ; extra = ExprExtras.empty () } in
+            let prebody var = { term = `App(e, var) ; classifier = t2 ; loc = e.loc ; extra = ExprExtras.empty () } in
+            let var         = { term = `Var(`Anon, (`Bound, List.length tl)) ; classifier = t1 ; loc = UChannel.span_end e.loc ; extra = ExprExtras.empty () } in
+            let var'        = etalong var id 0 in
+            lam (aux tl (prebody var'))
+          | _ -> assert false
       in
       aux argsT e'
 
     in
 
     match efocus.term with
-	
-	`Lam(s, t, ebody) ->
-	    assert (apps = 0);
-	    { efocus with term = `Lam(s, t, etalong ebody id 0) }
+        
+        `Lam(s, t, ebody) ->
+            assert (apps = 0);
+            { efocus with term = `Lam(s, t, etalong ebody id 0) }
 
       | `App(efun, earg)  ->
-	    let earg'         = etalong earg id 0 in
-	    let efocus' focus = { efocus with term = `App(focus, earg') } in
-	    etalong efun (fun focus -> eWithApps (efocus' focus)) (apps + 1)
+            let earg'         = etalong earg id 0 in
+            let efocus' focus = { efocus with term = `App(focus, earg') } in
+            etalong efun (fun focus -> eWithApps (efocus' focus)) (apps + 1)
 
       | `Var(_)
       | `Const(_)         ->
-	let eWithApps = eWithApps efocus in
-	let argsT, _ = gatherArrows efocus.classifier in
-	let argsT = List.drop apps argsT in
-	etaexpand argsT eWithApps
+        let eWithApps = eWithApps efocus in
+        let argsT, _ = gatherArrows efocus.classifier in
+        let argsT = List.drop apps argsT in
+        etaexpand argsT eWithApps
 
 
   and etalong_opt e =
@@ -1904,7 +1904,7 @@ let normalize e =
   let open NameUnif.Monad in
   inEmptyNameUnif begin
       perform
-	e' <-- betashort e ;
+        e' <-- betashort e ;
         return (etalong e')
   end
 ;;
