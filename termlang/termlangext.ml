@@ -248,6 +248,15 @@ end
 ;;
 
 
+new_builtin_predicate "capitalize" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ str; res ] -> perform
+    str  <-- chasePattcanon [] str ;
+    str' <-- _PtoString str ;
+    pattcanonUnifyFull res (_PofString (String.capitalize str') ~loc:str.loc))
+end;;
+
+
 (* --------------
    Character classes. 
    -------------- *)
@@ -278,6 +287,27 @@ new_builtin_predicate "print" ( ~* "A" **> _tProp )
      e <-- pattcanonRenormalize e ;
      p <-- chasePattcanon ~deep:true [] e ;
      let _ = Printf.printf "%a\n%!" Pattcanon.alphaSanitizedPrint p in
+     return ()))
+;;
+
+new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedPrint p in
+     pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
+;;
+
+new_builtin_predicate "print_string" ( _tString **> _tProp )
+  (fun _ -> fun [ e ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     s <-- _PtoString p ;
+     let _ = Printf.printf "%s%!" s in
      return ()))
 ;;
 
