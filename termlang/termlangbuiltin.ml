@@ -62,6 +62,12 @@ let new_builtin_type_constructor s =
   (idx, fun t -> { term = `TVar(s, idx, [t]) ; classifier = () ; loc = None ; extra = TypExtras.empty () })
 ;;
 
+let new_builtin_type_constructor_binary s =
+  let i = builtin_do (typedecl s (_tType **> _tType **> _tType)) in
+  let idx = Some (`Free, i) in
+  (idx, fun t1 t2 -> { term = `TVar(s, idx, [t1; t2]) ; classifier = () ; loc = None ; extra = TypExtras.empty () })
+;;
+
 
 let new_builtin s t =
   let i = builtin_do (typedecl s t) in
@@ -108,8 +114,10 @@ let _tiBool, _tBool     = new_builtin_type "bool" ;;
 let _eiTrue             = new_builtin "true" _tBool ;;
 let _eiFalse            = new_builtin "false" _tBool ;;
 
-let _tiTuple, _tTuple   = new_builtin_type "tuple" ;;
-let _eiTuple            = new_builtin "tuple" ( (~* "A") **> (~* "B") **> _tTuple );;
+let _tiTuple, _tTuple   = new_builtin_type_constructor_binary "tuple" ;;
+let _eiTuple            = let a = ~* "A" in
+                          let b = ~* "B" in
+                          new_builtin "tuple" ( a **> b **> _tTuple a b );;
 
 let _tiDyn, _tDyn       = new_builtin_type "dyn" ;;
 let _eiDyn              = let a = ~* "A" in

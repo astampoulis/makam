@@ -485,12 +485,3 @@ let global_staged_command cmdcode =
                     doStagedCommand cmdcode)
 
 ;;
-
-(* global_command_do --
-     if no extensions are enabled, just docommand cmd
-     if any is enabled, then create the proper query and
-     then do it.. (mkLam (fold2 (.. mkApp (mkApp (mkIVar eiAnd) cur) (mkapp elm1 elm2))
-                          l1 = [ map mkIVar extensionsIndexes ]
-                          l2 = [ (cmd), "X1", "X2" ... ]
-                          l3 = [ "X1", "X2", ... , mkIVar (`Bound 0) ]))
-*)
