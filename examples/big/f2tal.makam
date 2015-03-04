@@ -439,10 +439,6 @@ typeofc_ (valc U T) T <- typeofc U T, wftypc T unit.
 
 typeofvarc : bvalc -> typc -> prop.
 
-(*
-typeofc X Y <- print "entering", cheapprint 3 X, cheapprint 10 Y, failure.
-typeofc X Y <- typeofvarc X R, print "found for var", print R, print Y, eq R Y, print "is good".
-*)
 typeofc X Y <- typeofvarc X Y.
 typeofc (iconst _) tint.
 typeofc (fixc F) (tpi T) <-
@@ -461,10 +457,8 @@ typeofc (fixc F) (tpi T) <-
 typeofc (tupc VS) (ttup TS) <-
   map typeofc_ VS TS.
 
-(*
-typeofc X <- print "entering", cheapprint 3 X, failure.
-*)
-typeofc X <- (if isunif X, print "parapatem!", success), failure.
+
+typeofc X <- (if isunif X, print "TODO error!", success), failure.
 typeofc (letc (dcval V E)) <-
   typeofc_ V T,
   (x:bvalc -> typeofvarc x T -> typeofc (E x)).
@@ -504,10 +498,6 @@ typeofc (if0c V E1 E2) <-
 typeofc (haltc T V) <-
   typeofc_ V T.
 
-(*
-typeofc X Y <- print "failed", cheapprint 0 X, print Y, failure.
-typeofc X <- print "FAILED FOR::", cheapprint 3 X, failure.
-*)
 
 
 sugarapp : valc -> list typc -> valc -> prop.

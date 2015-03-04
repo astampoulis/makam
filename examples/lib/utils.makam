@@ -78,9 +78,6 @@ option : type -> type.
 none : option A.
 some : A -> option A.
 
-tuple : type -> type -> type.
-tuple : A -> B -> tuple A B.
-
 map : [A B C D] (A -> C -> prop) -> (B -> D -> prop) -> tuple A B -> tuple C D -> prop.
 map P Q (tuple X Y) (tuple X' Y') <- P X X', Q Y Y'.
 
