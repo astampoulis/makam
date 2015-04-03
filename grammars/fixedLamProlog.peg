@@ -24,6 +24,7 @@ open Termlangbuiltin;;
 open Termlangprolog;;
 open Batteries;;
 open PegBuiltins;;
+module StringSet = Set.Make(String);;
 
 type 'a located = { content : 'a ; span : UChannel.span } ;;
 let (--->) x1 x2 = UChannel.combine_span x1.span x2.span ;;
@@ -49,6 +50,8 @@ let mkTm v ls =
 let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 
 let lambda_prolog_toplevel_parser : ((unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ -> None) ;;
+
+let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun" ];;
 
 exception Forget of string ;;
 
@@ -117,8 +120,12 @@ ltyp  -> s:ltoken("[") parametric:repWHITE(token(ident)) e:ltoken("]") t:lmonoty
         << let param = { content = parametric ; span = s ---> e } in 
 	   autospan_bin _tForall param t >>
       / t:lmonotyp << t >>
-lmonotyp -> t:apptyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
-          / t:apptyp^ << t >>
+
+lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
+          / t:multtyp^                            << t >>
+
+multtyp -> t:apptyp^ token("*") e:lmonotyp        << autospan_bin _tTuple t e >>
+         / t:apptyp^                              << t>>
 
 apptyp -> x:loced(typconstr)
           << let id, args = x.content in
@@ -140,9 +147,9 @@ binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp tok
 
 (* Lambda Prolog part *)
 
-clause   -> goal:baseexpr^ token("when") cond:prop token("<-") premise:prop
+clause   -> goal:lexpr^ token("when") cond:prop token("<-") premise:prop
 	     << mkTm "whenclause" [ goal ; cond ; premise ] >>
-	  / goal:baseexpr^ token("when") cond:prop
+	  / goal:lexpr^ token("when") cond:prop
 	     << mkTm "whenclause" [ goal ; cond ; mkTm "success" [] ] >>
 	  / goal:lexpr^ x:token("<-") premise:prop
 	    << mkTm "clause" [ goal ; premise ] >>
@@ -163,11 +170,11 @@ newmetas -> s:ltoken("[") bindings:repplusWHITE(binding) token("]")
 		   bindings body >>
 	  / epsilon << fun x -> x >>
 
-hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh:hyp token(")")
+hyp      -> token("if") ifh:hyp1 token("then") thenh:hyp1 token("else") elseh:hyp
 	    << mkTm "ifte" [ ifh ; thenh ; elseh ] >>
-	  / token("once") token("(") o:prop token(")")
-	    << mkTm "once" [ o ] >>
-	  / token("(") newvars:repWHITE(newvar) 
+          / h:hyp1 << h >>
+
+hyp1     -> token("(") newvars:repWHITE(newvar) 
 	    knowns:rep( (x:assumption token("->") << x >>) )
 	    &&( epsilon << fun _ -> List.length newvars + List.length knowns > 0 >> )
 	    req:hyp token(")")
@@ -179,11 +186,9 @@ hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh
 		    List.fold_right
 		    (fun binding r -> mkTm "newvar" [ autospan_bin mkLamO binding r ])
 		    newvars >>
-	  / token("(") p:prop token(")") << p >>
-(*                     mult:repplusSEP(hyp^, ",")
-	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "and" [ r ; elm ]) (mkTm "success" [])
-	       (fun x -> x) mult >>
-*)
+          / h:hyp2 << h >>
+
+hyp2     -> token("(") p:prop token(")") << p >>
 	  / token("(") mult:repplusSEP(hyp^, ";") token(")")
 	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTm "failure" [])
 	       (fun x -> x) mult >>
@@ -377,14 +382,15 @@ whiteNoNewline -> ![\n] white ;
    OCaml identifiers *)
 identfstchar -> &latin1char c:letterchar    << c >>
 identrstchar -> &latin1char c:(letterchar / digitchar / [_']) << c >>
-ident        -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
+identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
+ident        -> &&( identaux << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux << id >>
 
 cmdnamefstchar -> &latin1char c:letterchar    << c >>
 cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
 cmdname        -> c:cmdnamefstchar cs:rep(cmdnamerstchar) << UString.implode (c :: cs) |> UString.to_string >>
 
 tident       -> m:ident^ "." &ident^ x:tident << m ^ "." ^ x >>
-	   / &&( ident^ << fun s -> not (s = "type") >>) x:ident^ << x >>
+	      / x:ident^ << x >>
 
 (* string characters must include the escape characters allowed by ocaml, so that bootstrapping works properly *)
 hexdigitchar ->  a:[0123456789abcdefABCDEF]  << a >>
