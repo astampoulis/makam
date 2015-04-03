@@ -1720,8 +1720,14 @@ let global_resolve_filename fn =
 ;;
 
 let global_load_file ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) =
-  global_load_file_resolved ?modul:modul pars (global_resolve_filename filename)
+    (pars : string -> (unit -> unit) list) (filename : string) () =
+  let module Path = BatPathGen.OfString in
+  let current_directory = Path.parent (Path.of_string filename) in
+  let original_directories = (!globalstate).included_directories in
+  globalstate := { !globalstate with included_directories = current_directory };
+  global_load_file_resolved ?modul:modul pars (global_resolve_filename filename) ();
+  globalstate := { !globalstate with included_directories = original_directories }
+;;
 
 
 let global_typecheck eorig = 
