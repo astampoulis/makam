@@ -65,7 +65,8 @@ let new_builtin_type_constructor s =
 let new_builtin_type_constructor_binary s =
   let i = builtin_do (typedecl s (_tType **> _tType **> _tType)) in
   let idx = Some (`Free, i) in
-  (idx, fun t1 t2 -> { term = `TVar(s, idx, [t1; t2]) ; classifier = () ; loc = None ; extra = TypExtras.empty () })
+  let mkType ?(loc = None) t1 t2 = { term = `TVar(s, idx, [t1; t2]) ; classifier = () ; loc = loc ; extra = TypExtras.empty () } in
+  (idx, mkType)
 ;;
 
 
