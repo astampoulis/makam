@@ -1,3 +1,5 @@
+%use "./stdlib/prelude".
+
 %directory "examples".
 %directory "examples/lib".
 %directory "examples/small".

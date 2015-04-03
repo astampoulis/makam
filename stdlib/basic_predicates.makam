@@ -1,0 +1,7 @@
+eq : A -> A -> prop.
+eq X X.
+
+not : prop -> prop.
+not P <- if once(P) then failure else success.
+
+
