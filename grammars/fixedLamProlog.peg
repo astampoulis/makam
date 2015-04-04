@@ -269,22 +269,22 @@ directive -> "use" repplus(white) s:token(ident_or_str)
 	   / "import" repplus(white) s:token(ident)
 	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s ~modul:s >>
 	   / "extend" s:token(ident)
-	   << fun () () -> Termlangcanon.global_enter_module s >>
+	   << fun () -> Termlangcanon.global_enter_module s; fun () -> () >>
 	   / "end"
-	   << fun () () -> Termlangcanon.global_leave_module () >>
+	   << fun () -> Termlangcanon.global_leave_module >>
 	   / "directory" repplus(white) s:token(str)
-	   << fun () () -> Termlangcanon.global_add_directory s >>
+	   << fun () -> Termlangcanon.global_add_directory s; fun () -> () >>
 	   / "typenorm" repplus(white) e:baseexpr
 	   << fun () () -> global_typecheck_and_normalize (e.content) >>
 	   / "type" repplus(white) e:baseexpr 
 	   << fun () () -> global_typecheck (e.content) >>
 	   / "reset"
-	   << fun () () -> global_reset () >>
+	   << fun () -> global_reset >>
 	   / "usenew" repplus(white) s:token(ident_or_str)
 	     << fun () -> global_reset () ;
 	                  Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
 	   / "curmodule"
-	   << fun () () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
+	   << fun () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module; fun () -> () >>
 
 	  / b:flag("debug") << fun () () -> _DEBUG_DEMAND := b >>
 	  / b:flag("debugfull") << fun () () -> _DEBUG := b >>

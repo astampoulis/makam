@@ -1666,7 +1666,7 @@ let global_load_file_resolved ?modul
       let state' = !globalstate in
       match fullmodul with
 
-      |        None ->
+      | None ->
         globalstate := { state' with globally_loaded_modules =
             StringSet.add filename state'.globally_loaded_modules }
 
@@ -1720,13 +1720,15 @@ let global_resolve_filename fn =
 ;;
 
 let global_load_file ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) () =
+    (pars : string -> (unit -> unit) list) (filename : string) =
   let module Path = BatPathGen.OfString in
-  let current_directory = Path.parent (Path.of_string filename) in
+  let current_directory = Path.of_string filename |> Path.parent |> Path.to_string in
   let original_directories = (!globalstate).included_directories in
-  globalstate := { !globalstate with included_directories = current_directory };
+  let new_directories = if current_directory = "." then original_directories else current_directory :: original_directories in
+  globalstate := { !globalstate with included_directories = new_directories };
   global_load_file_resolved ?modul:modul pars (global_resolve_filename filename) ();
-  globalstate := { !globalstate with included_directories = original_directories }
+  globalstate := { !globalstate with included_directories = original_directories };
+  fun () -> ()
 ;;
 
 
