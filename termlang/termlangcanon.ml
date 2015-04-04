@@ -1598,32 +1598,37 @@ let global_term_reset () =
 let reifyexn e = try `Left(e ()) with exn -> `Right(exn);;
 let reflectexn e = match e with `Left(v) -> v | `Right(exn) -> raise exn;;
 
-let global_enter_module m =
-  let state = !globalstate in
+let enter_module m () = 
+  let state = !termstate in
   let prev_curmod = state.current_module in
   let curmod = match prev_curmod with None -> m | Some prefix -> prefix ^ "." ^ m in
-  globalstate := { state with current_module = Some curmod ;
+  termstate := { state with current_module = Some curmod ;
                    module_extension_stack = prev_curmod :: state.module_extension_stack
-                 }
+               }
 ;;
+
+let global_enter_module m = globalterm_do (enter_module m);;
 
 exception NotInModule;;
 
-let global_leave_module () =
-  let state = !globalstate in
+let leave_module () =
+  let state = !termstate in
   match state.module_extension_stack with
     [] -> raise NotInModule
   | prev_curmod :: stack ->
-    globalstate := { state with current_module = prev_curmod ; module_extension_stack = stack }
-
+    termstate := { state with current_module = prev_curmod ; module_extension_stack = stack }
 ;;
-  
-let global_module_do m f =
-  global_enter_module m ;
+
+let global_leave_module () = globalterm_do leave_module ;;
+
+let module_do m f () =
+  enter_module m () ;
   let res = reifyexn f in
-  global_leave_module () ;
+  leave_module () ;
   reflectexn res
 ;;
+  
+let global_module_do m f = globalterm_do (module_do m f) ;;
 
 let global_restore_module fn state' =
   let state = !globalstate in

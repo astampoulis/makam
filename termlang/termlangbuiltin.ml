@@ -69,11 +69,14 @@ let new_builtin_type_constructor_binary s =
   (idx, mkType)
 ;;
 
-
 let new_builtin s t =
   let i = builtin_do (typedecl s t) in
   i
 ;;
+
+let builtin_enter_module m  = builtin_do (enter_module m) ;;
+let builtin_leave_module () = builtin_do leave_module;;
+
 
 let _tiString, _tString, mkString, pattheadString, pattneutString, pattcanonString =
   new_builtin_const_type "string"
