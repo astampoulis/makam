@@ -94,7 +94,7 @@ typapply (typconstr TC) TS T <- bindmany_apply TC TS T.
 nf         : typ -> typ -> prop.
 nf_        : typ -> typ -> prop.
 
-nf X Y <- if (isunif X; isunif Y) then eq X Y else nf_ X Y.
+nf X Y <- if (refl.isunif X; refl.isunif Y) then eq X Y else nf_ X Y.
 
 (nf_ X X) when newnmeta (fun x => eq x X).
 nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') <-
@@ -142,16 +142,16 @@ typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
 typinst T T' <- not(eq T (tpi _ _)), (eq T T'; nf T T').
 
 notinenv : typ -> prop.
-notinenv X <- assume_get typeof Assumptions,
-	      assume_get gentypeof MoreAssumptions,
+notinenv X <- refl.assume_get typeof Assumptions,
+	      refl.assume_get gentypeof MoreAssumptions,
 	      append Assumptions MoreAssumptions AS,
 	      gather_all_unifs (dyn AS) (X : typ) (XS : list typ),
 	      not(find_benign X XS).
 
 next_typgen : typ -> (typ -> typ) -> prop.
-next_typgen T F <- builtin.getunif T (X : typ),
+next_typgen T F <- refl.getunif T (X : typ),
 	           notinenv X,
-	           builtin.absunif T X F.
+	           refl.absunif T X F.
 
 typgen : typ -> typ -> prop.
 typgen T T <- not(next_typgen T _).
@@ -314,11 +314,11 @@ typebranch T T' Branch <-
   
 
 typeof (match E Branches) T' <-
-  typeof E T, not(isunif T),
+  typeof E T, not(refl.isunif T),
   map0 (typebranch T T') Branches.
 
 typeof (match E Branches) T' <-
-  typeof E T, not(isunif T), nf T Tnf,
+  typeof E T, not(refl.isunif T), nf T Tnf,
   map0 (typebranch Tnf T') Branches.
 
 typeof (match E Branches) T' <-
@@ -332,7 +332,7 @@ typeof (trycatch E Handlers) T <-
 
 (* conversion *)
 (typeof X Tnf) when isnvar X, once(typeof X T) <- nf T Tnf.
-(typeof E T) when not (isnvar E), not (isunif T), once(typeof E T') <- nf T' Z, nf T Z.
+(typeof E T) when not (isnvar E), not (refl.isunif T), once(typeof E T') <- nf T' Z, nf T Z.
 
 
 (* ---------------------------- *)

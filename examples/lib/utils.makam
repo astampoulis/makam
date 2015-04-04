@@ -100,7 +100,7 @@ renamebinder F ID (fun newbinderⁿID => F newbinderⁿID).
 
 printhead : A -> prop.
 printhead (X : A -> B) <- (x:A -> printhead (X x)).
-(printhead (X : A)) when not(eq (dyn(X : A)) (dyn(Y : B -> C))) <- headargs X HD _, headname HD S, print S.
+(printhead (X : A)) when not(eq (dyn(X : A)) (dyn(Y : B -> C))) <- refl.headargs X HD _, refl.headname HD S, print S.
 
 
 assumemany : list prop -> prop -> prop.
@@ -126,7 +126,7 @@ caseguard Scrutinee ( (Pattern, Guard, Body) :: Rest ) <-
 
 isdeepunif : A -> prop.
 isdeepunif A <-
-  if isunif A then success else
+  if refl.isunif A then success else
    case (dyn A)
           [ (dyn (dyn X), isdeepunif X),
             (dyn (tuple X Y), {prop| isdeepunif X, isdeepunif Y |}) ].
