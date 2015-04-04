@@ -26,313 +26,408 @@ open Termlangext;;
 open Utils;;
 
 
-new_builtin_predicate "lookup" ( _tString **> ( ~* "A" ) **> _tProp )
-  (let open RunCtx.Monad in
-   fun _ -> fun [ varname ; res ] -> perform
-       varname <-- chasePattcanon [] varname ;
-       varname <-- _PtoString varname ;
-       let expr = pattcanonToExpr (-1) res in
-       varidx  <-- intermlang (fun _ ->
-         try Some (findUnifiableVar `Free (findFvar varname) (exprAsExprU expr))
-         with _ -> None) ;
-       match varidx with
-       | Some (`Free, varidx) ->
-         let patt = pattheadToCanon { expr with term = `Var(`Concrete(varname), (`Free, varidx)) } in
-         pattcanonUnifyFull res patt
-       | _ -> mzero)
-;;
-
-new_builtin_predicate "allheads" ( (_tList _tDyn) **> _tProp )
-  (let open RunCtx.Monad in
-   fun _ -> fun [ res ] -> perform
-       vars <-- intermlang (fun _ ->
-         let idxs  = increasing !termstate.fvars in
-         let names = List.map nameOfFVar idxs in
-         let exprus = List.map2 (fun name idx -> mkIndexedVar ~name:(`Concrete(name)) (`Free, idx) ()) names idxs in
-         let exprs = List.map typeof exprus in
-         let patts = List.map (function
-                                | ({ term = `Var(`Concrete(name), (`Free, idx)) } as e) ->
-                                   { e with term = `Var(`Concrete(name), (`Free, idx)) }
-                                   |> pattheadToCanon |> _PofDyn
-                                | _ -> assert false)
-                              exprs
-         in
-         let list = _PofList _tDyn patts in
-         list);
-       pattcanonUnifyFull res vars)
-;;       
-
-new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
-  (let open RunCtx.Monad in
-   fun _ -> fun [ patt ; res ] -> perform
-       patt <-- pattcanonRenormalize patt ;
-       patt <-- chasePattcanon [] patt ;
-       match patt.term with
-         | `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(s), (`Free, _)) }, _, _ ) }) ->
-           pattcanonUnifyFull res (_PofString ~loc:patt.loc s)
+builtin_enter_module "refl" ;;
+  
+  new_builtin_predicate "lookup" ( _tString **> ( ~* "A" ) **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> fun [ varname ; res ] -> perform
+         varname <-- chasePattcanon [] varname ;
+         varname <-- _PtoString varname ;
+         let expr = pattcanonToExpr (-1) res in
+         varidx  <-- intermlang (fun _ ->
+           try Some (findUnifiableVar `Free (findFvar varname) (exprAsExprU expr))
+           with _ -> None) ;
+         match varidx with
+         | Some (`Free, varidx) ->
+           let patt = pattheadToCanon { expr with term = `Var(`Concrete(varname), (`Free, varidx)) } in
+           pattcanonUnifyFull res patt
          | _ -> mzero)
-;;
-
-new_builtin_predicate "headargs" ( ( ~* "A" ) **> ( ~* "B" ) **> (_tList _tDyn) **> _tProp)
-  (let open RunCtx.Monad in
-   fun _ -> fun [ term ; head ; args ] -> perform
-     term <-- pattcanonRenormalize term ;
-     term <-- chasePattcanon [] term ;
-     match term.term with
-
-       (* deconstruct *)
-       | `LamMany([], { term = `AppMany(hd, args', args'info) }) ->
-
-         perform
-           hd <-- pattcanonRenormalize (pattheadToCanon hd) ;
-           pattcanonUnifyFull head hd ;
-           let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
-           let args'list = _PofList ~loc:term.loc _tDyn args' in
-           pattcanonUnifyFull args args'list
-
-       (* reconstruct *)
-       | `LamMany([], { term = `Meta(_) }) ->
-         perform
-           args <-- _PtoList args ;
-           ps <-- mapM pattcanonRenormalize (head :: args) ;
-           ps <-- mapM (chasePattcanon []) ps ;
-           let (head' :: args') = ps in
-           (head'', argsinfo, typ) <--
-             (match head'.term with
-                 `LamMany(_, { term = `AppMany(hd, _, argsinfo) ;
-                               classifier = typ }) ->
-                   return (hd, argsinfo, typ)
-               | _ -> mzero) ;
-
-           (* check types *)
-           argstyps <-- intermlang (fun _ -> gatherArrowTyps head''.classifier) ;
-           if (List.length args' <> List.length argstyps) then mzero else return () ;
-           args' <-- mapM (uncurry _PtoDyn) (List.combine args' argstyps) ;
-
-           let term' =
-             pattneutToCanon
-               { term = `AppMany(head'', args', argsinfo) ;
-                 classifier = typ ;
-                 loc = head.loc ;
-                 extra = PattExtras.empty () }
-           in
-           pattcanonUnifyFull term term'
-
-       | _ -> mzero)
-;;
-
-new_builtin_predicate "assume_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
-  (let open RunCtx.Monad in
-   fun _ -> function [ pred ; unif ] -> begin perform
-
-      pred <-- pattcanonRenormalize pred ; 
-      pred <-- chasePattcanon [] pred ;
-    
-      match pred.term with
-          `LamMany(_, body) -> 
-            perform
-                let idx  =   headPredicate body in
-                env      <-- getenv ;
-                let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
-                cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
-                pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
-
-  end | _ -> assert false)
-;;
-
-new_builtin_predicate "getrules" ( ~* "A" **> (_tList _tClause) **> _tProp )
-  (let open RunCtx.Monad in
-   fun _ -> function [ pred ; unif ] -> begin perform
-
-      pred <-- pattcanonRenormalize pred ; 
-      pred <-- chasePattcanon [] pred ;
-    
-      match pred.term with
-          `LamMany(_, body) -> 
-            perform
-                let idx  =   headPredicate body in
-                cs       <-- findConstructors idx ;
-                cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
-                pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
-
-  end | _ -> assert false)
-;;
-
-new_builtin_predicate "decomposeunif" ( ( ~* "A" ) **> _tInt **> (_tList _tDyn) **> _tProp)
-  (let open RunCtx.Monad in
-   fun _ -> fun [ term ; index ; args ] -> perform
-     term <-- pattcanonRenormalize term ;
-     term <-- chasePattcanon [] term ;
-     match term.term with
-
-       (* deconstruct *)
-       | `LamMany([], { term = `Meta(_, idx, `Subst(args', _, args'info, _), _) }) ->
-
-         perform
-           pattcanonUnifyFull index (pattcanonInt idx) ;
-           let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
-           let args'list = _PofList ~loc:term.loc _tDyn args' in
-           pattcanonUnifyFull args args'list
-
-       | _ -> mzero)
-;;
-
-new_builtin_predicate "recomposeunif" ( ( ~* "A" ) **> (_tList _tDyn) **> ( ~* "A" ) **> _tProp)
-  (let open RunCtx.Monad in
-   fun _ -> fun [ term ; args ; result ] -> perform
-     term <-- pattcanonRenormalize term ;
-     term <-- chasePattcanon [] term ;
-     match term.term with
-
-       (* reconstruct *)
-       | `LamMany([], ({ term = `Meta(s, idx, `Subst(_, _, argsinfo, names), typ) } as neut)) ->
-         perform
-           args <-- _PtoList args ;
-           ps <-- mapM pattcanonRenormalize args ;
-           ps <-- mapM (chasePattcanon []) ps ;
-
-           (* check types *)
-           argstyps <-- intermlang (fun _ -> gatherArrowTyps typ) ;
-           if (List.length ps <> List.length argstyps) then mzero else return () ;
-           args' <-- mapM (uncurry _PtoDyn) (List.combine ps argstyps) ;
-
-           let term' =
-             pattneutToCanon
-               { neut with
-                 term = `Meta(s, idx, `Subst(args', None, argsinfo, names), typ) }
-           in
-           pattcanonUnifyFull term' result
-
-       | _ -> mzero)
-;;
-
-new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
-  (fun _ -> fun [ p ] ->
+  ;;
+  
+  new_builtin_predicate "allconstants" ( (_tList _tDyn) **> _tProp )
     (let open RunCtx.Monad in
-     perform
-       state  <-- getstate ;
-       p      <-- chasePattcanon ~deep:true [] p ;
-       _      <-- setstate state ;
-       let isunif = match p.term with `LamMany(_, { term = `Meta _ }) -> true | _ -> false in
-       moneOrMzero isunif))
-;;
-
-let ensure_concrete_type (p : pattcanon) : unit RunCtx.Monad.m =
-  let open RunCtx.Monad in
-  perform
-    t <-- intermlang (fun _ -> chaseType p.classifier) ;
-    let b = match t.term with `TVar(_, Some (`Free, _), _) -> true | _ -> false in
-    if b then return () else (Printf.printf "wrong call to external predicate expecting concrete type\n"; mzero)
-
-;;
-
-
-new_builtin_predicate "builtin.getunif" ( ~* "A" **> ~* "B" **> _tProp )
-  (fun _ -> fun [ input ; output ] ->
+     fun _ -> fun [ res ] -> perform
+         vars <-- intermlang (fun _ ->
+           let idxs  = increasing !termstate.fvars in
+           let names = List.map nameOfFVar idxs in
+           let exprus = List.map2 (fun name idx -> mkIndexedVar ~name:(`Concrete(name)) (`Free, idx) ()) names idxs in
+           let exprs = List.map typeof exprus in
+           let patts = List.map (function
+                                  | ({ term = `Var(`Concrete(name), (`Free, idx)) } as e) ->
+                                     { e with term = `Var(`Concrete(name), (`Free, idx)) }
+                                     |> pattheadToCanon |> _PofDyn
+                                  | _ -> assert false)
+                                exprs
+           in
+           let list = _PofList _tDyn patts in
+           list);
+         pattcanonUnifyFull res vars)
+  ;;       
+  
+  new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
     (let open RunCtx.Monad in
-     let combine r1 r2 =
-       match r1, r2 with
-         Some r, None | None, Some r -> Some r
-       | Some (l1, u1), Some (l2, u2) -> if l1 < l2 then Some (l1, u1) else Some (l2, u2)
-       | None, None -> None
-     in
-     let rec auxneut cur (p : pattneut) =
-       match p.term with
-         `Meta(m1) ->
+     fun _ -> fun [ patt ; res ] -> perform
+         patt <-- pattcanonRenormalize patt ;
+         patt <-- chasePattcanon [] patt ;
+         match patt.term with
+           | `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(s), (`Free, _)) }, _, _ ) }) ->
+             pattcanonUnifyFull res (_PofString ~loc:patt.loc s)
+           | _ -> mzero)
+  ;;
+  
+  new_builtin_predicate "headargs" ( ( ~* "A" ) **> ( ~* "B" ) **> (_tList _tDyn) **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> fun [ term ; head ; args ] -> perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+  
+         (* deconstruct *)
+         | `LamMany([], { term = `AppMany(hd, args', args'info) }) ->
+  
            perform
-             ifte (perform
-                     b <-- intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) ;
-                     moneOrMzero b)
-                  (fun () -> perform
-                     level <-- getMetaLevel (metaindex m1) ;
-                     return (combine cur (Some (level, p))))
-                  (lazy(foldM auxcanon cur (metasubstmain m1)))
-       | `AppMany(hd, args, _) ->
-           foldM auxcanon cur args
-     and auxcanon cur (p : pattcanon) =
-       match p.term with
-         `LamMany(lamsinfo, p) -> auxneut cur p
-     in
-     perform
-       _     <-- mapM ensure_concrete_type [ input ; output ] ;
-       p     <-- chasePattcanon ~deep:true [] input ;
-       p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
-       unif  <-- auxneut None p ;
-       match unif, output.term with
-         Some (_, unif), `LamMany([], { term = `Meta(o) }) ->
-           (* pattUnifyFull output unif *)
-           setMetaParent (metaindex o) unif
-       | _           -> mzero))
-;;
-
-new_builtin_predicate "builtin.absunif" ( ~* "A" **> ~* "B" **> (~* "B" **> ~* "A") **> _tProp )
-  (fun _ [ term ; meta ; output ] ->
+             hd <-- pattcanonRenormalize (pattheadToCanon hd) ;
+             pattcanonUnifyFull head hd ;
+             let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
+             let args'list = _PofList ~loc:term.loc _tDyn args' in
+             pattcanonUnifyFull args args'list
+  
+         (* reconstruct *)
+         | `LamMany([], { term = `Meta(_) }) ->
+           perform
+             args <-- _PtoList args ;
+             ps <-- mapM pattcanonRenormalize (head :: args) ;
+             ps <-- mapM (chasePattcanon []) ps ;
+             let (head' :: args') = ps in
+             (head'', argsinfo, typ) <--
+               (match head'.term with
+                   `LamMany(_, { term = `AppMany(hd, _, argsinfo) ;
+                                 classifier = typ }) ->
+                     return (hd, argsinfo, typ)
+                 | _ -> mzero) ;
+  
+             (* check types *)
+             argstyps <-- intermlang (fun _ -> gatherArrowTyps head''.classifier) ;
+             if (List.length args' <> List.length argstyps) then mzero else return () ;
+             args' <-- mapM (uncurry _PtoDyn) (List.combine args' argstyps) ;
+  
+             let term' =
+               pattneutToCanon
+                 { term = `AppMany(head'', args', argsinfo) ;
+                   classifier = typ ;
+                   loc = head.loc ;
+                   extra = PattExtras.empty () }
+             in
+             pattcanonUnifyFull term term'
+  
+         | _ -> mzero)
+  ;;
+  
+  new_builtin_predicate "assume_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
     (let open RunCtx.Monad in
-     let getmetaindexcanon p = match p.term with `LamMany([], { term = `Meta(m) }) -> Some (metaindex m) | _ -> None in
-     let getmetaindexneut p = match p.term with `Meta(m) -> Some (metaindex m) | _ -> None in
-     let chaseWithConstraints uvar =
-       let rec aux visited tovisit tovisit_set =
-         match tovisit with
-           [] -> return visited
-         | uvar :: tl when ISet.mem uvar visited -> aux visited tl (ISet.remove uvar tovisit_set)
-         | uvar :: tl ->
-           (perform 
-              let visited = ISet.add uvar visited in
-              let tovisit_set = ISet.remove uvar tovisit_set in
-              cs  <-- getConstraints uvar ;
-              cs' <-- mapM (fun elm ->
-                            match elm with
-                              `UnifCanon(bound, p1, p2) -> perform
-                                                             state <-- getbacktrackstate ;
-                                                             p1 <-- chasePattcanon bound p1 ;
-                                                             p2 <-- chasePattcanon bound p2 ;
-                                                             setstate state ;
-                                                             return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
-                            | `Unif(bound, p1, p2) -> perform
-                                                        state <-- getbacktrackstate ;
-                                                        p1 <-- chasePattneut bound p1 ;
-                                                        p2 <-- chasePattneut bound p2 ;
-                                                        setstate state ;
-                                                        return (List.filter_map getmetaindexneut [ p1 ; p2 ])
-                            | _ -> return []) cs;
-              let cs' = List.flatten cs' in
-              let newones = List.filter (fun elm -> not (ISet.mem elm visited || ISet.mem elm tovisit_set)) cs' in
-              aux visited (newones ++ tl) (ISet.union (newones |> List.enum |> ISet.of_enum) tovisit_set))
-       in
-       aux ISet.empty [uvar] (ISet.singleton uvar)
-     in
-     let rec auxneut bound uvars p : pattneut =
-       match p.term with
-         `Meta(m1) when ISet.mem (metaindex m1) uvars ->
-           let head = { p with term = `Var(`Anon, (`Bound, bound)) } in
-           let neut = { p with term = `AppMany(head, [], []) } in
-           neut
-       | `Meta(s,idx,`Subst(subst,substinv,ts,names),t) ->
-         let subst = List.map (auxcanon bound uvars) subst in
-         let substinv = invertSubst subst in
-         { p with term = `Meta(s,idx,`Subst(subst,substinv,ts,names),t) }
-       | `AppMany(hd, args, argsinfo) ->
-         { p with term = `AppMany(hd, List.map (auxcanon bound uvars) args, argsinfo) }
-     and auxcanon bound uvars p : pattcanon =
-       match p.term with
-         `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }
-     in
-     perform
-       _    <-- mapM ensure_concrete_type [ term ; meta ] ;
-       p    <-- chasePattcanon ~deep:true [] term ;
-       meta <-- chasePattcanon ~deep:true [] meta ;
-       uvar <-- (match getmetaindexcanon meta with Some i -> return i | _ -> mzero);
-       uvars <-- chaseWithConstraints uvar ;
-       p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
-       let ctx = auxneut 0 uvars p in
-       let restyp = meta.classifier **> term.classifier in
-       let res = { term = `LamMany( [ { term = (`Anon, meta.classifier) ; classifier = restyp ; loc = p.loc ; extra = PattExtras.empty () } ], ctx ) ;
-                   classifier = restyp ;
-                   loc = p.loc ; extra = PattExtras.empty () }
-       in
-       pattcanonUnifyFull output res))
-;;
+     fun _ -> function [ pred ; unif ] -> begin perform
+  
+        pred <-- pattcanonRenormalize pred ; 
+        pred <-- chasePattcanon [] pred ;
+      
+        match pred.term with
+            `LamMany(_, body) -> 
+              perform
+                  let idx  =   headPredicate body in
+                  env      <-- getenv ;
+                  let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
+                  cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
+                  pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
+  
+    end | _ -> assert false)
+  ;;
 
+  new_builtin_predicate "assume_reset" ( ~* "A" **> _tProp **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ pred ; { term = `LamMany([], p) } ] -> begin perform
+
+        pred <-- chasePattcanon [] pred ;
+      
+        match pred.term with
+            `LamMany(_, body) -> 
+              perform
+                  let idx = headPredicate body in
+                env' <-- resetTempConstructors idx ;
+                  inenv env' (demand p)
+
+    end | _ -> assert false)
+  ;;
+  
+  new_builtin_predicate "rules_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ pred ; unif ] -> begin perform
+  
+        pred <-- pattcanonRenormalize pred ; 
+        pred <-- chasePattcanon [] pred ;
+      
+        match pred.term with
+            `LamMany(_, body) -> 
+              perform
+                  let idx  =   headPredicate body in
+                  cs       <-- findConstructors idx ;
+                  cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
+                  pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
+  
+    end | _ -> assert false)
+  ;;
+
+  new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isunif = match p.term with `LamMany([], { term = `Meta _ }) -> true | _ -> false in
+         moneOrMzero isunif))
+  ;;
+
+  new_builtin_predicate "isconst" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isconst = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Const _ }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isconst))
+  ;;
+
+  new_builtin_predicate "isnvar" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isnvar = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Var (_, (`New, _)) }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isnvar))
+  ;;
+
+  new_builtin_predicate "isfvar" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isfvar = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Var (_, (`Free, _)) }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isfvar))
+  ;;
+
+  new_builtin_predicate "isvar" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isvar = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Var (_, _) }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isvar))
+  ;;
+
+  new_builtin_predicate "isfun" ( ~* "A" **> _tProp )
+    (fun _ -> fun [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isfun = match p.term with
+             `LamMany(hd :: _, _) -> true
+           | _ -> false
+         in
+         moneOrMzero isfun))
+  ;;
+
+  (* --- more low-level operations with metavariables --- *)
+  new_builtin_predicate "decomposeunif" ( ( ~* "A" ) **> _tInt **> (_tList _tDyn) **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> fun [ term ; index ; args ] -> perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+  
+         (* deconstruct *)
+         | `LamMany([], { term = `Meta(_, idx, `Subst(args', _, args'info, _), _) }) ->
+  
+           perform
+             pattcanonUnifyFull index (pattcanonInt idx) ;
+             let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
+             let args'list = _PofList ~loc:term.loc _tDyn args' in
+             pattcanonUnifyFull args args'list
+  
+         | _ -> mzero)
+  ;;
+  
+  new_builtin_predicate "recomposeunif" ( ( ~* "A" ) **> (_tList _tDyn) **> ( ~* "A" ) **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> fun [ term ; args ; result ] -> perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+  
+         (* reconstruct *)
+         | `LamMany([], ({ term = `Meta(s, idx, `Subst(_, _, argsinfo, names), typ) } as neut)) ->
+           perform
+             args <-- _PtoList args ;
+             ps <-- mapM pattcanonRenormalize args ;
+             ps <-- mapM (chasePattcanon []) ps ;
+  
+             (* check types *)
+             argstyps <-- intermlang (fun _ -> gatherArrowTyps typ) ;
+             if (List.length ps <> List.length argstyps) then mzero else return () ;
+             args' <-- mapM (uncurry _PtoDyn) (List.combine ps argstyps) ;
+  
+             let term' =
+               pattneutToCanon
+                 { neut with
+                   term = `Meta(s, idx, `Subst(args', None, argsinfo, names), typ) }
+             in
+             pattcanonUnifyFull term' result
+  
+         | _ -> mzero)
+  ;;
+    
+  let ensure_concrete_type (p : pattcanon) : unit RunCtx.Monad.m =
+    let open RunCtx.Monad in
+    perform
+      t <-- intermlang (fun _ -> chaseType p.classifier) ;
+      let b = match t.term with `TVar(_, Some (`Free, _), _) -> true | _ -> false in
+      if b then return () else (Printf.printf "wrong call to external predicate expecting concrete type\n"; mzero)
+  
+  ;;
+  
+  new_builtin_predicate "getunif" ( ~* "A" **> ~* "B" **> _tProp )
+    (fun _ -> fun [ input ; output ] ->
+      (let open RunCtx.Monad in
+       let combine r1 r2 =
+         match r1, r2 with
+           Some r, None | None, Some r -> Some r
+         | Some (l1, u1), Some (l2, u2) -> if l1 < l2 then Some (l1, u1) else Some (l2, u2)
+         | None, None -> None
+       in
+       let rec auxneut cur (p : pattneut) =
+         match p.term with
+           `Meta(m1) ->
+             perform
+               ifte (perform
+                       b <-- intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) ;
+                       moneOrMzero b)
+                    (fun () -> perform
+                       level <-- getMetaLevel (metaindex m1) ;
+                       return (combine cur (Some (level, p))))
+                    (lazy(foldM auxcanon cur (metasubstmain m1)))
+         | `AppMany(hd, args, _) ->
+             foldM auxcanon cur args
+       and auxcanon cur (p : pattcanon) =
+         match p.term with
+           `LamMany(lamsinfo, p) -> auxneut cur p
+       in
+       perform
+         _     <-- mapM ensure_concrete_type [ input ; output ] ;
+         p     <-- chasePattcanon ~deep:true [] input ;
+         p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
+         unif  <-- auxneut None p ;
+         match unif, output.term with
+           Some (_, unif), `LamMany([], { term = `Meta(o) }) ->
+             (* pattUnifyFull output unif *)
+             setMetaParent (metaindex o) unif
+         | _           -> mzero))
+  ;;
+  
+  new_builtin_predicate "absunif" ( ~* "A" **> ~* "B" **> (~* "B" **> ~* "A") **> _tProp )
+    (fun _ [ term ; meta ; output ] ->
+      (let open RunCtx.Monad in
+       let getmetaindexcanon p = match p.term with `LamMany([], { term = `Meta(m) }) -> Some (metaindex m) | _ -> None in
+       let getmetaindexneut p = match p.term with `Meta(m) -> Some (metaindex m) | _ -> None in
+       let chaseWithConstraints uvar =
+         let rec aux visited tovisit tovisit_set =
+           match tovisit with
+             [] -> return visited
+           | uvar :: tl when ISet.mem uvar visited -> aux visited tl (ISet.remove uvar tovisit_set)
+           | uvar :: tl ->
+             (perform 
+                let visited = ISet.add uvar visited in
+                let tovisit_set = ISet.remove uvar tovisit_set in
+                cs  <-- getConstraints uvar ;
+                cs' <-- mapM (fun elm ->
+                              match elm with
+                                `UnifCanon(bound, p1, p2) -> perform
+                                                               state <-- getbacktrackstate ;
+                                                               p1 <-- chasePattcanon bound p1 ;
+                                                               p2 <-- chasePattcanon bound p2 ;
+                                                               setstate state ;
+                                                               return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
+                              | `Unif(bound, p1, p2) -> perform
+                                                          state <-- getbacktrackstate ;
+                                                          p1 <-- chasePattneut bound p1 ;
+                                                          p2 <-- chasePattneut bound p2 ;
+                                                          setstate state ;
+                                                          return (List.filter_map getmetaindexneut [ p1 ; p2 ])
+                              | _ -> return []) cs;
+                let cs' = List.flatten cs' in
+                let newones = List.filter (fun elm -> not (ISet.mem elm visited || ISet.mem elm tovisit_set)) cs' in
+                aux visited (newones ++ tl) (ISet.union (newones |> List.enum |> ISet.of_enum) tovisit_set))
+         in
+         aux ISet.empty [uvar] (ISet.singleton uvar)
+       in
+       let rec auxneut bound uvars p : pattneut =
+         match p.term with
+           `Meta(m1) when ISet.mem (metaindex m1) uvars ->
+             let head = { p with term = `Var(`Anon, (`Bound, bound)) } in
+             let neut = { p with term = `AppMany(head, [], []) } in
+             neut
+         | `Meta(s,idx,`Subst(subst,substinv,ts,names),t) ->
+           let subst = List.map (auxcanon bound uvars) subst in
+           let substinv = invertSubst subst in
+           { p with term = `Meta(s,idx,`Subst(subst,substinv,ts,names),t) }
+         | `AppMany(hd, args, argsinfo) ->
+           { p with term = `AppMany(hd, List.map (auxcanon bound uvars) args, argsinfo) }
+       and auxcanon bound uvars p : pattcanon =
+         match p.term with
+           `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }
+       in
+       perform
+         _    <-- mapM ensure_concrete_type [ term ; meta ] ;
+         p    <-- chasePattcanon ~deep:true [] term ;
+         meta <-- chasePattcanon ~deep:true [] meta ;
+         uvar <-- (match getmetaindexcanon meta with Some i -> return i | _ -> mzero);
+         uvars <-- chaseWithConstraints uvar ;
+         p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
+         let ctx = auxneut 0 uvars p in
+         let restyp = meta.classifier **> term.classifier in
+         let res = { term = `LamMany( [ { term = (`Anon, meta.classifier) ; classifier = restyp ; loc = p.loc ; extra = PattExtras.empty () } ], ctx ) ;
+                     classifier = restyp ;
+                     loc = p.loc ; extra = PattExtras.empty () }
+         in
+         pattcanonUnifyFull output res))
+  ;;
+
+builtin_leave_module ();;
 
 
 
