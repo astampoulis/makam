@@ -383,7 +383,7 @@ whiteNoNewline -> ![\n] white ;
 identfstchar -> &latin1char c:letterchar    << c >>
 identrstchar -> &latin1char c:(letterchar / digitchar / [_']) << c >>
 identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
-ident        -> &&( identaux << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux << id >>
+ident        -> &&( identaux^ << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux^ << id >>
 
 cmdnamefstchar -> &latin1char c:letterchar    << c >>
 cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
