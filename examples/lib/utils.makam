@@ -4,7 +4,7 @@ eq : A -> A -> prop.
 eq X X.
 
 not : prop -> prop.
-not P <- (if once(P), failure, success).
+not P <- if once P then failure else success.
 
 is : [A] A -> (A -> prop) -> prop.
 is X F <- F X.
@@ -37,9 +37,9 @@ foldr P (cons HD TL) S S'' <- foldr P TL S S', P HD S' S''.
 
 foldrinv : [A B] (A -> B -> B -> prop) -> B -> list A -> B -> prop.
 foldrinv P SStart Res SEnd <-
-  (if (P Hd SNext SStart),
-      (foldrinv P SNext Tl SEnd, eq Res (cons Hd Tl)),
-      (eq Res nil, eq SStart SEnd)).
+  if P Hd SNext SStart
+  then (foldrinv P SNext Tl SEnd, eq Res (cons Hd Tl))
+  else (eq Res nil, eq SStart SEnd).
 
 
 foldl : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
@@ -52,10 +52,9 @@ find (HD' :: TL) HD <- find TL HD.
 
 foldlinv : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
 foldlinv P SEnd Res SStart <-
-  ifte (P SPrev Last SEnd)
-       (and (foldlinv P SPrev Res' SStart)
-            (snoc Res' Last Res))
-       (and (eq Res nil) (eq SStart SEnd)).
+  if P SPrev Last SEnd
+  then (foldlinv P SPrev Res' SStart, snoc Res' Last Res)
+  else (eq Res nil, eq SStart SEnd).
 
 reverse : [A] list A -> list A -> prop.
 reverse_aux : [A] list A -> (list A -> list A) -> list A -> prop.
@@ -118,25 +117,25 @@ define Pred How (cmd_newclause (clause (Pred Res) success)) <- How Res.
 
 case : [A] A -> (list (tuple A prop)) -> prop.
 case Scrutinee ( (Pattern, Body) :: Rest ) <-
-  (if eq Scrutinee Pattern, Body, case Scrutinee Rest).
+  if eq Scrutinee Pattern then Body else case Scrutinee Rest.
 
 caseguard : [A] A -> (list (tuple A (tuple prop prop))) -> prop.
 caseguard Scrutinee ( (Pattern, Guard, Body) :: Rest ) <-
-  (if (eq Scrutinee Pattern, Guard), Body, caseguard Scrutinee Rest).
+  if (eq Scrutinee Pattern, Guard) then Body else caseguard Scrutinee Rest.
 
 
 isdeepunif : A -> prop.
 isdeepunif A <-
-  (if isunif A, success,
+  if isunif A then success else
    case (dyn A)
           [ (dyn (dyn X), isdeepunif X),
-            (dyn (tuple X Y), {prop| isdeepunif X, isdeepunif Y |}) ]).
+            (dyn (tuple X Y), {prop| isdeepunif X, isdeepunif Y |}) ].
 
 defcase : [A] A -> prop -> (list (tuple A prop)) -> prop.
 defcase Scrutinee Default Branches <-
-  (if isdeepunif Scrutinee, Default,
-   ( (case Scrutinee nil <- Default) ->
-     case Scrutinee Branches )).
+  if isdeepunif Scrutinee then Default
+  else ((case Scrutinee nil <- Default) ->
+         case Scrutinee Branches ).
 
 (* dynamic types *)
 dyneq : A -> B -> prop.
@@ -159,7 +158,7 @@ appmany (X : A) nil (X : A).
 appmany (X : A -> B) (cons (dyn (HD : A)) TL) Res <- appmany (X HD) TL Res.
 
 newvmeta : (A -> prop) -> prop.
-newvmeta P <- (if newfmeta P, success, newnmeta P).
+newvmeta P <- if newfmeta P then success else newnmeta P.
 
 isnvar : A -> prop.
 (isnvar X) when newnmeta (fun x => eq x X).

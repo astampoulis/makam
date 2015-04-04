@@ -94,7 +94,7 @@ typapply (typconstr TC) TS T <- bindmany_apply TC TS T.
 nf         : typ -> typ -> prop.
 nf_        : typ -> typ -> prop.
 
-nf X Y <- (if (isunif X; isunif Y), eq X Y, nf_ X Y).
+nf X Y <- if (isunif X; isunif Y) then eq X Y else nf_ X Y.
 
 (nf_ X X) when newnmeta (fun x => eq x X).
 nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') <-
@@ -189,9 +189,9 @@ valrestr (ascribe E _) <- valrestr E.
 
 typeof (let E E') T' <-
   typeof E T, 
-  (if valrestr E,
-     (typgen T Tgen, kindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T')),
-     (kindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
+  if valrestr E
+  then (typgen T Tgen, kindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T'))
+  else (kindof T ktype, (x:term -> typeof x T -> typeof (E' x) T')).
 
 (* let rec *)
 typeof (letrec ES E') T' <-
@@ -204,15 +204,14 @@ typeof (letrec ES E') T' <-
 
      map typeof Bodies TS,
 
-     (if (map0 valrestr Bodies), (eq DoGen true), (eq DoGen false))
+     if map0 valrestr Bodies then eq DoGen true else eq DoGen false
     |}),
-    (if eq DoGen true,
-
-        (typgenlist TS TSgen, kindofall TSgen ktype,
-	   eq Assumption (many_assume gentypeof xs TSgen)),
-
+    if eq DoGen true then
+       (typgenlist TS TSgen, kindofall TSgen ktype,
+	   eq Assumption (many_assume gentypeof xs TSgen))
+    else
         (kindofall TS ktype,
-   	   eq Assumption (many_assume typeof xs TS))),
+   	   eq Assumption (many_assume typeof xs TS)),
 
     Assumption (typeof Rest T') |}).
      
