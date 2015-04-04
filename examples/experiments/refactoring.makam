@@ -1,28 +1,6 @@
 %use utils.
 
-%extend refl.
-
-(* nice reflective predicates *)
-
-builtin_isunif : A -> prop.
-builtin_isunif X <- isunif X.
-
-isunif : A -> prop.
-isunif X <- builtin_isunif X.
-
-isconst : A -> prop.
-isconst (X : string).
-isconst (X : int).
-
-isfun : A -> prop.
-isfun (X : A -> B).
-
-isterm : A -> prop.
-(isterm X) when not(isconst X), not(isfun X), headargs X _ _.
-
-%end.
-
-%extend type.
+%extend refltype.
 
 result : A -> B -> prop.
 (result X Y) when refl.isfun X <- (x:A -> result (X x) Y).
@@ -36,7 +14,7 @@ ispred X <- result X (Z : prop).
 
 dup_head : A -> B -> prop.
 (dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
-(dup_head P P') when refl.isterm P <- headargs P Head _, headname P PName, lookup PName P'.
+(dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
 dyncall : (A -> prop) -> dyn -> prop.
 dyncall P (dyn X) <- dup_head P P', P' X.
@@ -53,7 +31,7 @@ filter P (HD :: TL) TL' <- not(P HD), filter P TL TL'.
 filter P nil nil.
 
 allrules : list clause -> prop.
-allrules Rules <- allheads XS, filter (dyncall type.ispred) XS PS, map (dyncall getrules) PS RulesCD,
+allrules Rules <- refl.allconstants XS, filter (dyncall refltype.ispred) XS PS, map (dyncall refl.rules_get) PS RulesCD,
                   map (fun x y => eq x (dyn y)) RulesCD RulesC,
                   foldl append [] RulesC Rules.
 
@@ -61,13 +39,13 @@ allrules Rules <- allheads XS, filter (dyncall type.ispred) XS PS, map (dyncall 
 
 printlocsof_aux : A -> dyn -> dyn -> prop.
 printlocsof_aux Head (dyn X) (dyn Y) <-
-  (if headargs X Head' _,
-      (if dyneq Head' Head,
-          (locget X L, print L, structural (printlocsof_aux Head) (dyn X) (dyn Y)),
-	  structural (printlocsof_aux Head) (dyn X) (dyn Y)),
-      (if isunif X,
-          dyneq X Y,
-	  structural (printlocsof_aux Head) (dyn X) (dyn Y))).
+  (if refl.headargs X Head' _
+   then (if dyneq Head' Head
+         then (locget X L, print L, structural (printlocsof_aux Head) (dyn X) (dyn Y))
+         else structural (printlocsof_aux Head) (dyn X) (dyn Y))
+   else (if refl.isunif X
+         then dyneq X Y
+         else structural (printlocsof_aux Head) (dyn X) (dyn Y))).
 
 printlocsof : A -> B -> prop.
 printlocsof Head What <- printlocsof_aux Head (dyn What) _.
@@ -83,6 +61,3 @@ finduses X <- allrules Rules,
 
 finduses not ?
 
-
-
-(* check gatherarrows/countarrows descrep. *)

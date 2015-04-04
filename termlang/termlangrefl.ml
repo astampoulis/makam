@@ -197,13 +197,13 @@ builtin_enter_module "refl" ;;
          p      <-- chasePattcanon [] p ;
          _      <-- setstate state ;
          let isconst = match p.term with
-             `LamMany([], { term = `AppMany( { term = `Const _ }, _, _ ) }) -> true
+             `LamMany([], { term = `AppMany( { term = `Const _ }, [], [] ) }) -> true
            | _ -> false
          in
          moneOrMzero isconst))
   ;;
 
-  new_builtin_predicate "isnvar" ( ~* "A" **> _tProp )
+  new_builtin_predicate "isbaseterm" ( ~* "A" **> _tProp )
     (fun _ -> fun [ p ] ->
       (let open RunCtx.Monad in
        perform
@@ -211,41 +211,11 @@ builtin_enter_module "refl" ;;
          p      <-- pattcanonRenormalize p ;
          p      <-- chasePattcanon [] p ;
          _      <-- setstate state ;
-         let isnvar = match p.term with
-             `LamMany([], { term = `AppMany( { term = `Var (_, (`New, _)) }, _, _ ) }) -> true
-           | _ -> false
-         in
-         moneOrMzero isnvar))
-  ;;
-
-  new_builtin_predicate "isfvar" ( ~* "A" **> _tProp )
-    (fun _ -> fun [ p ] ->
-      (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
-         let isfvar = match p.term with
-             `LamMany([], { term = `AppMany( { term = `Var (_, (`Free, _)) }, _, _ ) }) -> true
-           | _ -> false
-         in
-         moneOrMzero isfvar))
-  ;;
-
-  new_builtin_predicate "isvar" ( ~* "A" **> _tProp )
-    (fun _ -> fun [ p ] ->
-      (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
-         let isvar = match p.term with
+         let isbaseterm = match p.term with
              `LamMany([], { term = `AppMany( { term = `Var (_, _) }, _, _ ) }) -> true
            | _ -> false
          in
-         moneOrMzero isvar))
+         moneOrMzero isbaseterm))
   ;;
 
   new_builtin_predicate "isfun" ( ~* "A" **> _tProp )

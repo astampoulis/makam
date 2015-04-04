@@ -192,6 +192,7 @@ hyp2     -> token("(") p:prop token(")") << p >>
 	  / token("(") mult:repplusSEP(hyp^, ";") token(")")
 	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTm "failure" [])
 	       (fun x -> x) mult >>
+          / token("once") token("(") p:prop token(")") << mkTm "once" [ p ] >>
           / p:lexpr^ << p >>
 
 assumption -> x:lexpr^ << mkTm "clause" [ x ; mkTm "success" [] ] >>

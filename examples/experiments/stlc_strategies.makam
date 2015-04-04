@@ -3,9 +3,9 @@
 memoized : A -> prop.
 memoized_aux : (A -> prop) -> A -> prop.
 memoized_aux P V <-
-  ifte (isunif V) (P V) success.
+  ifte (refl.isunif V) (P V) success.
 memoized X <-
-  headargs X Hd Args,
+  refl.headargs X Hd Args,
   reverse Args ( (dyn (Last : A)) :: RArgs'),
   reverse RArgs' Args',
   appmany Hd Args' P,
@@ -58,3 +58,10 @@ eval_cbnm : term -> term -> prop.
 eval_cbv X Y <- (eval_strategy cbval -> eval X Y).
 eval_cbnm X Y <- (eval_strategy cbname -> eval X Y).
 eval_cbnd X Y <- (eval_strategy cbneed -> eval X Y).
+
+
+(eq TERM (app (lam (fun x => tuple [x, x])) side_effect),
+ print_string "cbv eval\n", eval_cbv TERM CBV_VAL, print CBV_VAL,
+ print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
+ print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
+
