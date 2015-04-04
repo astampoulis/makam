@@ -1608,10 +1608,7 @@ let enter_module m () =
 ;;
 
 let global_enter_module m =
-  let _ = Printf.printf "entering module %a, current stack %a, current mod %a\n" String.print m (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
-  globalterm_do (enter_module m);
-  let _ = Printf.printf "entered module %a, current stack %a, current mod %a\n" String.print m (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
-  ()
+  globalterm_do (enter_module m)
 ;;
 
 exception NotInModule;;
@@ -1625,9 +1622,7 @@ let leave_module () =
 ;;
 
 let global_leave_module () =
-  globalterm_do leave_module ;
-  let _ = Printf.printf "left module, current stack %a, current mod %a\n" (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
-  ()
+  globalterm_do leave_module
 ;;
 
 
@@ -1648,7 +1643,6 @@ let global_restore_module fn state' =
 let global_load_file_resolved ?modul
     (pars : string -> (unit -> unit) list) (filename : string) =
 
-  let _ = Printf.printf "loading resolved %s\n" filename in
   let state = !globalstate in
   let fullmodul =
     match state.current_module, modul with
@@ -1671,7 +1665,7 @@ let global_load_file_resolved ?modul
          StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
        with _ -> false)
   in
-  if already_loaded then (Printf.printf "that's already in\n"; (fun () -> ()))
+  if already_loaded then (fun () -> ())
   else fun () -> begin
 
     let res = pars filename in
@@ -1731,7 +1725,6 @@ let global_resolve_directory fn =
 let global_add_directory s =
   let state = !globalstate in
   let s = global_resolve_directory s in
-  Printf.printf "resolved dir to add as %s\n" s;
   globalstate := { state with included_directories = state.included_directories ++ [s] }
 ;;
 
