@@ -3209,22 +3209,6 @@ module BuiltinProps = struct
 
     end | _ -> assert false)
   ;;
-
-  let _eiAssumeReset = new_builtin_predicate "assume_reset" ( ~* "A" **> _tProp **> _tProp )
-    (fun _ -> function [ pred ; { term = `LamMany([], p) } ] -> begin perform
-
-        pred <-- chasePattcanon [] pred ;
-      
-        match pred.term with
-            `LamMany(_, body) -> 
-              perform
-                  let idx = headPredicate body in
-                env' <-- resetTempConstructors idx ;
-                  inenv env' (demand p)
-
-    end | _ -> assert false)
-  ;;
-        
  
 end;;
 
