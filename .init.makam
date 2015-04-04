@@ -1,4 +1,4 @@
-%use "./stdlib/prelude".
+%use "stdlib/prelude".
 
 %directory "examples".
 %directory "examples/lib".
