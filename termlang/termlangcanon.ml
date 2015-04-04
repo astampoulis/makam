@@ -1607,7 +1607,12 @@ let enter_module m () =
                }
 ;;
 
-let global_enter_module m = globalterm_do (enter_module m);;
+let global_enter_module m =
+  let _ = Printf.printf "entering module %a, current stack %a, current mod %a\n" String.print m (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
+  globalterm_do (enter_module m);
+  let _ = Printf.printf "entered module %a, current stack %a, current mod %a\n" String.print m (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
+  ()
+;;
 
 exception NotInModule;;
 
@@ -1619,16 +1624,19 @@ let leave_module () =
     termstate := { state with current_module = prev_curmod ; module_extension_stack = stack }
 ;;
 
-let global_leave_module () = globalterm_do leave_module ;;
+let global_leave_module () =
+  globalterm_do leave_module ;
+  let _ = Printf.printf "left module, current stack %a, current mod %a\n" (List.print (Option.print String.print)) (!globalstate).module_extension_stack (Option.print String.print) (!globalstate).current_module in
+  ()
+;;
 
-let module_do m f () =
-  enter_module m () ;
+
+let global_module_do m f =
+  global_enter_module m ;
   let res = reifyexn f in
-  leave_module () ;
+  global_leave_module () ;
   reflectexn res
 ;;
-  
-let global_module_do m f = globalterm_do (module_do m f) ;;
 
 let global_restore_module fn state' =
   let state = !globalstate in
@@ -1640,6 +1648,7 @@ let global_restore_module fn state' =
 let global_load_file_resolved ?modul
     (pars : string -> (unit -> unit) list) (filename : string) =
 
+  let _ = Printf.printf "loading resolved %s\n" filename in
   let state = !globalstate in
   let fullmodul =
     match state.current_module, modul with
@@ -1662,7 +1671,7 @@ let global_load_file_resolved ?modul
          StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
        with _ -> false)
   in
-  if already_loaded then (fun () -> ())
+  if already_loaded then (Printf.printf "that's already in\n"; (fun () -> ()))
   else fun () -> begin
 
     let res = pars filename in
@@ -1705,35 +1714,45 @@ let global_load_file_resolved ?modul
 ;;
 (* ---- ok enough of that *)
 
-let global_add_directory s =
-  let state = !globalstate in
-  globalstate := { state with included_directories = state.included_directories ++ [s] }
-;;
-
 exception FileNotFound of string;;
 let first_existing_filename fns =
   try List.find Sys.file_exists fns
   with _ -> raise (FileNotFound (List.hd fns))
 ;;
 
+let global_resolve_directory fn = 
+  let module Path = BatPathGen.OfString in
+  let current_directory = Path.of_string fn |> Path.parent |> Path.to_string in
+  let directories = (!globalstate).included_directories |> List.map Path.of_string in
+  (fn :: List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories)
+  |> first_existing_filename
+;;
+
+let global_add_directory s =
+  let state = !globalstate in
+  let s = global_resolve_directory s in
+  Printf.printf "resolved dir to add as %s\n" s;
+  globalstate := { state with included_directories = state.included_directories ++ [s] }
+;;
+
 let global_resolve_filename fn = 
   let fn = if String.ends_with fn ".makam" then fn else fn ^ ".makam" in
   let module Path = BatPathGen.OfString in
+  let current_directory = Path.of_string fn |> Path.parent |> Path.to_string in
   let directories = (!globalstate).included_directories |> List.map Path.of_string in
   (fn :: List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories)
   |> first_existing_filename
 ;;
 
 let global_load_file ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) =
+    (pars : string -> (unit -> unit) list) (filename : string) () =
   let module Path = BatPathGen.OfString in
   let current_directory = Path.of_string filename |> Path.parent |> Path.to_string in
   let original_directories = (!globalstate).included_directories in
   let new_directories = if current_directory = "." then original_directories else current_directory :: original_directories in
   globalstate := { !globalstate with included_directories = new_directories };
   global_load_file_resolved ?modul:modul pars (global_resolve_filename filename) ();
-  globalstate := { !globalstate with included_directories = original_directories };
-  fun () -> ()
+  globalstate := { !globalstate with included_directories = original_directories }
 ;;
 
 

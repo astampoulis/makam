@@ -82,7 +82,12 @@ let rec repl () : unit =
   Sys.catch_break true;
   let input, prompt, reached_eof, is_stdin =
     if Array.length Sys.argv > 1 then
-      UChannel.from_filename (global_resolve_filename Sys.argv.(1)), "", UChannel.at_eof, false
+      let initloc =
+        let open UChannel in
+        { description = "<command-line>" ; lineno = 1; charno = 1; offset = 0 }
+      in
+      let use_files = Printf.sprintf "%%use \"%s\".\n" Sys.argv.(1) in
+      UChannel.from_string ~initloc:initloc use_files, "", UChannel.at_eof, false
     else
       UChannel.from_stdin (), "# ", UChannel.reached_eof, true
   in
