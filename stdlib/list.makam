@@ -1,0 +1,17 @@
+(* map is overloaded *)
+map : [A] (A -> prop) -> list A -> prop.
+map P [].
+map P (HD :: TL) <- P HD, map P TL.
+
+map : [A B] (A -> B -> prop) -> list A -> list B -> prop.
+map P [] [].
+map P (HD :: TL) (HD' :: TL') <- P HD HD', map P TL TL'.
+
+map : [A B C] (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
+map P [] [] [].
+map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) <- P HD1 HD2 HD3, map P TL1 TL2 TL3.
+
+map : [A B C D] (A -> B -> C -> D -> prop) -> list A -> list B -> list C -> list D -> prop.
+map P [] [] [] [].
+map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) <- P HD1 HD2 HD3 HD4, map P TL1 TL2 TL3 TL4.
+
