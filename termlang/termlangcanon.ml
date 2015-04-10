@@ -40,6 +40,7 @@ module StringOrdered = struct
 end;;
 module Dict = Map.Make(StringOrdered) ;;
 module StringSet = Set.Make(StringOrdered) ;;
+module Path = BatPathGen.OfString;;
 
 type ('a, 'b) typedterm = { term : 'a ; classifier : 'b ; loc : UChannel.span ; extra : Obj.t ref } ;;
 
@@ -122,7 +123,8 @@ type ctxState = { name_to_fvar : (int list) Dict.t ;
                   globally_loaded_modules : StringSet.t ;
                   modules_loaded_in_modules : StringSet.t Dict.t ;
                   module_extension_stack : string option list ;
-                  included_directories : string list
+                  included_directories : string list ;
+                  current_directory : string
                 } ;;
 
 let empty_env () = 
@@ -143,7 +145,7 @@ let empty_state () =
     polytmetas = 0 ; tmeta_to_polytmeta = IMap.empty ;
     current_module = None ; qualified_fvar_exists = StringSet.empty ; qualified_tfvar_exists = StringSet.empty ;
     globally_loaded_modules = StringSet.empty ; modules_loaded_in_modules = Dict.empty ;
-    module_extension_stack = [] ; included_directories = []
+    module_extension_stack = [] ; included_directories = [] ; current_directory = "."
   }
 ;;
 
@@ -1633,10 +1635,11 @@ let global_module_do m f =
   reflectexn res
 ;;
 
-let global_restore_module fn state' =
+let global_restore_module_and_dir state' =
   let state = !globalstate in
   globalstate := { state with current_module = state'.current_module ;
-                              module_extension_stack = state'.module_extension_stack }
+                              module_extension_stack = state'.module_extension_stack ;
+                              current_directory = state'.current_directory }
 ;;
   
 
@@ -1665,9 +1668,10 @@ let global_load_file_resolved ?modul
          StringSet.mem (Option.get fullmodul) (Dict.find filename state.modules_loaded_in_modules)
        with _ -> false)
   in
-  if already_loaded then (fun () -> ())
-  else fun () -> begin
+  if already_loaded then ()
+  else begin
 
+    let cur_dir = Path.of_string filename |> Path.parent |> Path.to_string in
     let res = pars filename in
     let updateLoadedModules () =
 
@@ -1686,10 +1690,12 @@ let global_load_file_resolved ?modul
 
     let doit f = 
 
+      globalstate := { !globalstate with current_directory = cur_dir } ;
+
       match modul with
 
       | None -> begin
-       f () ; updateLoadedModules ()
+        f () ; updateLoadedModules ()
       end
 
       | Some m -> begin
@@ -1699,9 +1705,9 @@ let global_load_file_resolved ?modul
 
     in
 
-    let module_state = !globalstate in
+    let original_state = !globalstate in
     let res = reifyexn (fun () -> doit (fun () -> List.iter (fun f -> f ()) res)) in
-    global_restore_module filename module_state ;
+    global_restore_module_and_dir original_state ;
     reflectexn res
 
   end
@@ -1709,43 +1715,27 @@ let global_load_file_resolved ?modul
 (* ---- ok enough of that *)
 
 exception FileNotFound of string;;
-let first_existing_filename fns =
+let first_existing_filename userfn fns =
   try List.find Sys.file_exists fns
-  with _ -> raise (FileNotFound (List.hd fns))
+  with _ -> raise (FileNotFound userfn)
 ;;
 
-let global_resolve_directory fn = 
-  let module Path = BatPathGen.OfString in
-  let current_directory = Path.of_string fn |> Path.parent |> Path.to_string in
-  let directories = (!globalstate).included_directories |> List.map Path.of_string in
-  (fn :: List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories)
-  |> first_existing_filename
-;;
-
-let global_add_directory s =
+let global_resolve_filename fn =
   let state = !globalstate in
-  let s = global_resolve_directory s in
-  globalstate := { state with included_directories = state.included_directories ++ [s] }
+  let directories = (state.current_directory :: state.included_directories) |> List.map Path.of_string in
+  List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories
+  |> first_existing_filename fn
 ;;
 
-let global_resolve_filename fn = 
-  let fn = if String.ends_with fn ".makam" then fn else fn ^ ".makam" in
-  let module Path = BatPathGen.OfString in
-  let current_directory = Path.of_string fn |> Path.parent |> Path.to_string in
-  let directories = (!globalstate).included_directories |> List.map Path.of_string in
-  (fn :: List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories)
-  |> first_existing_filename
+let global_add_directory dir =
+  let state = !globalstate in
+  globalstate := { state with included_directories = state.included_directories ++ [global_resolve_filename dir] }
 ;;
 
 let global_load_file ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) () =
-  let module Path = BatPathGen.OfString in
-  let current_directory = Path.of_string filename |> Path.parent |> Path.to_string in
-  let original_directories = (!globalstate).included_directories in
-  let new_directories = if current_directory = "." then original_directories else current_directory :: original_directories in
-  globalstate := { !globalstate with included_directories = new_directories };
-  global_load_file_resolved ?modul:modul pars (global_resolve_filename filename) ();
-  globalstate := { !globalstate with included_directories = original_directories }
+    (pars : string -> (unit -> unit) list) (filename : string) =
+  let filename = if String.ends_with filename ".makam" then filename else filename ^ ".makam" in
+  global_load_file_resolved ?modul:modul pars (global_resolve_filename filename)
 ;;
 
 

@@ -1,0 +1,5 @@
+%directory "use_directives".
+
+%import filenotfound_error.
+
+print_string "(should not print) back to main module.\n" ?
