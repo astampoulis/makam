@@ -1,2 +1,4 @@
 %use basic_predicates.
 %use list.
+(* %import tuple. *)
+(* %import map. *)

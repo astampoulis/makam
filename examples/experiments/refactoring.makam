@@ -17,10 +17,10 @@ dup_head : A -> B -> prop.
 (dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
 dyncall : (A -> prop) -> dyn -> prop.
-dyncall P (dyn X) <- dup_head P P', P' X.
+dyncall P (dyn X) <- refl.duphead P P', P' X.
 
 dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
-dyncall P (dyn X) (dyn Y) <- dup_head P P', P' X Y.
+dyncall P (dyn X) (dyn Y) <- refl.duphead P P', P' X Y.
 
 (* ([X]allheads X, print X, map0 (dyncall printhead) X) ? *)
 
@@ -60,4 +60,3 @@ finduses X <- allrules Rules,
 	      map0 (printlocsof X) Rules.
 
 finduses not ?
-
