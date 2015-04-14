@@ -1,11 +1,15 @@
-(* map is overloaded *)
+append : [A] list A -> list A -> list A -> prop.
+append [] Y Y.
+append (HD::TL) Y (HD::TL') <- append TL Y TL'.
+
+(* We overload the map predicate to work on up to 4 lists,
+   but define the most commonly used version last -- the one on 2 lists.
+   This way if no typing constraints are present, the common version will be picked
+   by default. *)
+
 map : [A] (A -> prop) -> list A -> prop.
 map P [].
 map P (HD :: TL) <- P HD, map P TL.
-
-map : [A B] (A -> B -> prop) -> list A -> list B -> prop.
-map P [] [].
-map P (HD :: TL) (HD' :: TL') <- P HD HD', map P TL TL'.
 
 map : [A B C] (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
 map P [] [] [].
@@ -14,4 +18,52 @@ map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) <- P HD1 HD2 HD3, map P TL1 TL2 TL3
 map : [A B C D] (A -> B -> C -> D -> prop) -> list A -> list B -> list C -> list D -> prop.
 map P [] [] [] [].
 map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) <- P HD1 HD2 HD3 HD4, map P TL1 TL2 TL3 TL4.
+
+map : [A B] (A -> B -> prop) -> list A -> list B -> prop.
+map P [] [].
+map P (HD :: TL) (HD' :: TL') <- P HD HD', map P TL TL'.
+
+(* Folds and fold inversion *)
+
+foldr : [A B] (A -> B -> B -> prop) -> list A -> B -> B -> prop.
+foldr P nil S S.
+foldr P (cons HD TL) S S'' <- foldr P TL S S', P HD S' S''.
+
+foldr_invert : [A B] (A -> B -> B -> prop) -> B -> list A -> B -> prop.
+foldr_invert P SStart Res SEnd <-
+  if P Hd SNext SStart
+  then (foldr_invert P SNext Tl SEnd, eq Res (cons Hd Tl))
+  else (eq Res nil, eq SStart SEnd).
+
+foldl : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
+foldl P S nil S.
+foldl P S (cons HD TL) S'' <- P S HD S', foldl P S' TL S''.
+
+foldl_invert : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
+foldl_invert P SEnd Res SStart <-
+  if P SPrev Last SEnd
+  then (foldl_invert P SPrev Res' SStart, append Res' [Last] Res)
+  else (eq Res nil, eq SStart SEnd).
+
+(* Reverse *)
+reverse : [A] list A -> list A -> prop.
+reverse_aux : [A] list A -> list A -> list A -> prop.
+reverse_aux [] L L.
+reverse_aux (HD :: TL) L L' <- reverse_aux TL (HD :: L) L'.
+reverse L L' <- reverse_aux L [] L'.
+
+
+
+(* Convert to catenable list -- list with a hole *)
+catenable : [A] list A -> (list A -> list A) -> prop.
+catenable [] (fun x => x).
+catenable (HD :: TL) (fun x => HD :: (TL' x)) <- catenable TL TL'.
+
+
+(* Flatten *)
+(* TODO: fix this, this is still broken because of a bug in unification apparently *)
+flatten : [A] list (list A) -> list A -> prop.
+flatten LS L <- map catenable LS LS',
+                reverse LS' LS'rev,
+                foldl (fun cur lst res => eq res (lst cur)) nil LS'rev L.
 
