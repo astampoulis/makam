@@ -1,8 +1,12 @@
+(* Append a list to the end of another list. *)
+
 append : [A] list A -> list A -> list A -> prop.
 append [] Y Y.
 append (HD::TL) Y (HD::TL') <- append TL Y TL'.
 
-(* We overload the map predicate to work on up to 4 lists,
+(* Map a predicate over (a number of) lists.
+
+   We overload the map predicate to work on up to 4 lists,
    but define the most commonly used version last -- the one on 2 lists.
    This way if no typing constraints are present, the common version will be picked
    by default. *)
@@ -45,7 +49,7 @@ foldl_invert P SEnd Res SStart <-
   then (foldl_invert P SPrev Res' SStart, append Res' [Last] Res)
   else (eq Res nil, eq SStart SEnd).
 
-(* Reverse *)
+(* Reverse the list *)
 reverse : [A] list A -> list A -> prop.
 reverse_aux : [A] list A -> list A -> list A -> prop.
 reverse_aux [] L L.
@@ -65,6 +69,35 @@ concat LS L <-
   map catenable LS LS', reverse LS' LS'rev,
   foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
 
-find : [A] A -> list A -> prop.
-find What Where <- eqT What EqInstance, find_aux EqTInstance What Where.
 
+(* Find element matching a predicate *)
+find : [A] (A -> prop) -> list A -> A -> prop.
+find Pred (HD :: TL) Res <- if (P HD) then eq Res HD else find Pred TL Res.
+
+(* Keep only elements that succeed on a predicate *)
+filter : [A] (A -> prop) -> list A -> list A -> prop.
+filter Pred (HD :: TL) Res <-
+  if (P HD)
+  then (eq Res (HD :: TL'), filter Pred TL TL')
+  else (filter Pred TL Res).
+
+(* Succeeds if a list contains an element *)
+contains : [A] eqT A -> A -> list A -> prop.
+contains_aux : [A] A -> list A -> prop.
+contains_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (contains_aux X TL).
+contains EqInstance X HD <- with_eqT EqInstance (contains_aux X HD).
+
+
+(* Relates a number of lists to a lists where the corresponding elements are tupled together. Overloaded up to 4 lists. *)
+(* Can be used in the opposite direction to unzip into multiple lists. *)
+zip : [A B] list A -> list B -> list C -> list (A * B * C) -> prop.
+zip [] [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) ((HD1, HD2, HD3) :: TL) <- zip TL1 TL2 TL3 TL.
+
+zip : [A B] list A -> list B -> list C -> list D -> list (A * B * C * D) -> prop.
+zip [] [] [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) ((HD1, HD2, HD3, HD4) :: TL) <- zip TL1 TL2 TL3 TL4 TL.
+
+zip : [A B] list A -> list B -> list (A * B) -> prop.
+zip [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) ((HD1, HD2) :: TL) <- zip TL1 TL2 TL.

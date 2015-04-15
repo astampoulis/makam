@@ -5,7 +5,7 @@ not : prop -> prop.
 not P <- if once(P) then failure else success.
 
 or_many : list prop -> prop.
-or_many (HD :: TL) <- HD ; or_many TL.
+or_many (HD :: TL) <- (HD ; or_many TL).
 
 and_many : list prop -> prop.
 and_many [].
@@ -15,7 +15,7 @@ unless : prop -> prop -> prop.
 unless P Q <- if P then success else Q.
 
 unless_many : list prop -> prop.
-unless_many (HD :: TL) <- if HD then success else firstof_many TL.
+unless_many (HD :: TL) <- if HD then success else unless_many TL.
 
 lift : [A B C] (A -> B -> C) -> A -> B -> C -> prop.
 lift F X1 X2 (F X1 X2).

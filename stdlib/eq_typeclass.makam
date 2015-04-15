@@ -13,8 +13,8 @@ eqT : (A -> A -> prop) -> eqT A.
 
 (* create a number of predicates for doing typeclass resolution and instantiation.
     eqT_lookup is used to look up an appropriate instance for a given type 
-    eqT_lookup_cache is used to store the result of the lookup locally
-    eqT_instance is used to declare instances of the typeclass, either locally or globally (local instances take precedence)
+    eqT_lookup_cache is used to cache the result of the lookup while executing code that needs an instance of the typeclass
+    eqT_instance is used to declare instances of the typeclass
     eqT_default is used to declare a fallback, default instance if no specialized instance is found. *)
 
 eqT_lookup       : eqT A -> prop.
@@ -23,15 +23,10 @@ eqT_instance     : eqT A -> prop.
 eqT_default      : eqT A -> prop.
 
 eqT_lookup X <-
-  unless
-    (eqT_lookup_cache X)
-    (assume_get eqT_instance LocalInstances,
-     rules_get eqT_instance GlobalInstances,
-     unless_many [
-       clause.or X LocalInstances,
-       clause.or X GlobalInstances,
-       eqT_default X
-     ]).
+  unless_many
+    [ eqT_lookup_cache X,
+      eqT_instance X,
+      eqT_default X ].
 
 (* The default case is to use the normal 'eq' predicate. *)
 eqT_default (eqT eq).
@@ -41,19 +36,26 @@ eqT_default (eqT eq).
 eqT_eq : (A -> A -> prop) -> prop.
 eqT_eq EQ <- eqT_lookup (eqT EQ).
 
-(* with_eqT is used to lookup a type class instance for a type matching a given term.
-   it takes a proposition to execute; lookups for that type class are cached during its execution. *)
-with_eqT : A -> prop -> prop.
-with_eqT (For : A) P <-
-  eqT_lookup (EQ : eqT A), (eqT_lookup_cache EQ -> P).
+(* with_eqT is used to execute a proposition that requires an instance of the typeclass.
+   if a concrete instance is not given, then it searches for an instance using `eqT_lookup`. *)
+with_eqT : eqT A -> prop -> prop.
+with_eqT Instance P <-
+  if refl.isunif Instance
+  then eqT_lookup Instance
+  else success,
+  (eqT_lookup_cache Instance -> P).
 
 
 (* Example of a function using the eqT typeclass:
 
-   find_aux : A -> list A -> prop.
-   find_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (find_aux X TL).
+   elem_aux : A -> list A -> prop.
+   elem_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (elem_aux X TL).
 
-   find : A -> list A -> prop.
-   find X L <- with_eqT X (find_aux X L).
+   elem : eqT A -> A -> list A -> prop.
+   elem EQ X L <- with_eqT EQ (elem_aux X L).
+
+
+    Note that the dependence on the type class is explicitly recorded in the type.
+    If the argument is left unspecified, then we search for an instance of the type class automatically.
 *)
 
