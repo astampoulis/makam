@@ -1366,6 +1366,7 @@ let rec pattneutSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p 
 
           let n = List.length info in
           let substargs, appargs = List.split_at n args in
+          let appargs = List.map (pattcanonSubstAux curbound substbound sigma) appargs in
           let substargsinfo, appargsinfo = List.split_at n argsinfo in
           (* TODO missing name unification *)
           let sigma' = List.map (fun x -> lazy(pattcanonSubstAux curbound substbound sigma x)) substargs in
@@ -1400,7 +1401,7 @@ let rec pattneutSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p 
     { p with term = `AppMany(hd, args', argsinfo) }
 
   | `Meta(s,i,subst,t) ->
-    
+
     let subst' = pattsubstSubstAux curbound substbound sigma subst in
     { p with term = `Meta(s,i,subst',t) }
 
