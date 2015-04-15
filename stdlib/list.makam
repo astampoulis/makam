@@ -65,5 +65,4 @@ catenable (HD :: TL) (fun x => HD :: (TL' x)) <- catenable TL TL'.
 flatten : [A] list (list A) -> list A -> prop.
 flatten LS L <- map catenable LS LS',
                 reverse LS' LS'rev,
-                foldl (fun cur lst res => eq res (lst cur)) nil LS'rev L.
-
+                foldl (fun cur lst => eq (lst cur)) nil LS'rev L.

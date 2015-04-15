@@ -1702,10 +1702,10 @@ let applySubstInverse (metalevel : int) (bound : name list)
           
           `AppMany(hd, args, argsinfo) ->
 
-            let hd'        = auxhead bound startbound hd in
-            let args'        = List.map (auxcanon ~nonewmetas:nonewmetas bound startbound) args in
+            let hd'     = auxhead bound startbound hd in
+            let args'   = List.map (auxcanon ~nonewmetas:nonewmetas bound startbound) args in
             (try
-              let hd'        = Option.get hd' in
+              let hd'   = Option.get hd' in
               let args' = List.map Option.get args' in
               Some { p with term = `AppMany(hd', args', argsinfo) ; extra = PattExtras.empty () }
             with _ -> None)
@@ -1935,20 +1935,20 @@ let metaSolvable m = metaSolvable ~directly:false m ;;
 
 let invertAndUnifyFull (_, idx1, subst1, _) bound (p1 : pattneut) (p2 : pattneut) =
 
-  let state                 = !tempstate in
+  let state             = !tempstate in
   let metalevel         = IMap.find idx1 state.rsmeta_level in
   let _                 = if not (pattOccursCheck ~nonrigid:false idx1 p2) then raise (PattUnifyError("occurs check")) in
-  let state                 = !tempstate in
+  let state             = !tempstate in
 
   let applySubstInverse = fun metalevel bound subst1 p2 ->
-                          log (lazy(Printf.sprintf "applysubstinv"))
-                              (lazy(applySubstInverse metalevel bound subst1 p2))
+                            log (lazy(Printf.sprintf "applysubstinv"))
+                            (lazy(applySubstInverse metalevel bound subst1 p2))
   in
 
-  let p'                 = applySubstInverse metalevel bound subst1 p2 in
+  let p'                = applySubstInverse metalevel bound subst1 p2 in
 
-  let state'                 = !tempstate in
-  let p'                 = (match p' with
+  let state'            = !tempstate in
+  let p'                = (match p' with
                             | Some p' -> p'
                             | None -> let s = Printf.sprintf "failed to invert %a over s-1 = %a"
                                               Pattneut.print p2 (List.print Pattcanon.print)
@@ -1956,18 +1956,18 @@ let invertAndUnifyFull (_, idx1, subst1, _) bound (p1 : pattneut) (p2 : pattneut
                                       in
                                       raise (PattUnifyError(s)))
   in
-  let slen                 = match subst1 with `Subst(s, _, _, _) -> List.length s in
+  let slen              = match subst1 with `Subst(s, _, _, _) -> List.length s in
   let _                 = if !_DEBUG then Printf.printf "   ~ %a ~ %a -->\n   ~= %a := %a\n%!"
-                             Pattneut.print p1
-                                 Pattneut.print p2
-                             Pattneut.print p1
-                             Pattneut.print p'
+                            Pattneut.print p1
+                            Pattneut.print p2
+                            Pattneut.print p1
+                            Pattneut.print p'
   in
 
   let _                 = setMetaParent_mutable idx1 p' ~substlen:slen in
-  let constraints         = getConstraints_mutable idx1 in
-  let newmetas                 = state'.rsmetas - state.rsmetas in
-  let restconstraints         = increasing newmetas
+  let constraints       = getConstraints_mutable idx1 in
+  let newmetas          = state'.rsmetas - state.rsmetas in
+  let restconstraints   = increasing newmetas
                           |> List.map (fun x -> let n = x + state.rsmetas in n, getConstraints_mutable n)
   in
   let shouldhandlenow c = match c with
