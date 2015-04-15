@@ -1,0 +1,59 @@
+(* The equality typeclass *)
+(* This shows one way to create a typeclass-like structure in Makam. *)
+
+(* we will define the equivalent of: *)
+(* class Eq A where
+     eq : A -> A -> prop *)
+
+(* create a type constructor 'eqT'; this is the equivalent the type part of the typeclass definition 'Eq A' *)
+eqT : type -> type.
+
+(* create a single constructor that packages together all the predicates that the typeclass defines *)
+eqT : (A -> A -> prop) -> eqT A.
+
+(* create a number of predicates for doing typeclass resolution and instantiation.
+    eqT_lookup is used to look up an appropriate instance for a given type 
+    eqT_lookup_cache is used to store the result of the lookup locally
+    eqT_instance is used to declare instances of the typeclass, either locally or globally (local instances take precedence)
+    eqT_default is used to declare a fallback, default instance if no specialized instance is found. *)
+
+eqT_lookup       : eqT A -> prop.
+eqT_lookup_cache : eqT A -> prop.
+eqT_instance     : eqT A -> prop.
+eqT_default      : eqT A -> prop.
+
+eqT_lookup X <-
+  unless
+    (eqT_lookup_cache X)
+    (assume_get eqT_instance LocalInstances,
+     rules_get eqT_instance GlobalInstances,
+     unless_many [
+       clause.or X LocalInstances,
+       clause.or X GlobalInstances,
+       eqT_default X
+     ]).
+
+(* The default case is to use the normal 'eq' predicate. *)
+eqT_default (eqT eq).
+
+(* Define a number of helper predicates for getting the different parts of the typeclass instance.
+   Here we will just have one for the 'eq' predicate defined in the typeclass *)
+eqT_eq : (A -> A -> prop) -> prop.
+eqT_eq EQ <- eqT_lookup (eqT EQ).
+
+(* with_eqT is used to lookup a type class instance for a type matching a given term.
+   it takes a proposition to execute; lookups for that type class are cached during its execution. *)
+with_eqT : A -> prop -> prop.
+with_eqT (For : A) P <-
+  eqT_lookup (EQ : eqT A), (eqT_lookup_cache EQ -> P).
+
+
+(* Example of a function using the eqT typeclass:
+
+   find_aux : A -> list A -> prop.
+   find_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (find_aux X TL).
+
+   find : A -> list A -> prop.
+   find X L <- with_eqT X (find_aux X L).
+*)
+

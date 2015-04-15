@@ -1,0 +1,2 @@
+* rename uses of mapN to map
+* flatten -> concat

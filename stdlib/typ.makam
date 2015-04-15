@@ -1,0 +1,2 @@
+eq : A -> B -> prop.
+eq (X : A) (Y : A).

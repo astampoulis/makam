@@ -53,16 +53,18 @@ reverse_aux (HD :: TL) L L' <- reverse_aux TL (HD :: L) L'.
 reverse L L' <- reverse_aux L [] L'.
 
 
-
-(* Convert to catenable list -- list with a hole *)
+(* Convert to catenable list -- list with a hole. Useful for some optimized
+   implementations. *)
 catenable : [A] list A -> (list A -> list A) -> prop.
 catenable [] (fun x => x).
 catenable (HD :: TL) (fun x => HD :: (TL' x)) <- catenable TL TL'.
 
+(* Concatenate many lists / flatten *)
+concat : [A] list (list A) -> list A -> prop.
+concat LS L <-
+  map catenable LS LS', reverse LS' LS'rev,
+  foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
 
-(* Flatten *)
-(* TODO: fix this, this is still broken because of a bug in unification apparently *)
-flatten : [A] list (list A) -> list A -> prop.
-flatten LS L <- map catenable LS LS',
-                reverse LS' LS'rev,
-                foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
+find : [A] A -> list A -> prop.
+find What Where <- eqT What EqInstance, find_aux EqTInstance What Where.
+

@@ -1,0 +1,27 @@
+applies : prop -> clause -> prop.
+applies CurGoal (clause Goal Premise) <- eq CurGoal Goal.
+applies CurGoal (whenclause Goal Guard Premise) <- eq CurGoal Goal, Guard.
+
+premise : clause -> prop.
+premise (clause Goal Premise) <- Premise.
+premise (whenclause Goal Guard Premise) <- Premise.
+
+demand : prop -> clause -> prop.
+demand CurGoal Clause <-
+  applies CurGoal Clause, premise Clause.
+
+or : prop -> list clause -> prop.
+or Goal (HD :: TL) <- demand Goal HD ; or Goal TL.
+
+and : prop -> list clause -> prop.
+and Goal [].
+and Goal (HD :: TL) <-
+  if applies Goal HD
+  then (premise HD, and Goal TL)
+  else (and Goal TL).
+
+case : prop -> list clause -> prop.
+case Goal (HD :: TL) <-
+  if applies Goal HD
+  then premise HD
+  else case Goal TL.

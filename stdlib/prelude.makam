@@ -1,4 +1,9 @@
 %use basic_predicates.
+%import clause.
+%import typ.
+
+%use eq_typeclass.
+
 %use list.
 (* %import tuple. *)
 (* %import map. *)
