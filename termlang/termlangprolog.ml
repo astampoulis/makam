@@ -1545,11 +1545,11 @@ let expandMeta subst slen p =
 
 
 module PUBench = struct
-  let expandMeta subst slen p                = bench "expand meta (in PU)"
+  let expandMeta subst slen p           = bench "expand meta (in PU)"
                                           (lazy(expandMeta subst slen p))
   let updateMetaBoundNames_mutable i s  = bench "update meta bound (in PU)"
                                           (lazy(updateMetaBoundNames_mutable i s))
-  let pattcanonRenormalize_mutable p        = bench "patt renormalize (in PU)"
+  let pattcanonRenormalize_mutable p    = bench "patt renormalize (in PU)"
                                           (lazy(pattcanonRenormalize_mutable p))
 end ;;
 
