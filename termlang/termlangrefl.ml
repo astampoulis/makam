@@ -411,6 +411,7 @@ builtin_enter_module "refl" ;;
            { p with term = `Meta(s,idx,`Subst(subst,substinv,ts,names),t) }
          | `AppMany(hd, args, argsinfo) ->
            { p with term = `AppMany(hd, List.map (auxcanon bound uvars) args, argsinfo) }
+         | _ -> assert false
        and auxcanon bound uvars p : pattcanon =
          match p.term with
            `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }

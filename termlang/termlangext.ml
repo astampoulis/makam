@@ -236,6 +236,7 @@ new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **>
     (function [ s ] ->
       perform
         s' <-- _PtoString s ;
+        let open UChannel in
         let span = match s.loc with Some { startloc = loc } -> Some loc | None -> None in
         let stream = UChannel.from_string ?initloc:span s' in
         let s'' = stream |> UChannel.map
