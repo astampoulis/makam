@@ -26,17 +26,17 @@ xpretty : peg A -> list string -> option (tuple (list string) A) -> prop.
 
 parse : peg A -> string -> option (tuple string A) -> prop.
 parse P S Res' <-
-  explode S Chars,
+  string.explode S Chars,
   xparse P Chars Res,
   (if (eq Res (some (tuple RestChars RealRes)))
-   then (explode S' RestChars, eq Res' (some (tuple S' RealRes)))
+   then (string.explode S' RestChars, eq Res' (some (tuple S' RealRes)))
    else (eq Res' none)).
 
 pretty : peg A -> option (tuple string A) -> string -> prop.
 pretty P (some (tuple Output Res)) Input <-
-  explode Output OutputC,
+  string.explode Output OutputC,
   xpretty P InputC (some (tuple OutputC Res)),
-  explode Input InputC.
+  string.explode Input InputC.
 	  
 
 pegbuiltin (exactchar _).
@@ -140,7 +140,7 @@ pegdefpretty_real P P' <- (if pegdefpretty P P' then success else pegdef P P').
 (* useful parsers *)
 class : string -> peg string.
 pegdef (class S) P <-
-  explode S Chars,
+  string.explode S Chars,
   foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
         failp Chars P.
 
@@ -149,7 +149,7 @@ pegdef (ignorep P) (semaction P (fun a res => eq res unit)).
 
 exactstr : string -> peg unit.
 pegdef (exactstr S) P <-
-  explode S Chars,
+  string.explode S Chars,
   foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
         Chars epsilon P.
 
@@ -213,7 +213,7 @@ pegdef (identfstchar) (semaction (concat (lookahd (externalclass char_latin1))
 pegdef (identrstchar) (choice identfstchar (class "0123456789")).
 pegdef (ident) (semaction
                  (concat identfstchar (rep identrstchar))
-		 (fun a b => and (eq a (tuple HD TL)) (explode b (cons HD TL)))).
+		 (fun a b => and (eq a (tuple HD TL)) (string.explode b (cons HD TL)))).
 
 parenthesized : peg A -> peg A.
 pegdef (parenthesized P) (semaction (concat (concat

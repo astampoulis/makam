@@ -39,10 +39,10 @@ pegbuiltin : peg A -> prop.
 
 parse : peg A -> (string -> option (tuple string A) -> prop) -> prop.
 parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
-        explode S Chars,
+        string.explode S Chars,
 	P' Chars Res,
         (if (eq Res (some (tuple RestChars RealRes)))
-	 then  (explode S' RestChars, eq Res' (some (tuple S' RealRes)))
+	 then  (string.explode S' RestChars, eq Res' (some (tuple S' RealRes)))
 	 else  (eq Res' none)) |}
 	) <-
   xparse P P'.
@@ -50,9 +50,9 @@ parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
 pretty : peg A -> (option (tuple string A) -> string -> prop) -> prop.
 pretty P (fun FullRes Input => {prop| [Output Res OutputC InputC]
   eq FullRes (some (tuple Output Res)),
-  explode Output OutputC,
+  string.explode Output OutputC,
   P' InputC (some (tuple OutputC Res)),
-  explode Input InputC |}) <-
+  string.explode Input InputC |}) <-
   xpretty P P'.
 
 
@@ -202,7 +202,7 @@ xparse (Peg : peg A) (fun Input Result => {prop| [U0]
   not(pegbuiltin Peg), not(peginline Peg _),
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
-  append Name "~xparse" XParseName,
+  string.append Name "~xparse" XParseName,
   refl.lookup XParseName P',
   map pegcompile_parse Args Args',
   appmany P' Args' P''.
@@ -211,7 +211,7 @@ xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) <-
   not(pegbuiltin Peg), not(peginline Peg _),
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
-  append Name "~xpretty" XPrettyName,
+  string.append Name "~xpretty" XPrettyName,
   refl.lookup XPrettyName P',
   map pegcompile_pretty Args Args',
   appmany P' Args' P''.
@@ -241,8 +241,8 @@ pegdeclare   : peg A -> cmd -> prop.
 pegdeclare (Peg : peg A) Cmd <-
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
-  append Name "~xparse" XParseName,
-  append Name "~xpretty" XPrettyName,
+  string.append Name "~xparse" XParseName,
+  string.append Name "~xpretty" XPrettyName,
 
   eq (Parse  : list string -> option (tuple (list string) A) -> prop) Parse,
   eq (Pretty : list string -> option (tuple (list string) A) -> prop) Pretty,
@@ -265,8 +265,8 @@ pegrule_full GenParse GenPretty (Peg : peg A) Def Cmd <-
 
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
-  append Name "~xparse" XParseName,
-  append Name "~xpretty" XPrettyName,
+  string.append Name "~xparse" XParseName,
+  string.append Name "~xpretty" XPrettyName,
 
   eq (Parse  : list string -> option (tuple (list string) A) -> prop) Parse,
   eq (Pretty : list string -> option (tuple (list string) A) -> prop) Pretty,
@@ -309,8 +309,8 @@ pegexport (Peg : peg A) Cmd <-
   parse Peg Prop1,
   pretty Peg Prop2,
   refl.headname Peg Name,
-  append Name "_parse" ParseName,
-  append Name "_pretty" PrettyName,
+  string.append Name "_parse" ParseName,
+  string.append Name "_pretty" PrettyName,
   eq Cmd (cmd_many [ cmd_newterm ParseName  (X : string -> option (tuple string A) -> prop),
                      cmd_newterm PrettyName (Y : option (tuple string A) -> string -> prop),
 	             cmd_stage (mkclausecmd ParseName Prop1),
@@ -320,8 +320,8 @@ pegexport : string -> peg A -> cmd -> prop.
 pegexport Name (Peg : peg A) Cmd <-
   parse Peg Prop1,
   pretty Peg Prop2,
-  append Name "_parse" ParseName,
-  append Name "_pretty" PrettyName,
+  string.append Name "_parse" ParseName,
+  string.append Name "_pretty" PrettyName,
   eq Cmd (cmd_many [ cmd_newterm ParseName  (X : string -> option (tuple string A) -> prop),
                      cmd_newterm PrettyName (Y : option (tuple string A) -> string -> prop),
 	             cmd_stage (mkclausecmd ParseName Prop1),
@@ -332,7 +332,7 @@ pegexport Name (Peg : peg A) Cmd <-
 (* useful parsers *)
 class : string -> peg string.
 peginline (class S) P <-
-   explode S Chars,
+   string.explode S Chars,
    foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
          failp Chars P.
 
@@ -341,7 +341,7 @@ peginline (ignorep P) (semaction P (fun a res => eq res unit)).
 
 exactstr : string -> peg unit.
 peginline (exactstr S) P <-
-  explode S Chars,
+  string.explode S Chars,
   foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
         Chars epsilon P.
 
@@ -399,7 +399,7 @@ peginline (identrstchar) (choice identfstchar (class "0123456789")).
 peginline (ident) 
 	     (semaction
                (concat identfstchar (rep identrstchar))
-	       (fun a b => {prop| [HD TL] eq a (HD, TL), explode b (cons HD TL) |})).
+	       (fun a b => {prop| [HD TL] eq a (HD, TL), string.explode b (cons HD TL) |})).
 
 parenthesized : peg A -> peg A.
 peginline (parenthesized P) (semaction (concat (concat
