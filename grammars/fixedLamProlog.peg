@@ -72,10 +72,12 @@ lexpr -> fn:ltoken("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
 	   let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
 	   List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
 
-      / hd:baseexpr^ token("::") tl:lexpr
+      / hd:appexpr^ token("::") tl:lexpr
         << mkTm "cons" [ hd ; tl ] >>
 
-      / f:baseexpr^ args:repWHITE(baseexpr)
+      / e:appexpr^ << e >>
+
+appexpr -> f:baseexpr^ args:repWHITE(baseexpr)
         << List.fold_left (autospan_bin mkApp) f args >> 
 
 namepref -> "^n" / "ⁿ" ;
@@ -125,7 +127,7 @@ ltyp  -> s:ltoken("[") parametric:repWHITE(token(ident)) e:ltoken("]") t:lmonoty
 lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
           / t:multtyp^                            << t >>
 
-multtyp -> t:apptyp^ token("*") e:lmonotyp        << autospan_bin _tTuple t e >>
+multtyp -> t:apptyp^ token("*") e:multtyp         << autospan_bin _tTuple t e >>
          / t:apptyp^                              << t>>
 
 apptyp -> x:loced(typconstr)
