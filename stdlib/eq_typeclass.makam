@@ -13,49 +13,32 @@ eqT : (A -> A -> prop) -> eqT A.
 
 (* create a number of predicates for doing typeclass resolution and instantiation.
     eqT_lookup is used to look up an appropriate instance for a given type 
-    eqT_lookup_cache is used to cache the result of the lookup while executing code that needs an instance of the typeclass
     eqT_instance is used to declare instances of the typeclass
     eqT_default is used to declare a fallback, default instance if no specialized instance is found. *)
 
 eqT_lookup       : eqT A -> prop.
-eqT_lookup_cache : eqT A -> prop.
 eqT_instance     : eqT A -> prop.
 eqT_default      : eqT A -> prop.
 
-eqT_lookup X <-
-  unless_many
-    [ eqT_lookup_cache X,
-      eqT_instance X,
-      eqT_default X ].
+eqT_lookup Instance <-
+  once (unless_many [
+    not(refl.isunif Instance),
+    eqT_instance Instance,
+    eqT_default Instance
+  ]).
 
 (* The default case is to use the normal 'eq' predicate. *)
 eqT_default (eqT eq).
 
-(* Define a number of helper predicates for getting the different parts of the typeclass instance.
-   Here we will just have one for the 'eq' predicate defined in the typeclass *)
-eqT_eq : (A -> A -> prop) -> prop.
-eqT_eq EQ <- eqT_lookup (eqT EQ).
-
-(* with_eqT is used to execute a proposition that requires an instance of the typeclass.
-   if a concrete instance is not given, then it searches for an instance using `eqT_lookup`. *)
-with_eqT : eqT A -> prop -> prop.
-with_eqT Instance P <-
-  if refl.isunif Instance
-  then eqT_lookup Instance
-  else success,
-  (eqT_lookup_cache Instance -> P).
-
 
 (* Example of a function using the eqT typeclass:
 
-   elem_aux : A -> list A -> prop.
-   elem_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (elem_aux X TL).
+   elem_aux : eqT A -> A -> list A -> prop.
+   elem_aux (eqT EQ) X (HD :: TL) <- unless (EQ X HD) (elem_aux X TL).
 
    elem : eqT A -> A -> list A -> prop.
-   elem EQ X L <- with_eqT EQ (elem_aux X L).
-
+   elem EQ X L <- eqT_lookup EQ, elem_aux EQ X L.
 
     Note that the dependence on the type class is explicitly recorded in the type.
     If the argument is left unspecified, then we search for an instance of the type class automatically.
 *)
-

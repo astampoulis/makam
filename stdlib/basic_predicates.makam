@@ -1,27 +1,14 @@
 eq : A -> A -> prop.
 eq X X.
 
-not : prop -> prop.
-not P <- if once(P) then failure else success.
+apply : [A1 A2 B] (A1 -> A2 -> B) -> A1 -> A2 -> B -> prop.
+apply F X1 X2 (F X1 X2).
 
-or_many : list prop -> prop.
-or_many (HD :: TL) <- (HD ; or_many TL).
+apply : [A1 A2 A3 B] (A1 -> A2 -> A3 -> B) -> A1 -> A2 -> A3 -> B -> prop.
+apply F X1 X2 X3 (F X1 X2 X3).
 
-and_many : list prop -> prop.
-and_many [].
-and_many (HD :: TL) <- HD, and_many TL.
+apply : [A1 A2 A3 A4 B] (A1 -> A2 -> A3 -> A4 -> B) -> A1 -> A2 -> A3 -> A4 -> B -> prop.
+apply F X1 X2 X3 X4 (F X1 X2 X3 X4).
 
-unless : prop -> prop -> prop.
-unless P Q <- if P then success else Q.
-
-unless_many : list prop -> prop.
-unless_many (HD :: TL) <- if HD then success else unless_many TL.
-
-lift : [A B C] (A -> B -> C) -> A -> B -> C -> prop.
-lift F X1 X2 (F X1 X2).
-
-lift : [A B C D] (A -> B -> C -> D) -> A -> B -> C -> D -> prop.
-lift F X1 X2 X3 (F X1 X2 X3).
-
-lift : [A B] (A -> B) -> A -> B -> prop.
-lift F X (F X).
+apply : [A B] (A -> B) -> A -> B -> prop.
+apply F X (F X).

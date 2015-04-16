@@ -1,0 +1,23 @@
+not : prop -> prop.
+not P <- if once(P) then failure else success.
+
+or_many : list prop -> prop.
+or_many (HD :: TL) <- (HD ; or_many TL).
+
+and_many : list prop -> prop.
+and_many [].
+and_many (HD :: TL) <- HD, and_many TL.
+
+unless : prop -> prop -> prop.
+unless P Q <- if P then success else Q.
+
+unless_many : list prop -> prop.
+unless_many (HD :: TL) <- if HD then success else unless_many TL.
+
+assume_many : list prop -> prop -> prop.
+assume_many [] P <- P.
+assume_many (HD :: TL) P <- (HD -> assume_many TL P).
+
+assume_many : list clause -> prop -> prop.
+assume_many [] P <- P.
+assume_many (HD :: TL) P <- assume HD (assume_many TL P).

@@ -1,0 +1,12 @@
+%extend tuple.
+
+map : [A B C D] (A -> C -> prop) -> (B -> D -> prop) -> A * B -> C * D -> prop.
+map P Q (X, Y) (X', Y') <- P X X', Q Y Y'.
+
+dynlist : A * B -> list dyn -> prop.
+dynlist (HD, TL) Result <-
+  if typ.eq TL (_ : A * B)
+  then (dynlist TL TL', eq Result (dyn HD :: TL'))
+  else (eq Result [dyn HD, dyn TL]).
+
+%end.

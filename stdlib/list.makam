@@ -1,3 +1,5 @@
+%use eq_typeclass.
+
 (* Append a list to the end of another list. *)
 
 append : [A] list A -> list A -> list A -> prop.
@@ -77,15 +79,23 @@ find Pred (HD :: TL) Res <- if (P HD) then eq Res HD else find Pred TL Res.
 (* Keep only elements that succeed on a predicate *)
 filter : [A] (A -> prop) -> list A -> list A -> prop.
 filter Pred (HD :: TL) Res <-
-  if (P HD)
+  if (Pred HD)
   then (eq Res (HD :: TL'), filter Pred TL TL')
   else (filter Pred TL Res).
 
+(* Combination of filter and map *)
+filtermap : [A] (A -> B -> prop) -> list A -> list B -> prop.
+filtermap Pred (HD :: TL) Res <-
+  if (Pred HD HD')
+  then (eq Res (HD' :: TL'), filtermap Pred TL TL')
+  else (filtermap Pred TL Res).
+
+
 (* Succeeds if a list contains an element *)
 contains : [A] eqT A -> A -> list A -> prop.
-contains_aux : [A] A -> list A -> prop.
-contains_aux X (HD :: TL) <- eqT_eq EQ, unless (EQ X HD) (contains_aux X TL).
-contains EqInstance X HD <- with_eqT EqInstance (contains_aux X HD).
+contains_aux : [A] eqT A -> A -> list A -> prop.
+contains_aux (eqT EQ) X (HD :: TL) <- unless (EQ X HD) (contains_aux (eqT EQ) X TL).
+contains Eq X HD <- eqT_lookup Eq, contains_aux Eq X HD.
 
 
 (* Relates a number of lists to a lists where the corresponding elements are tupled together. Overloaded up to 4 lists. *)

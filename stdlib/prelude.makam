@@ -1,9 +1,15 @@
 %use basic_predicates.
+%use connectives.
 %import clause.
 %import typ.
 
 %use eq_typeclass.
 
 %use list.
-(* %import tuple. *)
-(* %import map. *)
+%use dyn.
+%use tuple.
+%use option.
+%use map.
+
+(* %use structural_clause. *)
+(* %use more stuff like dynguard, cases, etc. *)

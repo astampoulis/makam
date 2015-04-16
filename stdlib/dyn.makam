@@ -1,0 +1,16 @@
+dyn : type.
+dyn : A -> dyn.
+
+%extend dyn.
+(* A version of `eq` that delays type unification of the terms until runtime *)
+eq : A -> B -> prop.
+eq X X.
+
+(* Similarly, a dynamically-typed version of application. *)
+apply : A -> B -> C -> prop.
+apply F X (F X).
+%end.
+
+apply_many : A -> list dyn -> B -> prop.
+apply_many X nil X.
+apply_many (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_many X' TL Res.
