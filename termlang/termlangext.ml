@@ -193,6 +193,9 @@ end;;
 (* ---------
    Strings. 
    --------- *)
+
+builtin_enter_module "string" ;;
+
 new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
   let convertfunc f [ s1 ; s2 ] = 
@@ -256,6 +259,24 @@ new_builtin_predicate "capitalize" ( _tString **> _tString **> _tProp ) begin
     str' <-- _PtoString str ;
     pattcanonUnifyFull res (_PofString (String.capitalize str') ~loc:str.loc))
 end;;
+
+new_builtin_predicate "uppercase" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ str; res ] -> perform
+    str  <-- chasePattcanon [] str ;
+    str' <-- _PtoString str ;
+    pattcanonUnifyFull res (_PofString (String.uppercase str') ~loc:str.loc))
+end;;
+
+new_builtin_predicate "lowercase" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ str; res ] -> perform
+    str  <-- chasePattcanon [] str ;
+    str' <-- _PtoString str ;
+    pattcanonUnifyFull res (_PofString (String.lowercase str') ~loc:str.loc))
+end;;
+
+builtin_leave_module ();;
 
 
 (* --------------

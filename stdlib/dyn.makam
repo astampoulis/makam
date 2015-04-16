@@ -1,6 +1,3 @@
-dyn : type.
-dyn : A -> dyn.
-
 %extend dyn.
 (* A version of `eq` that delays type unification of the terms until runtime *)
 eq : A -> B -> prop.
