@@ -160,11 +160,11 @@ builtin_enter_module "refl" ;;
         match pred.term with
             `LamMany(_, body) ->
               perform
-                  let idx  =   headPredicate body in
-                  env      <-- getenv ;
-                  let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
-                  cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
-                  pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
+                let idx  =   headPredicate body in
+                env      <-- getenv ;
+                let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
+                cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
+                pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
 
     end | _ -> assert false)
   ;;
@@ -178,9 +178,9 @@ builtin_enter_module "refl" ;;
         match pred.term with
             `LamMany(_, body) ->
               perform
-                  let idx = headPredicate body in
+                let idx = headPredicate body in
                 env' <-- resetTempConstructors idx ;
-                  inenv env' (demand p)
+                inenv env' (demand p)
 
     end | _ -> assert false)
   ;;
