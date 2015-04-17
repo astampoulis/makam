@@ -10,6 +10,7 @@
 %use tuple.
 %use option.
 %use map.
+%use fluid.
 
 (* %use structural_clause. *)
 (* %use more stuff like dynguard, cases, etc. *)
