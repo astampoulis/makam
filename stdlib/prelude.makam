@@ -12,5 +12,7 @@
 %use map.
 %use fluid.
 
+%use bind.
+
 (* %use structural_clause. *)
 (* %use more stuff like dynguard, cases, etc. *)

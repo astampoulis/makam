@@ -1,0 +1,53 @@
+bindone : type -> type -> type.
+bindone : string -> (A -> B) -> bindone A B.
+
+%extend bindone.
+
+newvar : [A B] bindone A B -> (A -> prop) -> prop.
+varname : A -> string -> prop.
+apply : [A B] bindone A B -> A -> B -> prop.
+
+newvar (bindone Name (F : A -> B)) (P : A -> prop) <-
+  (x:A -> varname x Name -> P x).
+
+apply (bindone _ F) X (F X).
+
+(* open's real signature is of the form:
+    (bindone A B * bindone A C * bindone A D * ...) ->
+    (A -> B -> C -> D -> ... -> prop) *)
+
+open_aux : [A] A -> list dyn -> PropType -> prop.
+open_aux Var [] P <- P.
+open_aux Var (dyn (bindone _ F) :: TL) P <-
+  eq (F Var) X, 
+  open_aux Var TL (P X).
+
+open_all_bindones : string -> list dyn -> prop.
+open_all_bindones Varname [].
+open_all_bindones Varname (dyn (bindone Varname' F) :: TL) <- eq Varname Varname', open_all_bindones Varname TL.
+
+open : TupleType -> PropType -> prop.
+open ES P <- tuple.dynlist ES ES',
+             open_all_bindones Varname ES',
+             eq ES' (dyn HD :: _),
+             newvar HD (fun x => {prop| open_aux x ES' (P x), varname x Varname |}).
+
+%end.
+
+
+bindmany : type -> type -> type.
+bindnone : B -> bindmany A B.
+bindone  : bindone A (bindmany A B) -> bindmany A B.
+
+%extend bindmany.
+
+newvars : [A B] bindmany A B -> (list A -> prop) -> prop.
+apply : [A B] bindmany A B -> list A -> B -> prop.
+
+newvars_aux : [A B] bindmany A B -> list A -> (list A -> prop) -> prop.
+newvars_aux (bindnone _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (bindone B) Vars P <-
+  bindone.open B (fun x b => newvars_aux b (x :: Vars) P).
+newvars B P <- newvars_aux B [] P.
+
+%end.

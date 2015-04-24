@@ -8,6 +8,14 @@ apply : A -> B -> C -> prop.
 apply F X (F X).
 %end.
 
+(* Apply many arguments *)
 apply_many : A -> list dyn -> B -> prop.
 apply_many X nil X.
 apply_many (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_many X' TL Res.
+
+(* Apply all arguments -- when the argument list is not specified,
+   this will repeatedly apply arguments, generating new unification
+   variables, for the full arity of the functional argument. *)
+apply_all : A -> list dyn -> B -> prop.
+apply_all (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_all X' TL Res.
+(apply_all X nil X) when not(typ.eq X (_ : A -> B)).
