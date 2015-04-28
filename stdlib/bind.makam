@@ -1,3 +1,6 @@
+(* Bind one variable of type A into a term of type B *)
+(* Includes a string that represents the concrete name of the variable *)
+
 bindone : type -> type -> type.
 bindone : string -> (A -> B) -> bindone A B.
 
@@ -15,8 +18,8 @@ apply (bindone _ F) X (F X).
 
 varname (bindone S _) S.
 
-match_info : [A B C] bindone A B -> bindone A C -> prop.
-match_info (bindone S _) (bindone S _).
+match_binders : [A B A' B'] bindone A B -> bindone A' B' -> prop.
+match_binders (bindone S _) (bindone S _).
 
 (* open's real signature is of the form:
     (bindone A B * bindone A C * bindone A D * ...) ->
@@ -29,13 +32,23 @@ open_aux Var (dyn B :: TL) P <-
   open_aux Var TL (P X).
 
 open : TupleType -> PropType -> prop.
-open ES P <- tuple.dynlist ES ES',
-             eq ES' (dyn HD :: _),
-             dyn.iter (match_info HD) ES',
-             newvar HD (fun x => open_aux x ES' (P x)).
+open ES P <- 
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvar HD (fun x => open_aux x ES' (P x)).
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvar HD (fun x => open_aux x ES' (P x)).
 
 %end.
 
+
+(* Bindmany: bind a number of A's into a B *)
 
 bindmany : type -> type -> type.
 bindend  : B -> bindmany A B.
@@ -60,14 +73,11 @@ applysome : [A B] bindmany A B -> list A -> bindmany A B -> prop.
 applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
 applysome X nil X.
 
-varnames_aux : [A B] bindmany A B -> list string -> list string -> prop.
-varnames_aux (bindend X) Names Names' <- reverse Names Names'.
-varnames_aux (bindnext S F) Names Names' <- (x:A -> varnames_aux (F x) (S :: Names) Names').
-varnames B Names <- varnames_aux B [] Names.
+varnames B Names <- newvars B (fun xs => map varname xs Names).
 
-match_info : [A B C] bindmany A B -> bindmany A C -> prop.
-match_info (bindend  _) (bindend _).
-match_info (bindnext S F) (bindnext S F') <- (x:A -> match_info (F x) (F' x)).
+match_binders : [A B A' B'] bindmany A B -> bindmany A' B' -> prop.
+match_binders (bindend  _) (bindend _).
+match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
 
 
 (* open real signature should be of the form:
@@ -80,9 +90,85 @@ open_aux Vars (dyn HD :: TL) P <-
   open_aux Vars TL (P X).
 
 open : TupleType -> PropType -> prop.
-open ES P <- tuple.dynlist ES ES',
-             eq ES' (dyn HD :: _),
-             dyn.iter (match_info HD) ES',
-             newvars HD (fun xs => open_aux xs ES' (P xs)).
+open ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
 
 %end.
+
+
+(* Telescope: bind a number of A's into B, with an additional term of type C at each
+   binding that can use previously-bound variables. Useful for modelling the context in
+   dependently-typed languages. *)
+(* Bindmany: bind a number of A's into a B *)
+
+telescope : type -> type -> type -> type.
+telend   : B -> telescope V T B.
+telnext  : string -> V -> (V -> telescope V T B) -> telescope V T B.
+
+%extend telescope.
+
+newvars : [V T B] telescope V T B -> (list V -> prop) -> prop.
+apply : [V T B] telescope V T B -> list A -> B -> prop.
+varnames : [V T B] telescope V T B -> list string -> prop.
+varinfo : [V T B] V -> T -> prop.
+varinfos : [V T B] telescope V T B -> list T -> prop.
+
+newvars_aux : [V T B] telescope V T B -> list V -> (list V -> prop) -> prop.
+newvars_aux (telend _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (telnext S T Rest) Vars P <-
+  bindone.open (bindone S Rest) (fun x bindrest => {prop| varinfo x T -> newvars_aux bindrest (x :: Vars) P |}).
+newvars B P <- newvars_aux B [] P.
+
+apply (telend X) [] X.
+apply (telnext _ _ F) (HD :: TL) Res <- apply (F HD) TL Res.
+
+applysome : [V T B] telescope V T B -> list A -> telescope V T B -> prop.
+applysome (telnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
+applysome X nil X.
+
+varnames B Names <- newvars B (fun xs => map varname xs Names).
+varinfos B Names <- newvars B (fun xs => map varinfo xs Names).
+
+match_binders : [V T A V' T' A'] telescope V T A -> telescope V' T' A' -> prop.
+match_binders (telend  _) (telend _).
+match_binders (telnext S _ F) (telnext S _ F') <- (x:A -> x:A' -> match_binders (F x) (F' x')).
+
+
+(* open real signature should be of the form:
+    (telescope V T A * telescope V T B * ...) ->
+    (list A -> list T -> -> B -> C -> ... -> prop) *)
+open_aux : [A] list A -> list dyn -> PropType -> prop.
+open_aux Vars [] P <- P.
+open_aux Vars (dyn HD :: TL) P <-
+  apply HD Vars X,
+  open_aux Vars TL (P X).
+
+open : TupleType -> PropType -> prop.
+open ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+%end.
+
+
+(* Mutual recursion binding *)
+
