@@ -169,6 +169,3 @@ open_nomatch ES P <-
 
 %end.
 
-
-(* Mutual recursion binding *)
-
