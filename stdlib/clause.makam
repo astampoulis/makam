@@ -1,3 +1,5 @@
+%extend clause.
+
 applies : prop -> clause -> prop.
 applies CurGoal (clause Goal Premise) <- eq CurGoal Goal.
 applies CurGoal (whenclause Goal Guard Premise) <- eq CurGoal Goal, Guard.
@@ -25,3 +27,5 @@ demand_case Goal (HD :: TL) <-
   if applies Goal HD
   then premise HD
   else demand_case Goal TL.
+
+%end.

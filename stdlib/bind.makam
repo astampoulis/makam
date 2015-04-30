@@ -37,14 +37,14 @@ open : TupleType -> PropType -> prop.
 open ES P <- 
   tuple.dynlist ES ES',
   eq ES' (dyn HD :: _),
-  dyn.iter (match_binders HD) ES',
+  dyn.polyiter (match_binders HD) ES',
   newvar HD (fun x => open_aux x ES' (P x)).
 
 open_nomatch : TupleType -> PropType -> prop.
 open_nomatch ES P <-
   tuple.dynlist ES ES',
   eq ES' (dyn HD :: _),
-  dyn.iter (match_binders HD) ES',
+  dyn.polyiter (match_binders HD) ES',
   newvar HD (fun x => open_aux x ES' (P x)).
 
 %end.
@@ -95,7 +95,7 @@ open : TupleType -> PropType -> prop.
 open ES P <-
   tuple.dynlist ES ES',
   eq ES' (dyn HD :: _),
-  dyn.iter (match_binders HD) ES',
+  dyn.polyiter (match_binders HD) ES',
   newvars HD (fun xs => open_aux xs ES' (P xs)).
 
 
@@ -158,7 +158,7 @@ open : TupleType -> PropType -> prop.
 open ES P <-
   tuple.dynlist ES ES',
   eq ES' (dyn HD :: _),
-  dyn.iter (match_binders HD) ES',
+  dyn.polyiter (match_binders HD) ES',
   newvars HD (fun xs => open_aux xs ES' (P xs)).
 
 

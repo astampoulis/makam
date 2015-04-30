@@ -248,6 +248,38 @@ builtin_enter_module "refl" ;;
      | _ -> assert false)
   ;;
 
+  new_builtin_predicate "isfvar" ( ~* "A" **> _tProp )
+    (fun _ -> function [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isbaseterm = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Var (_, (`Free, _)) }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isbaseterm)
+     | _ -> assert false)
+  ;;
+
+  new_builtin_predicate "isnvar" ( ~* "A" **> _tProp )
+    (fun _ -> function [ p ] ->
+      (let open RunCtx.Monad in
+       perform
+         state  <-- getstate ;
+         p      <-- pattcanonRenormalize p ;
+         p      <-- chasePattcanon [] p ;
+         _      <-- setstate state ;
+         let isbaseterm = match p.term with
+             `LamMany([], { term = `AppMany( { term = `Var (_, (`New, _)) }, _, _ ) }) -> true
+           | _ -> false
+         in
+         moneOrMzero isbaseterm)
+     | _ -> assert false)
+  ;;
+
   new_builtin_predicate "isfun" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in

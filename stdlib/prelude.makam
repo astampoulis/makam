@@ -1,7 +1,8 @@
 %use basic_predicates.
 %use connectives.
-%import clause.
-%import typ.
+%use clause.
+%use typ.
+%use guard.
 
 %use eq_typeclass.
 
@@ -13,6 +14,8 @@
 %use fluid.
 
 %use bind.
+
+%use structural.
 
 (* %use structural_clause. *)
 (* %use more stuff like dynguard, cases, etc. *)
