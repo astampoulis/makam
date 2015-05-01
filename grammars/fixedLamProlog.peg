@@ -114,6 +114,7 @@ identnamed -> x:ident^ namepref nmeta:identany << toVarWithNamedMeta x nmeta >>
 	    / x:identany << x >>
 identany   -> x:ident^ << x >> / "_" x:ident << "_" ^ x >> / "_" << "_" >>
 qualident  -> ms:repplus( (x:ident^ "." &ident^) ) x:ident^ << let prefix = String.join "." ms in prefix ^ "." ^ x >>
+            / "." x:ident^ << "." ^ x >>
 
 annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >> 
 
@@ -399,6 +400,7 @@ cmdname        -> c:cmdnamefstchar cs:rep(cmdnamerstchar) << UString.implode (c 
 
 tident       -> m:ident^ "." &ident^ x:tident << m ^ "." ^ x >>
 	      / x:ident^ << x >>
+              / "." x:ident^ << "." ^ x >>
 
 (* string characters must include the escape characters allowed by ocaml, so that bootstrapping works properly *)
 hexdigitchar ->  a:[0123456789abcdefABCDEF]  << a >>
