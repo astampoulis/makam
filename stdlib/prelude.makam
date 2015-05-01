@@ -15,6 +15,5 @@
 
 %use bind.
 
-%use structural.
-
+%use generic.
 %use demand.

@@ -30,17 +30,26 @@ call P X <- poly P P', P' X.
 call : (A -> B -> prop) -> A' -> B' -> prop.
 call P X Y <- poly P P', P' X Y.
 
+call : (A -> B -> C -> prop) -> A' -> B' -> C' -> prop.
+call P X Y Z <- poly P P', P' X Y Z.
+
 call_dyn : (A -> prop) -> dyn -> prop.
 call_dyn P (dyn X) <- poly P P', P' X.
 
 call_dyn : (A -> B -> prop) -> dyn -> dyn -> prop.
 call_dyn P (dyn X) (dyn Y) <- poly P P', P' X Y.
 
+call_dyn : (A -> B -> C -> prop) -> dyn -> dyn -> dyn -> prop.
+call_dyn P (dyn X) (dyn Y) (dyn Z) <- poly P P', P' X Y Z.
+
 iter : (A -> prop) -> list dyn -> prop.
 iter P L <- .map (call_dyn P) L.
 
 map : (A -> B -> prop) -> list dyn -> list dyn -> prop.
 map P L L' <- .map (call_dyn P) L L'.
+
+foldl : (B -> A -> B -> prop) -> B -> list dyn -> B -> prop.
+foldl F X L X' <- .foldl (call_dyn F) L (dyn X) (dyn X').
 
 %end.
 

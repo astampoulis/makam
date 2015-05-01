@@ -7,4 +7,5 @@ eq (X : A) (Y : A).
 isunif : A -> prop.
 isunif X <- not(not(eq X (_ : string))), not(not(eq X (_ : int))).
 
+
 %end.
