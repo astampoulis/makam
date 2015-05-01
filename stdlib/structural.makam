@@ -1,30 +1,23 @@
 structural : (A -> A -> prop) -> B -> B -> prop.
-structural_ : (A -> A -> prop) -> B -> B -> prop.
-
-structural P X Y <-
-  refl.rules_get structural_ Rules,
-  clause.demand_case (structural_ P X Y) Rules.
 
 (* defer if both input and output are uninstantiated metavariables *)
-structural_ Rec (X : A) (Y : A) when refl.isunif X, refl.isunif Y <-
+structural Rec (X : A) (Y : A) when refl.isunif X, refl.isunif Y <-
   guardmany (X, Y) (dyn.polycall Rec (dyn X) (dyn Y)).
 
 (* deal with built-in types *)
-structural_ Rec X X when refl.isconst X.
+structural Rec X X when refl.isconst X.
 
 (* deal with functions *)
-structural_ Rec (X : A -> B) (Y : A -> B) <-
-  (x:A -> dyn.polycall Rec (X x) (Y x)).
-
+structural Rec (X : A -> B) (Y : A -> B) <-
+  (x:A -> dyn.polycall Rec (dyn (X x)) (dyn (Y x))).
 
 (* the essence: forward and backward destructuring *)
-
-structural_ Rec X Y when refl.isbaseterm X <-
+structural Rec X Y when refl.isbaseterm X <-
   refl.headargs X Hd Args,
   dyn.polymap Rec Args Args',
   refl.headargs Y Hd Args'.
 
-structural_ Rec X Y when refl.isbaseterm Y <-
+structural Rec X Y when refl.isunif X, refl.isbaseterm Y <-
   refl.headargs Y Hd Args',
   dyn.polymap Rec Args Args',
   refl.headargs X Hd Args.

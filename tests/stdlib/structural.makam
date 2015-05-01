@@ -1,0 +1,15 @@
+change : A -> A -> prop.
+change_ : A -> A -> prop.
+
+change X Y <-
+  refl.rules_get change_ Rules,
+  clause.demand_case (change_ X Y) Rules.
+
+change_ "a" "b".
+change_ X Y <- plus X 1 Y.
+change_ X Y <- structural change X Y.
+
+
+%debug+.
+
+(structural eq (fun (x:A) => x) X, dyn.eq (Q : A) "lala", dyn.apply X "rere" Z) ?
