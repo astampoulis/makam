@@ -15,10 +15,6 @@ map_poly : list dyn -> list dyn -> prop.
 poly C C when refl.isconst C.
 poly X X when refl.isunif X.
 poly F F' when refl.isfun F <- (x:A -> x':A' -> poly x x' -> poly (F x) (F' x')).
-poly E E' when refl.isbaseterm E, refl.isnvar E <-
-  refl.headargs E HD ARGS,
-  map_poly ARGS ARGS',
-  refl.headargs E' HD ARGS'.
 poly E E' when refl.isbaseterm E, refl.isfvar E <-
   refl.headargs E HD ARGS,
   refl.duphead HD HD',
