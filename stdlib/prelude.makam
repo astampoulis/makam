@@ -17,5 +17,4 @@
 
 %use structural.
 
-(* %use structural_clause. *)
-(* %use more stuff like dynguard, cases, etc. *)
+%use demand.

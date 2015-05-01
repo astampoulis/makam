@@ -28,17 +28,23 @@ poly E E' when refl.isbaseterm E, refl.isfvar E <-
 map_poly [] [].
 map_poly (dyn HD :: TL) (dyn HD' :: TL') <- poly HD HD', map_poly TL TL'.
 
-polycall : (A -> prop) -> dyn -> prop.
-polycall P (dyn X) <- poly P P', P' X.
+call : (A -> prop) -> A' -> prop.
+call P X <- poly P P', P' X.
 
-polycall : (A -> B -> prop) -> dyn -> dyn -> prop.
-polycall P (dyn X) (dyn Y) <- poly P P', P' X Y.
+call : (A -> B -> prop) -> A' -> B' -> prop.
+call P X Y <- poly P P', P' X Y.
 
-polyiter : (A -> prop) -> list dyn -> prop.
-polyiter P L <- map (polycall P) L.
+call_dyn : (A -> prop) -> dyn -> prop.
+call_dyn P (dyn X) <- poly P P', P' X.
 
-polymap : (A -> B -> prop) -> list dyn -> list dyn -> prop.
-polymap P L L' <- map (polycall P) L L'.
+call_dyn : (A -> B -> prop) -> dyn -> dyn -> prop.
+call_dyn P (dyn X) (dyn Y) <- poly P P', P' X Y.
+
+iter : (A -> prop) -> list dyn -> prop.
+iter P L <- .map (call_dyn P) L.
+
+map : (A -> B -> prop) -> list dyn -> list dyn -> prop.
+map P L L' <- .map (call_dyn P) L L'.
 
 %end.
 
