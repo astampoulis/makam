@@ -49,7 +49,7 @@ map : (A -> B -> prop) -> list dyn -> list dyn -> prop.
 map P L L' <- .map (call_dyn P) L L'.
 
 foldl : (B -> A -> B -> prop) -> B -> list dyn -> B -> prop.
-foldl F X L X' <- .foldl (call_dyn F) L (dyn X) (dyn X').
+foldl F X L X' <- .foldl (call_dyn F) (dyn X) L (dyn X').
 
 %end.
 

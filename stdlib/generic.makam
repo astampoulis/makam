@@ -64,13 +64,13 @@ fold F Acc X Acc when refl.isconst X.
 fold F Acc (X : A -> B) Acc' <-
   (x:A -> dyn.call F Acc (X x) Acc').
 
-fold F X Acc Acc' when refl.isbaseterm X <-
-  refl.headargs X HD Args
+fold F Acc X Acc' when refl.isbaseterm X <-
+  refl.headargs X HD Args,
   dyn.foldl F Acc Args Acc'.
 %end.
 
 
-eq_nounif : [A]A -> A -> prop.
+eq_nounif : A -> A -> prop.
 
 eq_nounif (X : A) (Y : A)
   when refl.isunif X, refl.isunif Y, refl.decomposeunif X I XArgs, refl.decomposeunif Y I YArgs <-

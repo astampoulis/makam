@@ -17,3 +17,5 @@
 
 %use generic.
 %use demand.
+
+%use vars.
