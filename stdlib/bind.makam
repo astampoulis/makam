@@ -108,10 +108,67 @@ open_nomatch ES P <-
 %end.
 
 
+(* Bindmutrec: mutually recursive binding of a number of A's used into the same number of B's *)
+
+bindmutrec : type -> type -> type.
+bindend  : list B -> bindmutrec A B.
+bindnext : string -> (A -> bindmutrec A B) -> bindmutrec A B.
+
+%extend bindmutrec.
+
+newvars : [A B] bindmutrec A B -> (list A -> prop) -> prop.
+apply : [A B] bindmutrec A B -> list A -> list B -> prop.
+varnames : [A B] bindmutrec A B -> list string -> prop.
+
+newvars_aux : [A B] bindmutrec A B -> list A -> (list A -> prop) -> prop.
+newvars_aux (bindend _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (bindnext S Rest) Vars P <-
+  bindone.open (bindone S Rest) (fun x bindrest => newvars_aux bindrest (x :: Vars) P).
+newvars B P <- newvars_aux B [] P.
+
+apply (bindend X) [] X.
+apply (bindnext _ F) (HD :: TL) Res <- apply (F HD) TL Res.
+
+applysome : [A B] bindmutrec A B -> list A -> bindmutrec A B -> prop.
+applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
+applysome X nil X.
+
+varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
+
+match_binders : [A B A' B'] bindmutrec A B -> bindmutrec A' B' -> prop.
+match_binders (bindend  _) (bindend _).
+match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
+
+
+(* open real signature should be of the form:
+    (bindmutrec A B * bindmutrec A C * ...) ->
+    (list A -> list B -> list C -> ... -> prop) *)
+open_aux : [A] list A -> list dyn -> PropType -> prop.
+open_aux Vars [] P <- P.
+open_aux Vars (dyn HD :: TL) P <-
+  apply HD Vars X,
+  open_aux Vars TL (P X).
+
+open : TupleType -> PropType -> prop.
+open ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+%end.
+
+
 (* Telescope: bind a number of A's into B, with an additional term of type C at each
    binding that can use previously-bound variables. Useful for modelling the context in
    dependently-typed languages. *)
-(* Bindmany: bind a number of A's into a B *)
 
 telescope : type -> type -> type -> type.
 telend   : B -> telescope V T B.

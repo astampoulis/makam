@@ -1,0 +1,8 @@
+%extend refl.
+
+sameunif : A -> A -> prop.
+sameunif X Y <-
+  refl.isunif X, refl.isunif Y,
+  refl.decomposeunif X I _, refl.decomposeunif Y I _.
+
+%end.

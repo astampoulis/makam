@@ -24,7 +24,6 @@ freevars Root Result <-
 
   
 (* unifvars *)
-
 unifvars : [A B]A -> list B -> prop.
 unifvars_aux : list B -> A -> list B -> prop.
 unifvars_aux_ : list B -> A -> list B -> prop.
@@ -40,5 +39,5 @@ unifvars_aux_ Acc X Result when refl.isunif X <-
   refl.decomposeunif X _ Args, unifvars_aux Acc Args Result.
 
 unifvars Root Result <-
-  unifvars_aux [] Root Result', unique (eqT eq_nounif) Result' Result.
+  unifvars_aux [] Root Result', unique (eqT refl.sameunif) Result' Result.
 

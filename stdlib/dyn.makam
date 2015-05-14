@@ -67,3 +67,10 @@ apply_many (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_many X' T
 apply_all : A -> list dyn -> B -> prop.
 apply_all (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_all X' TL Res.
 (apply_all X nil X) when not(typ.eq X (_ : A -> B)).
+
+(* Abstract over many variables *)
+newvars_many : list dyn -> (list dyn -> prop) -> prop.
+newvars_many_aux : list dyn -> list dyn -> (list dyn -> prop) -> prop.
+newvars_many_aux [] Acc P <- reverse Acc Acc', P Acc'.
+newvars_many_aux (dyn (HD : A) :: TL) Acc P <- (x:A -> newvars_many_aux TL (dyn x :: Acc) P).
+newvars_many Typs P <- newvars_many_aux Typs [] P.
