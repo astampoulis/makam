@@ -1,0 +1,67 @@
+%use ocaml.
+
+(* examples *)
+
+typeof (let
+         (lam (bindone "f" (fun f => lam (bindone "g" (fun g => lam (bindone "x" (fun x =>
+	  app f (app g x))))))))
+	 (bindone "compose" (fun compose => compose))) X ?
+
+typeof (letrec
+	 (bindnext "compose" (fun compose => bindend [
+         (lam (bindone "f" (fun f => lam (bindone "g" (fun g => lam (bindone "x" (fun x =>
+	  app f (app g x))))))))
+         ]))
+	 (bindnext "compose" (fun compose => bindend compose))) X ?
+
+typeof (letrec
+	   (bindnext "append" (fun 
+	   append => bindend [
+	   lam (bindone "x" (fun x => lam (bindone "y" (fun y =>
+	   match x
+             [ bindnext "hd" (fun hd => bindnext "tl" (fun tl => bindend
+	       (pconstr "Cons" (ptuple [ pvar hd, pvar tl ]),
+		constr "Cons" (tuple [ hd, app (app append tl) y ])))),
+
+	       bindend
+	       (pconstrun "Nil", y) ])))) ]))
+          (bindnext "append" (fun append => bindend append))) Y ?
+
+sigof (strmany
+	 [ strletrec
+	   (bindnext "append" (fun append => bindend [
+	   lam (bindone "x" (fun x => lam (bindone "y" (fun y => 
+	   match x
+	     [ bindnext "hd" (fun hd => bindnext "tl" (fun tl => bindend
+		( pconstr "Cons" (ptuple [pvar hd, pvar tl]),
+		  constr "Cons" (tuple [hd, app (app append tl) y])))),
+	       bindend
+		( pconstrun "Nil",
+		  y ) ])))) ])),
+           strlet "g" (named "append") ]) S ?
+
+sigof (strmany
+        [strtypesingle "tree" [ktype] (typdef_variant
+           [ ("Leaf", csdefunit),
+	     ("Node", csdef (typconstr (bindnext "a" (fun a => bindend (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
+	 strlet "isempty"
+           (lam (bindone "t" (fun t => match t
+	      [ bindnext "top" (fun top => bindend
+		   ( pconstr "Node" (ptuple [pwild, pvar top, pwild]),
+		     top ))] ))) ]) S ?
+
+sigof (strmany
+         [ strtypesingle "test1" [ktype, ktype] (typdef_eq
+	    (typconstr (bindnext "a" (fun a => bindnext "b" (fun b => bindend (
+		   tprod [ tbase "list" [a],
+		           tbase "list" [ tbase "list" [ tprod [b, a] ] ] ])))))),
+	   strtypesingle "test2" [ktype] (typdef_eq
+	    (typconstr (bindnext "a" (fun a => bindend (
+		   tbase "test1" [a, a]))))),
+	   strlet "f" (lam (bindone "x" (fun x => ascribe x (tbase "test2" [tbase "unit" []])))),
+	   strlet "g" (app (named "f")
+			  (tuple [ construn "Nil",
+			          constr "Cons" (tuple [ (constr "Cons" (tuple [tuple [construn "Unit", construn "Unit"], construn "Nil"])) ,
+				                         constr "Cons" (tuple [construn "Nil", construn "Nil"])])])) ]) S ?
+
+

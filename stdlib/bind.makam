@@ -135,6 +135,15 @@ applysome X nil X.
 
 varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
 
+to_bindmany : [A B] bindmutrec A B -> bindmany A (list B) -> prop.
+to_bindmany (bindend X) (bindend X).
+to_bindmany (bindnext S F : bindmutrec A B) (bindnext S F') <-
+  bindone.open (bindone S F, bindone S F') (fun (x : A) rest rest' => to_bindmany rest rest').
+
+opt_to_bindmany : A -> B -> prop.
+opt_to_bindmany (X : bindmutrec A B) Y <- to_bindmany X Y.
+opt_to_bindmany (X : bindmany A B) (X : bindmany A B).
+
 match_binders : [A B A' B'] bindmutrec A B -> bindmutrec A' B' -> prop.
 match_binders (bindend  _) (bindend _).
 match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
@@ -142,26 +151,24 @@ match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (
 
 (* open real signature should be of the form:
     (bindmutrec A B * bindmutrec A C * ...) ->
-    (list A -> list B -> list C -> ... -> prop) *)
-open_aux : [A] list A -> list dyn -> PropType -> prop.
-open_aux Vars [] P <- P.
-open_aux Vars (dyn HD :: TL) P <-
-  apply HD Vars X,
-  open_aux Vars TL (P X).
+    (list A -> list B -> list C -> ... -> prop)
+
+    bindmany's instead of mutrec's are also allowed *)
 
 open : TupleType -> PropType -> prop.
 open ES P <-
   tuple.dynlist ES ES',
-  eq ES' (dyn HD :: _),
-  dyn.iter (match_binders HD) ES',
-  newvars HD (fun xs => open_aux xs ES' (P xs)).
+  dyn.map opt_to_bindmany ES' ES'',
+  tuple.dynlist ES''' ES'',
+  bindmany.open ES''' P.
 
 
 open_nomatch : TupleType -> PropType -> prop.
 open_nomatch ES P <-
   tuple.dynlist ES ES',
-  eq ES' (dyn HD :: _),
-  newvars HD (fun xs => open_aux xs ES' (P xs)).
+  dyn.map opt_to_bindmany ES' ES'',
+  tuple.dynlist ES''' ES'',
+  bindmany.open_nomatch ES''' P.
 
 %end.
 

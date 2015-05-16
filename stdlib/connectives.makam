@@ -18,9 +18,9 @@ assume_many : list prop -> prop -> prop.
 assume_many [] P <- P.
 assume_many (HD :: TL) P <- (HD -> assume_many TL P).
 
-assume_many : list clause -> prop -> prop.
-assume_many [] P <- P.
-assume_many (HD :: TL) P <- assume HD (assume_many TL P).
+assume_many_clauses : list clause -> prop -> prop.
+assume_many_clauses [] P <- P.
+assume_many_clauses (HD :: TL) P <- assume HD (assume_many_clauses TL P).
 
 assume_many : [A B] (A -> B -> prop) -> list A -> list B -> prop -> prop.
 assume_many P [] [] G <- G.

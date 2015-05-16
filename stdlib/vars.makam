@@ -24,6 +24,7 @@ freevars Root Result <-
 
   
 (* unifvars *)
+
 unifvars : [A B]A -> list B -> prop.
 unifvars_aux : list B -> A -> list B -> prop.
 unifvars_aux_ : list B -> A -> list B -> prop.
