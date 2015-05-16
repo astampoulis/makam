@@ -159,7 +159,7 @@ open : TupleType -> PropType -> prop.
 open ES P <-
   tuple.dynlist ES ES',
   dyn.map opt_to_bindmany ES' ES'',
-  tuple.dynlist ES''' ES'',
+  tuple.ofdynlist ES'' ES''',
   bindmany.open ES''' P.
 
 
@@ -167,7 +167,7 @@ open_nomatch : TupleType -> PropType -> prop.
 open_nomatch ES P <-
   tuple.dynlist ES ES',
   dyn.map opt_to_bindmany ES' ES'',
-  tuple.dynlist ES''' ES'',
+  tuple.ofdynlist ES''' ES'',
   bindmany.open_nomatch ES''' P.
 
 %end.

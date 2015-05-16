@@ -24,6 +24,7 @@ freevars Root Result <-
 
   
 (* unifvars *)
+(* TODO make sure that mode works ok *)
 
 unifvars : [A B]A -> list B -> prop.
 unifvars_aux : list B -> A -> list B -> prop.
@@ -39,6 +40,20 @@ unifvars_aux_ (Acc : list A) (X : A) Result when refl.isunif X <-
 unifvars_aux_ Acc X Result when refl.isunif X <-
   refl.decomposeunif X _ Args, unifvars_aux Acc Args Result.
 
-unifvars Root Result <-
-  unifvars_aux [] Root Result', unique (eqT refl.sameunif) Result' Result.
+unifvars Root Result' <-
+  unifvars_aux [] Root Result, unique (eqT refl.sameunif) Result' Result.
 
+
+(* deepguard *)
+(* TODO: make sure that mode works ok *)
+deepguard : A -> B -> prop -> prop.
+deepguard E (T : B) P <-
+  unifvars E (Unifs : list B),
+  map (apply dyn) Unifs DynUnifs,
+  tuple.ofdynlist DynUnifs Tuple,
+  guardmany Tuple P.
+
+
+(* example thing that breaks (because of unifvars returning multiple things, but not only:
+  (deepguard [(X : string), (Y : string)] (_ : string) (and (print X) (print Y)), eq Y "a", eq Y "b") ?
+*)
