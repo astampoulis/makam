@@ -95,13 +95,13 @@ filtermap Pred (HD :: TL) Res <-
 contains : [A] eqT A -> A -> list A -> prop.
 contains_aux : [A] eqT A -> A -> list A -> prop.
 contains_aux (eqT EQ) X (HD :: TL) <- unless (EQ X HD) (contains_aux (eqT EQ) X TL).
-contains Eq X HD <- eqT_lookup Eq, contains_aux Eq X HD.
+contains Eq X L <- eqT_lookup Eq, contains_aux Eq X L.
 
 (* Returns a list with the unique elements *)
 unique : [A] eqT A -> list A -> list A -> prop.
 unique Eq L L' <-
   eqT_lookup Eq,
-  foldl (fun cur elm res => {prop| if contains Eq elm cur then eq res cur else eq res (elm :: cur) |})
+  foldl (fun cur elm res => {prop| (if contains Eq elm cur then eq res cur else eq res (elm :: cur)) |})
         [] L L'', reverse L'' L'.
 
 

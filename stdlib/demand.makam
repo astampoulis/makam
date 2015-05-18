@@ -20,7 +20,7 @@ case Goal <- aux_demand clause.demand_case Goal.
 case_otherwise : prop -> prop -> prop.
 case_otherwise Goal Otherwise <-
   (
-    (clause.demand_case _ [] <- Otherwise) ->
+    (clause.demand_case Goal [] <- Otherwise) ->
     aux_demand clause.demand_case Goal
   ).
 
