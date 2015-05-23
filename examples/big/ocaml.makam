@@ -94,7 +94,7 @@ typapply (typconstr TC) TS T <- bindmany_apply TC TS T.
 nf         : typ -> typ -> prop.
 nf_        : typ -> typ -> prop.
 
-nf X Y <- (if (isunif X; isunif Y), eq X Y, nf_ X Y).
+nf X Y <- if (refl.isunif X; refl.isunif Y) then eq X Y else nf_ X Y.
 
 (nf_ X X) when newnmeta (fun x => eq x X).
 nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') <-
@@ -134,15 +134,29 @@ typeof (ascribe E T) T <- typeof E T.
 
 typeof (raise E) T     <- typeof E (tbase "exn" nil), kindof T ktype.
 
+gentypeof : term -> typ -> prop.
+
 (* implicit generalization/instantiation and so on *)
 typinst : typ -> typ -> prop.
 typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
 typinst T T' <- not(eq T (tpi _ _)), (eq T T'; nf T T').
 
+notinenv : typ -> prop.
+notinenv X <- refl.assume_get typeof Assumptions,
+	      refl.assume_get gentypeof MoreAssumptions,
+	      append Assumptions MoreAssumptions AS,
+	      gather_all_unifs (dyn AS) (X : typ) (XS : list typ),
+	      not(find_benign X XS).
+
+next_typgen : typ -> (typ -> typ) -> prop.
+next_typgen T F <- refl.getunif T (X : typ),
+	           notinenv X,
+	           refl.absunif T X F.
+
 typgen : typ -> typ -> prop.
-typgen T T <- not(getunif T (X: typ)).
+typgen T T <- not(next_typgen T _).
 typgen T (tpi K F') <-
-  getunif T (X : typ), absunif T X F,
+  next_typgen T F,
   (x:typ -> kindofg x K -> typgen (F x) (F' x)).
 
 tpimany : knd -> (typ -> list typ) -> list typ -> prop.
@@ -151,14 +165,8 @@ tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
   tpimany K TS TS'.
 
 typgenlist : list typ -> list typ -> prop.
-typgenlist TS TS' <-
-   (if getunif TS (X : typ),
-     (absunif TS X F,
-      (x:typ -> kindofg x K -> typgenlist (F x) (F' x)),
-      tpimany K F' TS'),
-     (eq TS TS')).
+typgenlist TS TS' <- map typgen TS TS'.
 
-gentypeof : term -> typ -> prop.
 (typeof X T) when newvmeta (fun x => eq x X), gentypeof X T.
 (typeof X T') when newvmeta (fun x => eq x X), gentypeof X T <- typinst T T'.
 
@@ -177,12 +185,13 @@ valrestr (lamt     _).
 valrestr (tuple _).
 valrestr (record _).
 valrestr (ascribe E _) <- valrestr E.
+(valrestr X) when newnmeta (fun x => eq x X).
 
 typeof (let E E') T' <-
   typeof E T, 
-  (if valrestr E,
-     (typgen T Tgen, kindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T')),
-     (kindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
+  if valrestr E
+  then (typgen T Tgen, kindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T'))
+  else (kindof T ktype, (x:term -> typeof x T -> typeof (E' x) T')).
 
 (* let rec *)
 typeof (letrec ES E') T' <-
@@ -195,13 +204,14 @@ typeof (letrec ES E') T' <-
 
      map typeof Bodies TS,
 
-     (if (map0 valrestr Bodies),
-
-        (typgenlist TS TSgen, kindofall TSgen ktype,
-	   eq Assumption (many_assume gentypeof xs TSgen)),
-
+     if map0 valrestr Bodies then eq DoGen true else eq DoGen false
+    |}),
+    if eq DoGen true then
+       (typgenlist TS TSgen, kindofall TSgen ktype,
+	   eq Assumption (many_assume gentypeof xs TSgen))
+    else
         (kindofall TS ktype,
-   	   eq Assumption (many_assume typeof xs TS))) |}),
+   	   eq Assumption (many_assume typeof xs TS)),
 
     Assumption (typeof Rest T') |}).
      
@@ -304,11 +314,11 @@ typebranch T T' Branch <-
   
 
 typeof (match E Branches) T' <-
-  typeof E T, not(isunif T),
+  typeof E T, not(refl.isunif T),
   map0 (typebranch T T') Branches.
 
 typeof (match E Branches) T' <-
-  typeof E T, not(isunif T), nf T Tnf,
+  typeof E T, not(refl.isunif T), nf T Tnf,
   map0 (typebranch Tnf T') Branches.
 
 typeof (match E Branches) T' <-
@@ -322,7 +332,7 @@ typeof (trycatch E Handlers) T <-
 
 (* conversion *)
 (typeof X Tnf) when isnvar X, once(typeof X T) <- nf T Tnf.
-(typeof E T) when not (isnvar E), not (isunif T), once(typeof E T') <- nf T' Z, nf T Z.
+(typeof E T) when not (isnvar E), not (refl.isunif T), once(typeof E T') <- nf T' Z, nf T Z.
 
 
 (* ---------------------------- *)

@@ -26,32 +26,32 @@ xpretty : peg A -> list string -> option (tuple (list string) A) -> prop.
 
 parse : peg A -> string -> option (tuple string A) -> prop.
 parse P S Res' <-
-  explode S Chars,
+  string.explode S Chars,
   xparse P Chars Res,
-  (if (eq Res (some (tuple RestChars RealRes))),
-   (explode S' RestChars, eq Res' (some (tuple S' RealRes))),
-   (eq Res' none)).
+  (if (eq Res (some (tuple RestChars RealRes)))
+   then (string.explode S' RestChars, eq Res' (some (tuple S' RealRes)))
+   else (eq Res' none)).
 
 pretty : peg A -> option (tuple string A) -> string -> prop.
 pretty P (some (tuple Output Res)) Input <-
-  explode Output OutputC,
+  string.explode Output OutputC,
   xpretty P InputC (some (tuple OutputC Res)),
-  explode Input InputC.
+  string.explode Input InputC.
 	  
 
 pegbuiltin (exactchar _).
 xparse (exactchar S) Input Result <-
-   (if (eq Input (cons S Output)),
-    eq Result (some (tuple Output S)),
-    eq Result none).
+   (if (eq Input (cons S Output))
+    then eq Result (some (tuple Output S))
+    else eq Result none).
 xpretty (exactchar S) (cons S Output) (some (tuple Output _)).
 
 
 pegbuiltin (any).
 xparse (any) Input Result <-
-   (if (eq Input (cons Hd Output)),
-    eq Result (some (tuple Output Hd)),
-    eq Result none).
+   (if (eq Input (cons Hd Output))
+    then eq Result (some (tuple Output Hd))
+    else eq Result none).
 xpretty (any) (cons Hd Output) (some (tuple Output Hd)).
 
 
@@ -59,8 +59,8 @@ pegbuiltin (concat _ _).
 xparse (concat P1 P2) Input Result <-
    (if (xparse P1 Input (some (tuple Input1 Res1)),
         xparse P2 Input1 (some (tuple Input2 Res2))),
-     eq Result (some (tuple Input2 (tuple Res1 Res2))),
-     eq Result none).
+    then eq Result (some (tuple Input2 (tuple Res1 Res2)))
+    else eq Result none).
 xpretty (concat P1 P2) Input (some (tuple Input2 (tuple Res1 Res2))) <-
    xpretty P2 Input1 (some (tuple Input2 Res2)),
    xpretty P1 Input  (some (tuple Input1 Res1)).
@@ -68,38 +68,38 @@ xpretty (concat P1 P2) Input (some (tuple Input2 (tuple Res1 Res2))) <-
 
 pegbuiltin (choice _ _).
 xparse (choice P1 P2) Input Result <-
-  (if (xparse P1 Input Res1, eq Res1 (some _)),
-      (eq Result Res1),
-      (xparse P2 Input Result)).
+  (if   (xparse P1 Input Res1, eq Res1 (some _))
+   then (eq Result Res1)
+   else (xparse P2 Input Result)).
 xpretty (choice P1 P2) Input (some (tuple Input' Res)) <-
-  (if xpretty P1 Input (some (tuple Input' Res)),
-   success,
-   xpretty P2 Input (some (tuple Input' Res))).
+  (if xpretty P1 Input (some (tuple Input' Res))
+   then success
+   else xpretty P2 Input (some (tuple Input' Res))).
 
 
 pegbuiltin (lookahd _).
 xparse (lookahd P) Input Result <-
-  (if (xparse P Input (some (tuple _ Res))),
-      (eq Result (some (tuple Input Res))),
-      (eq Result none)).
+  (if (xparse P Input (some (tuple _ Res)))
+   then (eq Result (some (tuple Input Res)))
+   else (eq Result none)).
 xpretty (lookahd P) Input (some (tuple Input Res)) <-
   xparse P Input (some (tuple _ Res)).
 
 
 pegbuiltin (notp _).
 xparse (notp P) Input Result <-
-  (if xparse P Input none,
-      eq Result (some (tuple Input unit)),
-      eq Result none).
+  (if xparse P Input none
+   then eq Result (some (tuple Input unit))
+   else eq Result none).
 xpretty (notp P) Input (some (tuple Input _)) <-
   xparse P Input none.
 
 
 pegbuiltin (semaction _ _).
 xparse (semaction P F) Input Result <-
-  (if xparse P Input (some (tuple Input' Res)),
-      (F Res Res', eq Result (some (tuple Input' Res'))),
-      (eq Result none)).
+  (if xparse P Input (some (tuple Input' Res))
+   then (F Res Res', eq Result (some (tuple Input' Res')))
+   else (eq Result none)).
 xpretty (semaction P F) Input (some (tuple Input' Res')) <-
   F Res Res',
   xpretty P Input (some (tuple Input' Res)).
@@ -107,9 +107,9 @@ xpretty (semaction P F) Input (some (tuple Input' Res')) <-
 
 pegbuiltin (externalclass _).
 xparse (externalclass P) Input Result <-
-  (if (eq Input (cons Hd Tl), P Hd),
-   eq Result (some (tuple Tl Hd)),
-   eq Result none).
+  (if (eq Input (cons Hd Tl), P Hd)
+   then eq Result (some (tuple Tl Hd))
+   else eq Result none).
 xpretty (externalclass P) (cons Hd Tl) (some (tuple Tl Hd)) <-
   P Hd.
 
@@ -126,21 +126,21 @@ xpretty (failp)  Input none.
 
 xparse P Input Result <- 
   not(pegbuiltin P),
-  (if (once( (pegdef P P', xparse P' Input Result, eq Result (some _))) ),
-   success,
-   eq Result none).
+  (if (once( (pegdef P P', xparse P' Input Result, eq Result (some _))) )
+   then success
+   else eq Result none).
 xpretty P Input Result <-
   not(pegbuiltin P),
   once( (pegdefpretty_real P P', xpretty P' Input Result) ).
 
-pegdefpretty_real P P' <- (if pegdefpretty P P', success, pegdef P P').
+pegdefpretty_real P P' <- (if pegdefpretty P P' then success else pegdef P P').
 
 
 
 (* useful parsers *)
 class : string -> peg string.
 pegdef (class S) P <-
-  explode S Chars,
+  string.explode S Chars,
   foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
         failp Chars P.
 
@@ -149,7 +149,7 @@ pegdef (ignorep P) (semaction P (fun a res => eq res unit)).
 
 exactstr : string -> peg unit.
 pegdef (exactstr S) P <-
-  explode S Chars,
+  string.explode S Chars,
   foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
         Chars epsilon P.
 
@@ -213,7 +213,7 @@ pegdef (identfstchar) (semaction (concat (lookahd (externalclass char_latin1))
 pegdef (identrstchar) (choice identfstchar (class "0123456789")).
 pegdef (ident) (semaction
                  (concat identfstchar (rep identrstchar))
-		 (fun a b => and (eq a (tuple HD TL)) (explode b (cons HD TL)))).
+		 (fun a b => and (eq a (tuple HD TL)) (string.explode b (cons HD TL)))).
 
 parenthesized : peg A -> peg A.
 pegdef (parenthesized P) (semaction (concat (concat

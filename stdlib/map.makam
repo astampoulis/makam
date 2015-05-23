@@ -1,0 +1,91 @@
+map : type -> type -> type.
+
+(* A map takes equality typeclass instances both for keys and values.
+   These default to the normal `eq` predicate. *)
+map : eqT A -> eqT B -> list (A * B) -> map A B.
+
+%extend map.
+
+eq_headkey : [A B] map A B -> A -> prop.
+eq_headkey (map (eqT EQkey) EqVal ((Key, _) :: _)) Key' <-
+  EQkey Key Key'.
+
+eq_headval : [A B] map A B -> B -> prop.
+eq_headval (map EqKey (eqT EQval) ((_, Val) :: _)) Val' <-
+  EQval Val Val'.
+
+headtail : [A B] map A B -> A * B -> map A B -> prop.
+headtail (map EqKey EqVal (Head :: Tail)) Head (map EqKey EqVal Tail).
+
+(* Remove the  key-value pair matching the key. *)
+remove : [A B] map A B -> A * B -> map A B -> prop.
+remove Map (Key, Val) Map' <-
+  if eq_headkey Map Key
+  then (eq_headval Map Val, headtail Map _ Map')
+  else (headtail Map Head Tail, remove Tail (Key, Val) Tail',
+        headtail Map' Head Tail').
+
+(* Find the value corresponding to a key in a map *)
+find : [A B] map A B -> A -> B -> prop.
+find Map Key Val <-
+  remove Map (Key, Val) _.
+
+(* Check whether a key exists in the map *)
+elem : [A B] map A B -> A -> prop.
+elem (Map : map A B) Key <- find Map Key _.
+
+(* Compute the difference between two maps *)
+diff : [A B] map A B -> map A B -> map A B -> prop.
+diff MapA MapB MapR <-
+  eq (MapA, MapB) (map EQ1 EQ2 _, map EQ1 EQ2 MapBList),
+  foldl remove MapA MapBList MapR. 
+
+(* Resets a map to be empty; useful also for creating an empty map out of a given one. *)
+reset : [A B] map A B -> map A B -> prop.
+reset (map Eq1 Eq2 _) (map Eq1 Eq2 []).
+
+(* Check whether two maps are equal *)
+equal : [A B] map A B -> map A B -> prop.
+equal MapA MapB <-
+  reset MapA Empty,
+  diff MapA MapB Empty.
+
+(* Succeeds if the map is empty; also could be used to create an empty map. *)
+empty : [A B] eqT A -> eqT B -> map A B -> prop.
+empty Eq1 Eq2 (map Eq1 Eq2 []) <-
+  eqT_lookup Eq1, eqT_lookup Eq2.
+
+fromlist : [A B] eqT A -> eqT B -> list (A * B) -> map A B -> prop.
+fromlist Eq1 Eq2 L (map Eq1 Eq2 L) <-
+  eqT_lookup Eq1, eqT_lookup Eq2.
+
+(* Map each value in the map through a predicate. *)
+mapvalues : [K A B] (A -> B -> prop) -> map K A -> map K B -> prop.
+mapvalues P (map Eq1 Eq2 List) (map Eq1 Eq2' List') <-
+  eqT_lookup Eq2',
+  map (fun elm res => {prop| [Key Val Val'] eq elm (Key, Val), P Val Val', eq res (Key, Val') |}) List List'.
+
+(* Relates a map to a map that includes the given (key, value) pair,
+   unless the map includes a different entry for the key already. *)
+add : [A B] map A B -> A * B -> map A B -> prop.
+add Map (Key, Val) Result <-
+  if elem Map Key
+  then (find Map Key Val, eq Result Map)
+  else (headtail Result (Key, Val) Map).
+
+(* Compute the union of two maps. *)
+union : map A B -> map A B -> map A B -> prop.
+union MapA MapB MapResult <-
+  eq (MapA, MapB) (map EQ1 EQ2 _, map EQ1 EQ2 MapBList),
+  foldl add MapA MapBList MapResult.
+
+(* Relates a map to a map that includes the given (key, value) pair,
+   changing the entry for the key if one exists already. *)
+update : [A B] map A B -> A * B -> map A B -> prop.
+update Map (Key, Val) Result <-
+  if elem Map Key
+  then (remove Map (Key, _) Map',
+        headtail Result (Key, Val) Map')
+  else headtail Result (Key, Val) Map.
+
+%end.

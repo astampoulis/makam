@@ -1,0 +1,121 @@
+%use eq_typeclass.
+
+(* Append a list to the end of another list. *)
+
+append : [A] list A -> list A -> list A -> prop.
+append [] Y Y.
+append (HD::TL) Y (HD::TL') <- append TL Y TL'.
+
+(* Map a predicate over (a number of) lists.
+
+   We overload the map predicate to work on up to 4 lists,
+   but define the most commonly used version last -- the one on 2 lists.
+   This way if no typing constraints are present, the common version will be picked
+   by default. *)
+
+map : [A] (A -> prop) -> list A -> prop.
+map P [].
+map P (HD :: TL) <- P HD, map P TL.
+
+map : [A B C] (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
+map P [] [] [].
+map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) <- P HD1 HD2 HD3, map P TL1 TL2 TL3.
+
+map : [A B C D] (A -> B -> C -> D -> prop) -> list A -> list B -> list C -> list D -> prop.
+map P [] [] [] [].
+map P (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) <- P HD1 HD2 HD3 HD4, map P TL1 TL2 TL3 TL4.
+
+map : [A B] (A -> B -> prop) -> list A -> list B -> prop.
+map P [] [].
+map P (HD :: TL) (HD' :: TL') <- P HD HD', map P TL TL'.
+
+(* Folds and fold inversion *)
+
+foldr : [A B] (A -> B -> B -> prop) -> list A -> B -> B -> prop.
+foldr P nil S S.
+foldr P (cons HD TL) S S'' <- foldr P TL S S', P HD S' S''.
+
+foldr_invert : [A B] (A -> B -> B -> prop) -> B -> list A -> B -> prop.
+foldr_invert P SStart Res SEnd <-
+  if P Hd SNext SStart
+  then (foldr_invert P SNext Tl SEnd, eq Res (cons Hd Tl))
+  else (eq Res nil, eq SStart SEnd).
+
+foldl : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
+foldl P S nil S.
+foldl P S (cons HD TL) S'' <- P S HD S', foldl P S' TL S''.
+
+foldl_invert : [A B] (B -> A -> B -> prop) -> B -> list A -> B -> prop.
+foldl_invert P SEnd Res SStart <-
+  if P SPrev Last SEnd
+  then (foldl_invert P SPrev Res' SStart, append Res' [Last] Res)
+  else (eq Res nil, eq SStart SEnd).
+
+(* Reverse the list *)
+reverse : [A] list A -> list A -> prop.
+reverse_aux : [A] list A -> list A -> list A -> prop.
+reverse_aux [] L L.
+reverse_aux (HD :: TL) L L' <- reverse_aux TL (HD :: L) L'.
+reverse L L' <- reverse_aux L [] L'.
+
+
+(* Convert to catenable list -- list with a hole. Useful for some optimized
+   implementations. *)
+catenable : [A] list A -> (list A -> list A) -> prop.
+catenable [] (fun x => x).
+catenable (HD :: TL) (fun x => HD :: (TL' x)) <- catenable TL TL'.
+
+(* Concatenate many lists / flatten *)
+concat : [A] list (list A) -> list A -> prop.
+concat LS L <-
+  map catenable LS LS', reverse LS' LS'rev,
+  foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
+
+
+(* Find element matching a predicate *)
+find : [A] (A -> prop) -> list A -> A -> prop.
+find Pred (HD :: TL) Res <- if (P HD) then eq Res HD else find Pred TL Res.
+
+(* Keep only elements that succeed on a predicate *)
+filter : [A] (A -> prop) -> list A -> list A -> prop.
+filter Pred (HD :: TL) Res <-
+  if (Pred HD)
+  then (eq Res (HD :: TL'), filter Pred TL TL')
+  else (filter Pred TL Res).
+
+(* Combination of filter and map *)
+filtermap : [A] (A -> B -> prop) -> list A -> list B -> prop.
+filtermap Pred (HD :: TL) Res <-
+  if (Pred HD HD')
+  then (eq Res (HD' :: TL'), filtermap Pred TL TL')
+  else (filtermap Pred TL Res).
+
+
+(* Succeeds if a list contains an element *)
+contains : [A] eqT A -> A -> list A -> prop.
+contains_aux : [A] eqT A -> A -> list A -> prop.
+contains_aux (eqT EQ) X (HD :: TL) <- unless (EQ X HD) (contains_aux (eqT EQ) X TL).
+contains Eq X L <- eqT_lookup Eq, contains_aux Eq X L.
+
+(* Returns a list with the unique elements *)
+unique : [A] eqT A -> list A -> list A -> prop.
+unique Eq L L' <-
+  eqT_lookup Eq,
+  foldl (fun cur elm res => {prop| (if contains Eq elm cur then eq res cur else eq res (elm :: cur)) |})
+        [] L L'', reverse L'' L'.
+
+
+
+(* Relates a number of lists to a lists where the corresponding elements are tupled together. Overloaded up to 4 lists. *)
+(* Can be used in the opposite direction to unzip into multiple lists. *)
+zip : [A B] list A -> list B -> list C -> list (A * B * C) -> prop.
+zip [] [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) ((HD1, HD2, HD3) :: TL) <- zip TL1 TL2 TL3 TL.
+
+zip : [A B] list A -> list B -> list C -> list D -> list (A * B * C * D) -> prop.
+zip [] [] [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) ((HD1, HD2, HD3, HD4) :: TL) <- zip TL1 TL2 TL3 TL4 TL.
+
+zip : [A B] list A -> list B -> list (A * B) -> prop.
+zip [] [] [].
+zip (HD1 :: TL1) (HD2 :: TL2) ((HD1, HD2) :: TL) <- zip TL1 TL2 TL.

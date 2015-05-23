@@ -1,0 +1,76 @@
+%extend dyn.
+(* A version of `eq` that delays type unification of the terms until runtime *)
+eq : A -> B -> prop.
+eq X X.
+
+(* Similarly, a dynamically-typed version of application. *)
+apply : A -> B -> C -> prop.
+apply F X (F X).
+
+(* Magic: fake rank-N polymorphism by duplicating all heads found, therefore
+   generating new polymorphic variables for them. *)
+poly : A -> B -> prop.
+polybvar : A -> B -> prop.
+map_poly : list dyn -> list dyn -> prop.
+
+poly E E' when refl.isbaseterm E, refl.isnvar E <-
+  unless (polybvar E E') (dyn.eq E E').
+poly E E' when refl.isbaseterm E, refl.isfvar E <-
+  refl.headargs E HD ARGS,
+  refl.duphead HD HD',
+  map_poly ARGS ARGS',
+  refl.headargs E' HD' ARGS'.
+poly C C when refl.isconst C.
+poly X X when refl.isunif X.
+poly F F' when refl.isfun F <- (x:A -> x':A' -> polybvar x x' -> poly (F x) (F' x')).
+
+map_poly [] [].
+map_poly (dyn HD :: TL) (dyn HD' :: TL') <- poly HD HD', map_poly TL TL'.
+
+call : (A -> prop) -> A' -> prop.
+call P X <- poly P P', P' X.
+
+call : (A -> B -> prop) -> A' -> B' -> prop.
+call P X Y <- poly P P', P' X Y.
+
+call : (A -> B -> C -> prop) -> A' -> B' -> C' -> prop.
+call P X Y Z <- poly P P', P' X Y Z.
+
+call_dyn : (A -> prop) -> dyn -> prop.
+call_dyn P (dyn X) <- poly P P', P' X.
+
+call_dyn : (A -> B -> prop) -> dyn -> dyn -> prop.
+call_dyn P (dyn X) (dyn Y) <- poly P P', P' X Y.
+
+call_dyn : (A -> B -> C -> prop) -> dyn -> dyn -> dyn -> prop.
+call_dyn P (dyn X) (dyn Y) (dyn Z) <- poly P P', P' X Y Z.
+
+iter : (A -> prop) -> list dyn -> prop.
+iter P L <- .map (call_dyn P) L.
+
+map : (A -> B -> prop) -> list dyn -> list dyn -> prop.
+map P L L' <- .map (call_dyn P) L L'.
+
+foldl : (B -> A -> B -> prop) -> B -> list dyn -> B -> prop.
+foldl F X L X' <- .foldl (call_dyn F) (dyn X) L (dyn X').
+
+%end.
+
+(* Apply many arguments *)
+apply_many : A -> list dyn -> B -> prop.
+apply_many X nil X.
+apply_many (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_many X' TL Res.
+
+(* Apply all arguments -- when the argument list is not specified,
+   this will repeatedly apply arguments, generating new unification
+   variables, for the full arity of the functional argument. *)
+apply_all : A -> list dyn -> B -> prop.
+apply_all (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_all X' TL Res.
+(apply_all X nil X) when not(typ.eq X (_ : A -> B)).
+
+(* Abstract over many variables *)
+newvars_many : list dyn -> (list dyn -> prop) -> prop.
+newvars_many_aux : list dyn -> list dyn -> (list dyn -> prop) -> prop.
+newvars_many_aux [] Acc P <- reverse Acc Acc', P Acc'.
+newvars_many_aux (dyn (HD : A) :: TL) Acc P <- (x:A -> newvars_many_aux TL (dyn x :: Acc) P).
+newvars_many Typs P <- newvars_many_aux Typs [] P.

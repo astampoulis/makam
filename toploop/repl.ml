@@ -82,12 +82,18 @@ let rec repl () : unit =
   Sys.catch_break true;
   let input, prompt, reached_eof, is_stdin =
     if Array.length Sys.argv > 1 then
-      UChannel.from_filename (global_resolve_filename Sys.argv.(1)), "", UChannel.at_eof, false
+      let initloc =
+        let open UChannel in
+        { description = "<command-line>" ; lineno = 1; charno = 1; offset = 0 }
+      in
+      let use_files = Printf.sprintf "%%use \"%s\".\n" Sys.argv.(1) in
+      UChannel.from_string ~initloc:initloc use_files, "", UChannel.at_eof, false
     else
       UChannel.from_stdin (), "# ", UChannel.reached_eof, true
   in
   let old_debug = ref false in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in
+  let last_cmd_span () = UChannel.string_of_span !FixedLamProlog.last_command_span in
   let rec loop input : unit = 
     let recover () =
       let furthest = UChannel.flush_to_furthest input in
@@ -125,15 +131,15 @@ let rec repl () : unit =
 	(print_now "\nInterrupted.\n"; restore_debug () ; if is_stdin then repl () else loop (UChannel.flush_to_furthest input))
       | Termlangcanon.FileNotFound s ->
 	(Printf.printf "In %s:\n  File %s not found.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)) s; loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()) s; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
         (restore_debug (); loop (UChannel.flush_to_furthest input))
       | Termlangprolog.ResetInModule m ->
 	(Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)) m; loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()) m; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.NotInModule ->
 	(Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)); loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | FixedLamProlog.Forget(s) ->
         (forget_to_state s; loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
@@ -167,7 +173,7 @@ let output_log () =
 let load_init_files () =
   let loadfile s =
     if Sys.file_exists ".init.makam" then
-      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s ()
+      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
   in
   loadfile ".init.makam";
   Termlangcanon.builtinstate := !globalstate ;

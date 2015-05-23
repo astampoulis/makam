@@ -20,7 +20,7 @@ fv_avoid : A -> prop.
 
 fv_aux Root Cur Res <-
   caseguard Root
-    [ (dyn X, {prop| headargs X V Args, isnvar V, not(fv_avoid V) |}, generic_fold fv_aux (dyn Args) (V :: Cur) Res),
+    [ (dyn X, {prop| refl.headargs X V Args, isnvar V, not(fv_avoid V) |}, generic_fold fv_aux (dyn Args) (V :: Cur) Res),
       (dyn (fun (x : A) => Body x), {prop| success |}, {prop| (x:A -> fv_avoid x -> generic_fold fv_aux (dyn (Body x)) Cur Res)  |}),
       (_, success, generic_fold fv_aux Root Cur Res) ].
   
@@ -35,7 +35,7 @@ getunif_aux : dyn -> option B -> option B -> prop.
 getunif_aux Root Cur (Res : option T) <-
   caseguard (Cur, Root)
     [ ( (some Cur', _), success, (eq Res Cur) ),
-      ( (none, (dyn X)), isunif X,
+      ( (none, (dyn X)), refl.isunif X,
         (ifte (typeq (some X) Res)
               (eq (dyn Res) (dyn (some X)))
               (eq Res none)) ),
@@ -47,8 +47,8 @@ absunif : A -> B -> (B -> A) -> prop.
 absunif_aux : B -> B -> dyn -> dyn -> prop.
 absunif_aux Unif Replace Root Res <-
   caseguard Root
-    [ ( (dyn X), {prop| isunif X, decomposeunif X I _ |},
-                 {prop| ifte (decomposeunif Unif I _) (eq Res (dyn Replace)) (eq Res (dyn X)) |}),
+    [ ( (dyn X), {prop| refl.isunif X, refl.decomposeunif X I _ |},
+                 {prop| ifte (refl.decomposeunif Unif I _) (eq Res (dyn Replace)) (eq Res (dyn X)) |}),
       ( _, success, structural (absunif_aux Unif Replace) Root Res) ].
 
 absunif Root (Unif : A) Res <-
@@ -63,7 +63,7 @@ gather_all_unifs_aux : A -> dyn -> list A -> list A -> prop.
 
 gather_all_unifs_aux (Typ : A) Root Cur Res <-
   caseguard Root
-   [ ( (dyn X), isunif X,
+   [ ( (dyn X), refl.isunif X,
                 {prop| ifte (typeq Typ X) (and (dyneq X Y) (eq Res (Y :: Cur))) (eq Res Cur) |} ),
      ( _, success, generic_fold (gather_all_unifs_aux Typ) Root Cur Res ) ].
 

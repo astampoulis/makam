@@ -1,0 +1,159 @@
+(* This experiment is an exploration of the following ideas:
+
+     - can we have predicates where the evaluation strategy for rules is
+       different than the built-in one?
+       e.g. a predicate where the first rule that applies gets used (sequence rules together with IFTE instead of OR)
+            a predicate with an otherwise clause
+            a predicate that only has the rules where structural recursion does not apply
+     - an initial approach to testing
+     - reflecting on rules: a getrules predicate that gives us all the rules of a specificate predicate.
+                            for the time being we fake this; we need to implement a built-in operator
+                            that pulls all rules, instantiates each one with new metavariables,
+                            and returns them as a list of clauses. 
+     - avoiding dyn when defining/using structural.
+       this requires a hack right now, since we do not have rank-N polymorphism. basically, the correct
+       type for structural is:
+         structural : (forall A. A -> A -> prop) -> forall A. A -> A -> prop
+       unfortunately this is not supported in Makam, since we only have prenex polymorphism. so we get
+       instead
+         structural : forall A B. (A -> A -> prop) -> (B -> B -> prop)
+       however, we have dynamic typing. if we avoid runtime type unification by indirecting calls to
+        the recursive predicate, we might be able to fake the behavior of the 'correct' type.
+
+*)
+
+
+
+%use utils.
+%use testing.
+%use generic.
+
+
+getrules : A -> list clause -> prop.
+
+
+clausegoal : clause -> (prop -> prop) -> prop.
+clausegoal (clause Goal Premise) (eq Goal).
+clausegoal (whenclause Goal When Premise) (fun g => and (eq Goal g) (When)).
+
+clausepremise : clause -> prop -> prop.
+clausepremise (clause Goal Premise) Premise.
+clausepremise (whenclause Goal When Premise) Premise.
+
+
+demand_ifte : prop -> prop -> prop -> prop.
+(* compose rules with ifte instead of or, and add an otherwise clause *)
+
+demand_ifte P OW Res <-
+  refl.headargs P Predicate _,
+  getrules Predicate Rules,
+  foldr (fun elm cur res => {prop| [G Pr]
+        clausegoal elm G, 
+        clausepremise elm Pr,
+        eq res (ifte (G P) Pr cur) |}) Rules OW Res.
+
+
+test : string -> prop.
+
+test X <- demand_ifte (test X)
+                      (and (print ("test did not work for", X)) failure) P, P.
+
+(* fake reflection of rules.
+   still need to figure out a way to differentiate between the 'actual' rule that changes what
+   demanding the predicate means (as above), and the real rules as the ones below.
+   easiest solution is to just have the real rules live in a different predicate. *)
+
+getrules test [ clause (test "aaa") success,
+                whenclause (test Z) {prop| eq X "b", append (X : string) Y Z |} success
+              ].
+
+`( testing.expect success (test "aaa") ).
+`( testing.expect success (test "baa") ).
+`( testing.expect failure (test "caa") ).
+
+
+
+change_strings : dyn -> dyn -> prop.
+
+getrules change_strings [ clause (change_strings (dyn (X : string)) (dyn "q")) success ].
+
+change_strings X Y <-
+  demand_ifte ( change_strings X Y )
+              ( structural change_strings X Y ) P,
+  P.
+
+
+`( testing.expect success (change_strings (dyn [ "lala", "dada" ]) (dyn [ "q", "q" ])) ).
+
+change_strings (dyn [ "lala", "dada" ]) X ?
+
+
+
+(* try out a version of structural without explicit dyn wrappping *)
+
+
+(* fake rank-N polymorphism by duplicating a polymorphic head.
+   (this forces generation of fresh type variables, which can be instantiated independently) *)
+
+dup_head : A -> B -> prop.
+(dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
+(dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
+
+polyrec : (A -> B -> prop) -> C -> D -> prop.
+polyrec P X Y <- dup_head P P', P' X Y.
+
+dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
+dyncall P (dyn X) (dyn Y) <- polyrec P X Y.
+
+gentest : A -> B -> prop.
+gentest "lala" 15.
+gentest 20 "qwerty".
+
+`( testing.expect success {prop| map (dyncall gentest) [dyn "lala", dyn 20] [dyn 15, dyn "qwerty"] |} ).
+
+
+structural : (A -> A -> prop) -> B -> B -> prop.
+
+(structural Rec X Y) when refl.isunif X, refl.isunif Y <-
+  guardmany [ dyn X , dyn Y ] (polyrec Rec X Y).
+
+(structural Rec X X) when refl.isconst X.
+
+(structural Rec X Y) when refl.isfun X <-
+  (x:A -> polyrec Rec (X x) (Y x)).
+
+
+(structural Rec X Y) when refl.isbaseterm X <-
+  refl.headargs X Hd Args,
+  map (dyncall Rec) Args Args',
+  refl.headargs Y Hd Args'.
+
+(structural Rec X Y) when refl.isunif X, refl.isbaseterm Y <-
+  refl.headargs Y Hd Args',
+  map (dyncall Rec) Args Args',
+  refl.headargs X Hd Args.
+
+
+nicer_change_strings : A -> A -> prop.
+
+getrules nicer_change_strings [ clause (nicer_change_strings X "q") success ].
+
+demand_structural : prop -> prop -> prop.
+demand_structural P P' <-
+  refl.headargs P Pred _,
+  demand_ifte P ( structural Pred X Y ) P'.
+
+nicer_change_strings X Y <-
+  demand_structural (nicer_change_strings X Y) P, 
+  P.
+
+
+`( testing.expect success (nicer_change_strings [ "lala", "dada" ] [ "q", "q" ]) ).
+
+
+
+
+(* OK cool. Now we need to figure out:
+    - what happens with local rules and assume?
+    - how should the demand rule actually be implemented?
+*)

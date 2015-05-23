@@ -3,7 +3,7 @@
 structural : (dyn -> dyn -> prop) -> dyn -> dyn -> prop.
 
 (* defer if both input and output are uninstantiated metavariables *)
-(structural Rec (dyn (X : A)) (dyn (Y : A))) when isunif X, isunif Y <-
+(structural Rec (dyn (X : A)) (dyn (Y : A))) when refl.isunif X, refl.isunif Y <-
   guardmany [ dyn X , dyn Y ] (Rec (dyn X) (dyn Y)).
 
 (* deal with built-in types *)
@@ -15,29 +15,29 @@ structural Rec (dyn (X : A -> B)) (dyn (Y : A -> B)) <-
 (* the essence: forward and backward destructuring *)
 
 (structural Rec (dyn (X : A)) (dyn (Y : A)))
-when not(typeq X (B : C -> D)), not(isunif X) <-
-  headargs X Hd Args,
+when not(typeq X (B : C -> D)), not(refl.isunif X) <-
+  refl.headargs X Hd Args,
   map Rec Args Args',
-  headargs Y Hd Args'.
+  refl.headargs Y Hd Args'.
 
 (structural Rec (dyn (X : A)) (dyn (Y : A)))
-when not(typeq X (B : C -> D)), isunif X, not(isunif Y) <-
-  headargs Y Hd Args',
+when not(typeq X (B : C -> D)), refl.isunif X, not(refl.isunif Y) <-
+  refl.headargs Y Hd Args',
   map Rec Args Args',
-  headargs X Hd Args.
+  refl.headargs X Hd Args.
 
 (* Generic fold *)
 
 generic_fold : (dyn -> A -> A -> prop) -> dyn -> A -> A -> prop.
-(generic_fold F (dyn (X : A)) Cur Res) when isunif X <-
+(generic_fold F (dyn (X : A)) Cur Res) when refl.isunif X <-
   guard X (F (dyn X) Cur Res).
 generic_fold F (dyn (X : string)) Cur Cur.
 generic_fold F (dyn (X : int)) Cur Cur.
 generic_fold F (dyn (X : A -> B)) Cur Res <-
   (x:A -> F (dyn (X x)) Cur Res).
 (generic_fold F (dyn (X : A)) Cur Res)
-when not(typeq X (B : C -> D)), not(isunif X) <-
-  headargs X Hd Args,
+when not(typeq X (B : C -> D)), not(refl.isunif X) <-
+  refl.headargs X Hd Args,
   foldl (fun cur elm res => F elm cur res) Cur Args Res.  
 
 
@@ -47,11 +47,11 @@ eq_benign_aux : dyn -> dyn -> prop.
 
 eq_benign X Y <- eq_benign_aux (dyn X) (dyn Y).
 
-(eq_benign_aux (dyn (X : A)) (dyn (Y : A))) when isunif X, isunif Y, decomposeunif X I Xargs, decomposeunif Y I Yargs <-
+(eq_benign_aux (dyn (X : A)) (dyn (Y : A))) when refl.isunif X, refl.isunif Y, refl.decomposeunif X I Xargs, refl.decomposeunif Y I Yargs <-
   map eq_benign_aux Xargs Yargs.
-(eq_benign_aux (dyn (X : string)) (dyn (Y : string))) when not(isunif X), not(isunif Y) <- eq X Y.
-(eq_benign_aux (dyn (X : int)) (dyn (Y : int))) when not(isunif X), not(isunif Y) <- eq X Y.
-(eq_benign_aux (dyn (X : A -> B)) (dyn (Y : A -> B))) when not(isunif X), not(isunif Y) <-
+(eq_benign_aux (dyn (X : string)) (dyn (Y : string))) when not(refl.isunif X), not(refl.isunif Y) <- eq X Y.
+(eq_benign_aux (dyn (X : int)) (dyn (Y : int))) when not(refl.isunif X), not(refl.isunif Y) <- eq X Y.
+(eq_benign_aux (dyn (X : A -> B)) (dyn (Y : A -> B))) when not(refl.isunif X), not(refl.isunif Y) <-
   (x:A -> eq_benign_aux (dyn (X x)) (dyn (Y x))).
 
 builtintyp : A -> prop.
@@ -59,8 +59,8 @@ builtintyp (X : A -> B).
 builtintyp (X : string).
 builtintyp (X : int).
 
-(eq_benign_aux (dyn X) (dyn Y)) when not(isunif X), not(isunif Y), not(builtintyp X) <-
-  headargs X Hd Args,
-  headargs Y Hd Args',
+(eq_benign_aux (dyn X) (dyn Y)) when not(refl.isunif X), not(refl.isunif Y), not(builtintyp X) <-
+  refl.headargs X Hd Args,
+  refl.headargs Y Hd Args',
   map eq_benign_aux Args Args'.
 

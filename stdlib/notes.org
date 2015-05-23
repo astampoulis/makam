@@ -1,0 +1,3 @@
+* rename uses of mapN to map
+* flatten -> concat
+* append -> string.append for strings, explode -> string.explode for strings

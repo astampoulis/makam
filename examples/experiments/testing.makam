@@ -1,0 +1,27 @@
+%use utils.
+
+%extend testing.
+
+%extend private.
+
+test_result : prop -> bool -> prop.
+test_result Test true.
+test_result Test false <- print "!!!!!! test", print Test, print "!!!!! failed".
+
+reify_success : prop -> bool -> prop.
+reify_success P R <- ifte P (eq R true) (eq R false).
+
+equiv : bool -> bool -> bool -> prop.
+equiv true true true.
+equiv false false true.
+equiv false true false.
+equiv true false false.
+
+%end.
+
+expect : prop -> prop -> cmd -> prop.
+expect P1 P2 (cmd_query (private.test_result P2 Res)) <-
+  private.reify_success P1 R1, private.reify_success P2 R2,
+  private.equiv R1 R2 Res.
+
+%end.

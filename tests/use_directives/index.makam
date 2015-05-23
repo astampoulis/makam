@@ -1,0 +1,18 @@
+%use normal.
+
+test : type.
+test : test.
+
+testprop : A -> prop.
+testprop test.
+
+%import qualified.
+
+eq : A -> A -> prop.
+eq X X.
+
+eq test qualified.test ?
+eq test test ?
+eq qualified.test qualified.test ?
+testprop test ?
+

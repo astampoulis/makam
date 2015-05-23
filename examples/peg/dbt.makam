@@ -44,11 +44,12 @@ dbtmagic : list dyn -> A.
 
 findbenign : [A] list A -> A -> prop.
 findbenign L HD <-
-  (if isunif L, failure,
-      (eq L (HD' :: TL),
-       ifte (eq_benign HD HD')
-	 (success)
-	 (findbenign TL HD))).
+  (if refl.isunif L
+   then failure,
+   else (eq L (HD' :: TL),
+         if eq_benign HD HD'
+	 then success
+         else findbenign TL HD)).
 
 dbtenv X dbtmagic <-
   dbtmagicenv XS,
@@ -107,11 +108,11 @@ dbtguess (dyn (X : A -> B)) D D.
 
 dbt_mk_bindmany : C -> bindmany A B -> prop.
 dbt_mk_bindmany (X : C) (B : bindmany A B) <-
-  (if isunif X,
-      eq (dyn B) (dyn X),
-      (if typeq (X : C) (Z : A -> C'),
-        (eq B (bcons R), eq (dyn X) (dyn Z'), (x:A -> dbt_mk_bindmany (Z' x) (R x))),
-	(eq (dyn X) (dyn (X' : B)), eq B (bnil X')))).
+  (if refl.isunif X
+   then eq (dyn B) (dyn X)
+   else (if typeq (X : C) (Z : A -> C'),
+         then (eq B (bcons R), eq (dyn X) (dyn Z'), (x:A -> dbt_mk_bindmany (Z' x) (R x)))
+         else (eq (dyn X) (dyn (X' : B)), eq B (bnil X')))).
 
 dbtguess (dyn (X : bindmany A B)) D (dbt_comp dbt_mk_bindmany [ D ]).
 

@@ -1,0 +1,15 @@
+%use pegstaged_lam.
+
+test1 : A -> prop.
+test1 X <-
+   pclosedterm_parse "λx.λy.λz.y x" (some (tuple "" X)).
+
+test2 : string -> prop.
+test2 R <- 
+   eq X "x",
+   eq Y "y",
+   eq Z "z",
+   pclosedterm_pretty (some (tuple "" (lam (fun x^nX => lam (fun y^nY => lam (fun z^nZ => app y^nY x^nX)))))) R.
+
+test1 X ?
+test2 X ?
