@@ -94,7 +94,7 @@ filterlist (cons none TL) TL' <- filterlist TL TL'.
 (* string stuff *)
 
 appendmany : list string -> string -> prop.
-appendmany LS S <- foldr append LS "" S.
+appendmany LS S <- foldr string.append LS "" S.
 
 (* other predicates *)
 

@@ -129,16 +129,16 @@ to_miniexp (dyn (tuple A B)) (miniexp.tuple [A', B']) <-
 
 to_miniexp_aux_function : string -> dyn -> miniexp.miniexp -> prop.
 to_miniexp_aux_function Prefix (dyn X) (miniexp.apply F Args') <-
-  headargs X HD Args,
-  headname HD HDName,
+  refl.headargs X HD Args,
+  refl.headname HD HDName,
   appendmany [ Prefix, ".", HDName ] F,
   map to_miniexp Args Args'.
 
 to_miniexp_aux_constructor : dyn -> miniexp.miniexp -> prop.
 to_miniexp_aux_constructor (dyn X) (miniexp.constr F Args') <-
-  headargs X HD Args,
-  headname HD HDName,
-  capitalize HDName F,
+  refl.headargs X HD Args,
+  refl.headname HD HDName,
+  string.capitalize HDName F,
   map to_miniexp Args Args'.
 
 to_miniexp (dyn (C : constant)) Res <- to_miniexp_aux_constructor (dyn C) Res.
