@@ -36,7 +36,7 @@ to_ocaml_string (str S) Res <-
 
 to_ocaml_string (char C) Res <-
   tostring C S,
-  explode S [ "\"", C', "\"" ],
+  string.explode S [ "\"", C', "\"" ],
   appendmany [ "'", C', "'" ] Res.
 
 to_ocaml_string (int I) Res <-

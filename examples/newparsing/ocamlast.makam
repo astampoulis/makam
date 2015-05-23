@@ -7,7 +7,7 @@
    the original functions or constructors *)
 
 %use utils.
-%import "examples/newparsing/miniexp" as miniexp.
+%import miniexp.
 
 (* Base types from asttypes *)
 lid, str : type.
