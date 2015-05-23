@@ -46,6 +46,7 @@ let (process_input : string -> unit) input =
       in
       find_newline furthest
     in
+    let last_cmd_span () = UChannel.string_of_span !FixedLamProlog.last_command_span in
 
     try
     begin
@@ -68,15 +69,15 @@ let (process_input : string -> unit) input =
       | BatInnerIO.Input_closed -> ()
       | Termlangcanon.FileNotFound s ->
 	(Printf.printf "In %s:\n  File %s not found.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)) s; loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()) s; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
         (restore_debug (); loop (UChannel.flush_to_furthest input))
       | Termlangprolog.ResetInModule m ->
 	(Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)) m; loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()) m; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.NotInModule ->
 	(Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
-	   (UChannel.string_of_loc (UChannel.loc input)); loop (UChannel.flush_to_furthest input))
+	   (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
         (print_now ("\nIncomplete parse at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
       | e ->
@@ -88,7 +89,7 @@ let (process_input : string -> unit) input =
 let load_init_files () =
   let loadfile s =
     if Sys.file_exists ".init.makam" then
-      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s ()
+      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
   in
   loadfile ".init.makam";
   Termlangcanon.builtinstate := !globalstate ;

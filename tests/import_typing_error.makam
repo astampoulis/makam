@@ -1,0 +1,7 @@
+print_string "starting to load main file.\n" ?
+
+%directory "use_directives".
+
+%import typing_error.
+
+print_string "(should not print) back to main module.\n" ?

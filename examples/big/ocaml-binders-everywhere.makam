@@ -110,12 +110,12 @@ kindofall    : list typ -> knd -> prop.
 kindofconstr : typconstr -> knd -> prop.
 guardkindof  : typ -> knd -> prop.
 
-kindof T ktype              <- (isunif T; failure).
+kindof T ktype              <- (refl.isunif T; failure).
 kindof (tarrow T1 T2) ktype <- guardkindof T1 ktype, guardkindof T2 ktype.
 kindof (tpi K TF)     ktype <- (x:typ -> kindof x K -> guardkindof (TF x) ktype).
 kindof (tprod TS)     ktype <- kindofall TS ktype.
 kindof (tapp T TS)    K     <- guardkindof T (karrow KS K), map guardkindof TS KS.
-kindof T ktype              <- not (isunif T), kindof T (karrow nil ktype).
+kindof T ktype              <- not (refl.isunif T), kindof T (karrow nil ktype).
 
 kindofall TS K <- map (fun t res => guardkindof t K) TS _.
 
@@ -138,7 +138,7 @@ tconstrdef : typ -> typconstr -> knd -> prop.
 kindof X K <- tconstrdef X _ K.
 
 nf         : typ -> typ -> prop.
-nf X X <- isunif X.
+nf X X <- refl.isunif X.
 nf (tapp TypConstr TypArgs) (tapp TypConstr TypArgs') <-
   map nf TypArgs TypArgs'.
 nf (tapp TypConstr TypArgs) T <-
@@ -196,9 +196,9 @@ typinst (tpi K TF) T' <- typinst (TF Tnew) T'.
 typinst T T <- not(eq T (tpi _ _)).
 
 typgen : typ -> typ -> prop.
-typgen T T <- not(getunif T (X: typ)).
+typgen T T <- not(refl.getunif T (X: typ)).
 typgen T (tpi K F') <-
-  getunif T (X : typ), absunif T X F,
+  refl.getunif T (X : typ), refl.absunif T X F,
   (x:typ -> kindof x K -> typgen (F x) (F' x)).
 
 tpimany : knd -> (typ -> list typ) -> list typ -> prop.
@@ -208,11 +208,11 @@ tpimany K (fun x => cons (T x) (TS x)) (cons (tpi K T) TS') <-
 
 typgenlist : list typ -> list typ -> prop.
 typgenlist TS TS' <-
-   (if getunif TS (X : typ),
-     (absunif TS X F,
-      (x:typ -> kindof x K -> typgenlist (F x) (F' x)),
-      tpimany K F' TS'),
-     (eq TS TS')).
+   (if refl.getunif TS (X : typ)
+    then (refl.absunif TS X F,
+          (x:typ -> kindof x K -> typgenlist (F x) (F' x)),
+          tpimany K F' TS')
+    else (eq TS TS')).
 
 gentypeof : term -> typ -> prop.
 typeof X T <- gentypeof X T.
@@ -234,9 +234,9 @@ valrestr (ascribe E _) <- valrestr E.
 
 typeof (let E E') T' <-
   typeof E T, 
-  (if valrestr E,
-     (typgen T Tgen, guardkindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T')),
-     (guardkindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
+  (if valrestr E
+   then (typgen T Tgen, guardkindof Tgen ktype, (x:term -> gentypeof x Tgen -> typeof (E' x) T'))
+   else (guardkindof T ktype, (x:term -> typeof x T -> typeof (E' x) T'))).
 
 (* let rec *)
 typeof_recdef          : bindmutrec term term -> list typ -> prop.
@@ -249,9 +249,9 @@ gentypeof_recbody TS E T' <- bindmany_map gentypeof typeof E TS T'.
 
 typeof (letrec ES E') T' <-
   typeof_recdef ES TS, 
-  (if (bindmutrec_endmap (fun elm res => valrestr elm) ES _),
-    (typgenlist TS TSgen, kindofall TSgen ktype, gentypeof_recbody TSgen E' T'),
-    (kindofall TS ktype, typeof_recbody TS E' T')).
+  (if (bindmutrec_endmap (fun elm res => valrestr elm) ES _)
+   then (typgenlist TS TSgen, kindofall TSgen ktype, gentypeof_recbody TSgen E' T')
+   else (kindofall TS ktype, typeof_recbody TS E' T')).
 
 
 (* constructors *)
@@ -378,12 +378,12 @@ typebranches BS T T' <- map (fun branch res => typebranch nil branch T T') BS _ 
 
 typeof (match E Branches) T' <-
   typeof E T,
-  not(isunif T),
+  not(refl.isunif T),
   typebranches Branches T T'.
 
 typeof (match E Branches) T' <-
   typeof E T,
-  not(isunif T),
+  not(refl.isunif T),
   nf T Tnf,
   typebranches Branches Tnf T'.
 
@@ -397,7 +397,7 @@ typeof (trycatch E Handlers) T <-
 
 
 (* conversion *)
-typeof E T <- not (isunif T), once(typeof E T'), (nf T T'; nf T' T).
+typeof E T <- not (refl.isunif T), once(typeof E T'), (nf T T'; nf T' T).
 
 
 (* built-in datatypes *)
@@ -571,10 +571,10 @@ termext : termext -> term -> term.
 typext  : typext  -> typ -> typ.
 strext  : stritemext -> stritem -> stritem.
 
-typeof (termext extE baseE) t <- not(isunif baseE), typeof baseE t.
-kindof (typext extT baseT) k <-  not(isunif baseT), kindof baseT k.
-sigof  (strext extS baseS) s <-  not(isunif baseS), sigof baseS s.
-valrestr (termext extE baseE) <- not(isunif baseE), valrestr baseE.
+typeof (termext extE baseE) t <- not(refl.isunif baseE), typeof baseE t.
+kindof (typext extT baseT) k <-  not(refl.isunif baseT), kindof baseT k.
+sigof  (strext extS baseS) s <-  not(refl.isunif baseS), sigof baseS s.
+valrestr (termext extE baseE) <- not(refl.isunif baseE), valrestr baseE.
 *)
 
 typeof (let

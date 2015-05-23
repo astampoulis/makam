@@ -290,7 +290,7 @@ ctx_id_subst   : subst -> prop.
 modify_id_subst : (subst -> subst -> prop) -> prop -> prop.
 modify_id_subst Mod Next <-
   ctx_id_subst Cur, Mod Cur Cur',
-  assume_reset ctx_id_subst {prop| (ctx_id_subst Cur' -> Next) |}.
+  refl.assume_reset ctx_id_subst {prop| (ctx_id_subst Cur' -> Next) |}.
 
 subst_snoc : hol.term -> subst -> subst -> prop.
 subst_snoc X S S' <- subst_append S [X] S'.

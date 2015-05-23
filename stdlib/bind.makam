@@ -1,0 +1,236 @@
+nameofvar : A -> string -> prop.
+infoofvar : V -> T -> prop.
+
+(* Bind one variable of type A into a term of type B *)
+(* Includes a string that represents the concrete name of the variable *)
+
+bindone : type -> type -> type.
+bindone : string -> (A -> B) -> bindone A B.
+
+%extend bindone.
+
+newvar : [A B] bindone A B -> (A -> prop) -> prop.
+varname : [A] bindone A B -> string -> prop.
+apply : [A B] bindone A B -> A -> B -> prop.
+
+newvar (bindone Name (F : A -> B)) (P : A -> prop) <-
+  (x:A -> nameofvar x Name -> P x).
+
+apply (bindone _ F) X (F X).
+
+varname (bindone S _) S.
+
+match_binders : [A B A' B'] bindone A B -> bindone A' B' -> prop.
+match_binders (bindone S _) (bindone S _).
+
+(* open's real signature is of the form:
+    (bindone A B * bindone A C * bindone A D * ...) ->
+    (A -> B -> C -> D -> ... -> prop) *)
+
+open_aux : [A] A -> list dyn -> PropType -> prop.
+open_aux Var [] P <- P.
+open_aux Var (dyn B :: TL) P <-
+  apply B Var X,
+  open_aux Var TL (P X).
+
+open : TupleType -> PropType -> prop.
+open ES P <- 
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvar HD (fun x => open_aux x ES' (P x)).
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvar HD (fun x => open_aux x ES' (P x)).
+
+%end.
+
+
+(* Bindmany: bind a number of A's into a B *)
+
+bindmany : type -> type -> type.
+bindend  : B -> bindmany A B.
+bindnext : string -> (A -> bindmany A B) -> bindmany A B.
+
+%extend bindmany.
+
+newvars : [A B] bindmany A B -> (list A -> prop) -> prop.
+apply : [A B] bindmany A B -> list A -> B -> prop.
+varnames : [A B] bindmany A B -> list string -> prop.
+
+newvars_aux : [A B] bindmany A B -> list A -> (list A -> prop) -> prop.
+newvars_aux (bindend _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (bindnext S Rest) Vars P <-
+  bindone.open (bindone S Rest) (fun x bindrest => newvars_aux bindrest (x :: Vars) P).
+newvars B P <- newvars_aux B [] P.
+
+apply (bindend X) [] X.
+apply (bindnext _ F) (HD :: TL) Res <- apply (F HD) TL Res.
+
+applysome : [A B] bindmany A B -> list A -> bindmany A B -> prop.
+applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
+applysome X nil X.
+
+varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
+
+match_binders : [A B A' B'] bindmany A B -> bindmany A' B' -> prop.
+match_binders (bindend  _) (bindend _).
+match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
+
+
+(* open real signature should be of the form:
+    (bindmany A B * bindmany A C * ...) ->
+    (list A -> B -> C -> ... -> prop) *)
+open_aux : [A] list A -> list dyn -> PropType -> prop.
+open_aux Vars [] P <- P.
+open_aux Vars (dyn HD :: TL) P <-
+  apply HD Vars X,
+  open_aux Vars TL (P X).
+
+open : TupleType -> PropType -> prop.
+open ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+%end.
+
+
+(* Bindmutrec: mutually recursive binding of a number of A's used into the same number of B's *)
+
+bindmutrec : type -> type -> type.
+bindend  : list B -> bindmutrec A B.
+bindnext : string -> (A -> bindmutrec A B) -> bindmutrec A B.
+
+%extend bindmutrec.
+
+newvars : [A B] bindmutrec A B -> (list A -> prop) -> prop.
+apply : [A B] bindmutrec A B -> list A -> list B -> prop.
+varnames : [A B] bindmutrec A B -> list string -> prop.
+
+newvars_aux : [A B] bindmutrec A B -> list A -> (list A -> prop) -> prop.
+newvars_aux (bindend _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (bindnext S Rest) Vars P <-
+  bindone.open (bindone S Rest) (fun x bindrest => newvars_aux bindrest (x :: Vars) P).
+newvars B P <- newvars_aux B [] P.
+
+apply (bindend X) [] X.
+apply (bindnext _ F) (HD :: TL) Res <- apply (F HD) TL Res.
+
+applysome : [A B] bindmutrec A B -> list A -> bindmutrec A B -> prop.
+applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
+applysome X nil X.
+
+varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
+
+to_bindmany : [A B] bindmutrec A B -> bindmany A (list B) -> prop.
+to_bindmany (bindend X) (bindend X).
+to_bindmany (bindnext S F : bindmutrec A B) (bindnext S F') <-
+  bindone.open (bindone S F, bindone S F') (fun (x : A) rest rest' => to_bindmany rest rest').
+
+opt_to_bindmany : A -> B -> prop.
+opt_to_bindmany (X : bindmutrec A B) Y <- to_bindmany X Y.
+opt_to_bindmany (X : bindmany A B) (X : bindmany A B).
+
+match_binders : [A B A' B'] bindmutrec A B -> bindmutrec A' B' -> prop.
+match_binders (bindend  _) (bindend _).
+match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
+
+
+(* open real signature should be of the form:
+    (bindmutrec A B * bindmutrec A C * ...) ->
+    (list A -> list B -> list C -> ... -> prop)
+
+    bindmany's instead of mutrec's are also allowed *)
+
+open : TupleType -> PropType -> prop.
+open ES P <-
+  tuple.dynlist ES ES',
+  dyn.map opt_to_bindmany ES' ES'',
+  tuple.ofdynlist ES'' ES''',
+  bindmany.open ES''' P.
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  dyn.map opt_to_bindmany ES' ES'',
+  tuple.ofdynlist ES''' ES'',
+  bindmany.open_nomatch ES''' P.
+
+%end.
+
+
+(* Telescope: bind a number of A's into B, with an additional term of type C at each
+   binding that can use previously-bound variables. Useful for modelling the context in
+   dependently-typed languages. *)
+
+telescope : type -> type -> type -> type.
+telend   : B -> telescope V T B.
+telnext  : string -> V -> (V -> telescope V T B) -> telescope V T B.
+
+%extend telescope.
+
+newvars : [V T B] telescope V T B -> (list V -> prop) -> prop.
+apply : [V T B] telescope V T B -> list A -> B -> prop.
+varnames : [V T B] telescope V T B -> list string -> prop.
+varinfos : [V T B] telescope V T B -> list T -> prop.
+
+newvars_aux : [V T B] telescope V T B -> list V -> (list V -> prop) -> prop.
+newvars_aux (telend _) Vars P <- reverse Vars Vars', P Vars'.
+newvars_aux (telnext S T Rest) Vars P <-
+  bindone.open (bindone S Rest) (fun x bindrest => {prop| (infoofvar x T -> newvars_aux bindrest (x :: Vars) P) |}).
+newvars B P <- newvars_aux B [] P.
+
+apply (telend X) [] X.
+apply (telnext _ _ F) (HD :: TL) Res <- apply (F HD) TL Res.
+
+applysome : [V T B] telescope V T B -> list A -> telescope V T B -> prop.
+applysome (telnext _ _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
+applysome X nil X.
+
+varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
+varinfos B Names <- newvars B (fun xs => map infoofvar xs Names).
+
+match_binders : [V T A V' T' A'] telescope V T A -> telescope V' T' A' -> prop.
+match_binders (telend  _) (telend _).
+match_binders (telnext S _ F) (telnext S _ F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
+
+
+(* open real signature should be of the form:
+    (telescope V T A * telescope V T B * ...) ->
+    (list A -> list T -> -> B -> C -> ... -> prop) *)
+open_aux : [A] list A -> list dyn -> PropType -> prop.
+open_aux Vars [] P <- P.
+open_aux Vars (dyn HD :: TL) P <-
+  apply HD Vars X,
+  open_aux Vars TL (P X).
+
+open : TupleType -> PropType -> prop.
+open ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  dyn.iter (match_binders HD) ES',
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+
+open_nomatch : TupleType -> PropType -> prop.
+open_nomatch ES P <-
+  tuple.dynlist ES ES',
+  eq ES' (dyn HD :: _),
+  newvars HD (fun xs => open_aux xs ES' (P xs)).
+
+%end.
+

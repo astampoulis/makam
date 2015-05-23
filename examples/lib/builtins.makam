@@ -73,12 +73,6 @@ removableguard : unit -> A -> prop -> prop.
             of Trigger removes the deferred predicate P even if X is uninstantiated.
             useful as a building block, e.g. for implementing guarding on multiple
             variables. *)
-assume_reset : A -> prop -> prop.
-         (* assume_reset P Q expects that P is a predicate (has a type of the form
-            ... -> prop). It removes all local assumptions (introduced through assume)
-            for the P predicate; this happens locally while evaluating Q. This predicate
-            is useful for implementing modal typing and related type system features. *)
-
 *)
 
 (* ----- External predicates. *)
@@ -98,6 +92,10 @@ explode : string -> list string -> prop.
 
 print : A -> prop.
           (* generic printing predicate *)
+print_string : string -> prop.
+          (* print a string *)
+show : A -> string -> prop.
+          (* print any term as a string *)
 *)
 
 
@@ -105,6 +103,9 @@ print : A -> prop.
 (* ----- Reflective predicates. *)
 
 (*
+
+%extend refl.
+         (* all of these are in the 'refl' module, so must be prefixed with 'refl.' *)
 
 isunif : A -> prop.
          (* isunif X succeeds if X is an uninstantiated metavariable *)
@@ -132,6 +133,14 @@ recomposeunif : A -> list dyn -> A -> prop.
                    metavariable of the form X A1 .. An. It changes the explicit
                    substitution A1 .. An into ARGS' to form E' := X A'1 ... A'n *)
 
+assume_reset : A -> prop -> prop.
+         (* assume_reset P Q expects that P is a predicate (has a type of the form
+            ... -> prop). It removes all local assumptions (introduced through assume)
+            for the P predicate; this happens locally while evaluating Q. This predicate
+            is useful for implementing modal typing and related type system features. *)
+
+
+%end.
 *)
 
 (* ----- Staging. *)

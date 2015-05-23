@@ -1,0 +1,31 @@
+%extend clause.
+
+applies : prop -> clause -> prop.
+applies CurGoal (clause Goal Premise) <- eq CurGoal Goal.
+applies CurGoal (whenclause Goal Guard Premise) <- eq CurGoal Goal, Guard.
+
+premise : clause -> prop.
+premise (clause Goal Premise) <- Premise.
+premise (whenclause Goal Guard Premise) <- Premise.
+
+demand : prop -> clause -> prop.
+demand CurGoal Clause <-
+  applies CurGoal Clause, premise Clause.
+
+demand_or : prop -> list clause -> prop.
+demand_or Goal (HD :: TL) <- (demand Goal HD ; demand_or Goal TL).
+
+demand_and : prop -> list clause -> prop.
+demand_and Goal [].
+demand_and Goal (HD :: TL) <-
+  if applies Goal HD
+  then (premise HD, demand_and Goal TL)
+  else (demand_and Goal TL).
+
+demand_case : prop -> list clause -> prop.
+demand_case Goal (HD :: TL) <-
+  if applies Goal HD
+  then premise HD
+  else demand_case Goal TL.
+
+%end.

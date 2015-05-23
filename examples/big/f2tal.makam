@@ -319,7 +319,7 @@ optkT (appk (valk (fixk F) _) TS VS) E' <-
   optkT E E'.
 
 optkT (appk V TS VS) (appk V' TS VS') <-
-  (if eq V (valk (fixk F) _), not(bindmany_apply F TS (_, (fun x => Body))), success),
+  (if eq V (valk (fixk F) _) then not(bindmany_apply F TS (_, (fun x => Body))) else success),
   optkV V V', map optkV VS VS'.
 
 (* examples *)
@@ -439,32 +439,26 @@ typeofc_ (valc U T) T <- typeofc U T, wftypc T unit.
 
 typeofvarc : bvalc -> typc -> prop.
 
-(*
-typeofc X Y <- print "entering", cheapprint 3 X, cheapprint 10 Y, failure.
-typeofc X Y <- typeofvarc X R, print "found for var", print R, print Y, eq R Y, print "is good".
-*)
 typeofc X Y <- typeofvarc X Y.
 typeofc (iconst _) tint.
 typeofc (fixc F) (tpi T) <-
   bindmany_newvars F (fun as => {prop| [TS Decls]
   bindmany_apply F as (tuple TS Decls),
   bindmany_apply T as TS,
-  assume_reset (typeofc : bvalc -> typc -> prop) {prop|
+  refl.assume_reset (typeofc : bvalc -> typc -> prop) {prop|
   (x:bvalc ->
    typeofvarc x (tpi T) ->
    bindmany_newvars (Decls x) (fun xs => {prop| [E]
    bindmany_apply (Decls x) xs E,
    many_assume typeofvarc xs TS
    (typeofc E) |})) |} |}),
-  assume_reset wftypc (wftypc (tpi T) unit).
+  refl.assume_reset wftypc (wftypc (tpi T) unit).
 
 typeofc (tupc VS) (ttup TS) <-
   map typeofc_ VS TS.
 
-(*
-typeofc X <- print "entering", cheapprint 3 X, failure.
-*)
-typeofc X <- (if isunif X, print "parapatem!", success), failure.
+
+typeofc X <- (if refl.isunif X then print "TODO error!" else success), failure.
 typeofc (letc (dcval V E)) <-
   typeofc_ V T,
   (x:bvalc -> typeofvarc x T -> typeofc (E x)).
@@ -504,10 +498,6 @@ typeofc (if0c V E1 E2) <-
 typeofc (haltc T V) <-
   typeofc_ V T.
 
-(*
-typeofc X Y <- print "failed", cheapprint 0 X, print Y, failure.
-typeofc X <- print "FAILED FOR::", cheapprint 3 X, failure.
-*)
 
 
 sugarapp : valc -> list typc -> valc -> prop.
@@ -607,7 +597,7 @@ valfv_aux Input Cur Res <-
   caseguard Input
     [ (dyn (fun (x : A) => (T x : B)), success,
        {prop| (x:A -> valfv_avoid x -> generic_fold valfv_aux (dyn (T x)) Cur Res) |}),
-      (dyn (valk U S), {prop| headargs U X Args, isnvar X, not(valfv_avoid X) |}, 
+      (dyn (valk U S), {prop| refl.headargs U X Args, isnvar X, not(valfv_avoid X) |}, 
        {prop| eq Res ((valk U S) :: Cur) |}),
       (_, success, {prop| generic_fold valfv_aux Input Cur Res |}) ].
 
@@ -648,7 +638,7 @@ translatec_val (valk (fixk Fix) T)
   (* Venv_    *) eq Venv_    (valc (tupc YS'closure) Tenv_),
 
 
-  assume_reset translatec_typ (
+  refl.assume_reset translatec_typ (
 
   bindmany_newvars Fix (fun as => {prop| [TS FixFun]
   bindmany_newvars BStemp (fun bs' => {prop| [Tcode]
@@ -678,7 +668,7 @@ translatec_val (valk (fixk Fix) T)
   (zenv:bvalc ->
   bindmany_newvars Fix'Params (fun xs' =>
   
-  assume_reset translatec_var (
+  refl.assume_reset translatec_var (
   many_assume translatec_var xs xs' ( {prop| [FixBody FixBody'
 	                                      ZcodeInst ZenvVal ZUnused]
   

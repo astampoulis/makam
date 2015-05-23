@@ -1,0 +1,4 @@
+%directory "use_directives".
+%use index.
+
+print_string "Use directives successfully loaded.\n" ?

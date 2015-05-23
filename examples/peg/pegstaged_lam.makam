@@ -69,17 +69,3 @@ pclosedterm : peg term.
 peginline pclosedterm (isemaction pterm (lm_fun (fun in => lm_envrun in))).
 
 `( pegexport pclosedterm ).
-
-test3 : A -> prop.
-test3 X <-
-   pclosedterm_parse "λx.λy.λz.y x" (some (tuple "" X)).
-
-test4 : string -> prop.
-test4 R <- 
-   eq X "x",
-   eq Y "y",
-   eq Z "z",
-   pclosedterm_pretty (some (tuple "" (lam (fun x^nX => lam (fun y^nY => lam (fun z^nZ => app y^nY x^nX)))))) R.
-
-
-

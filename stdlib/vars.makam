@@ -1,0 +1,50 @@
+%use generic.
+%use demand. 
+
+
+(* freevars *)
+freevars : [A B]A -> list B -> prop.
+freevars_aux : list B -> A -> list B -> prop.
+freevars_aux_ : list B -> A -> list B -> prop.
+freevars_dontadd : A -> prop.
+
+freevars_aux Acc Root Result <-
+  demand.case_otherwise (freevars_aux_ Acc Root Result)
+                        (generic.fold freevars_aux Acc Root Result).
+
+freevars_aux_ Acc X Result when refl.headargs X V Args, refl.isnvar V, not(freevars_dontadd V) <-
+  freevars_aux (V :: Acc) Args Result.
+
+freevars_aux_ Acc (F : A -> B) Res <-
+  (x:A -> freevars_dontadd x -> freevars_aux Acc (F x) Res).
+
+freevars Root Result <-
+  freevars_aux [] Root Result', unique _ Result' Result.
+
+  
+(* unifvars *)
+unifvars : [A B]A -> list B -> prop.
+unifvars_aux : list B -> A -> list B -> prop.
+unifvars_aux_ : list B -> A -> list B -> prop.
+
+unifvars_aux Acc Root Result <-
+  demand.case_otherwise (unifvars_aux_ Acc Root Result)
+                        (generic.fold unifvars_aux Acc Root Result).
+
+unifvars_aux_ (Acc : list A) (X : A) Result when refl.isunif X <-
+  refl.decomposeunif X _ Args, unifvars_aux (X :: Acc) Args Result.
+
+unifvars_aux_ Acc X Result when refl.isunif X <-
+  refl.decomposeunif X _ Args, unifvars_aux Acc Args Result.
+
+unifvars Root Result <-
+  unifvars_aux [] Root Result', unique (eqT refl.sameunif) Result' Result.
+
+
+(* deepguard *)
+deepguard : A -> B -> prop -> prop.
+deepguard E (T : B) P <-
+  unifvars E (Unifs : list B),
+  map (apply dyn) Unifs DynUnifs,
+  tuple.ofdynlist DynUnifs Tuple,
+  guardmany Tuple P.

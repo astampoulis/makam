@@ -24,6 +24,7 @@ open Termlangbuiltin;;
 open Termlangprolog;;
 open Batteries;;
 open PegBuiltins;;
+module StringSet = Set.Make(String);;
 
 type 'a located = { content : 'a ; span : UChannel.span } ;;
 let (--->) x1 x2 = UChannel.combine_span x1.span x2.span ;;
@@ -49,6 +50,9 @@ let mkTm v ls =
 let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 
 let lambda_prolog_toplevel_parser : ((unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ -> None) ;;
+let last_command_span : UChannel.span ref = ref None ;;
+
+let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun" ];;
 
 exception Forget of string ;;
 
@@ -68,10 +72,12 @@ lexpr -> fn:ltoken("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
 	   let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
 	   List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
 
-      / hd:baseexpr^ token("::") tl:lexpr
+      / hd:appexpr^ token("::") tl:lexpr
         << mkTm "cons" [ hd ; tl ] >>
 
-      / f:baseexpr^ args:repWHITE(baseexpr)
+      / e:appexpr^ << e >>
+
+appexpr -> f:baseexpr^ args:repWHITE(baseexpr)
         << List.fold_left (autospan_bin mkApp) f args >> 
 
 namepref -> "^n" / "ⁿ" ;
@@ -110,6 +116,7 @@ identnamed -> x:ident^ namepref nmeta:identany << toVarWithNamedMeta x nmeta >>
 	    / x:identany << x >>
 identany   -> x:ident^ << x >> / "_" x:ident << "_" ^ x >> / "_" << "_" >>
 qualident  -> ms:repplus( (x:ident^ "." &ident^) ) x:ident^ << let prefix = String.join "." ms in prefix ^ "." ^ x >>
+            / "." x:ident^ << "." ^ x >>
 
 annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >> 
 
@@ -119,8 +126,12 @@ ltyp  -> s:ltoken("[") parametric:repWHITE(token(ident)) e:ltoken("]") t:lmonoty
         << let param = { content = parametric ; span = s ---> e } in 
 	   autospan_bin _tForall param t >>
       / t:lmonotyp << t >>
-lmonotyp -> t:apptyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
-          / t:apptyp^ << t >>
+
+lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
+          / t:multtyp^                            << t >>
+
+multtyp -> t:apptyp^ token("*") e:multtyp         << autospan_bin _tTuple t e >>
+         / t:apptyp^                              << t>>
 
 apptyp -> x:loced(typconstr)
           << let id, args = x.content in
@@ -142,9 +153,9 @@ binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp tok
 
 (* Lambda Prolog part *)
 
-clause   -> goal:baseexpr^ token("when") cond:prop token("<-") premise:prop
+clause   -> goal:lexpr^ token("when") cond:prop token("<-") premise:prop
 	     << mkTm "whenclause" [ goal ; cond ; premise ] >>
-	  / goal:baseexpr^ token("when") cond:prop
+	  / goal:lexpr^ token("when") cond:prop
 	     << mkTm "whenclause" [ goal ; cond ; mkTm "success" [] ] >>
 	  / goal:lexpr^ x:token("<-") premise:prop
 	    << mkTm "clause" [ goal ; premise ] >>
@@ -165,12 +176,13 @@ newmetas -> s:ltoken("[") bindings:repplusWHITE(binding) token("]")
 		   bindings body >>
 	  / epsilon << fun x -> x >>
 
-hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh:hyp token(")")
+hyp      -> token("if") ifh:hyp1 token("then") thenh:hyp1 token("else") elseh:hyp
 	    << mkTm "ifte" [ ifh ; thenh ; elseh ] >>
-	  / token("once") token("(") o:prop token(")")
-	    << mkTm "once" [ o ] >>
-	  / token("(") newvars:repWHITE(newvar) 
+          / h:hyp1 << h >>
+
+hyp1     -> token("(") newvars:repWHITE(newvar) 
 	    knowns:rep( (x:assumption token("->") << x >>) )
+	    &&( epsilon << fun _ -> List.length newvars + List.length knowns > 0 >> )
 	    req:hyp token(")")
 	     << req |>
 		    fun x -> List.fold_left
@@ -180,14 +192,13 @@ hyp      -> token("(") token("if") ifh:hyp token(",") thenh:hyp token(",") elseh
 		    List.fold_right
 		    (fun binding r -> mkTm "newvar" [ autospan_bin mkLamO binding r ])
 		    newvars >>
-	  / token("(") p:prop token(")") << p >>
-(*                     mult:repplusSEP(hyp^, ",")
-	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "and" [ r ; elm ]) (mkTm "success" [])
-	       (fun x -> x) mult >>
-*)
+          / h:hyp2 << h >>
+
+hyp2     -> token("(") p:prop token(")") << p >>
 	  / token("(") mult:repplusSEP(hyp^, ";") token(")")
 	    << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTm "failure" [])
 	       (fun x -> x) mult >>
+          / token("once") token("(") p:prop token(")") << mkTm "once" [ p ] >>
           / p:lexpr^ << p >>
 
 assumption -> x:lexpr^ << mkTm "clause" [ x ; mkTm "success" [] ] >>
@@ -235,7 +246,7 @@ prologcmd1 -> (* c:consumeBM << fun () -> () >> / *)
 	                                   else
 					     (Benchmark.cumulative "total queries"
 					      (lazy(Termlangprolog.global_query p.content))) >>
-	   / token("%") d:directive token(".") << d () >>
+	   / token("%") d:directive token(".") << fun () -> d () >>
 	   / o:ocamlrevquote  << fun () -> !(Termlangprolog.meta_do) o >>
 	   / repplusV(white)^ << fun () -> () >>
 
@@ -261,44 +272,48 @@ ident_or_str -> s:ident << s >> / s:str << s >>
 directive -> "use" repplus(white) s:token(ident_or_str)
 	     << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
 	   / "import" repplus(white) s:token(ident_or_str) token("as") m:token(ident)
-	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s ~modul:m >>
+	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) ~modul:m s >>
 	   / "import" repplus(white) s:token(ident)
-	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s ~modul:s >>
+	   << fun () -> Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) ~modul:s s >>
 	   / "extend" s:token(ident)
-	   << fun () () -> Termlangcanon.global_enter_module s >>
+	   << fun () -> Termlangcanon.global_enter_module s >>
 	   / "end"
-	   << fun () () -> Termlangcanon.global_leave_module () >>
+	   << fun () -> Termlangcanon.global_leave_module () >>
 	   / "directory" repplus(white) s:token(str)
-	   << fun () () -> Termlangcanon.global_add_directory s >>
+	   << fun () -> Termlangcanon.global_add_directory s >>
 	   / "typenorm" repplus(white) e:baseexpr
-	   << fun () () -> global_typecheck_and_normalize (e.content) >>
+	   << fun () -> global_typecheck_and_normalize (e.content) >>
 	   / "type" repplus(white) e:baseexpr 
-	   << fun () () -> global_typecheck (e.content) >>
+	   << fun () -> global_typecheck (e.content) >>
 	   / "reset"
-	   << fun () () -> global_reset () >>
+	   << fun () -> global_reset () >>
 	   / "usenew" repplus(white) s:token(ident_or_str)
 	     << fun () -> global_reset () ;
-	                  Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
+             	             Termlangcanon.global_load_file (Peg.parse_of_file !lambda_prolog_toplevel_parser) s >>
 	   / "curmodule"
-	   << fun () () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
+	   << fun () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
 
-	  / b:flag("debug") << fun () () -> _DEBUG_DEMAND := b >>
-	  / b:flag("debugfull") << fun () () -> _DEBUG := b >>
-	  / b:flag("debugnames") << fun () () -> _DEBUG_NAMES := b >>
-	  / b:flag("debugtypes") << fun () () -> _DEBUG_TYPES := b >>
-	  / b:flag("debugstage") << fun () () -> Termlangrefl._DEBUG_STAGING := b >>
-	  / b:flag("constraints") << fun () () -> _DEBUG_CONSTRAINTS := b >>
-	  / b:flag("benchmark")  << fun () () -> _BENCHMARK := b >>
-	  / b:flag("log")	 << fun () () -> _LOGGING := b >>
-	  / b:flag("only_typecheck") << fun () () -> _ONLY_TYPECHECK := b >>
-	  / b:flag("trace") es:repplusSEP(baseexpr, ",") << fun () () -> List.iter (fun e -> global_trace b (e.content)) es >>
-	  / "forget" s:token(cmdname)  << fun () () -> raise (Forget s) >>
+	  / b:flag("debug") << fun () -> _DEBUG_DEMAND := b >>
+	  / b:flag("debugfull") << fun () -> _DEBUG := b >>
+	  / b:flag("debugnames") << fun () -> _DEBUG_NAMES := b >>
+	  / b:flag("debugtypes") << fun () -> _DEBUG_TYPES := b >>
+	  / b:flag("debugstage") << fun () -> Termlangrefl._DEBUG_STAGING := b >>
+	  / b:flag("constraints") << fun () -> _DEBUG_CONSTRAINTS := b >>
+	  / b:flag("benchmark")  << fun () -> _BENCHMARK := b >>
+	  / b:flag("log")	 << fun () -> _LOGGING := b >>
+	  / b:flag("only_typecheck") << fun () -> _ONLY_TYPECHECK := b >>
+	  / b:flag("trace") es:repplusSEP(baseexpr, ",") << fun () -> List.iter (fun e -> global_trace b (e.content)) es >>
+	  / "forget" s:token(cmdname)  << fun () -> raise (Forget s) >>
 
 flag(p) -> p token("+") << true  >>
 	 / p token("-") << false >>
 
 
-cmdflushed -> c:prologcmd << fun () -> c () ; flush IO.stdout >>
+cmdflushed -> c:loced(prologcmd)
+              << fun () ->
+                 last_command_span := c.span ;
+                 c.content () ;
+                 flush IO.stdout >>
 toplevel   -> c:rep(cmdflushed) repV(white) << c >>
 
 
@@ -378,14 +393,16 @@ whiteNoNewline -> ![\n] white ;
    OCaml identifiers *)
 identfstchar -> &latin1char c:letterchar    << c >>
 identrstchar -> &latin1char c:(letterchar / digitchar / [_']) << c >>
-ident        -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
+identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
+ident        -> &&( identaux^ << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux^ << id >>
 
 cmdnamefstchar -> &latin1char c:letterchar    << c >>
 cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
 cmdname        -> c:cmdnamefstchar cs:rep(cmdnamerstchar) << UString.implode (c :: cs) |> UString.to_string >>
 
 tident       -> m:ident^ "." &ident^ x:tident << m ^ "." ^ x >>
-	   / &&( ident^ << fun s -> not (s = "type") >>) x:ident^ << x >>
+	      / x:ident^ << x >>
+              / "." x:ident^ << "." ^ x >>
 
 (* string characters must include the escape characters allowed by ocaml, so that bootstrapping works properly *)
 hexdigitchar ->  a:[0123456789abcdefABCDEF]  << a >>

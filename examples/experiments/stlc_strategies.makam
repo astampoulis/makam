@@ -1,0 +1,67 @@
+%use utils.
+
+memoized : A -> prop.
+memoized_aux : (A -> prop) -> A -> prop.
+memoized_aux P V <-
+  ifte (refl.isunif V) (P V) success.
+memoized X <-
+  refl.headargs X Hd Args,
+  reverse Args ( (dyn (Last : A)) :: RArgs'),
+  reverse RArgs' Args',
+  appmany Hd Args' P,
+  memoized_aux P Last.
+
+term : type.
+
+lam : (term -> term) -> term.
+app : term -> term -> term.
+
+
+eval : term -> term -> prop.
+
+strategy : type.
+eval_strategy : strategy -> prop.
+cbval : strategy.
+cbneed : strategy.
+cbname : strategy.
+
+eval (app E1 E2) V <-
+   eval_strategy cbval,
+   eval E1 (lam (fun x => Body x)),
+   eval E2 V2,
+   eval (Body V2) V.
+
+eval (lam E) (lam E).
+
+eval (app E1 E2) V <-
+   eval_strategy cbname,
+   eval E1 (lam (fun x => Body x)),
+   eval (Body E2) V.
+
+eval (app E1 E2) V <-
+  eval_strategy cbneed,
+  eval E1 (lam Body),
+  ( thunk:term ->
+    (eval thunk V2 <- memoized(eval E2 V2)) ->
+    eval (Body thunk) V ).
+
+tuple : list term -> term.
+eval (tuple ES) (tuple VS) <-
+  map eval ES VS.
+
+side_effect : term.
+eval (side_effect) (tuple []) <- print "evaluation".
+
+eval_cbv : term -> term -> prop.
+eval_cbnd : term -> term -> prop.
+eval_cbnm : term -> term -> prop.
+eval_cbv X Y <- (eval_strategy cbval -> eval X Y).
+eval_cbnm X Y <- (eval_strategy cbname -> eval X Y).
+eval_cbnd X Y <- (eval_strategy cbneed -> eval X Y).
+
+
+(eq TERM (app (lam (fun x => tuple [x, x])) side_effect),
+ print_string "cbv eval\n", eval_cbv TERM CBV_VAL, print CBV_VAL,
+ print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
+ print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
+

@@ -1,0 +1,27 @@
+%extend demand.
+
+aux_demand : (prop -> list clause -> prop) -> prop -> prop.
+aux_demand ClauseDemand Goal <-
+  refl.headargs Goal Pred _,
+  refl.rules_get Pred GlobalRules,
+  refl.assume_get Pred LocalRules,
+  append GlobalRules LocalRules AllRules,
+  ClauseDemand Goal AllRules.
+
+or : prop -> prop.
+or Goal <- aux_demand clause.demand_or Goal.
+
+and : prop -> prop.
+and Goal <- aux_demand clause.demand_and Goal.
+
+case : prop -> prop.
+case Goal <- aux_demand clause.demand_case Goal.
+
+case_otherwise : prop -> prop -> prop.
+case_otherwise Goal Otherwise <-
+  (
+    (clause.demand_case Goal [] <- Otherwise) ->
+    aux_demand clause.demand_case Goal
+  ).
+
+%end.

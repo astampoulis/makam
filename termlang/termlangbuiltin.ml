@@ -62,11 +62,21 @@ let new_builtin_type_constructor s =
   (idx, fun t -> { term = `TVar(s, idx, [t]) ; classifier = () ; loc = None ; extra = TypExtras.empty () })
 ;;
 
+let new_builtin_type_constructor_binary s =
+  let i = builtin_do (typedecl s (_tType **> _tType **> _tType)) in
+  let idx = Some (`Free, i) in
+  let mkType ?(loc = None) t1 t2 = { term = `TVar(s, idx, [t1; t2]) ; classifier = () ; loc = loc ; extra = TypExtras.empty () } in
+  (idx, mkType)
+;;
 
 let new_builtin s t =
   let i = builtin_do (typedecl s t) in
   i
 ;;
+
+let builtin_enter_module m  = builtin_do (enter_module m) ;;
+let builtin_leave_module () = builtin_do leave_module;;
+
 
 let _tiString, _tString, mkString, pattheadString, pattneutString, pattcanonString =
   new_builtin_const_type "string"
@@ -99,7 +109,7 @@ let _tiLoc, _tLoc, mkLoc, pattheadLoc, pattneutLoc, pattcanonLoc =
 let _tiList, _tList     = new_builtin_type_constructor "list" ;;
 let _eiNil              = new_builtin "nil"  (_tList ( ~* "A" ));;
 let _eiCons             = let a = ~* "A" in
-			  new_builtin "cons" (a **> _tList a **> _tList a) ;;
+                          new_builtin "cons" (a **> _tList a **> _tList a) ;;
 
 let _tiUnit, _tUnit     = new_builtin_type "unit" ;;
 let _eiUnit             = new_builtin "unit" _tUnit;;
@@ -108,15 +118,17 @@ let _tiBool, _tBool     = new_builtin_type "bool" ;;
 let _eiTrue             = new_builtin "true" _tBool ;;
 let _eiFalse            = new_builtin "false" _tBool ;;
 
+let _tiTuple, _tTuple   = new_builtin_type_constructor_binary "tuple" ;;
+let _eiTuple            = let a = ~* "A" in
+                          let b = ~* "B" in
+                          new_builtin "tuple" ( a **> b **> _tTuple a b );;
+
 let _tiDyn, _tDyn       = new_builtin_type "dyn" ;;
 let _eiDyn              = let a = ~* "A" in
-			  new_builtin "dyn" (a **> _tDyn) ;;
+                          new_builtin "dyn" (a **> _tDyn) ;;
 
 let _tiProp, _tProp     = new_builtin_type "prop" ;;
 let _tiClause, _tClause = new_builtin_type "clause" ;;
 
 let _eiClause           = new_builtin "clause" (_tProp **> _tProp **> _tClause) ;;
 let _eiWhenClause       = new_builtin "whenclause" (_tProp **> _tProp **> _tProp **> _tClause) ;;
-
-
-    
