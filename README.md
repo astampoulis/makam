@@ -43,10 +43,12 @@ Now, when you want to run Makam, just issue:
 
     makam
 
-Examples written in Makam are available in a separate repository, which I recommend to clone:
+Examples written in Makam are available in the same repository. Having a local copy
+is useful as a reference point, since there's no tutorial yet:
 
-    git clone https://github.com/astampoulis/makam-examples.git
-    
+    git clone https://github.com/astampoulis/makam.git
+
+Look in the `examples` directory.
 
 ### Upgrading Makam
 
@@ -55,7 +57,6 @@ It is recommended that you upgrade Makam frequently. OPAM can be used for that:
     opam upgrade makam
 
 ### How to use Makam
-
 
 Unfortunately we do not have a Makam tutorial yet -- one will be out soon though.
 The closest thing to a proper tutorial is a technical overview paper which you can
