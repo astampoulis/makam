@@ -1,0 +1,5 @@
+%directory "examples/lib".
+%directory "examples/big".
+%directory "examples/small".
+%directory "examples/peg".
+%directory "examples/experiments".
