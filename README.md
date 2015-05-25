@@ -69,30 +69,39 @@ Look into the files in the examples/ directory for sample developments in Makam.
 Recommendations:
 
 `small/systemf.makam`  -- a simple implementation of System F
+
 `big/ocaml.makam`      -- a fragment of the OCaml type system
+
 `big/hol.makam`        -- the HOL formal logic
+
 `big/veriml.makam`     -- the VeriML type system
+
 `big/urweb.makam`      -- type inference for Featherweight Ur
 
-`big/testocaml.makam`
-`big/testveriml.makam`
+`big/testocaml.makam`,
+`big/testveriml.makam`,
 `big/testurweb.makam`  -- files containing sample queries
 
 `lib/builtins.makam`   -- the builtin types and constants of Makam
 
+
 Some commands:
 
 `%use "examples/big/testocaml.makam".`       -- load a file
-`%use testocaml.`                            -- when testocaml.makam is in the
-                                                search path
+
+`%use testocaml.`                            -- when testocaml.makam is in the search path
+
 `%reset.`                                    -- to reset the state of Makam
 
-`expr : type.`                               -- declare a new type
-                                                (or type constructor)
+`expr : type.`                               -- declare a new type (or type constructor)
+
 `ifthenelse : expr -> expr -> expr.`         -- declare a new constant
+
 `eval : expr -> expr -> prop.`               -- declare a new predicate
-`eval (ifthenelse E1 E2 E3) V2 <- eval E1 etrue, eval E2 V2.`
-                                         -- declare a new rule
+
+`eval (ifthenelse E1 E2 E3) V2 <- eval E1 etrue, eval E2 V2.` -- declare a new rule
+
 `eval (ifthenelse etrue efalse etrue) E ?` -- perform a query
+
 
 That's basically it. For the rest, look at the examples!
