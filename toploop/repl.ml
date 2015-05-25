@@ -78,15 +78,15 @@ let _ =
       | _ -> res)
 ;;
 
-let rec repl () : unit =
+let rec repl files : unit =
   Sys.catch_break true;
   let input, prompt, reached_eof, is_stdin =
-    if Array.length Sys.argv > 1 then
+    if not (List.is_empty files) then
       let initloc =
         let open UChannel in
         { description = "<command-line>" ; lineno = 1; charno = 1; offset = 0 }
       in
-      let use_files = Printf.sprintf "%%use \"%s\".\n" Sys.argv.(1) in
+      let use_files = String.concat "\n" (List.map (fun s -> "%use \"" ^ s ^ "\".") files) in
       UChannel.from_string ~initloc:initloc use_files, "", UChannel.at_eof, false
     else
       UChannel.from_stdin (), "# ", UChannel.reached_eof, true
@@ -128,10 +128,12 @@ let rec repl () : unit =
       with 
       | BatInnerIO.Input_closed -> ()
       | Sys.Break ->
-	(print_now "\nInterrupted.\n"; restore_debug () ; if is_stdin then repl () else loop (UChannel.flush_to_furthest input))
-      | Termlangcanon.FileNotFound s ->
-	(Printf.printf "In %s:\n  File %s not found.\n%!"
-	   (last_cmd_span ()) s; loop (UChannel.flush_to_furthest input))
+	(print_now "\nInterrupted.\n"; restore_debug () ; if is_stdin then repl [] else loop (UChannel.flush_to_furthest input))
+      | Termlangcanon.FileNotFound(s, all) ->
+	(Printf.printf "In %s:\n  File %s not found (searched: %a).\n%!"
+	               (last_cmd_span ()) s
+                       (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all
+        ; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
         (restore_debug (); loop (UChannel.flush_to_furthest input))
       | Termlangprolog.ResetInModule m ->
@@ -172,19 +174,39 @@ let output_log () =
 
 let load_init_files () =
   let loadfile s =
-    if Sys.file_exists ".init.makam" then
-      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
+    global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
   in
-  loadfile ".init.makam";
+  loadfile (global_resolve_filename "stdlib/init.makam") ;
+  if Sys.file_exists "init.makam" then loadfile "init.makam" ;
   Termlangcanon.builtinstate := !globalstate ;
   Termlangprolog.builtinprologstate := !globalprologstate
-;;    
+;;
+
+open BatOptParse;;
+let parse_options () =
+  let parsr =
+    OptParser.make
+      ~version:version
+      ~description:
+      (String.concat
+         ""
+         [ "Makam, version "; version; " -- "; "A tool for rapid language prototyping" ])
+      ()
+  in
+  let includes = StdOpt.str_callback ~metavar:"directory" global_add_directory in
+  let _ = OptParser.add parsr ~short_name:'I' ~long_name:"include"
+                        ~help:"include the directory in the search path for makam files"
+                        includes
+  in
+  OptParser.parse_argv parsr
+;;
 
 let main () =
+  let files = parse_options () in
   print_now ("\n\tMakam, version " ^ version ^ "\n\n");
   load_init_files ();
   store_state ();
-  repl ();
+  repl files;
   print_now "\n";
   benchmark_results ();
   output_log ()

@@ -1,0 +1,25 @@
+OASISFormat: 0.4
+Name:        makam
+Version:     0.0.5
+Synopsis:    The Makam Metalanguage -- a tool for rapid language prototyping
+Authors:     Antonis Stampoulis <antonis.stampoulis@gmail.com>
+Homepage:    http://astampoulis.github.io/
+
+License:     GPL-3
+Plugins:     DevFiles (0.4)
+BuildTools:  ocamlbuild
+OCamlVersion:          >= 4.02.0
+AlphaFeatures:         ocamlbuild_more_args
+XOCamlBuildPluginTags: package(js_of_ocaml.ocamlbuild)
+XOCamlBuildExtraArgs:  -byte-plugin
+
+SourceRepository master
+  Type:     git
+  Location: https://github.com/astampoulis/makam.git
+  
+Executable "makam-bin"
+  Path:       .
+  MainIs:     toploop/nativerepl.ml
+  CompiledObject: best
+  Install:        false
+  

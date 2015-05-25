@@ -31,18 +31,28 @@ You first need to install OPAM, the OCaml Package Manager. Instructions are avai
 
 We have been testing using the OCaml 4.02.0 configuration.
 
-After you have OPAM installed, you need to install a few OPAM packages:
+After you have OPAM installed, you can install Makam:
 
-    opam install batteries oclock uucp pa_monad_custom js_of_ocaml camlp4
+    opam pin add makam https://github.com/astampoulis/makam.git
 
-You are now ready to run make:
+(Makam is still under development and does not have a stable release yet, thus having its
+installation track the git repository is the recommended option for the time being.)
 
-    make
+This compiles and installs Makam after installing all needed dependencies.
+Now, when you want to run Makam, just issue:
 
-You are all done! Now, when you want to run Makam, just issue:
+    makam
 
-    ./makam
+Examples written in Makam are available in a separate repository, which I recommend to clone:
 
+    git clone https://github.com/astampoulis/makam-examples.git
+    
+
+### Upgrading Makam
+
+It is recommended that you upgrade Makam frequently. OPAM can be used for that:
+
+    opam upgrade makam
 
 ### How to use Makam
 

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+OCAMLRUNPARAM="l=100M,s=16M,i=2M,o=200" %{makam:lib}%/makam-bin -I %{makam:share}% $*

@@ -10,3 +10,6 @@ generated/*
 *.vo
 \#*\#
 js/makam.js
+setup.data
+setup.log
+makam

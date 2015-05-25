@@ -1716,17 +1716,20 @@ let global_load_file_resolved ?modul
 ;;
 (* ---- ok enough of that *)
 
-exception FileNotFound of string;;
+exception FileNotFound of string * string list;;
 let first_existing_filename userfn fns =
   try List.find Sys.file_exists fns
-  with _ -> raise (FileNotFound userfn)
+  with _ -> raise (FileNotFound(userfn, fns))
 ;;
 
 let global_resolve_filename fn =
   let state = !globalstate in
-  let directories = (state.current_directory :: state.included_directories) |> List.map Path.of_string in
-  List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories
-  |> first_existing_filename fn
+  if Path.is_absolute (Path.of_string fn) then
+    first_existing_filename fn [fn]
+  else
+    let directories = (state.current_directory :: state.included_directories) |> List.map Path.of_string in
+    List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories
+    |> first_existing_filename fn
 ;;
 
 let global_add_directory dir =

@@ -248,7 +248,11 @@ prologcmd1 -> (* c:consumeBM << fun () -> () >> / *)
 	   / o:ocamlrevquote  << fun () -> !(Termlangprolog.meta_do) o >>
 	   / repplusV(white)^ << fun () -> () >>
 
-prologcmd  -> p:prologcmd1 << fun () -> Benchmark.cumulative "total" (lazy(p ())) >>
+prologcmd  -> c:loced(prologcmd1)
+              << fun () ->
+                 last_command_span := c.span ;
+                 let p = c.content in
+                 Benchmark.cumulative "total" (lazy(p ())) >>
 
 prologcmdvoid ->
 	     d:defBM token(".") << fun () -> () >> 
@@ -307,11 +311,7 @@ flag(p) -> p token("+") << true  >>
 	 / p token("-") << false >>
 
 
-cmdflushed -> c:loced(prologcmd)
-              << fun () ->
-                 last_command_span := c.span ;
-                 c.content () ;
-                 flush IO.stdout >>
+cmdflushed -> c:prologcmd << fun () -> c () ; flush IO.stdout >>
 toplevel   -> c:rep(cmdflushed) repV(white) << c >>
 
 

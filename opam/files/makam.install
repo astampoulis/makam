@@ -1,0 +1,27 @@
+libexec: [
+  "?_build/toploop/nativerepl.byte" {"makam-bin"}
+  "?_build/toploop/nativerepl.native" {"makam-bin"}
+]
+bin: [
+  "makam"
+]
+share: [
+  "stdlib/basic_predicates.makam" {"stdlib/basic_predicates.makam"}
+  "stdlib/bind.makam" {"stdlib/bind.makam"}
+  "stdlib/clause.makam" {"stdlib/clause.makam"}
+  "stdlib/connectives.makam" {"stdlib/connectives.makam"}
+  "stdlib/demand.makam" {"stdlib/demand.makam"}
+  "stdlib/dyn.makam" {"stdlib/dyn.makam"}
+  "stdlib/eq_typeclass.makam" {"stdlib/eq_typeclass.makam"}
+  "stdlib/fluid.makam" {"stdlib/fluid.makam"}
+  "stdlib/generic.makam" {"stdlib/generic.makam"}
+  "stdlib/guard.makam" {"stdlib/guard.makam"}
+  "stdlib/init.makam" {"stdlib/init.makam"}
+  "stdlib/list.makam" {"stdlib/list.makam"}
+  "stdlib/map.makam" {"stdlib/map.makam"}
+  "stdlib/morerefl.makam" {"stdlib/morerefl.makam"}
+  "stdlib/option.makam" {"stdlib/option.makam"}
+  "stdlib/tuple.makam" {"stdlib/tuple.makam"}
+  "stdlib/typ.makam" {"stdlib/typ.makam"}
+  "stdlib/vars.makam" {"stdlib/vars.makam"}
+]
