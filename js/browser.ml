@@ -67,9 +67,11 @@ let (process_input : string -> unit) input =
     end 
       with 
       | BatInnerIO.Input_closed -> ()
-      | Termlangcanon.FileNotFound s ->
-	(Printf.printf "In %s:\n  File %s not found.\n%!"
-	   (last_cmd_span ()) s; loop (UChannel.flush_to_furthest input))
+      | Termlangcanon.FileNotFound(s, all) ->
+	(Printf.printf "In %s:\n  File %s not found (searched: %a).\n%!"
+	               (last_cmd_span ()) s
+                       (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all
+        ; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
         (restore_debug (); loop (UChannel.flush_to_furthest input))
       | Termlangprolog.ResetInModule m ->
@@ -88,10 +90,10 @@ let (process_input : string -> unit) input =
 
 let load_init_files () =
   let loadfile s =
-    if Sys.file_exists ".init.makam" then
-      global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
+    global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
   in
-  loadfile ".init.makam";
+  loadfile (global_resolve_filename "stdlib/init.makam") ;
+  if Sys.file_exists "init.makam" then loadfile "init.makam" ;
   Termlangcanon.builtinstate := !globalstate ;
   Termlangprolog.builtinprologstate := !globalprologstate
 ;;    

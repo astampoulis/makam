@@ -6,11 +6,12 @@ true: -traverse, debug
 <parsing> or <bootstrap> or <utils> or <termlang> or <grammars> or <toploop>: include
 
 
-<**/*.ml{,i}>: package(findlib), package(batteries), package(uucp), package(oclock), \
+<**/*.ml{,i}>: package(findlib), package(batteries), package(uucp), package(mtime.os), \
 	       package(camlp4), syntax(camlp4o), package(monad-custom)
 
 <js/*>: package(js_of_ocaml)
 <js/*.ml>: package(js_of_ocaml), package(js_of_ocaml.syntax)
+<js/*.byte>: package(mtime.jsoo)
 
 <bootstrap/*.ml>: package(camlp4.quotations.o)
 <utils/toploopTools.ml>: package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
@@ -26,5 +27,5 @@ true: -traverse, debug
 <toploop/*.ml>: package(compiler-libs.toplevel)
 <toploop/byterepl.byte>: package(unix)
 
-<**/*.{byte,native}>: package(unix), package(dynlink), package(uucp), package(oclock), \
+<**/*.{byte,native}>: package(unix), package(dynlink), package(uucp), package(mtime.os), \
                       thread, package(batteries), package(camlp4.fulllib)

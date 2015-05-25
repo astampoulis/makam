@@ -42,7 +42,8 @@ configure:
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/)
-PHONY=js
+
+.PHONY: js
 
 js:
 	$(OCAMLBUILD) -plugin-tag "package(js_of_ocaml.ocamlbuild)" -no-links js/browser.byte

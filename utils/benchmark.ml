@@ -7,8 +7,7 @@ let enabled : bool ref = ref false ;;
 let pausedtimeelapsed = ref 0.0 ;;
 
 let time =
-  let clock = match Oclock.process_cputime with Some x -> x | _ -> assert false in
-  fun () -> (Int64.to_float (Oclock.gettime clock)) *. 1e-9 -. !pausedtimeelapsed
+  fun () -> (Mtime.to_ns (Mtime.elapsed ()) *. 1e-9) -. !pausedtimeelapsed
 ;;
   
 let starttime () = time () ;;

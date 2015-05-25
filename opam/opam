@@ -19,7 +19,7 @@ depends: [
   "oasis" {>= "0.4"}
   "ocamlfind"
   "batteries"
-  "oclock"
+  "mtime"
   "uucp"
   "pa_monad_custom"
   "js_of_ocaml"
