@@ -27,5 +27,6 @@ true: -traverse, debug
 <toploop/*.ml>: package(compiler-libs.toplevel)
 <toploop/byterepl.byte>: package(unix)
 
-<**/*.{byte,native}>: package(unix), package(dynlink), package(uucp), package(mtime.os), \
+<**/*.{byte,native}>: package(unix), package(dynlink), package(uucp), \
                       thread, package(batteries), package(camlp4.fulllib)
+<toploop/*.{byte,native}>: package(mtime.os)
