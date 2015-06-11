@@ -27,7 +27,7 @@ app      : term -> term -> term .
 lamt     : bindone typ term -> term.
 appt     : term -> typ -> term.
 let      : term -> bindone term term -> term.
-letrec   : bindmutrec term term -> bindmany term term -> term.
+letrec   : bindmany term (list term * term) -> term.
 constr   : string -> term -> term.
 construn : string -> term.
 ascribe  : term -> typ -> term.
@@ -186,14 +186,15 @@ typeof (let E E') T' <-
   else (kindof T ktype, bindone.open E' (fun x e' => {prop| (typeof x T -> typeof e' T') |})).
 
 (* let rec *)
-typeof (letrec ES E') T' <-
+typeof (letrec ESE') T' <-
 
-  bindmutrec.open (ES, E') (fun xs bodies e' => {prop|
-    assume_many typeof xs TS (map typeof bodies TS),
-    if map valrestr bodies
+  bindmany.open ESE' (fun xs defsBody => {prop| [Defs Body]
+    eq defsBody (Defs, Body),
+    assume_many typeof xs TS (map typeof Defs TS),
+    if map valrestr Defs
     then (typgenlist TS TSgen, kindofall TSgen ktype,
-          assume_many gentypeof xs TSgen (typeof e' T'))
-    else (assume_many typeof xs TS (typeof e' T'))
+          assume_many gentypeof xs TSgen (typeof Body T'))
+    else (assume_many typeof xs TS (typeof Body T'))
   |}).
   
 (* constructors *)
@@ -328,7 +329,7 @@ typdef_eq      : typconstr -> typdef.
 (* structure items *)
 strlet    : string -> term -> stritem.
 strlet_   : term -> stritem.
-strletrec : bindmutrec term term -> stritem.
+strletrec : bindmany term (list term) -> stritem.
 strtype   : list string -> list (list knd) -> list typdef -> stritem.
 strtypesingle : string -> list knd -> typdef -> stritem.
 strexn    : string -> constrdef -> stritem.
@@ -356,9 +357,9 @@ sigof (strlet_ E)
 
 sigof (strletrec ES)
       (sigmany Vals) <-
-  bindmutrec.open (ES, BXS) (fun xs (es : list term) bxs => {prop| eq bxs (tuple xs) |}),
-  bindmutrec.varnames ES Names,
-  typeof (letrec ES BXS) (tprod TS),
+  bindmany.open (ES, ESE') (fun xs (es : list term) ese' => {prop| eq ese' (es, tuple xs) |}),
+  bindmany.varnames ES Names,
+  typeof (letrec ESE') (tprod TS),
   map (fun n t => eq (sigval n t)) Names TS Vals.
 
 
@@ -471,20 +472,3 @@ typeof (stringconst S) (tbase "string" []).
 `( ocamldo (strtypesingle "option" [ktype] (typdef_variant
      [ ( "None", csdefunit ),
        ( "Some", csdef (typconstr (bindnext "a" (fun a => bindend a))) ) ])) ).
-
-
-
-gracewithnames : A -> A -> prop.
-gracewithnames : int -> A -> A -> prop.
-gracewithnames_ : int -> A -> A -> prop.
-
-gracewithnames X Y <-
-  gracewithnames 0 X Y.
-
-gracewithnames N X Y <-
-  demand.case_otherwise (gracewithnames_ N X Y) (structural (gracewithnames N) X Y).
-
-gracewithnames_ N (X : bindone typ A) Y when bindone.varname X S, refl.isunif S <-
-  tostring N Suffix, string.append "a" Suffix S,
-  plus N 1 N',
-  bindone.open (X, Y) (fun (x : typ) body body' => gracewithnames N' body body').

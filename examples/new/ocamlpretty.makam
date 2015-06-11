@@ -1,0 +1,72 @@
+%extend string.
+
+concat : list string -> string -> prop.
+concat SS S <- foldr string.append SS "" S.
+
+%end.
+
+
+gracewithnames : A -> A -> prop.
+gracewithnames : int -> A -> A -> prop.
+gracewithnames_ : int -> A -> A -> prop.
+
+gracewithnames X Y <-
+  gracewithnames 0 X Y.
+
+gracewithnames N X Y <-
+  demand.case_otherwise (gracewithnames_ N X Y) (structural (gracewithnames N) X Y).
+
+gracewithnames_ N (X : bindone typ A) Y when bindone.varname X S, refl.isunif S <-
+  tostring N Suffix, string.append "a" Suffix S,
+  plus N 1 N',
+  bindone.open (X, Y) (fun (x : typ) body body' => gracewithnames N' body body').
+
+
+listdo : [A]list (A -> prop) -> list A -> prop.
+listdo L L' <- map (fun p => p) L L'.
+
+doconcat : list (string -> prop) -> string -> prop.
+doconcat SS S <- listdo SS SS', string.concat SS' S.
+
+%extend string.
+intersperse : string -> list string -> string -> prop.
+intersperse _ [] "".
+intersperse _ [Last] Last.
+intersperse D (HD :: TL) S <- intersperse D TL TL', string.concat [HD, D, TL'] S.
+%end.
+
+pretty, pretty_ : typ -> string -> prop.
+pretty T S <- demand.case (pretty_ T S).
+
+pretty_ (tarrow T1 T2) S <-
+  doconcat [ eq "(", pretty T1, eq " => ", pretty T2, eq ")" ] S.
+
+pretty_ (tprod TS) S <-
+  map pretty TS TS',
+  string.intersperse " * " TS' TS'',
+  string.concat [ "(", TS'', ")" ] S.
+
+pretty_ (tbase X []) X.
+
+pretty_ (tbase X L) S <-
+  map pretty L L',
+  string.intersperse " " L' L'',
+  string.concat [ X, " ", L'' ] S.
+
+pretty_ (tpi K F) S <-
+  bindone.open F (fun x body =>
+    doconcat [ eq "(", eq "forall ", nameofvar x, eq ".", pretty body, eq ")" ] S
+  ).
+
+pretty_ X S when refl.isnvar X <- nameofvar X S.
+
+%extend ocaml.
+
+print_type : typ -> prop.
+print_type T <-
+  gracewithnames T T',
+  pretty T' S,
+  string.concat [ "\n\n", S, "\n\n" ] S',
+  print_string S'.
+
+%end.
