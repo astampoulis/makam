@@ -118,7 +118,7 @@ typeof (app E1 E2) T2 <-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
 typeof (lamt E) (tpi K TF) <-
-  bindone.open (E, TF) (fun a e t => {prop|
+  bindone.open E TF (fun a e t => {prop|
     (kindofg a K -> typeof e t)
   |}).
 
@@ -357,7 +357,7 @@ sigof (strlet_ E)
 
 sigof (strletrec ES)
       (sigmany Vals) <-
-  bindmany.open (ES, ESE') (fun xs (es : list term) ese' => {prop| eq ese' (es, tuple xs) |}),
+  bindmany.open ES ESE' (fun xs es ese' => {prop| eq ese' (es, tuple xs) |}),
   bindmany.varnames ES Names,
   typeof (letrec ESE') (tprod TS),
   map (fun n t => eq (sigval n t)) Names TS Vals.
