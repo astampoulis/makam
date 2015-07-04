@@ -63,7 +63,7 @@ fromlist Eq1 Eq2 L (map Eq1 Eq2 L) <-
 mapvalues : [K A B] (A -> B -> prop) -> map K A -> map K B -> prop.
 mapvalues P (map Eq1 Eq2 List) (map Eq1 Eq2' List') <-
   eqT_lookup Eq2',
-  map (fun elm res => {prop| [Key Val Val'] eq elm (Key, Val), P Val Val', eq res (Key, Val') |}) List List'.
+  map (pfun elm res => [Key Val Val'] eq elm (Key, Val), P Val Val', eq res (Key, Val')) List List'.
 
 (* Relates a map to a map that includes the given (key, value) pair,
    unless the map includes a different entry for the key already. *)

@@ -161,7 +161,7 @@ varinfos : [V T B] telescope V T B -> list T -> prop.
 newvars_aux : [V T B] telescope V T B -> list V -> (list V -> prop) -> prop.
 newvars_aux (telend _) Vars P <- reverse Vars Vars', P Vars'.
 newvars_aux (telnext S T Rest) Vars P <-
-  bindone.open (bindone S Rest) (fun x bindrest => {prop| (infoofvar x T -> newvars_aux bindrest (x :: Vars) P) |}).
+  bindone.open (bindone S Rest) (pfun x bindrest => (infoofvar x T -> newvars_aux bindrest (x :: Vars) P) ).
 newvars B P <- newvars_aux B [] P.
 
 apply (telend X) [] X.

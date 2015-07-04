@@ -72,6 +72,11 @@ lexpr -> fn:ltoken("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
 	   let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
 	   List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
 
+       / fn:ltoken("pfun") bindings:repplusWHITE(binding) token("=>") body:prop
+        << let bindings = List.flatten bindings in
+	   let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
+	   List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
+
       / hd:appexpr^ token("::") tl:lexpr
         << mkTm "cons" [ hd ; tl ] >>
 

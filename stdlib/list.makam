@@ -101,7 +101,7 @@ contains Eq X L <- eqT_lookup Eq, contains_aux Eq X L.
 unique : [A] eqT A -> list A -> list A -> prop.
 unique Eq L L' <-
   eqT_lookup Eq,
-  foldl (fun cur elm res => {prop| (if contains Eq elm cur then eq res cur else eq res (elm :: cur)) |})
+  foldl (pfun cur elm res => (if contains Eq elm cur then eq res cur else eq res (elm :: cur)) )
         [] L L'', reverse L'' L'.
 
 

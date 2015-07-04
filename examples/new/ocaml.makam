@@ -75,7 +75,7 @@ kindofconstr : typconstr -> knd -> prop.
 
 kindof T K <- guard T (kindofg T K).
 kindofg (tarrow T1 T2) ktype <- kindof T1 ktype, kindof T2 ktype.
-kindofg (tpi K TF)     ktype <- bindone.open TF (fun x t => {prop| (kindofg x K -> kindof t ktype) |}).
+kindofg (tpi K TF)     ktype <- bindone.open TF (pfun x t => (kindofg x K -> kindof t ktype)).
 kindofg (tprod TS)     ktype <- kindofall TS ktype.
 kindofg (tbase T TS)   K     <- guard T (kindofbase T (karrow KS K)), map kindof TS KS.
 
@@ -110,17 +110,17 @@ typeof    : term -> typ -> prop.
 
 
 typeof (lam E) (tarrow T1 T2) <-
-  bindone.open E (fun x e => {prop|
+  bindone.open E (pfun x e =>
     (typeof x T1 -> typeof e T2)
-  |}), kindof T1 ktype.
+  ), kindof T1 ktype.
 
 typeof (app E1 E2) T2 <-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
 typeof (lamt E) (tpi K TF) <-
-  bindone.open E TF (fun a e t => {prop|
+  bindone.open E TF (pfun a e t =>
     (kindofg a K -> typeof e t)
-  |}).
+  ).
 
 typeof (appt E T) T' <-
   typeof E (tpi K TF), bindone.apply TF T T', kindof T K.
@@ -154,7 +154,7 @@ typgen : typ -> typ -> prop.
 typgen T T <- not(next_typgen T _).
 typgen T (tpi K F') <-
   next_typgen T F,
-  bindone.open F' (fun x f' => {prop| (kindofg x K -> typgen (F x) f') |} ).
+  bindone.open F' (pfun x f' => (kindofg x K -> typgen (F x) f')).
 
 typgenlist : list typ -> list typ -> prop.
 typgenlist TS TS' <- map typgen TS TS'.
@@ -182,20 +182,20 @@ valrestr (ascribe E _) <- valrestr E.
 typeof (let E E') T' <-
   typeof E T, 
   if valrestr E
-  then (typgen T Tgen, kindof Tgen ktype, bindone.open E' (fun x e' => {prop| (gentypeof x Tgen -> typeof e' T') |}))
-  else (kindof T ktype, bindone.open E' (fun x e' => {prop| (typeof x T -> typeof e' T') |})).
+  then (typgen T Tgen, kindof Tgen ktype, bindone.open E' (pfun x e' => (gentypeof x Tgen -> typeof e' T')))
+  else (kindof T ktype, bindone.open E' (pfun x e' => (typeof x T -> typeof e' T') )).
 
 (* let rec *)
 typeof (letrec ESE') T' <-
 
-  bindmany.open ESE' (fun xs defsBody => {prop| [Defs Body]
+  bindmany.open ESE' (pfun xs defsBody => [Defs Body]
     eq defsBody (Defs, Body),
     assume_many typeof xs TS (map typeof Defs TS),
     if map valrestr Defs
     then (typgenlist TS TSgen, kindofall TSgen ktype,
           assume_many gentypeof xs TSgen (typeof Body T'))
     else (assume_many typeof xs TS (typeof Body T'))
-  |}).
+  ).
   
 (* constructors *)
 typeof (construn C) (tbase Tbase TS) <-
@@ -281,12 +281,12 @@ typeofpatt (precord FieldsPatts) (tbase Tbase TS) <-
 
 
 typebranch T T' Branch <-
-  bindmany.open Branch (fun pattvars branch => {prop| [Patt Body]
+  bindmany.open Branch (pfun pattvars branch => [Patt Body]
     eq branch (Patt, Body),
     assume_many typeof pattvars TS {prop|
       typeofpatt Patt T,
       typeof Body T'
-    |} |}).
+    |}).
   
 
 typeof (match E Branches) T' <-
@@ -357,7 +357,7 @@ sigof (strlet_ E)
 
 sigof (strletrec ES)
       (sigmany Vals) <-
-  bindmany.open ES ESE' (fun xs es ese' => {prop| eq ese' (es, tuple xs) |}),
+  bindmany.open ES ESE' (pfun xs es ese' => eq ese' (es, tuple xs)),
   bindmany.varnames ES Names,
   typeof (letrec ESE') (tprod TS),
   map (fun n t => eq (sigval n t)) Names TS Vals.
@@ -376,10 +376,10 @@ constructor_wf csdefunit KS.
 constructor_wf (csdef TC) KS <- typconstr_wf TC KS.
 
 typdef_wf (typdef_variant Constructors) KS <-
-  map (fun nc => {prop| [Name Constr] eq nc (Name, Constr), constructor_wf Constr KS |}) Constructors.
+  map (pfun nc => [Name Constr] eq nc (Name, Constr), constructor_wf Constr KS ) Constructors.
 
 typdef_wf (typdef_record Fields) KS <-
-  map (fun nc => {prop| [Name TConstr] eq nc (Name, TConstr), typconstr_wf TConstr KS |}) Fields.
+  map (pfun nc => [Name TConstr] eq nc (Name, TConstr), typconstr_wf TConstr KS ) Fields.
 
 typdef_wf (typdef_eq TC) KS <-
   typconstr_wf TC KS.
@@ -423,13 +423,13 @@ sigitem_new_assumptions (sigmany Sigs)  Flattened <-
 typdef_new_assumptions TName KS (typdef_variant Constructors) ( (type_variant_def TName KS Constructors) ::
                                                                 ConstrAssumptions ) <-
 
-  map (fun nc res => {prop| [Name Csdef] eq nc (Name, Csdef), eq res (constructor_def Name Csdef TName) |})
+  map (pfun nc res => [Name Csdef] eq nc (Name, Csdef), eq res (constructor_def Name Csdef TName) )
       Constructors ConstrAssumptions.
 
 typdef_new_assumptions TName KS (typdef_record Fields) ( (type_record_def TName KS Map) ::
                                                          FieldAssumptions ) <-
   map.fromlist _ _ Fields Map,
-  map (fun nt res => {prop| [Name Tconstr] eq nt (Name, Tconstr), eq res (field_def Name Tconstr TName) |})
+  map (pfun nt res => [Name Tconstr] eq nt (Name, Tconstr), eq res (field_def Name Tconstr TName) )
       Fields FieldAssumptions.
 
 typdef_new_assumptions TName KS (typdef_eq TypConstr) [ type_eq_def TName KS TypConstr ].
