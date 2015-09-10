@@ -1,0 +1,48 @@
+test_suite : type.
+
+testcase : test_suite -> prop.
+
+run_tests : list test_suite -> prop.
+
+%extend testing_private.
+
+handle_result : list clause -> list clause -> prop.
+handle_result Successes [] <-
+  length Successes Tests, tostring Tests TestsS,
+  foldl string.append ""
+  [ "\n\n=== TESTS SUCCESSFUL (", TestsS, " passed, 0 failed) ===\n\n" ] S,
+  print_string S.
+
+handle_result Successes Failures when not(eq Failures []) <-
+  length Successes SuccessN, tostring SuccessN SuccessS,
+  length Failures FailureN, tostring FailureN FailureS,
+  foldl string.append ""
+  [ "\n\n=== TESTS FAILED (", SuccessS, " passed, ", FailureS, ") ===\n\n" ] S,
+  print_string S,
+  failure.
+
+handle_failure : clause -> prop.
+handle_failure TestCase <-
+  locget TestCase Loc,
+  tostring Loc TestCaseS,
+  foldl string.append ""
+  [ "\n-- Test failure for testcase at ", TestCaseS, "\n" ] S,
+  print_string S.
+
+run_test : list test_suite -> list clause -> list clause -> prop -> list clause -> prop.
+run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Failures.
+run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
+  if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
+  then (
+    if (clause.premise TestCase)
+    then (run_test Suites (TestCase :: Successes) Failures (testcase X) TL)
+    else (handle_failure TestCase, run_test Suites Successes (TestCase :: Failures) (testcase X) TL)
+  )
+  else (run_test Suites Successes Failures (testcase X) TL).
+
+
+%end.
+
+run_tests Suites <-
+  print_string "\n\n=== RUNNING TESTS ===\n",
+  demand.aux_demand (testing_private.run_test Suites [] []) (testcase X).
