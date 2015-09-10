@@ -52,7 +52,7 @@ let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 let lambda_prolog_toplevel_parser : ((unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ -> None) ;;
 let last_command_span : UChannel.span ref = ref None ;;
 
-let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun" ];;
+let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun"; "pfun" ];;
 
 exception Forget of string ;;
 
