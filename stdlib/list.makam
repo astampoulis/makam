@@ -74,7 +74,7 @@ concat LS L <-
 
 (* Find element matching a predicate *)
 find : [A] (A -> prop) -> list A -> A -> prop.
-find Pred (HD :: TL) Res <- if (P HD) then eq Res HD else find Pred TL Res.
+find Pred (HD :: TL) Res <- if (Pred HD) then eq Res HD else find Pred TL Res.
 
 (* Keep only elements that succeed on a predicate *)
 filter : [A] (A -> prop) -> list A -> list A -> prop.
