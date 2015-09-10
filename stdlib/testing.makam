@@ -1,8 +1,8 @@
-test_suite : type.
+testsuite : type.
 
-testcase : test_suite -> prop.
+testcase : testsuite -> prop.
 
-run_tests : list test_suite -> prop.
+run_tests : list testsuite -> prop.
 
 %extend testing_private.
 
@@ -29,7 +29,7 @@ handle_failure TestCase <-
   [ "\n-- Test failure for testcase at ", TestCaseS, "\n" ] S,
   print_string S.
 
-run_test : list test_suite -> list clause -> list clause -> prop -> list clause -> prop.
+run_test : list testsuite -> list clause -> list clause -> prop -> list clause -> prop.
 run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Failures.
 run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
