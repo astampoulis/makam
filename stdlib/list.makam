@@ -51,6 +51,11 @@ foldl_invert P SEnd Res SStart <-
   then (foldl_invert P SPrev Res' SStart, append Res' [Last] Res)
   else (eq Res nil, eq SStart SEnd).
 
+(* Length *)
+length : [A] list A -> int -> prop.
+length [] 0.
+length (HD :: TL) N <- length TL N', plus N' 1 N.
+
 (* Reverse the list *)
 reverse : [A] list A -> list A -> prop.
 reverse_aux : [A] list A -> list A -> list A -> prop.
