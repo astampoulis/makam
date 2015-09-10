@@ -1,0 +1,8 @@
+%extend string.
+
+concat : list string -> string -> prop.
+concat Strings Result <-
+  foldl append "" Strings Result.
+
+%end.
+
