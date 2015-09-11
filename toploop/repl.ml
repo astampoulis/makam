@@ -206,7 +206,15 @@ let main () =
   print_now ("\n\tMakam, version " ^ version ^ "\n\n");
   load_init_files ();
   store_state ();
+  let doexit, files =
+    match List.rev files with
+      [] -> false, files
+    | stdin :: tl when stdin = "-" ->
+       false, List.rev tl
+    | _ -> true, files
+  in
   repl files;
+  if not doexit then repl [];
   print_now "\n";
   benchmark_results ();
   output_log ()
