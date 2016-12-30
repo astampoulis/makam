@@ -347,6 +347,24 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "unifmetalevel" ( ( ~* "A" ) **> _tInt **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> function [ term ; level ] -> begin perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+
+         (* deconstruct *)
+         | `LamMany([], { term = `Meta(m1) }) ->
+
+          perform
+             lvl <-- getMetaLevel (metaindex m1);
+             pattcanonUnifyFull level (pattcanonInt lvl) ;
+
+         | _ -> mzero
+    end | _ -> assert false)
+  ;;
+
   let ensure_concrete_type (p : pattcanon) : unit RunCtx.Monad.m =
     let open RunCtx.Monad in
     perform
