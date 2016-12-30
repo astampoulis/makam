@@ -25,6 +25,7 @@ absunif : A -> B -> (B -> A) -> prop.
 absunif_aux, absunif_ : B -> B -> A -> A -> prop.
 
 absunif_ Unif Replace Root Replace when refl.sameunif Root Unif.
+absunif_ Unif Replace Root Root when refl.isunif Root.
 absunif_aux Unif Replace Root Result <- demand.case_otherwise (absunif_ Unif Replace Root Result) (structural (absunif_aux Unif Replace) Root Result).
 
 absunif Root (Unif : A) Res <-
