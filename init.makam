@@ -3,3 +3,4 @@
 %directory "examples/small".
 %directory "examples/peg".
 %directory "examples/experiments".
+%directory "examples/paper".

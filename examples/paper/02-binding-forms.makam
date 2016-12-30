@@ -1,0 +1,25 @@
+%use "01-base-language".
+
+(* As we've seen, single-variable binding as in the lambda abstraction can be handled easily through higher-order abstract
+   syntax. Let us now explore how to encode other forms of binding.
+   
+   As a first example, we will introduce multiple-argument functions as a distinct object-level construct, as opposed to
+   using currying. A first attempt at encoding such a construct could be to introduce a `list` of term variables at the same
+   time, as follows:
+*)
+
+lammany : (list term -> term) -> term.
+
+(* This is not exactly what we would like. The type `list term -> term` introduces a fresh local variable for the `list`
+   type, as opposed to a number of fresh local variables for the `term` type. Since the HOAS function space is parametric,
+   there is no way to even refer to the potential elements of the fresh `list` -- we can only refer to the list in full.
+
+   Instead, we would like a type that represents all types of the form:
+   term -> term
+   term -> (term -> term)
+   term -> (term -> (term -> term))
+   ...
+
+   Such a type can be directly encoded in λProlog, as follows:
+*)
+
