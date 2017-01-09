@@ -106,8 +106,8 @@ openmany F P :-
    it therefore can be read as existential quantification. Metavariables are allowed
    to capture all the free variables in scope at the point where there are introduced.
    For most of them, introduced implicitly in each clause, this means the free variables
-   in scope when the clause is used. In this case however we would like to permit `Body`
-   to capture the fresh variables introduced by the `intromany` predicate too, hence the
+   in scope when the clause is used. In this case however it is necessary that `Body`
+   can capture the fresh variables introduced by the `intromany` predicate too, hence the
    explicit metavariable introduction.
 *)
 
