@@ -1,0 +1,57 @@
+%use "02-binding-forms".
+
+(* Sneak peek: not much commentary here, just showing what's possible. *)
+
+(* dbind A T B: dependently-typed binding of many A's into a B; T is a tuple-type representing the type of substitutions. *)
+
+dbind : type -> type -> type -> type.
+
+%extend dbind.
+
+one : (A -> dbind A T B) -> dbind A (A * T) B.
+none : B -> dbind A unit B.
+
+intro : [A B] dbind A T B -> (T -> prop) -> prop.
+apply : [A B] dbind A T B -> T -> B -> prop.
+open : [A B] dbind A T B -> (T -> B -> prop) -> prop.
+
+intro (dbind.one F) P :-
+  (x:A -> intro (F x) (fun t => P (x, t))).
+intro (dbind.none Body) P :- P unit.
+
+apply (dbind.one F) (X, XS) Body :-
+  apply (F X) XS Body.
+apply (dbind.none Body) unit Body.
+
+open (dbind.one F) P :-
+  (x:A -> open (F x) (fun t body => P (x, t) body)).
+open (dbind.none Body) P :- P unit Body.  
+
+%end.
+
+(*
+something like that should work:
+(though letrec is probably not the best example)
+
+letrec : dbind term T T -> dbind term T term -> term.
+typeof (letrec Defs Body) T' :-
+  dbind.open Defs (pfun xs defs =>
+    tuple.toList xs xsL,
+    assumemany typeof xsL TS (structural typeof defs TS)
+  ),
+  dbind.open Body (pfun xs body =>
+    tuple.toList xs xsL,
+    assumemany typeof xsL TS (typeof body T')).
+*)
+
+(* we can also use the same trick for linear contexts with no reordering, such as patterns.
+   The two type arguments is the tuple of variables that we start with, and the second one
+   the tuple of variables we're left with. *)
+
+patt : type -> type -> type.
+
+pattunit : patt T T.
+pattvar : patt (term * T) T.
+pattwild : patt T T.
+patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3.
+

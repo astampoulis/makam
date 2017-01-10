@@ -126,3 +126,51 @@ typeof (lammany (bindnext (fun x => bindnext (fun y => bindbase (tuple [x, y])))
 (*
 >> T := arrowmany [ T1, T2 ] (product [ T1, T2 ])
 *)
+
+(* Adding the corresponding `appmany` construct for simultaneous application is straight-forward.
+   We can use the `applymany` predicate defined above to encode simultaneous substitution for the
+   evaluation rule. *)
+
+appmany : term -> list term -> term.
+
+typeof (appmany E ES) T' :-
+  typeof E (arrowmany TS T'),
+  map typeof ES TS.
+
+eval (lammany F) (lammany F).
+
+eval (appmany E ES) V' :-
+  eval E (lammany F),
+  map eval ES VS,
+  applymany F VS E',
+  eval E' V'.
+
+(* We can use the `bindmany` type to encode other constructs, such as mutually recursive definitions,
+   like the `let rec` construct of ML. In that case, we can capture the right binding structure by
+   introducing a number of variables simultaneously, accessible both when giving the (same number of)
+   definitions and the body of the construct.
+
+   We can therefore encode a `let rec` construct of the form:
+   `let rec f = f_def and g = g_def in body`
+   as
+   `letrec (bindnext (fun f => bindnext (fun g => bindbase ([f_def, g_def]))))
+     (bindnext (fun f => bindnext (fun g => bindbase body)))`
+*)
+
+letrec : bindmany term (list term) -> bindmany term term -> term.
+
+typeof (letrec XS_Defs XS_Body) T' :-
+  openmany XS_Defs (pfun xs defs =>
+    assumemany typeof xs TS (map typeof defs TS)
+  ),
+  openmany XS_Body (pfun xs body =>
+    assumemany typeof xs TS (typeof body T')
+  ).
+
+(* Still, even though this encoding matches the binding structure correctly, it is unsatisfying,
+   as it does not guarantee that the same number of variables are introduced in both cases and
+   that the same number of definitions are given. Though this requirement is enforced at the
+   level of the typing rules, it would be better if we could enforce it at the syntax level.
+   This would require some sort of dependency though, which at first does not seem possible to
+   do in λProlog.
+*)
