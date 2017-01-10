@@ -1,6 +1,6 @@
 %use "02-binding-forms".
 
-(* Sneak peek: not much commentary here, just showing what's possible. *)
+(* Sneak peek: work-in-progress and not much commentary here, just roughly showing what's possible. *)
 
 (* dbind A T B: dependently-typed binding of many A's into a B; T is a tuple-type representing the type of substitutions. *)
 
@@ -53,5 +53,23 @@ patt : type -> type -> type.
 pattunit : patt T T.
 pattvar : patt (term * T) T.
 pattwild : patt T T.
-patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3.
+patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3. (* unfortunately can't do n-ary tuples.. *)
 
+single_branch_match : term -> patt T unit -> dbind term T term -> term.
+
+(*
+patt_to_term : patt T T'-> term -> T' -> T -> prop.
+patt_to_term pattunit eunit Subst Subst.
+patt_to_term pattvar X Subst (X, Subst).
+patt_to_term pattwild _ Subst Subst.
+patt_to_term (patttuple P1 P2) (tuple E1 E2) Subst3 Subst1 :-
+  patt_to_term P2 E2 Subst3 Subst2,
+  patt_to_term P1 E1 Subst2 Subst1.
+
+eval (single_branch_match Scrutinee Patt Body) V :-
+  patt_to_term Patt PattTerm unit UnifVars,
+  eq Scrutinee PattTerm, (* reuse unification *)
+  dbind.apply Body UnifVars Body',
+  eval Body' V.
+*)
+  
