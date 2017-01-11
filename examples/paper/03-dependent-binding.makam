@@ -53,7 +53,7 @@ patt : type -> type -> type.
 pattunit : patt T T.
 pattvar : patt (term * T) T.
 pattwild : patt T T.
-patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3. (* unfortunately can't do n-ary tuples.. *)
+patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3.
 
 single_branch_match : term -> patt T unit -> dbind term T term -> term.
 
@@ -72,4 +72,18 @@ eval (single_branch_match Scrutinee Patt Body) V :-
   dbind.apply Body UnifVars Body',
   eval Body' V.
 *)
-  
+
+
+(* unfortunately n-ary tuples require their own list type: *)
+pattlist : type -> type -> type.
+pattnil : pattlist T T.
+pattcons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
+pattntuple : pattlist T1 T2 -> patt T1 T2.
+
+(*
+pattlist_to_termlist : pattlist T T' -> list term -> T' -> T -> prop.
+pattlist_to_termlist pattnil [] Subst Subst.
+pattlist_to_termlist (pattcons P PS) (T :: TS) Subst3 Subst1 <-
+  pattlist_to_termlist PS TS Subst3 Subst2,
+  patt_to_term P T Subst2 Subst1.
+*)
