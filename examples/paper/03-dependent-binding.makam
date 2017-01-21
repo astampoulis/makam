@@ -16,7 +16,7 @@ apply : [A B] dbind A T B -> T -> B -> prop.
 open : [A B] dbind A T B -> (T -> B -> prop) -> prop.
 
 intro (dbind.one F) P :-
-  (x:A -> intro (F x) (fun t => P (x, t))).
+  (x:A -> intro (F x) (pfun t => P (x, t))).
 intro (dbind.none Body) P :- P unit.
 
 apply (dbind.one F) (X, XS) Body :-
@@ -45,8 +45,9 @@ typeof (letrec Defs Body) T' :-
 *)
 
 (* we can also use the same trick for linear contexts with no reordering, such as patterns.
-   The two type arguments is the tuple of variables that we start with, and the second one
-   the tuple of variables we're left with. *)
+   Taking patterns as an example, we need two type arguments: one representing the tuple
+   of variables that we start with, and another one for representing the tuple of variables
+   we're left with. *)
 
 patt : type -> type -> type.
 

@@ -104,7 +104,7 @@ openmany F P :-
 
    The square bracket notation, used above in `[Body]`, introduces a new metavariable;
    it therefore can be read as existential quantification. Metavariables are allowed
-   to capture all the free variables in scope at the point where there are introduced.
+   to capture all the free variables in scope at the point where they are introduced.
    For most of them, introduced implicitly in each clause, this means the free variables
    in scope when the clause is used. In this case however it is necessary that `Body`
    can capture the fresh variables introduced by the `intromany` predicate too, hence the
@@ -124,10 +124,10 @@ typeof (lammany F) (arrowmany TS T') :-
 typeof (lammany (bindnext (fun x => bindnext (fun y => bindbase (tuple [x, y]))))) T ?
 
 (*
->> T := arrowmany [ T1, T2 ] (product [ T1, T2 ])
+>> T := arrowmany [T1, T2] (product [T1, T2])
 *)
 
-(* Adding the corresponding `appmany` construct for simultaneous application is straight-forward.
+(* Adding the corresponding `appmany` construct for simultaneous application is straightforward.
    We can use the `applymany` predicate defined above to encode simultaneous substitution for the
    evaluation rule. *)
 
