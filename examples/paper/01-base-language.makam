@@ -56,8 +56,65 @@ typeof (lam _ (fun x => x)) T' ?
    type with a naive implementation of unification fails as expected.
 *)
 
-typeof (lam T (fun x => app x x)) T' ?
+typeof (lam _ (fun x => app x x)) T' ?
 
 (*
 >> Impossible.
 *)
+
+(* Other than supporting higher-order abstract syntax, λProlog also supports polymorphic types and higher-order
+   predicates, in a matter akin to traditional functional programming languages. For example, we can define the
+   polymorphic `list` type, and an accompanying `map` higher-order predicate, as follows:
+*)
+
+%extend tmp. (* NOTE: temporary namespace so that we can still use the standard `list` type in what follows. *)
+
+list : type -> type.
+
+nil : list A.
+cons : A -> list A -> list A.
+
+map : (A -> B -> prop) -> list A -> list B -> prop.
+map P nil nil.
+map P (cons X XS) (cons Y YS) :- P X Y, map P XS YS.
+
+%end.
+
+(* Using the meta-level list type, we can encode object-level constructs such as tuples and product types 
+   directly: *)
+
+tuple : list term -> term.
+product : list typ -> typ.
+
+(* Similarly we can use the `map` predicate to define the typing relation for tuples. *)
+
+typeof (tuple ES) (product TS) :-
+  map typeof ES TS.
+
+(* Executing a query like: *)
+
+typeof (lam _ (fun x => lam _ (fun y => tuple (cons x (cons y nil))))) T ?
+
+(*
+   yields:
+
+>> T := arrow T1 (arrow T2 (product (cons T1 (cons T2 nil))))
+*)
+
+(* So far we have only introduced the predicate `typeof` for typing. In the same way,
+   we can introduce a predicate for evaluating terms, capturing the dynamic semantics of
+   the language. *)
+
+eval : term -> term -> prop.
+
+(* Most of the rules are straightforward, following standard practice for big-step semantics.
+   We assume a call-by-value evaluation strategy. *)
+
+eval (lam T F) (lam T F).
+eval (tuple ES) (tuple VS) :- map eval ES TS.
+
+(* For the beta-redex case, function application for higher-order abstract syntax gives us
+   capture-avoiding substitution directly: *)
+
+eval (app E E') V'' :-
+  eval E (lam _ F), eval E' V', eval (F V') V''.

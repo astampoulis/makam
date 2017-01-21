@@ -1,0 +1,90 @@
+%use "02-binding-forms".
+
+(* Sneak peek: work-in-progress and not much commentary here, just roughly showing what's possible. *)
+
+(* dbind A T B: dependently-typed binding of many A's into a B; T is a tuple-type representing the type of substitutions. *)
+
+dbind : type -> type -> type -> type.
+
+%extend dbind.
+
+one : (A -> dbind A T B) -> dbind A (A * T) B.
+none : B -> dbind A unit B.
+
+intro : [A B] dbind A T B -> (T -> prop) -> prop.
+apply : [A B] dbind A T B -> T -> B -> prop.
+open : [A B] dbind A T B -> (T -> B -> prop) -> prop.
+
+intro (dbind.one F) P :-
+  (x:A -> intro (F x) (pfun t => P (x, t))).
+intro (dbind.none Body) P :- P unit.
+
+apply (dbind.one F) (X, XS) Body :-
+  apply (F X) XS Body.
+apply (dbind.none Body) unit Body.
+
+open (dbind.one F) P :-
+  (x:A -> open (F x) (fun t body => P (x, t) body)).
+open (dbind.none Body) P :- P unit Body.  
+
+%end.
+
+(*
+something like that should work:
+(though letrec is probably not the best example)
+
+letrec : dbind term T T -> dbind term T term -> term.
+typeof (letrec Defs Body) T' :-
+  dbind.open Defs (pfun xs defs =>
+    tuple.toList xs xsL,
+    assumemany typeof xsL TS (structural typeof defs TS)
+  ),
+  dbind.open Body (pfun xs body =>
+    tuple.toList xs xsL,
+    assumemany typeof xsL TS (typeof body T')).
+*)
+
+(* we can also use the same trick for linear contexts with no reordering, such as patterns.
+   Taking patterns as an example, we need two type arguments: one representing the tuple
+   of variables that we start with, and another one for representing the tuple of variables
+   we're left with. *)
+
+patt : type -> type -> type.
+
+pattunit : patt T T.
+pattvar : patt (term * T) T.
+pattwild : patt T T.
+patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3.
+
+single_branch_match : term -> patt T unit -> dbind term T term -> term.
+
+(*
+patt_to_term : patt T T'-> term -> T' -> T -> prop.
+patt_to_term pattunit eunit Subst Subst.
+patt_to_term pattvar X Subst (X, Subst).
+patt_to_term pattwild _ Subst Subst.
+patt_to_term (patttuple P1 P2) (tuple E1 E2) Subst3 Subst1 :-
+  patt_to_term P2 E2 Subst3 Subst2,
+  patt_to_term P1 E1 Subst2 Subst1.
+
+eval (single_branch_match Scrutinee Patt Body) V :-
+  patt_to_term Patt PattTerm unit UnifVars,
+  eq Scrutinee PattTerm, (* reuse unification *)
+  dbind.apply Body UnifVars Body',
+  eval Body' V.
+*)
+
+
+(* unfortunately n-ary tuples require their own list type: *)
+pattlist : type -> type -> type.
+pattnil : pattlist T T.
+pattcons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
+pattntuple : pattlist T1 T2 -> patt T1 T2.
+
+(*
+pattlist_to_termlist : pattlist T T' -> list term -> T' -> T -> prop.
+pattlist_to_termlist pattnil [] Subst Subst.
+pattlist_to_termlist (pattcons P PS) (T :: TS) Subst3 Subst1 <-
+  pattlist_to_termlist PS TS Subst3 Subst2,
+  patt_to_term P T Subst2 Subst1.
+*)
