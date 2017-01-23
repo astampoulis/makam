@@ -165,11 +165,14 @@ patt_unit : patt T T.
 patt_var : patt (term * T) T.
 patt_wild : patt T T.
 
+(* Probably hidden: add natural numbers so that we can have a simple example of patterns. *)
 nat : typ.
 zero : term.
 succ : term -> term.
 typeof zero nat.
 typeof (succ N) nat :- typeof N nat.
+eval zero zero.
+eval (succ E) (succ V) :- eval E V.
 
 patt_zero : patt T T.
 patt_succ : patt T T' -> patt T T'.
@@ -207,10 +210,27 @@ pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
 
 eval (case_or_else Scrutinee Pattern Body Else) V :-
   patt_to_term Pattern TermWithUnifvars snil Unifvars,
-  eq Scrutinee TermWithUnifvars, (* reuse unification from the meta-language *)
-  applymany Body Unifvars Body',
-  eval Body' V.
+  if (eq Scrutinee TermWithUnifvars)    (* reuse unification from the meta-language *)
+  then (applymany Body Unifvars Body', eval Body' V)
+  else (eval Else V).
 
-(* 
-eval (app (lam T2 (fun x => case_or_else (tuple [zero, succ (succ x)]) (patt_tuple (patt_cons patt_zero (patt_cons (patt_succ patt_var) patt_nil))) (dbindnext (fun a => dbindnext (fun b => dbindbase b))) zero)) (tuple [zero, succ (succ (succ zero))])) V ?
-*)
+
+(* Hidden: booleans. *)
+bool : typ.
+bconst : bool -> term.
+typeof (bconst B) bool.
+eval (bconst B) (bconst B).
+patt_bconst : bool -> patt T T.
+patt_to_term (patt_bconst B) (bconst B) Subst Subst.
+
+
+(eq PRED 
+  (lam _ (fun n => 
+    case_or_else n
+      patt_zero (dbindbase zero)
+      (case_or_else n
+      (patt_succ patt_var) (dbindnext (fun pred => dbindbase pred))
+      zero (* should never get reached *)
+      ))),
+ eval (app PRED zero) PRED_OF_ZERO,
+ eval (app PRED (succ (succ zero))) PRED_OF_TWO) ?
