@@ -1,90 +1,263 @@
 %use "02-binding-forms".
 
-(* Sneak peek: work-in-progress and not much commentary here, just roughly showing what's possible. *)
+(* The type system of λProlog can be viewed as a particular subset of System Fω: namely, it is the
+   simply-typed lambda calculus extended with prenex polymorphism and simple type constructors of
+   the form `type -> type -> ... -> type`. (As an aside, `prop` can be viewed as a separate sort,
+   but we take the view that it is just a distinguished extensible type.)
 
-(* dbind A T B: dependently-typed binding of many A's into a B; T is a tuple-type representing the type of substitutions. *)
+   As is well-known from Haskell even before the addition of kind definitions, type promotion and
+   type-in-type, this subset of System Fω is enough to model some form of dependency. For example,
+   we can introduce two types for modelling natural numbers, and define vectors as a GADT using those:
+*)
+natZ : type.
+natS : type -> type.
+
+vector : type -> type -> type.
+vnil : vector natZ A.
+vcons : A -> vector N A -> vector (natS N) A.
+
+(* In fact, λProlog naturally supports pattern-matching over such constructors as well, through
+   *ad-hoc polymorphism*, where polymorphic type variables are allowed to be instantiated at *runtime*
+   rather than at type-checking time. The mechanism through which ad-hoc polymorphism works in
+   λProlog is simple: before performing unification at the term-level, we perform unification at
+   the type level first, therefore further determining any uninstantiated type variables. Therefore,
+   when we check to see whether the current goal matches the premise of a rule, type unification
+   can force us to distinguish between different types. Based on these, the standard example
+   of `map` for vectors is as follows:
+*)
+
+vmap : [A B] (A -> B -> prop) -> vector N A -> vector N B -> prop.
+vmap P vnil vnil.
+vmap P (vcons X XS) (vcons Y YS) :- P X Y, vmap P XS YS.
+
+(* TODO: flip the meaning of square bracket notation in types
+   
+   Currently square brackets are used in order to specify which type variables should be treated
+   parametrically, whereas I think it makes more sense to explicitly call out variables where ad-hoc
+   polymorphism is allowed. This will require quite a bit of adaptation.
+*)
+
+(* The notation [N] in the type of `vmap` means that the type argument `N` is ad-hoc/not-parametric.
+   Non-specified type arguments are parametric by default, so as to match standard practice in
+   languages like ML and Haskell, and to catch type errors that allowing unqualified ad-hoc
+   polymorphism would permit. For example, consider the following erroneous definition for `fold`,
+   where the arguments for `P` in the `cons` case are flipped.
+
+foldl : (B -> A -> B -> prop) -> B -> list A -> B -> prop.
+foldl P S nil S.
+foldl P S (cons HD TL) S'' <- P HD S S', foldl P S' TL S''.
+
+   If ad-hoc polymorphism is allowed for `A` and `B`, this is a well-typed definition. However, the
+   erroneous call to `P` forces the types `A` and `B` to be unified, and therefore the `fold`
+   predicate is unnecessarily restricted to only work when the two types are the same. Having to
+   specify ad-hoc polymorphism explicitly helps us avoid such mistakes. *)
+
+(* Though this support for ad-hoc polymorphism was part of the original λProlog design, we have not
+   found extensive coverage of its implications in the literature. Furthermore, it is not supported
+   well by standard implementations of λProlog (like Teyjus), which was one of the reasons that
+   prompted us to work on Makam. 
+*)
+
+(* Armed with GADTs of this form, we can now introduce dependently-typed binding forms, where the
+   number of variables that are being bound is reflected in the type. One way to do this is the
+   following: 
+*)
+
+(* dbind A N B: dependently-typed binding of N A's into a B; N will be instantiated with `natZ`
+   and `natS` as above. *)
+
+dbind : type -> type -> type -> type. 
+
+dbindbase : B -> dbind A natZ B.
+dbindnext : (A -> dbind A N B) -> dbind A (natS N) B.
+
+(* Another possibility, avoiding the need for introducing type-level natural numbers, is to
+   use a more standard type as the dependent parameter: the type of tuples that would serve
+   as substitutions for the introduced variables. The type would then become:
+*)
 
 dbind : type -> type -> type -> type.
 
-%extend dbind.
+dbindbase : B -> dbind A unit B.
+dbindnext : (A -> dbind A T B) -> dbind A (A * T) B.
 
-one : (A -> dbind A T B) -> dbind A (A * T) B.
-none : B -> dbind A unit B.
+(* TODO: decide between the two
 
-intro : [A B] dbind A T B -> (T -> prop) -> prop.
-apply : [A B] dbind A T B -> T -> B -> prop.
-open : [A B] dbind A T B -> (T -> B -> prop) -> prop.
+   The good thing about vectors is that they're well-understood from the dependent types literature,
+   and also make for quite pleasant higher-order predicates that are entirely equivalent to lists
+   and bindmany. As a result, we could elide a lot of the details in the paper, giving only a few
+   examples.
 
-intro (dbind.one F) P :-
-  (x:A -> intro (F x) (pfun t => P (x, t))).
-intro (dbind.none Body) P :- P unit.
+   The bad thing about them is the clunky representation for natural numbers: Makam was not designed
+   to do actual dependent types, and adding the option for introducing new kinds other than `type`,
+   such as `nat`, would be both time-consuming, and would also necessitate us talking more about the
+   actual Makam type system. I feel like if we keep it at the subset of Fω that it is now, the
+   hand-wavy explanation at the top of this file is enough. Also, the other problem is that they
+   don't generalize as well: the tuple representation is very easy to generalize to variables of
+   different sorts (just get rid of the first type argument), which could be useful in later
+   developments -- it will play nicely in terms of the expression problem. I wouldn't want to
+   introduce heterogeneous lists etc. instead.
 
-apply (dbind.one F) (X, XS) Body :-
-  apply (F X) XS Body.
-apply (dbind.none Body) unit Body.
+   The problem with tuples, of course, is that the higher-order predicates etc. don't look as nice,
+   and require quite a bit of ad-hoc polymorphism: the whole type of the tuple has to stay abstract
+   and be pattern-matched above, whereas with vectors we only do ad-hoc polymorphism
+   for the 'dependent' argument.
 
-open (dbind.one F) P :-
-  (x:A -> open (F x) (fun t body => P (x, t) body)).
-open (dbind.none Body) P :- P unit Body.  
+   I quite like the fact that the very basic type system of Makam, together with the ad-hoc
+   polymorphism that comes for free in the λProlog world, yields such a nice (I think) and easy to
+   work with notion of dependency that is useful for our purposes. This too points towards using
+   tuples, as it does not feel like something is 'missing', as happens when we introduce hacks like
+   `natZ` and `natS`.  *)
 
-%end.
+(* The definitions for helper predicates, such as `intromany`, `applymany`, etc. follow the case
+   for `bindmany` closely, only with more precise types.  We first define a helper type `subst A T`
+   that is equivalent to the type of tuples `T` we expect. This is not strictly necessary but allows
+   for more precise types: *)
 
-(*
-something like that should work:
-(though letrec is probably not the best example)
+subst : type -> type -> type.
+snil : subst A unit.
+scons : A -> subst A T -> subst A (A * T).
 
-letrec : dbind term T T -> dbind term T term -> term.
+(* The predicates are now defined as follows. First, their types are: *)
+
+intromany : [A B] dbind A T B -> (subst A T -> prop) -> prop.
+applymany : [A B] dbind A T B -> subst A T -> B -> prop.
+openmany : [A B] dbind A T B -> (subst A T -> B -> prop) -> prop.
+
+(* Note that we are reusing the same predicate names as before. Makam allows overloading for
+   all variable names; expected types are taken into account for resolving variables and disambiguating
+   between them, as has been long known to be possible in the bi-directional type-checking
+   literature. Type ascription is used when variable resolution is ambiguous.  We also avoid
+   overloading for constructors; having unambiguous types for constructors means that they can be
+   used to resolve ambiguity between overloaded predicates easily. *)
+
+intromany (dbindbase F) P :- P snil.
+intromany (dbindnext F) P :-
+  (x:A -> intromany (F x) (pfun t => P (scons x t))).
+
+applymany (dbindbase Body) snil Body.
+applymany (dbindnext F) (scons X XS) Body :-
+  applymany (F X) XS Body.
+
+openmany F P :-
+  intromany F (pfun xs => [Body] applymany F xs Body, P xs Body).
+
+(* Also, we define predicates analogous to `map` and `assumemany` for the
+   `subst` type: *)
+
+assumemany : (A -> B -> prop) -> subst A T -> subst B T' -> prop -> prop.
+assumemany P snil snil Q :- Q.
+assumemany P (scons X XS) (scons Y YS) Q :- (P X Y -> assumemany P XS YS Q).
+
+map : [A B] (A -> B -> prop) -> subst A T -> subst B T' -> prop.
+map P snil snil.
+map P (scons X XS) (scons Y YS) :- P X Y, map P XS YS.
+
+(* (Here we have not captured the relationship between the type of tuples `T` and `T'` precisely,
+   namely that one structurally matches the other with `A`s replaced by `B`s. We could capture that
+   by adding another argument of a dependent type that captures that relationship, but we will elide
+   this to avoid needlessly complicating the presentation.) *)
+
+(* Using this type, we can define `letrec` as follows: *)
+
+letrec : dbind term T (subst term T) -> dbind term T term -> term.
+
+(* This encoding captures the binding structure of the construct precisely: we need the same number
+   of definitions as the number of variables we introduce, and the body of the construct needs
+   exactly the same number of variables bound.
+
+   The typing rule is entirely similar to the one we had previously: *)
+
 typeof (letrec Defs Body) T' :-
-  dbind.open Defs (pfun xs defs =>
-    tuple.toList xs xsL,
-    assumemany typeof xsL TS (structural typeof defs TS)
+  openmany Defs (pfun xs defs =>
+    assumemany typeof xs TS (map typeof defs TS)
   ),
-  dbind.open Body (pfun xs body =>
-    tuple.toList xs xsL,
-    assumemany typeof xsL TS (typeof body T')).
-*)
+  openmany Body (pfun xs body =>
+    assumemany typeof xs TS (typeof body T')
+  ).
 
-(* we can also use the same trick for linear contexts with no reordering, such as patterns.
-   Taking patterns as an example, we need two type arguments: one representing the tuple
-   of variables that we start with, and another one for representing the tuple of variables
-   we're left with. *)
+(* We can also use the same 'dependency' trick for other, more complicated forms of binding. One
+   such example which we sketch below is linear ordered binding as in the case of patterns. The
+   point is that having explicit support in our metalanguage only for single-variable binding, as is
+   standard in HOAS, together with the two kinds of polymorphism we have shown, is enough. Using
+   them, we can encode complicated binding forms, that often require explicit support in other
+   meta-linguistic settings (e.g. Needle + Knot, Unbound, etc.)
+*)
+      
+(* To encode patterns, we use a type with two type arguments: one representing
+   the list of variables that the pattern *can* use (in order), and a second
+   one representing the suffix of that list that are available to use *after*
+   the pattern. At the top level, only the first argument is important: a
+   full pattern must use all the variables that it declares. The second argument
+   is necessary to properly construct it out of the sub-patterns that make it
+   up.
+   
+*)
 
 patt : type -> type -> type.
 
-pattunit : patt T T.
-pattvar : patt (term * T) T.
-pattwild : patt T T.
-patttuple : patt T1 T2 -> patt T2 T3 -> patt T1 T3.
+patt_unit : patt T T.
+patt_var : patt (term * T) T.
+patt_wild : patt T T.
 
-single_branch_match : term -> patt T unit -> dbind term T term -> term.
+nat : typ.
+zero : term.
+succ : term -> term.
+typeof zero nat.
+typeof (succ N) nat :- typeof N nat.
 
-(*
-patt_to_term : patt T T'-> term -> T' -> T -> prop.
-patt_to_term pattunit eunit Subst Subst.
-patt_to_term pattvar X Subst (X, Subst).
-patt_to_term pattwild _ Subst Subst.
-patt_to_term (patttuple P1 P2) (tuple E1 E2) Subst3 Subst1 :-
-  patt_to_term P2 E2 Subst3 Subst2,
-  patt_to_term P1 E1 Subst2 Subst1.
+patt_zero : patt T T.
+patt_succ : patt T T' -> patt T T'.
 
-eval (single_branch_match Scrutinee Patt Body) V :-
-  patt_to_term Patt PattTerm unit UnifVars,
-  eq Scrutinee PattTerm, (* reuse unification *)
-  dbind.apply Body UnifVars Body',
-  eval Body' V.
-*)
-
-
-(* unfortunately n-ary tuples require their own list type: *)
+(* n-ary tuples require a type for pattern lists: *)
 pattlist : type -> type -> type.
-pattnil : pattlist T T.
-pattcons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
-pattntuple : pattlist T1 T2 -> patt T1 T2.
+patt_tuple : pattlist T T' -> patt T T'.
 
-(*
-pattlist_to_termlist : pattlist T T' -> list term -> T' -> T -> prop.
-pattlist_to_termlist pattnil [] Subst Subst.
-pattlist_to_termlist (pattcons P PS) (T :: TS) Subst3 Subst1 <-
+patt_nil : pattlist T T.
+patt_cons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
+
+(* We can now encode a single-branch "case-or-else" statement as follows: *)
+
+case_or_else : term -> patt T unit -> dbind term T term -> term -> term.
+
+(* The first argument is the scrutinee; the second is the pattern; the third
+   is the branch body, where we bind the same number of variables as the ones
+   used in the pattern, and the last argument is the `else` case. *)
+
+(* TODO: add typing rules *)
+
+(* TODO: add explanation for evaluation rules *)
+
+patt_to_term : patt T T' -> term -> subst term T' -> subst term T -> prop.
+patt_to_term patt_var X Subst (scons X Subst).
+patt_to_term patt_wild _ Subst Subst.
+patt_to_term patt_zero zero Subst Subst.
+patt_to_term (patt_succ PN) (succ EN) Subst' Subst :- patt_to_term PN EN Subst' Subst.
+
+pattlist_to_termlist : pattlist T T' -> list term -> subst term T' -> subst term T -> prop.
+
+patt_to_term (patt_tuple PS) (tuple ES) Subst' Subst :-
+  pattlist_to_termlist PS ES Subst' Subst.
+
+pattlist_to_termlist patt_nil [] Subst Subst.
+pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
   pattlist_to_termlist PS TS Subst3 Subst2,
   patt_to_term P T Subst2 Subst1.
+
+eval (case_or_else Scrutinee Pattern Body Else) V :-
+  patt_to_term Pattern TermWithUnifvars snil Unifvars,
+  eq Scrutinee TermWithUnifvars, (* reuse unification from the meta-language *)
+  applymany Body Unifvars Body',
+  eval Body' V.
+
+(* 
+eval (app (lam T2 (fun x => case_or_else (tuple [zero, succ (succ x)]) (patt_tuple (patt_cons patt_zero (patt_cons (patt_succ patt_var) patt_nil))) (dbindnext (fun a => dbindnext (fun b => dbindbase b))) zero)) (tuple [zero, succ (succ (succ zero))])) V ?
+*)
+
+(* TODO: there's some bug here. *)
+
+(* TODO: connect this to literature
+
+   How does this compare to Crary's trick in LF? 
+   What do standard typing rules for patterns look like?
 *)
