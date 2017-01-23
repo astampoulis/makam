@@ -30,13 +30,6 @@ vmap : [A B] (A -> B -> prop) -> vector N A -> vector N B -> prop.
 vmap P vnil vnil.
 vmap P (vcons X XS) (vcons Y YS) :- P X Y, vmap P XS YS.
 
-// TODO: flip the meaning of square bracket notation in types
-(*
-   Currently square brackets are used in order to specify which type variables should be treated
-   parametrically, whereas I think it makes more sense to explicitly call out variables where ad-hoc
-   polymorphism is allowed. This will require quite a bit of adaptation.
-*)
-
 (* The notation [N] in the type of `vmap` means that the type argument `N` is ad-hoc/not-parametric.
    Non-specified type arguments are parametric by default, so as to match standard practice in
    languages like ML and Haskell, and to catch type errors that allowing unqualified ad-hoc
@@ -80,34 +73,6 @@ dbind : type -> type -> type -> type.
 
 dbindbase : B -> dbind A unit B.
 dbindnext : (A -> dbind A T B) -> dbind A (A * T) B.
-
-// TODO: decide between the two representations for dbind
-(*
-   The good thing about vectors is that they're well-understood from the dependent types literature,
-   and also make for quite pleasant higher-order predicates that are entirely equivalent to lists
-   and bindmany. As a result, we could elide a lot of the details in the paper, giving only a few
-   examples.
-
-   The bad thing about them is the clunky representation for natural numbers: Makam was not designed
-   to do actual dependent types, and adding the option for introducing new kinds other than `type`,
-   such as `nat`, would be both time-consuming, and would also necessitate us talking more about the
-   actual Makam type system. I feel like if we keep it at the subset of Fω that it is now, the
-   hand-wavy explanation at the top of this file is enough. Also, the other problem is that they
-   don't generalize as well: the tuple representation is very easy to generalize to variables of
-   different sorts (just get rid of the first type argument), which could be useful in later
-   developments -- it will play nicely in terms of the expression problem. I wouldn't want to
-   introduce heterogeneous lists etc. instead.
-
-   The problem with tuples, of course, is that the higher-order predicates etc. don't look as nice,
-   and require quite a bit of ad-hoc polymorphism: the whole type of the tuple has to stay abstract
-   and be pattern-matched over, whereas with vectors we only do ad-hoc polymorphism for the
-   'dependent' argument. I've introduced the `subst` type below to mitigate the issue somewhat.
-
-   I quite like the fact that the very basic type system of Makam, together with the ad-hoc
-   polymorphism that comes for free in the λProlog world, yields such a nice (I think) and easy to
-   work with notion of dependency that is useful for our purposes. This too points towards using
-   tuples, as it does not feel like something is 'missing', as happens when we introduce hacks like
-   `natZ` and `natS`.  *)
 
 (* The definitions for helper predicates, such as `intromany`, `applymany`, etc. follow the case
    for `bindmany` closely, only with more precise types.  We first define a helper type `subst A T`
@@ -224,10 +189,6 @@ case_or_else : term -> patt T unit -> dbind term T term -> term -> term.
    is the branch body, where we bind the same number of variables as the ones
    used in the pattern, and the last argument is the `else` case. *)
 
-// TODO: add typing rules
-
-// TODO: add explanation for evaluation rules
-
 patt_to_term : patt T T' -> term -> subst term T' -> subst term T -> prop.
 patt_to_term patt_var X Subst (scons X Subst).
 patt_to_term patt_wild _ Subst Subst.
@@ -252,12 +213,4 @@ eval (case_or_else Scrutinee Pattern Body Else) V :-
 
 (* 
 eval (app (lam T2 (fun x => case_or_else (tuple [zero, succ (succ x)]) (patt_tuple (patt_cons patt_zero (patt_cons (patt_succ patt_var) patt_nil))) (dbindnext (fun a => dbindnext (fun b => dbindbase b))) zero)) (tuple [zero, succ (succ (succ zero))])) V ?
-*)
-
-// TODO: there's some bug here
-
-// TODO: connect this to literature
-(*
-   How does this compare to Crary's trick in LF? 
-   What do standard typing rules for patterns look like?
 *)
