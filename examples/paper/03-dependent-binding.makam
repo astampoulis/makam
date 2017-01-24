@@ -146,26 +146,37 @@ typeof (letrec Defs Body) T' :-
    point is that having explicit support in our metalanguage only for single-variable binding, as is
    standard in HOAS, together with the two kinds of polymorphism we have shown, is enough. Using
    them, we can encode complicated binding forms, that often require explicit support in other
-   meta-linguistic settings (e.g. Needle + Knot, Unbound, etc.)
-*)
+   meta-linguistic settings (e.g. Needle + Knot, Unbound, etc.)  *)
       
-(* To encode patterns, we use a type with two type arguments: one representing
-   the list of variables that the pattern *can* use (in order), and a second
-   one representing the suffix of that list that are available to use *after*
-   the pattern. At the top level, only the first argument is important: a
-   full pattern must use all the variables that it declares. The second argument
-   is necessary to properly construct it out of the sub-patterns that make it
-   up.
-   
+(* At the top level, a single type argument is needed for patterns, representing the list
+   of variables that it uses in the order that they are used. Each variable can only be
+   used once, so at the level of patterns, there is not really a notion of binding: pattern
+   variables are "introduced" at their point of use. However, the list of variables that
+   we build up can be reused in order to be actually bound into a term -- e.g. the body
+   of a pattern-matching branch.
+
+   (Single-variable binding is really a way to introduce a "point" in an AST where we can "refer
+   back to" from its children; or the means to introduce sharing in the notion of ASTs, allowing
+   to refer to the same "thing" a number of times. There's no sharing going on inside patterns
+   though; hence no binding constructs are needed for encoding the patterns themselves.
+
+   Each sub-pattern that makes up a pattern needs to dependent on two arguments, in order to capture
+   the linearity -- the fact that variables "go away" after their first use. The first argument
+   represents all the variables that can be used, and initially matches the type argument of the
+   top-level pattern; the second argument represents the variables that "remain" to be used after
+   this sub-pattern is traversed. We use "initially" and "after" to refer to the order of visiting
+   the sub-patterns in a structural, depth-first traversal of the pattern. The "difference" between
+   the types corresponds to the variables that each particular sub-pattern uses.
+
+   To make the presentation cleaner, we will introduce a single type for patterns that has both
+   arguments, with the requirement that for top-level arguments, no variables remain.
+
 *)
 
 patt : type -> type -> type.
 
-patt_unit : patt T T.
-patt_var : patt (term * T) T.
-patt_wild : patt T T.
-
 (* Probably hidden: add natural numbers so that we can have a simple example of patterns. *)
+
 nat : typ.
 zero : term.
 succ : term -> term.
@@ -174,8 +185,18 @@ typeof (succ N) nat :- typeof N nat.
 eval zero zero.
 eval (succ E) (succ V) :- eval E V.
 
+(* The pattern for zero does not use any variables; the pattern `succ P` for successor
+   uses the same variables that `P` does.
+*)
+
 patt_zero : patt T T.
 patt_succ : patt T T' -> patt T T'.
+
+(* A single pattern variable declares/uses exactly itself. *)
+patt_var : patt (term * T) T.
+
+(* A wildcard pattern does not use any variables. *)
+patt_wild : patt T T.
 
 (* n-ary tuples require a type for pattern lists: *)
 pattlist : type -> type -> type.
@@ -191,6 +212,45 @@ case_or_else : term -> patt T unit -> dbind term T term -> term -> term.
 (* The first argument is the scrutinee; the second is the pattern; the third
    is the branch body, where we bind the same number of variables as the ones
    used in the pattern, and the last argument is the `else` case. *)
+
+(* The typing relation for patterns is defined as follows: given
+   a pattern and a list of types for the variables that remain after the pattern,
+   yield a list of types for all the variables that are available, plus the
+   type of the pattern.
+*)
+
+typeof : patt T T' -> subst typ T'typ -> subst typ Ttyp -> typ -> prop.
+
+typeof patt_var S' (scons T S') T.
+typeof patt_wild S S T.
+typeof patt_zero S S nat.
+typeof (patt_succ P) S' S nat :-
+  typeof P S' S nat.
+
+typeof_pattlist : pattlist T T' -> subst typ T'typ -> subst typ Ttyp -> list typ -> prop.
+
+typeof (patt_tuple PS) S' S (product TS) :-
+  typeof_pattlist PS S' S TS.
+
+typeof_pattlist patt_nil S S [].
+typeof_pattlist (patt_cons P PS) S3 S1 (T :: TS) :-
+  typeof_pattlist PS S3 S2 TS, typeof P S2 S1 T.
+
+typeof (case_or_else Scrutinee Pattern Body Else) T' :-
+  typeof Scrutinee T,
+  typeof Pattern snil TS T,
+  openmany Body (pfun xs body =>
+     (assumemany typeof xs TS (typeof body T'))
+  ),
+  typeof Else T'.  
+
+(* In order to define evaluation rules, we could define a predicate that models unification
+   between patterns and terms. However, we can do better than that: we can re-use the
+   existing support for unification from the metalanguage! In that case, all we need is a
+   way to convert a pattern into a term, with pattern variables replaced by *meta-level
+   metavariables*. The metavariables are introduced at each conversion rule as needed,
+   and will get instantiated to the right terms if unification with the scrutinee succeeds.
+*)
 
 patt_to_term : patt T T' -> term -> subst term T' -> subst term T -> prop.
 patt_to_term patt_var X Subst (scons X Subst).
@@ -214,15 +274,13 @@ eval (case_or_else Scrutinee Pattern Body Else) V :-
   then (applymany Body Unifvars Body', eval Body' V)
   else (eval Else V).
 
+(* Two new things here: if-then-else has the semantics described in the LogicT monad paper.
+   `eq` is a predicate that forces its arguments to be unified, defined simply as:
+*)
+eq : [A] A -> A -> prop.
+eq X X.
 
-(* Hidden: booleans. *)
-bool : typ.
-bconst : bool -> term.
-typeof (bconst B) bool.
-eval (bconst B) (bconst B).
-patt_bconst : bool -> patt T T.
-patt_to_term (patt_bconst B) (bconst B) Subst Subst.
-
+(* Example of pattern matching: predecessor for nats. *)
 
 (eq PRED 
   (lam _ (fun n => 
@@ -232,5 +290,6 @@ patt_to_term (patt_bconst B) (bconst B) Subst Subst.
       (patt_succ patt_var) (dbindnext (fun pred => dbindbase pred))
       zero (* should never get reached *)
       ))),
+ typeof PRED T,
  eval (app PRED zero) PRED_OF_ZERO,
  eval (app PRED (succ (succ zero))) PRED_OF_TWO) ?
