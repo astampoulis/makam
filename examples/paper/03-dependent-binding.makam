@@ -285,11 +285,9 @@ eq X X.
 (eq PRED 
   (lam _ (fun n => 
     case_or_else n
-      patt_zero (dbindbase zero)
-      (case_or_else n
       (patt_succ patt_var) (dbindnext (fun pred => dbindbase pred))
-      zero (* should never get reached *)
-      ))),
+      zero
+      )),
  typeof PRED T,
  eval (app PRED zero) PRED_OF_ZERO,
  eval (app PRED (succ (succ zero))) PRED_OF_TWO) ?
