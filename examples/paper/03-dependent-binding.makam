@@ -1,7 +1,7 @@
 %use "02-binding-forms".
 
 (* The type system of λProlog can be viewed as a particular subset of System Fω: namely, it is the
-   simply-typed lambda calculus extended with prenex polymorphism and simple type constructors of
+   simply typed lambda calculus extended with prenex polymorphism and simple type constructors of
    the form `type -> type -> ... -> type`. (As an aside, `prop` can be viewed as a separate sort,
    but we take the view that it is just a distinguished extensible type.)
 
@@ -158,7 +158,7 @@ typeof (letrec Defs Body) T' :-
    (Single-variable binding is really a way to introduce a "point" in an AST where we can "refer
    back to" from its children; or the means to introduce sharing in the notion of ASTs, allowing
    to refer to the same "thing" a number of times. There's no sharing going on inside patterns
-   though; hence no binding constructs are needed for encoding the patterns themselves.
+   though; hence no binding constructs are needed for encoding the patterns themselves.)
 
    Each sub-pattern that makes up a pattern needs to dependent on two arguments, in order to capture
    the linearity -- the fact that variables "go away" after their first use. The first argument
