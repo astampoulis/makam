@@ -111,7 +111,7 @@ eval : term -> term -> prop.
    We assume a call-by-value evaluation strategy. *)
 
 eval (lam T F) (lam T F).
-eval (tuple ES) (tuple VS) :- map eval ES TS.
+eval (tuple ES) (tuple VS) :- map eval ES VS.
 
 (* For the beta-redex case, function application for higher-order abstract syntax gives us
    capture-avoiding substitution directly: *)
