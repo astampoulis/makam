@@ -166,13 +166,13 @@ definitions and the body of the construct.
 
 We can therefore encode a `let rec` construct of the form:
 
-```ocaml
+```
 let rec f = f_def and g = g_def in body
 ```
 
 as
 
-```makam
+```
 letrec (bindnext (fun f => bindnext (fun g => bindbase ([f_def, g_def]))))
        (bindnext (fun f => bindnext (fun g => bindbase body)))
 ```
