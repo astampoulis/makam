@@ -23,19 +23,19 @@ varname (bindone S _) S.
 match_binders : bindone A B -> bindone A' B' -> prop.
 match_binders (bindone S _) (bindone S _).
 
-open_aux : {PropType} A -> list dyn -> PropType -> prop.
+open_aux : [PropType] A -> list dyn -> PropType -> prop.
 open_aux Var [] P <- P.
 open_aux Var (dyn B :: TL) P <-
   apply B Var X,
   open_aux Var TL (P X).
 
-opendyn : {PropType} list dyn -> PropType -> prop.
+opendyn : [PropType] list dyn -> PropType -> prop.
 opendyn ES P <-
   eq ES (dyn HD :: _),
   dyn.iter (match_binders HD) ES,
   newvar HD (fun x => open_aux x ES (P x)).
 
-opendyn_nomatch : {PropType} list dyn -> PropType -> prop.
+opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
 opendyn_nomatch ES P <-
   eq ES (dyn HD :: _),
   newvar HD (fun x => open_aux x ES (P x)).
@@ -99,19 +99,19 @@ match_binders (bindend  _) (bindend _).
 match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
 
 
-open_aux : {PropType} list A -> list dyn -> PropType -> prop.
+open_aux : [PropType] list A -> list dyn -> PropType -> prop.
 open_aux Vars [] P <- P.
 open_aux Vars (dyn B :: TL) P <-
   apply B Vars X,
   open_aux Vars TL (P X).
 
-opendyn : {PropType} list dyn -> PropType -> prop.
+opendyn : [PropType] list dyn -> PropType -> prop.
 opendyn ES P <-
   eq ES (dyn HD :: _),
   dyn.iter (match_binders HD) ES,
   newvars HD (fun xs => open_aux xs ES (P xs)).
 
-opendyn_nomatch : {PropType} list dyn -> PropType -> prop.
+opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
 opendyn_nomatch ES P <-
   eq ES (dyn HD :: _),
   newvars HD (fun xs => open_aux xs ES (P xs)).
@@ -178,19 +178,19 @@ match_binders : telescope V T A -> telescope V' T' A' -> prop.
 match_binders (telend  _) (telend _).
 match_binders (telnext S _ F) (telnext S _ F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
 
-open_aux : {PropType} list A -> list dyn -> PropType -> prop.
+open_aux : [PropType] list A -> list dyn -> PropType -> prop.
 open_aux Vars [] P <- P.
 open_aux Vars (dyn HD :: TL) P <-
   apply HD Vars X,
   open_aux Vars TL (P X).
 
-opendyn : {PropType} list dyn -> PropType -> prop.
+opendyn : [PropType] list dyn -> PropType -> prop.
 opendyn ES P <-
   eq ES (dyn HD :: _),
   dyn.iter (match_binders HD) ES,
   newvars HD (fun xs => open_aux xs ES (P xs)).
 
-opendyn_nomatch : {PropType} list dyn -> PropType -> prop.
+opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
 opendyn_nomatch ES P <-
   eq ES (dyn HD :: _),
   newvars HD (fun x => open_aux x ES (P x)).

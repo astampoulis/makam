@@ -34,8 +34,8 @@ bnil     : B -> bindmany A B.
        (bcons (fun x => bcons (fun y => bcons (fun z => body))))
  *)
 
-bindmanycast : {T} T -> bindmany A B -> prop.
-bindmanycast_aux : {T} T -> bindmany A B -> prop.
+bindmanycast : [T] T -> bindmany A B -> prop.
+bindmanycast_aux : [T] T -> bindmany A B -> prop.
 
 bindmanycast X R <- once(bindmanycast_aux X R).
 bindmanycast_aux (fun (x : A) => P x) (bcons (fun (x : A) => R x)) <-
@@ -129,8 +129,8 @@ bindany : type -> type.
 bcons  : (A -> bindany T) -> bindany T.
 bnil   : T -> bindany T.
 
-bindany_cast     : {T} T -> bindany A -> prop.
-bindany_cast_aux : {T} T -> bindany A -> prop.
+bindany_cast     : [T] T -> bindany A -> prop.
+bindany_cast_aux : [T] T -> bindany A -> prop.
 
 bindany_cast X R <- once(bindany_cast_aux X R).
 bindany_cast_aux (fun (x : B) => P x) (bcons (fun (x : B) => R x)) <-

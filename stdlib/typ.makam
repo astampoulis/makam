@@ -1,6 +1,6 @@
 %extend typ.
 
-eq : {B} A -> B -> prop.
+eq : [B] A -> B -> prop.
 eq (X : A) (Y : A).
 
 

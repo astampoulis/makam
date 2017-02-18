@@ -11,9 +11,9 @@ sameunif X Y <-
 %extend userdef.
 
 (* reimplement two builtin predicates just to show that it's possible to do *)
-getunif : {A B} A -> B -> prop.
+getunif : [A B] A -> B -> prop.
 
-getunif_aux, getunif_ : {A B} option B -> A -> option B -> prop.
+getunif_aux, getunif_ : [A B] option B -> A -> option B -> prop.
 
 getunif_aux X Y Z <- demand.case_otherwise (getunif_ X Y Z) (generic.fold getunif_aux X Y Z).
 getunif_ (some Res) _ (some Res).
@@ -21,8 +21,8 @@ getunif_ _ X (some X) when refl.isunif X.
 
 getunif Root Unif <- getunif_aux none Root (some Unif).
 
-absunif : {A B} A -> B -> (B -> A) -> prop.
-absunif_aux, absunif_ : {A B} B -> B -> A -> A -> prop.
+absunif : [A B] A -> B -> (B -> A) -> prop.
+absunif_aux, absunif_ : [A B] B -> B -> A -> A -> prop.
 
 absunif_ Unif Replace Root Replace when refl.sameunif Root Unif.
 absunif_ Unif Replace Root Root when refl.isunif Root.

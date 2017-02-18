@@ -38,7 +38,7 @@ dbtrun (dbt_lam (F : A -> dbt)) (dyn E) <-
 dbtrun (dbt_int I) (dyn (I : int)).
 dbtrun (dbt_string S) (dyn (S : string)).
 
-dbtenv : {A} string -> A -> prop.
+dbtenv : [A] string -> A -> prop.
 dbtmagicenv : list string -> prop.
 dbtmagic : list dyn -> A.
 
@@ -81,7 +81,7 @@ dbtrun (dbt_magicnu D) E <-
   foldr (fun elm cur => eq (dbt_nu elm cur)) XS D D',
   dbtrun D' E.
 
-argtyps : {A} A -> list dyn -> prop.
+argtyps : [A] A -> list dyn -> prop.
 argtyps (X : unit -> B) TL <-
   (x:unit -> argtyps (X x) TL).
 argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) <-

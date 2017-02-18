@@ -437,7 +437,7 @@ constrdef False csdefunit bool nil.
 sigof : modstruct -> modsig -> prop.
 sigof_item : stritem -> bindany (list prop) -> listbindany sigitem -> prop.
 
-sigof_item_cast : {X} stritem -> X -> listbindany sigitem -> prop.
+sigof_item_cast : [X] stritem -> X -> listbindany sigitem -> prop.
 sigof_item X Y Z <-
   sigof_item_cast X Y' Z,
   bindany_cast Y' Y.

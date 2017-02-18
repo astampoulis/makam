@@ -5,7 +5,7 @@
 (* freevars *)
 freevars : A -> list B -> prop.
 freevars_aux : list B -> A -> list B -> prop.
-freevars_aux_ : {A} list B -> A -> list B -> prop.
+freevars_aux_ : [A] list B -> A -> list B -> prop.
 freevars_dontadd : A -> prop.
 
 freevars_aux Acc Root Result <-
@@ -25,7 +25,7 @@ freevars Root Result <-
 (* unifvars *)
 unifvars : A -> list B -> prop.
 unifvars_aux : list B -> A -> list B -> prop.
-unifvars_aux_ : {A} list B -> A -> list B -> prop.
+unifvars_aux_ : [A] list B -> A -> list B -> prop.
 
 unifvars_aux Acc Root Result <-
   demand.case_otherwise (unifvars_aux_ Acc Root Result)

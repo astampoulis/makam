@@ -20,24 +20,24 @@ compiled  : (list string -> option (tuple (list string) A) -> prop) ->
 	    (list string -> option (tuple (list string) A) -> prop) ->
 	    peg A.
 
-peginline        : {A} peg A -> peg A -> prop.
-peginline_parse  : {A} peg A -> peg A -> prop.
-peginline_pretty : {A} peg A -> peg A -> prop.
+peginline        : [A] peg A -> peg A -> prop.
+peginline_parse  : [A] peg A -> peg A -> prop.
+peginline_pretty : [A] peg A -> peg A -> prop.
 
-pegrule        : {A} peg A -> peg A -> cmd -> prop.
-pegrule_parse  : {A} peg A -> peg A -> cmd -> prop.
-pegrule_pretty : {A} peg A -> peg A -> cmd -> prop.
+pegrule        : [A] peg A -> peg A -> cmd -> prop.
+pegrule_parse  : [A] peg A -> peg A -> cmd -> prop.
+pegrule_pretty : [A] peg A -> peg A -> cmd -> prop.
 
-xparse  : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
-xxparse  : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
-xuparse  : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
-xpretty : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
-xxpretty : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
-xupretty : {A} peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xparse  : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xxparse  : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xuparse  : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xpretty : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xxpretty : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
+xupretty : [A] peg A -> (list string -> option (tuple (list string) A) -> prop) -> prop.
 
-pegbuiltin : {A} peg A -> prop.
+pegbuiltin : [A] peg A -> prop.
 
-parse : {A} peg A -> (string -> option (tuple string A) -> prop) -> prop.
+parse : [A] peg A -> (string -> option (tuple string A) -> prop) -> prop.
 parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
         string.explode S Chars,
 	P' Chars Res,
@@ -47,7 +47,7 @@ parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
 	) <-
   xparse P P'.
 
-pretty : {A} peg A -> (option (tuple string A) -> string -> prop) -> prop.
+pretty : [A] peg A -> (option (tuple string A) -> string -> prop) -> prop.
 pretty P (fun FullRes Input => {prop| [Output Res OutputC InputC]
   eq FullRes (some (tuple Output Res)),
   string.explode Output OutputC,
@@ -160,8 +160,8 @@ pegbuiltin (compiled _ _).
 xparse  (compiled Parse Pretty) Parse.
 xpretty (compiled Parse Pretty) Pretty.
 
-peginline_xparse  : {A} peg A -> peg A -> prop.
-peginline_xpretty : {A} peg A -> peg A -> prop.
+peginline_xparse  : [A] peg A -> peg A -> prop.
+peginline_xpretty : [A] peg A -> peg A -> prop.
 
 peginline_xparse  P Def <- (if peginline_parse P Def then success else peginline P Def).
 peginline_xpretty P Def <- (if peginline_pretty P Def then success else peginline P Def).
@@ -216,28 +216,28 @@ xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) <-
   map pegcompile_pretty Args Args',
   appmany P' Args' P''.
 
-mkclause : {A} A -> A -> clause -> prop.
+mkclause : [A] A -> A -> clause -> prop.
 mkclause (G : prop) (P : prop) (clause G P).
 mkclause (G : A -> B) (P : A -> B) X <- mkclause (G Y) (P Y) X.
 
-mkclausecmd : {A} string -> A -> cmd -> prop.
+mkclausecmd : [A] string -> A -> cmd -> prop.
 mkclausecmd GName P (cmd_newclause Clause) <- refl.lookup GName G, mkclause G P Clause.
 
-mkclausecmd2 : {B} string -> list dyn -> list prop -> (B -> prop) -> cmd -> prop.
+mkclausecmd2 : [B] string -> list dyn -> list prop -> (B -> prop) -> cmd -> prop.
 mkclausecmd2 GName Args Knowns Proc (cmd_newclause Clause) <-
   refl.lookup GName G,
   appmany G Args G',
   assumemany Knowns (Proc X),
   mkclause G' X Clause.
 
-weirdappmanyrev : {A B} A -> list dyn -> B -> prop.
+weirdappmanyrev : [A B] A -> list dyn -> B -> prop.
 weirdappmanyrev (X : A) nil (Y : A).
 weirdappmanyrev (X : A) (cons (dyn (HD : B)) TL) Z <- weirdappmanyrev (Y : B -> A) TL Z.
 weirdappmanyrevreal : A -> list dyn -> B -> prop.
 weirdappmanyrevreal X L Y <- reverse L L', weirdappmanyrev X L' Y.
 
 
-pegdeclare   : {A} peg A -> cmd -> prop.
+pegdeclare   : [A] peg A -> cmd -> prop.
 pegdeclare (Peg : peg A) Cmd <-
   refl.headname Peg Name,
   refl.headargs Peg _ Args,

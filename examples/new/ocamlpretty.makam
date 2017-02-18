@@ -6,9 +6,9 @@ concat SS S <- foldr string.append SS "" S.
 %end.
 
 
-gracewithnames : {A} A -> A -> prop.
-gracewithnames : {A} int -> A -> A -> prop.
-gracewithnames_ : {A} int -> A -> A -> prop.
+gracewithnames : [A] A -> A -> prop.
+gracewithnames : [A] int -> A -> A -> prop.
+gracewithnames_ : [A] int -> A -> A -> prop.
 
 gracewithnames X Y <-
   gracewithnames 0 X Y.

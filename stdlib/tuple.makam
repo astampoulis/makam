@@ -9,7 +9,7 @@ dynlist Res [dyn Res]
 dynlist Res (dyn HD :: TL') when not(typ.isunif Res), dyn.eq Res (HD, TL) <-
   dynlist TL TL'.
 
-ofdynlist : {A} list dyn -> A -> prop.
+ofdynlist : [A] list dyn -> A -> prop.
 ofdynlist [dyn Res] Res.
 ofdynlist (dyn HD :: TL) (HD, TL') <- ofdynlist TL TL'.
 
