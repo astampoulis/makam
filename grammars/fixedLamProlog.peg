@@ -125,9 +125,9 @@ annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >>
 
 typ  -> t:ltyp << t.content >>
 
-ltyp  -> s:ltoken("[") parametric:repWHITE(token(ident)) e:ltoken("]") t:lmonotyp
-        << let param = { content = parametric ; span = s ---> e } in 
-           autospan_bin _tForall param t >>
+ltyp  -> s:ltoken("[") adhoc:repWHITE(token(ident)) e:ltoken("]") t:lmonotyp
+        << let adhoc = { content = adhoc ; span = s ---> e } in 
+           autospan_bin _tForallAdhoc adhoc t >>
       / t:lmonotyp << t >>
 
 lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>

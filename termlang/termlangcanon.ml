@@ -1193,14 +1193,14 @@ let kindcheck_type (t : typ) : typ =
 
 (* let kindcheck_type t = Ctx.bench "kind checking" (lazy(kindcheck_type t)) ;; *)
 
-let quantifyOverTPolys paramnames (t : typ) : typ =
+let quantifyOverTPolys adhocnames (t : typ) : typ =
 
-  let paramnames = List.enum paramnames |> StringSet.of_enum in
+  let adhocnames = List.enum adhocnames |> StringSet.of_enum in
   let state = !termstate in
   if state.tmetas = 0
   then t
   else (let names = List.rev state.tmetanames in
-        let parametric = List.map (fun x -> StringSet.mem x paramnames) names in
+        let parametric = List.map (fun x -> not(StringSet.mem x adhocnames)) names in
         let binders = List.combine names parametric in
         { term = `Forall(binders, t) ; classifier = () ; loc = t.loc ; extra = TypExtras.empty () })
 ;;
@@ -1214,9 +1214,12 @@ let type_declaration (s : string) (t : typ) : int =
                  let i     = addTFvar s arity in
                  i
 
-  | _ -> let paramnames, t = match t.term with `Forall(paramnames, t) -> List.map fst paramnames, t | _ -> [], t in
+  | _ -> let adhoclist, t =
+           match t.term with `Forall(binders, t) -> List.filter (fun (_, isParam) -> not isParam) binders, t | _ -> [], t
+         in
+         let adhocnames = List.map fst adhoclist in
          let t' = kindcheck_type t in
-         let t' = quantifyOverTPolys paramnames t' in
+         let t' = quantifyOverTPolys adhocnames t' in
          let i  = addFvar s t' in
          i
 
@@ -1230,7 +1233,9 @@ let _tVar ?(loc = None) ?(args = []) x =
   { term = `TVar(x, None, args) ; classifier = () ; loc = loc ; extra = TypExtras.empty () };;
 let _tArrow ?(loc = None) t1 t2 =
   { term = `Arrow(t1,t2) ; classifier = () ; loc = loc ; extra = TypExtras.empty () } ;;
-let _tForall ?(loc = None) names t =
+let _tForallAdhoc ?(loc = None) names t =
+  { term = `Forall(List.map (fun x -> x, false) names, t); classifier = () ; loc = loc ; extra = TypExtras.empty () } ;;
+let _tForallParam ?(loc = None) names t =
   { term = `Forall(List.map (fun x -> x, true) names, t); classifier = () ; loc = loc ; extra = TypExtras.empty () } ;;
 
 let ( ~*  ) ?(loc = None) x     = _tVar ~loc:loc ~args:[] x ;;

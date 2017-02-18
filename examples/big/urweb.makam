@@ -390,7 +390,7 @@ dynteq (dyn T) (dyn T') <-
    then teq X Y
    else structural dynteq (dyn T) (dyn T')).
 
-letdef : string -> E -> cmd -> prop.
+letdef : [E] string -> E -> cmd -> prop.
 letdef X E (cmd_many [ cmd_newterm X (_ : term),
                        cmd_stage (fun res => {prop|
 	                  refl.lookup X C,
@@ -398,7 +398,7 @@ letdef X E (cmd_many [ cmd_newterm X (_ : term),
   typeof E T.
 
 
-typedef : string -> T -> cmd -> prop.
+typedef : [T] string -> T -> cmd -> prop.
 typedef X T (cmd_many [ cmd_newterm X (_ : typ),
                         cmd_stage (fun res => {prop|
 	                  refl.lookup X C,

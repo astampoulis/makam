@@ -42,7 +42,7 @@ when not(typeq X (B : C -> D)), not(refl.isunif X) <-
 
 
 (* eq_benign: no instantiation goes on. *)
-eq_benign : [A]A -> A -> prop.
+eq_benign : A -> A -> prop.
 eq_benign_aux : dyn -> dyn -> prop.
 
 eq_benign X Y <- eq_benign_aux (dyn X) (dyn Y).
@@ -54,7 +54,7 @@ eq_benign X Y <- eq_benign_aux (dyn X) (dyn Y).
 (eq_benign_aux (dyn (X : A -> B)) (dyn (Y : A -> B))) when not(refl.isunif X), not(refl.isunif Y) <-
   (x:A -> eq_benign_aux (dyn (X x)) (dyn (Y x))).
 
-builtintyp : A -> prop.
+builtintyp : [A] A -> prop.
 builtintyp (X : A -> B).
 builtintyp (X : string).
 builtintyp (X : int).

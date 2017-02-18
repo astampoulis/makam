@@ -67,7 +67,7 @@ typeof_ (appt E T) (T' T) <-
 typeof_ (tup ES) (ttup TS) <-
   map typeof ES TS.
 
-nth : [A] list A -> nat -> A -> prop.
+nth : list A -> nat -> A -> prop.
 nth (HD :: TL) nzero HD.
 nth (HD :: TL) (nsucc N) R <- nth TL N R.
 
@@ -589,9 +589,9 @@ translatec_val (valk (tupk VS) T) (valc (tupc VS') T') <-
   translatec_typ T T'.
 
 
-valfv : A -> list B -> prop.
-valfv_aux : dyn -> list B -> list B -> prop.
-valfv_avoid : A -> prop.
+valfv : [A] A -> list B -> prop.
+valfv_aux : [B] dyn -> list B -> list B -> prop.
+valfv_avoid : [A] A -> prop.
 
 valfv_aux Input Cur Res <-
   caseguard Input
@@ -606,8 +606,8 @@ valfv X Res' <-
 
 (* ------------------ fv *)
 
-foldr_inat : [A B] (nat -> A -> B -> B -> prop) -> list A -> B -> B -> prop.
-foldr_inat_aux : [A B] (nat -> A -> B -> B -> prop) -> nat -> list A -> B -> B -> prop.
+foldr_inat : (nat -> A -> B -> B -> prop) -> list A -> B -> B -> prop.
+foldr_inat_aux : (nat -> A -> B -> B -> prop) -> nat -> list A -> B -> B -> prop.
 
 foldr_inat_aux P N nil S S.
 foldr_inat_aux P N (cons HD TL) S S'' <- foldr_inat_aux P (nsucc N) TL S S', P N HD S' S''.
@@ -705,7 +705,7 @@ examplec : termc -> prop.
 `( define examplec (fun res => {prop| examplek E, translatec_prog E res |}) ).
 
 
-erasetypes : A -> A -> prop.
+erasetypes : [A] A -> A -> prop.
 erasetypes (X : typc) (X : typc).
 erasetypes (dcval X Y) (dcval X' Y') <- erasetypes X X', (x:bvalc -> erasetypes (Y x) (Y' x)).
 erasetypes (dcproj I V Y) (dcproj I V' Y') <- erasetypes V V', (x:bvalc -> erasetypes (Y x) (Y' x)).

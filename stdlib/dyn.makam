@@ -1,16 +1,16 @@
 %extend dyn.
 (* A version of `eq` that delays type unification of the terms until runtime *)
-eq : A -> B -> prop.
+eq : [B] A -> B -> prop.
 eq X X.
 
 (* Similarly, a dynamically-typed version of application. *)
-apply : A -> B -> C -> prop.
+apply : [A C] A -> B -> C -> prop.
 apply F X (F X).
 
 (* Magic: fake rank-N polymorphism by duplicating all heads found, therefore
    generating new polymorphic variables for them. *)
-poly : A -> B -> prop.
-polybvar : A -> B -> prop.
+poly : [A B] A -> B -> prop.
+polybvar : [A B] A -> B -> prop.
 map_poly : list dyn -> list dyn -> prop.
 
 poly E E' when refl.isbaseterm E, refl.isnvar E <-
@@ -57,14 +57,14 @@ foldl F X L X' <- .foldl (call_dyn F) (dyn X) L (dyn X').
 %end.
 
 (* Apply many arguments *)
-apply_many : A -> list dyn -> B -> prop.
+apply_many : [A B] A -> list dyn -> B -> prop.
 apply_many X nil X.
 apply_many (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_many X' TL Res.
 
 (* Apply all arguments -- when the argument list is not specified,
    this will repeatedly apply arguments, generating new unification
    variables, for the full arity of the functional argument. *)
-apply_all : A -> list dyn -> B -> prop.
+apply_all : [A B] A -> list dyn -> B -> prop.
 apply_all (X : A -> B) (dyn HD :: TL) Res <- dyn.apply X HD X', apply_all X' TL Res.
 (apply_all X nil X) when not(typ.eq X (_ : A -> B)).
 

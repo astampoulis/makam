@@ -28,7 +28,7 @@
 *)
 
 
-structural : (A -> A -> prop) -> B -> B -> prop.
+structural : [B] (A -> A -> prop) -> B -> B -> prop.
 
 (* defer if both input and output are uninstantiated metavariables *)
 structural Rec (X : A) (Y : A) when refl.isunif X, refl.isunif Y <-
@@ -54,7 +54,7 @@ structural Rec X Y when refl.isunif X, refl.isbaseterm Y <-
 
 
 %extend generic.
-fold : (B -> A -> B -> prop) -> B -> A' -> B -> prop.
+fold : [A A'] (B -> A -> B -> prop) -> B -> A' -> B -> prop.
 
 fold F Acc X Acc' when refl.isunif X <-
   guard X (dyn.call F Acc X Acc').
@@ -70,7 +70,7 @@ fold F Acc X Acc' when refl.isbaseterm X <-
 %end.
 
 
-eq_nounif : A -> A -> prop.
+eq_nounif : [A] A -> A -> prop.
 
 eq_nounif (X : A) (Y : A)
   when refl.isunif X, refl.isunif Y, refl.decomposeunif X I XArgs, refl.decomposeunif Y I YArgs <-

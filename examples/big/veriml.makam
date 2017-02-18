@@ -56,7 +56,7 @@ ctxparam    : cvar -> (svar -> listbindmany hol.term hol.term A) -> ctx A. (* Φ
 
 (* Typing judgements *)
 ctxofsubst_var : svar -> cvar -> prop.            (* ⊢ id_φ : [φ]() *)
-ctxofsubst     : [A] subst -> ctx A -> prop.      (* ⊢ σ : Φ    – actually ⊢ σ : [Φ]() *)
+ctxofsubst     : subst -> ctx A -> prop.      (* ⊢ σ : Φ    – actually ⊢ σ : () *)
 ctypeof_var    : cvar -> ctype -> prop.           (* ⊢ X : K *)
 ctypeof        : cexpr -> ctype -> prop.          (* ⊢ T : K *)
 
@@ -90,7 +90,7 @@ ctxofsubst (substparam ID_Phi TL) (ctxparam Phi Rest) <-
      produces the identity substitution for Φ based on these fresh variables
      and runs P with that identity substitution *)
 
-ctx_open : [A] ctx A -> (subst -> prop) -> prop.
+ctx_open : ctx A -> (subst -> prop) -> prop.
 ctx_open (ctxconcrete Phi) F <-
   listbindmany_newvars Phi (fun vars => {prop| [Typs]
    listbindmany_getinfo Phi vars Typs,
@@ -105,7 +105,7 @@ ctx_open (ctxparam Phi Rest) F <-
      given an explicit substitution for Φ,
      return the body of the contextual term *)
 
-ctx_body : [A] ctx A -> subst -> A -> prop.
+ctx_body : ctx A -> subst -> A -> prop.
 ctx_body (ctxconcrete PhiA) (substconcrete Sigma) A <-
    listbindmany_apply PhiA Sigma A.
 ctx_body (ctxparam Phi Rest) (substparam IDPhi RestSigma) A <-
@@ -113,7 +113,7 @@ ctx_body (ctxparam Phi Rest) (substparam IDPhi RestSigma) A <-
 
 (* ctx_get ([Φ]a) id{Φ} ([Φ]())
      removes the body of the context, useful for testing contexts for equality *)
-ctx_get : [A] ctx A -> subst -> ctx unit -> prop.
+ctx_get : ctx A -> subst -> ctx unit -> prop.
 ctx_get (ctxconcrete (lbnil _)) (substconcrete nil) (ctxconcrete (lbnil unit)).
 ctx_get (ctxconcrete (lbcons HDt Rest)) (substconcrete (cons HD TL))
         (ctxconcrete (lbcons HDt Rest')) <-
@@ -123,7 +123,7 @@ ctx_get (ctxparam Phi Rest) (substparam IDphi Sigma')
   ctx_get (ctxconcrete (Rest IDphi)) (substconcrete Sigma') (ctxconcrete (Rest' IDphi)).
 
 
-ctx_get_partial : [A] ctx A -> subst -> ctx unit -> ctx A -> prop.
+ctx_get_partial : ctx A -> subst -> ctx unit -> ctx A -> prop.
 ctx_get_partial A (substconcrete nil) (ctxconcrete (lbnil unit)) A.
 ctx_get_partial (ctxconcrete (lbcons HDt Rest)) (substconcrete (cons HD TL))
         (ctxconcrete (lbcons HDt Rest')) RestEnd <-
@@ -133,7 +133,7 @@ ctx_get_partial (ctxparam Phi Rest) (substparam IDphi Sigma')
   ctx_get_partial (ctxconcrete (Rest IDphi)) (substconcrete Sigma') (ctxconcrete (Rest' IDphi)) RestEnd.
 
 (* ctx_append ([Φ]a) ([Φ']b) ([Φ, Φ']b) *)
-ctx_append : [A B] ctx A -> listbindmany hol.term hol.term B -> ctx B -> prop.
+ctx_append : ctx A -> listbindmany hol.term hol.term B -> ctx B -> prop.
 ctx_append (ctxconcrete L) L' (ctxconcrete L'') <-
   listbindmany_append L L' L''.
 ctx_append (ctxparam Phi L) L' (ctxparam Phi L'') <-

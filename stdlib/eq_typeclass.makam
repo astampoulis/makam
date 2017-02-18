@@ -16,9 +16,9 @@ eqT : (A -> A -> prop) -> eqT A.
     eqT_instance is used to declare instances of the typeclass
     eqT_default is used to declare a fallback, default instance if no specialized instance is found. *)
 
-eqT_lookup       : eqT A -> prop.
-eqT_instance     : eqT A -> prop.
-eqT_default      : eqT A -> prop.
+eqT_lookup       : [A] eqT A -> prop.
+eqT_instance     : [A] eqT A -> prop.
+eqT_default      : [A] eqT A -> prop.
 
 eqT_lookup Instance <-
   once (unless_many [

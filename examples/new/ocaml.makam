@@ -219,7 +219,7 @@ typeof (projrec E Field) T <-
   typapply TC TS T,
   once (typeof E (tbase Tbase TS)).
 
-guess_type : [A] map string A -> string -> prop.
+guess_type : map string A -> string -> prop.
 guess_type Map Tbase <-
   map.headtail Map (Key, _) _,
   field_def Key _ Tbase.
