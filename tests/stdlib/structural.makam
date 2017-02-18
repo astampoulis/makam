@@ -1,5 +1,5 @@
-change : A -> A -> prop.
-change_ : A -> A -> prop.
+change : {A} A -> A -> prop.
+change_ : {A} A -> A -> prop.
 
 change X Y <-
   demand.case_otherwise (change_ X Y)

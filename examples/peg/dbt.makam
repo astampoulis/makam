@@ -38,14 +38,14 @@ dbtrun (dbt_lam (F : A -> dbt)) (dyn E) <-
 dbtrun (dbt_int I) (dyn (I : int)).
 dbtrun (dbt_string S) (dyn (S : string)).
 
-dbtenv : string -> A -> prop.
+dbtenv : {A} string -> A -> prop.
 dbtmagicenv : list string -> prop.
 dbtmagic : list dyn -> A.
 
-findbenign : [A] list A -> A -> prop.
+findbenign : list A -> A -> prop.
 findbenign L HD <-
   (if refl.isunif L
-   then failure,
+   then failure
    else (eq L (HD' :: TL),
          if eq_benign HD HD'
 	 then success
@@ -61,9 +61,9 @@ dbtenv X dbtmagic <-
 
 headargs' : A -> B -> list dyn -> prop.
 headargs' E HD ARGS <-
-  (if eq (dyn HD) (dyn dbtmagic),
-      eq E (dbtmagic ARGS),
-      headargs E HD ARGS).
+  (if eq (dyn HD) (dyn dbtmagic)
+   then eq E (dbtmagic ARGS)
+   else refl.headargs E HD ARGS).
 
 dbtrun (dbt_lookup S ARGS) (dyn E) <-
   dbtenv S HD,
@@ -81,7 +81,7 @@ dbtrun (dbt_magicnu D) E <-
   foldr (fun elm cur => eq (dbt_nu elm cur)) XS D D',
   dbtrun D' E.
 
-argtyps : A -> list dyn -> prop.
+argtyps : {A} A -> list dyn -> prop.
 argtyps (X : unit -> B) TL <-
   (x:unit -> argtyps (X x) TL).
 argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) <-
@@ -110,7 +110,7 @@ dbt_mk_bindmany : C -> bindmany A B -> prop.
 dbt_mk_bindmany (X : C) (B : bindmany A B) <-
   (if refl.isunif X
    then eq (dyn B) (dyn X)
-   else (if typeq (X : C) (Z : A -> C'),
+   else (if typeq (X : C) (Z : A -> C')
          then (eq B (bcons R), eq (dyn X) (dyn Z'), (x:A -> dbt_mk_bindmany (Z' x) (R x)))
          else (eq (dyn X) (dyn (X' : B)), eq B (bnil X')))).
 

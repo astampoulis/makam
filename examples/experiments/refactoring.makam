@@ -2,24 +2,24 @@
 
 %extend refltype.
 
-result : A -> B -> prop.
+result : {A B} A -> B -> prop.
 (result X Y) when refl.isfun X <- (x:A -> result (X x) Y).
 (result X Y) when not(refl.isfun X) <- typeq X Y.
 
-ispred : A -> prop.
+ispred : {A} A -> prop.
 ispred X <- result X (Z : prop).
 
 %end.
 
 
-dup_head : A -> B -> prop.
+dup_head : {A B} A -> B -> prop.
 (dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
 (dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
-dyncall : (A -> prop) -> dyn -> prop.
+dyncall : {A} (A -> prop) -> dyn -> prop.
 dyncall P (dyn X) <- refl.duphead P P', P' X.
 
-dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
+dyncall : {A B} (A -> B -> prop) -> dyn -> dyn -> prop.
 dyncall P (dyn X) (dyn Y) <- refl.duphead P P', P' X Y.
 
 (* ([X]allheads X, print X, map0 (dyncall printhead) X) ? *)

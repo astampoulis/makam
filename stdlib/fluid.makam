@@ -2,12 +2,12 @@ fluid : type -> type.
 
 %extend fluid.
 
-new : [A] A -> (fluid A -> prop) -> prop.
-get : [A] fluid A -> A -> prop.
-set : [A] fluid A -> A -> prop -> prop.
-modify : [A] fluid A -> (A -> A -> prop) -> prop -> prop.
+new : A -> (fluid A -> prop) -> prop.
+get : fluid A -> A -> prop.
+set : fluid A -> A -> prop -> prop.
+modify : fluid A -> (A -> A -> prop) -> prop -> prop.
 
-current_value : [A] fluid A -> A -> prop.
+current_value : fluid A -> A -> prop.
 
 new (Init : A) Pred <- (x:(fluid A) -> current_value x Init -> Pred x).
 get X Value <- once(current_value X Value).

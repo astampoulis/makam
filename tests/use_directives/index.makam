@@ -3,7 +3,7 @@
 test : type.
 test : test.
 
-testprop : A -> prop.
+testprop : {A} A -> prop.
 testprop test.
 
 %import qualified.

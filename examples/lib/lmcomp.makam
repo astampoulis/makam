@@ -9,8 +9,8 @@ lm_pattbody : type -> type -> type.
 
 lm_fun      : (A -> lm_comp B) -> lm_arrow A B.
 
-lm_forward  : [A B] lm_arrow A B -> (A -> B -> prop) -> prop.
-lm_backward : [A B] lm_arrow A B -> (B -> A -> prop) -> prop.
+lm_forward  : lm_arrow A B -> (A -> B -> prop) -> prop.
+lm_backward : lm_arrow A B -> (B -> A -> prop) -> prop.
 
 lm_lift     : (A -> B -> prop) -> A -> lm_comp B.
 lm_liftback : (A -> B -> prop) -> B -> lm_comp A.
@@ -35,7 +35,7 @@ lm_recdef       : lm_recarrow A B -> lm_arrow A B -> prop.
 
 lm_to_ipred         : lm_arrow A B -> (A -> B -> ipred) -> prop.
 lmcomp_to_ipred     : lm_comp B -> (B -> ipred) -> prop.
-lmpattbody_to_ipred : [A B] lm_pattbody A B -> lm_comp B -> (A -> B -> ipred) -> prop.
+lmpattbody_to_ipred : lm_pattbody A B -> lm_comp B -> (A -> B -> ipred) -> prop.
 
 lm_to_ipred (lm_fun (Comp : A -> lm_comp B)) IPred <-
   (input:A -> lmcomp_to_ipred (Comp inputⁿ_) (IPred inputⁿ_)).
@@ -64,12 +64,12 @@ lmpattbody_to_ipred (lm_patt_end Patt Body) Otherwise
   lmcomp_to_ipred Body Body',
   lmcomp_to_ipred Otherwise Otherwise'.
 
-lm_forward : [A B] lm_arrow A B -> (A -> B -> prop) -> prop.
+lm_forward : lm_arrow A B -> (A -> B -> prop) -> prop.
 lm_forward (Comp : lm_arrow A B) (P : A -> B -> prop) <-
   lm_to_ipred Comp IP,
   (input:A -> (output:B -> ipred_forward (IP inputⁿ_ outputⁿ_) (P inputⁿ_ outputⁿ_))).
 
-lm_backward : [A B] lm_arrow A B -> (B -> A -> prop) -> prop.
+lm_backward : lm_arrow A B -> (B -> A -> prop) -> prop.
 lm_backward Comp (P : B -> A -> prop) <-
   lm_to_ipred Comp IP,
   (input:A -> (output:B -> ipred_backward (IP inputⁿ_ outputⁿ_) (P outputⁿ_ inputⁿ_))).

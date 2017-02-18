@@ -16,10 +16,9 @@ XOCamlBuildExtraArgs:  -byte-plugin
 SourceRepository master
   Type:     git
   Location: https://github.com/astampoulis/makam.git
-  
+
 Executable "makam-bin"
   Path:       .
   MainIs:     toploop/nativerepl.ml
   CompiledObject: best
   Install:        false
-  

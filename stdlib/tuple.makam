@@ -1,6 +1,6 @@
 %extend tuple.
 
-map : [A B C D] (A -> C -> prop) -> (B -> D -> prop) -> A * B -> C * D -> prop.
+map : (A -> C -> prop) -> (B -> D -> prop) -> A * B -> C * D -> prop.
 map P Q (X, Y) (X', Y') <- P X X', Q Y Y'.
 
 dynlist : A -> list dyn -> prop.
@@ -9,7 +9,7 @@ dynlist Res [dyn Res]
 dynlist Res (dyn HD :: TL') when not(typ.isunif Res), dyn.eq Res (HD, TL) <-
   dynlist TL TL'.
 
-ofdynlist : list dyn -> A -> prop.
+ofdynlist : {A} list dyn -> A -> prop.
 ofdynlist [dyn Res] Res.
 ofdynlist (dyn HD :: TL) (HD, TL') <- ofdynlist TL TL'.
 

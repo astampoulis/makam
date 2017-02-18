@@ -30,12 +30,12 @@ distinguish between different types. Based on these, the standard example of `ma
 follows:
 
 ```makam
-vmap : [A B] (A -> B -> prop) -> vector N A -> vector N B -> prop.
+vmap : {N} (A -> B -> prop) -> vector N A -> vector N B -> prop.
 vmap P vnil vnil.
 vmap P (vcons X XS) (vcons Y YS) :- P X Y, vmap P XS YS.
 ```
 
-The notation `[N]` in the type of `vmap` means that the type argument `N` is ad-hoc/not-parametric.
+The notation `{N}` in the type of `vmap` means that the type argument `N` is ad-hoc/not-parametric.
 Non-specified type arguments are parametric by default, so as to match standard practice in
 languages like ML and Haskell, and to catch type errors that allowing unqualified ad-hoc
 polymorphism would permit. For example, consider the following erroneous definition for `fold`,
@@ -93,9 +93,9 @@ scons : A -> subst A T -> subst A (A * T).
 The predicates are now defined as follows. First, their types are: 
 
 ```makam
-intromany : [A B] dbind A T B -> (subst A T -> prop) -> prop.
-applymany : [A B] dbind A T B -> subst A T -> B -> prop.
-openmany : [A B] dbind A T B -> (subst A T -> B -> prop) -> prop.
+intromany : {T} dbind A T B -> (subst A T -> prop) -> prop.
+applymany : {T} dbind A T B -> subst A T -> B -> prop.
+openmany : {T} dbind A T B -> (subst A T -> B -> prop) -> prop.
 ```
 
 Note that we are reusing the same predicate names as before. Makam allows overloading for all
@@ -122,11 +122,11 @@ Also, we define predicates analogous to `map` and `assumemany` for the
 `subst` type: 
 
 ```makam
-assumemany : (A -> B -> prop) -> subst A T -> subst B T' -> prop -> prop.
+assumemany : {T T'} (A -> B -> prop) -> subst A T -> subst B T' -> prop -> prop.
 assumemany P snil snil Q :- Q.
 assumemany P (scons X XS) (scons Y YS) Q :- (P X Y -> assumemany P XS YS Q).
 
-map : [A B] (A -> B -> prop) -> subst A T -> subst B T' -> prop.
+map : {T T'} (A -> B -> prop) -> subst A T -> subst B T' -> prop.
 map P snil snil.
 map P (scons X XS) (scons Y YS) :- P X Y, map P XS YS.
 ```
@@ -241,7 +241,7 @@ variables that remain after the pattern, yield a list of types for all the varia
 available, plus the type of the pattern.
 
 ```makam
-typeof : patt T T' -> subst typ T'typ -> subst typ Ttyp -> typ -> prop.
+typeof : {T T' Ttyp T'typ} patt T T' -> subst typ T'typ -> subst typ Ttyp -> typ -> prop.
 
 typeof patt_var S' (scons T S') T.
 typeof patt_wild S S T.
@@ -249,7 +249,8 @@ typeof patt_zero S S nat.
 typeof (patt_succ P) S' S nat :-
   typeof P S' S nat.
 
-typeof_pattlist : pattlist T T' -> subst typ T'typ -> subst typ Ttyp -> list typ -> prop.
+typeof_pattlist :
+  {T T' Ttyp T'typ} pattlist T T' -> subst typ T'typ -> subst typ Ttyp -> list typ -> prop.
 
 typeof (patt_tuple PS) S' S (product TS) :-
   typeof_pattlist PS S' S TS.
@@ -275,13 +276,13 @@ introduced at each conversion rule as needed, and will get instantiated to the r
 unification with the scrutinee succeeds.
 
 ```makam
-patt_to_term : patt T T' -> term -> subst term T' -> subst term T -> prop.
+patt_to_term : {T T'} patt T T' -> term -> subst term T' -> subst term T -> prop.
 patt_to_term patt_var X Subst (scons X Subst).
 patt_to_term patt_wild _ Subst Subst.
 patt_to_term patt_zero zero Subst Subst.
 patt_to_term (patt_succ PN) (succ EN) Subst' Subst :- patt_to_term PN EN Subst' Subst.
 
-pattlist_to_termlist : pattlist T T' -> list term -> subst term T' -> subst term T -> prop.
+pattlist_to_termlist : {T T'} pattlist T T' -> list term -> subst term T' -> subst term T -> prop.
 
 patt_to_term (patt_tuple PS) (tuple ES) Subst' Subst :-
   pattlist_to_termlist PS ES Subst' Subst.
@@ -302,7 +303,7 @@ Two new things here: if-then-else has the semantics described in the LogicT mona
 `eq` is a predicate that forces its arguments to be unified, defined simply as:
 
 ```makam
-eq : [A] A -> A -> prop.
+eq : A -> A -> prop.
 eq X X.
 ```
 

@@ -3,7 +3,7 @@
 %use lmcomp.
 
 ctx         : type -> type.
-ctx_lookup  : [A] ctx A -> string -> A -> prop.
+ctx_lookup  : ctx A -> string -> A -> prop.
 ctx_guess   : string -> A -> ctx A -> prop.
 
 inenv : type -> type.

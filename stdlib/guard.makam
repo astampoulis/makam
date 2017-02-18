@@ -1,6 +1,6 @@
 guardmany : TupleType -> prop -> prop.
 
-guardmany_aux : TupleType -> unit -> prop -> prop.
+guardmany_aux : {TupleType} TupleType -> unit -> prop -> prop.
 
 guardmany_aux X Trigger P when not(typ.eq X (_ : A * B)) <-
   removableguard Trigger X {prop| P, eq Trigger unit |}.

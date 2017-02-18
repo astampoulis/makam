@@ -3,16 +3,16 @@ none : option A.
 some : A -> option A.
 
 %extend option.
-map : [A B] (A -> B -> prop) -> option A -> option B -> prop.
+map : (A -> B -> prop) -> option A -> option B -> prop.
 map P (some X) (some Y) <- P X Y.
 map P none none.
 
-issome : [A] option A -> prop.
+issome : option A -> prop.
 issome (some _).
 
-isnone : [A] option A -> prop.
+isnone : option A -> prop.
 isnone none.
 
-get : [A] option A -> A -> prop.
+get : option A -> A -> prop.
 get (some X) X.
 %end.

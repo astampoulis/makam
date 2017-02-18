@@ -1,12 +1,12 @@
 %use generic.
 
-find_benign : [A]A -> list A -> prop.
+find_benign : A -> list A -> prop.
 find_benign Elm (HD :: TL) <-
   ifte (eq_benign Elm HD)
        (success)
        (find_benign Elm TL).
 
-unique : [A]list A -> list A -> prop.
+unique : list A -> list A -> prop.
 unique Input Output <-
  foldl (fun cur elm res =>
         ifte (find_benign elm cur)
@@ -57,7 +57,7 @@ absunif Root (Unif : A) Res <-
 
 
 (* gather_all_unifs *)
-gather_all_unifs : [A] dyn -> A -> list A -> prop.
+gather_all_unifs : dyn -> A -> list A -> prop.
 
 gather_all_unifs_aux : A -> dyn -> list A -> list A -> prop.
 

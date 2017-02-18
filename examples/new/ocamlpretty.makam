@@ -6,9 +6,9 @@ concat SS S <- foldr string.append SS "" S.
 %end.
 
 
-gracewithnames : A -> A -> prop.
-gracewithnames : int -> A -> A -> prop.
-gracewithnames_ : int -> A -> A -> prop.
+gracewithnames : {A} A -> A -> prop.
+gracewithnames : {A} int -> A -> A -> prop.
+gracewithnames_ : {A} int -> A -> A -> prop.
 
 gracewithnames X Y <-
   gracewithnames 0 X Y.
@@ -22,7 +22,7 @@ gracewithnames_ N (X : bindone typ A) Y when bindone.varname X S, refl.isunif S 
   bindone.open X Y (fun x body body' => gracewithnames N' body body').
 
 
-listdo : [A]list (A -> prop) -> list A -> prop.
+listdo : list (A -> prop) -> list A -> prop.
 listdo L L' <- map (fun p => p) L L'.
 
 doconcat : list (string -> prop) -> string -> prop.

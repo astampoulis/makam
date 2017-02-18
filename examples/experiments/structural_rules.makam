@@ -29,7 +29,7 @@
 %use generic.
 
 
-getrules : A -> list clause -> prop.
+getrules : {A} A -> list clause -> prop.
 
 
 clausegoal : clause -> (prop -> prop) -> prop.
@@ -64,7 +64,7 @@ test X <- demand_ifte (test X)
    easiest solution is to just have the real rules live in a different predicate. *)
 
 getrules test [ clause (test "aaa") success,
-                whenclause (test Z) {prop| eq X "b", append (X : string) Y Z |} success
+                whenclause (test Z) {prop| eq X "b", string.append (X : string) Y Z |} success
               ].
 
 `( testing.expect success (test "aaa") ).
@@ -95,7 +95,7 @@ change_strings (dyn [ "lala", "dada" ]) X ?
 (* fake rank-N polymorphism by duplicating a polymorphic head.
    (this forces generation of fresh type variables, which can be instantiated independently) *)
 
-dup_head : A -> B -> prop.
+dup_head : {A B} A -> B -> prop.
 (dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
 (dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
@@ -105,14 +105,14 @@ polyrec P X Y <- dup_head P P', P' X Y.
 dyncall : (A -> B -> prop) -> dyn -> dyn -> prop.
 dyncall P (dyn X) (dyn Y) <- polyrec P X Y.
 
-gentest : A -> B -> prop.
+gentest : {A B} A -> B -> prop.
 gentest "lala" 15.
 gentest 20 "qwerty".
 
 `( testing.expect success {prop| map (dyncall gentest) [dyn "lala", dyn 20] [dyn 15, dyn "qwerty"] |} ).
 
 
-structural : (A -> A -> prop) -> B -> B -> prop.
+structural : {A B} (A -> A -> prop) -> B -> B -> prop.
 
 (structural Rec X Y) when refl.isunif X, refl.isunif Y <-
   guardmany [ dyn X , dyn Y ] (polyrec Rec X Y).
