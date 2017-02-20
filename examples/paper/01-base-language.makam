@@ -22,7 +22,7 @@ introducing /exotic terms/.
 *)
 
 app    : term -> term -> term.
-lam    : (term -> term) -> term.
+lam    : typ -> (term -> term) -> term.
 
 arrow  : typ -> typ -> typ.
 
@@ -47,7 +47,7 @@ The rule for lambda functions is similarly straightforward:
 
 *)
 
-typeof (lam E) (arrow T1 T2) :-
+typeof (lam T1 E) (arrow T1 T2) :-
   (x:term -> typeof x T1 -> typeof (E x) T2).
 
 (*
@@ -63,7 +63,7 @@ calculus, as we can issue queries for the `typeof` relation to Makam:
 
 *)
 
-typeof (lam (fun x => x)) T' ?
+typeof (lam _ (fun x => x)) T' ?
 (* >> Yes: *)
 (* >> T' := arrow T T *)
 
@@ -75,7 +75,7 @@ ill-formed cyclical type with a naive implementation of unification fails as exp
 
 *)
 
-typeof (lam (fun x => app x x)) T' ?
+typeof (lam _ (fun x => app x x)) T' ?
 (* >> Impossible. *)
 
 (*
@@ -119,7 +119,7 @@ Executing a query with a tuple yields the correct result:
 
 *)
 
-typeof (lam (fun x => lam (fun y => tuple (cons x (cons y nil))))) T ?
+typeof (lam _ (fun x => lam _ (fun y => tuple (cons x (cons y nil))))) T ?
 (* >> Yes: *)
 (* >> T := arrow T1 (arrow T2 (product (cons T1 (cons T2 nil)))) *)
 
@@ -139,7 +139,7 @@ assume a call-by-value evaluation strategy.
 
 *)
 
-eval (lam F) (lam F).
+eval (lam T F) (lam T F).
 eval (tuple ES) (tuple VS) :- map eval ES VS.
 
 (*
@@ -150,7 +150,7 @@ capture-avoiding substitution directly:
 *)
 
 eval (app E E') V'' :-
-  eval E (lam F), eval E' V', eval (F V') V''.
+  eval E (lam _ F), eval E' V', eval (F V') V''.
 
 (*
 *)
