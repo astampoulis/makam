@@ -311,7 +311,7 @@ Example of pattern matching: predecessor for nats.
 
 ```makam
 (eq _PRED 
-  (lam _ (fun n => 
+  (lam (fun n => 
     case_or_else n
       (patt_succ patt_var) (dbindnext (fun pred => dbindbase pred))
       zero

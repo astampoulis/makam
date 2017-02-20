@@ -18,7 +18,7 @@ introducing /exotic terms/.
 
 ```makam
 app    : term -> term -> term.
-lam    : typ -> (term -> term) -> term.
+lam    : (term -> term) -> term.
 
 arrow  : typ -> typ -> typ.
 ```
@@ -39,7 +39,7 @@ unification variables.
 The rule for lambda functions is similarly straightforward: 
 
 ```makam
-typeof (lam T1 E) (arrow T1 T2) :-
+typeof (lam E) (arrow T1 T2) :-
   (x:term -> typeof x T1 -> typeof (E x) T2).
 ```
 
@@ -53,7 +53,7 @@ With these definitions, we have already implemented a type-checker for the simpl
 calculus, as we can issue queries for the `typeof` relation to Makam:
 
 ```makam
-typeof (lam _ (fun x => x)) T' ?
+typeof (lam (fun x => x)) T' ?
 >> Yes:
 >> T' := arrow T T
 ```
@@ -63,7 +63,7 @@ already implemented in the unification engine. As a result, a query that would r
 ill-formed cyclical type with a naive implementation of unification fails as expected.
 
 ```makam
-typeof (lam _ (fun x => app x x)) T' ?
+typeof (lam (fun x => app x x)) T' ?
 >> Impossible.
 ```
 
@@ -101,7 +101,7 @@ typeof (tuple ES) (product TS) :-
 Executing a query with a tuple yields the correct result:
 
 ```makam
-typeof (lam _ (fun x => lam _ (fun y => tuple (cons x (cons y nil))))) T ?
+typeof (lam (fun x => lam (fun y => tuple (cons x (cons y nil))))) T ?
 >> Yes:
 >> T := arrow T1 (arrow T2 (product (cons T1 (cons T2 nil))))
 ```
@@ -117,7 +117,7 @@ Most of the rules are straightforward, following standard practice for big-step 
 assume a call-by-value evaluation strategy.
 
 ```makam
-eval (lam T F) (lam T F).
+eval (lam F) (lam F).
 eval (tuple ES) (tuple VS) :- map eval ES VS.
 ```
 
@@ -126,5 +126,5 @@ capture-avoiding substitution directly:
 
 ```makam
 eval (app E E') V'' :-
-  eval E (lam _ F), eval E' V', eval (F V') V''.
+  eval E (lam F), eval E' V', eval (F V') V''.
 ```
