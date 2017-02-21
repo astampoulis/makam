@@ -144,7 +144,7 @@ c : constructor -> subst typ T -> list term -> term.
 typeof (c Constructor TypArgs Args) (tc TC TypArgs) :-
   argumentsof Constructor TC PolyC,
   applymany PolyC TypArgs Typs,
-  ((map : A -> list B -> list C -> prop) typeof Args Typs).
+  map typeof Args Typs.
 
 (*
 *)
