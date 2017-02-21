@@ -144,8 +144,8 @@ apptyp -> x:loced(typconstr)
 
 typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
 
-basetyp -> id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
-         / id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+basetyp -> id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+         / id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
          / t:lparenthesized(lmonotyp)   << t >>
 
 binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")

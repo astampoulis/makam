@@ -48,112 +48,81 @@ typeof (lamt (fun a => lam a (fun x => x))) T ?
 Moving on towards a more ML-like language, we would like to add the option to declare
 algebraic datatypes. This requires us to first introduce a notion of top-level
 programs, composed of a series of declarations of types and terms, as well as 
-a predicate to check that a program is well-formed. In keeping with an
-ML-like language, we could do something more general than that: add ML-style modules.
-We will need to introduce the ability to create module structures and signatures --
-corresponding to the implementation and specification parts of modules. Structures
-are composed of a series of declarations, while signatures are composed of a series
-of specifications. Therefore:
+a predicate to check that a program is well-formed:
 
 ```makam
-declaration, specification : type.
-struct, sig : type.
-
-struct : list declaration -> struct.
-sig : list specification -> sig.
+program : type.
+wfprogram : program -> prop.
 ```
 
-`let` definitions are our first example of a module component:
+Let us add `let` definitions as a first example of a program component. These introduce
+a term variable that can be used in the rest of the program:
 
 ```makam
-let : string -> term -> declaration.
-val : string -> typ -> specification.
+let : term -> (term -> program) -> program.
+
+wfprogram (let E P) :-
+  typeof E T,
+  (x:term -> typeof x T -> wfprogram (P x)).
 ```
 
-One thing to note is the presence of strings: as opposed to what we've seen so far,
-we'll be using concrete strings in the different components of structures and
-signatures, as opposed to abstract binders through higher-order abstract syntax. The
-reason for this is two-fold: first, matching components between a structure and a
-signature is done based on their concrete names; and second, there is not really a
-case where we would need substitution for the abstract variables, have we used those
-instead. As a result, we do not have to use a higher-order representation for the
-variables used in modules, and we can go with a normal first-class representation
-instead.
-
-The typing rule of a `let` declaration should make sure that the term matches the type
-of the corresponding `val` specification, and also that the corresponding named
-variable gets the right type in the rest of the module. In order to be able to capture
-the latter part, we will use a list of propositions, representing local assumptions
-that should be made in the rest of the module. We will also need a term constructor
-for named variables:
+We also need a "last" component for the program -- typically this takes the form of
+a main expression:
 
 ```makam
-named : string -> term.
-specof : declaration -> specification -> list prop -> prop.
-specof (let S E) (val S T) [typeof (named S) T] :-
-  typeof E T.
+main : term -> program.
+
+wfprogram (main E) :-
+  typeof E _.
 ```
 
-Let us now move on to datatypes. Datatypes have a name, a number of type parameters,
-and a list of constructors; constructors themselves have a name and a list of
-arguments. We will only allow transparent datatypes for now, whose specification
-matches their declaration.
+Let us now proceed to algebraic datatypes. Datatypes have a name, a number of type
+parameters, and a list of constructors; constructors themselves have a name and a list
+of arguments:
 
 ```makam
-datatype_decl, constructor_decl : type.
-datatype_decl : string -> dbind typ T (list constructor) -> datatype_decl.
-constructor_decl : string -> subst typ T' -> constructor_decl.
-struct_datatype : datatype_decl -> declaration.
-sig_datatype : datatype_decl -> specification.
+typeconstructor : type -> type.
+constructor : type.
+
+constructor_declaration : type -> type.
+cdnil : constructor_declaration unit.
+cdcons : list typ -> constructor_declaration T -> constructor_declaration (constructor * T).
+
+datatype_declaration :
+  (typeconstructor T -> dbind typ T (constructor_declaration C)) ->
+  (typeconstructor T -> dbind constructor C program) ->
+  program.
 ```
 
-We will also need type- and term-level constructs for referring to a datatype and
-a constructor, respectively:
+Adding the necessary predicates:
 
 ```makam
-d : string -> subst typ T -> typ.
-c : string -> subst term T -> term.
+argumentsof : constructor -> typeconstructor T -> dbind typ T (list typ) -> prop.
+
+open_constructors : [T C]
+  typeconstructor T -> subst typ T -> constructor_declaration C -> (subst constructor C -> prop) -> prop.
+open_constructors _ _ cdnil P :- P snil.
+open_constructors TC TVars (cdcons ConstructorType CS) P :-
+  applymany PolyC TVars ConstructorType,
+  (c:constructor ->
+   argumentsof c TC PolyC -> open_constructors TC Subst CS (pfun cs => P (scons c cs))).
+
+wfprogram (datatype_declaration Constructors Rest) :-
+  (dt:(typeconstructor T) ->
+    openmany (Constructors dt) (pfun tvars constructor_decls =>
+      open_constructors dt tvars constructor_decls (pfun constructors => ([Program']
+        applymany (Rest dt) constructors Program',
+        wfprogram Program')))).
 ```
 
-Typing:
+Let's add term- and type-level formers:
 
 ```makam
-datatype : datatype_decl -> prop.
+tc : typeconstructor T -> subst typ T -> typ.
+c : constructor -> subst typ T -> list term -> term.
 
-wftype : typ -> prop.
-wftype (d S Args) :-
-  datatype (datatype_decl S Decl),
-  intromany Decl (pfun typevars =>
-    map (pfun var arg => wftype arg) typevars Args
-  ).
+typeof (c Constructor TypArgs Args) (tc TC TypArgs) :-
+  argumentsof Constructor TC PolyC,
+  applymany PolyC TypArgs Typs,
+  ((map : A -> list B -> list C -> prop) typeof Args Typs).
 ```
-
-specof (struct_datatype Datatype) (sig_datatype Datatype)
-       ((datatype DataType) : ConstructorAssumptions) :-
-  eq Datatype (datatype_decl TypeName Declaration),
-  (datatype (datatype_decl TypeName Declaration) ->
-    wf_constructors
-
-
-We will also need predicates that relate definitions to specifications, and structures
-to signatures. (We will focus on principal signatures for the time being, 
-
-```makam
-specof : string -> declaration -> specification -> list prop -> type.
-sigof : struct -> sig -> type.
-```
-
-```makam
-sigof (struct S) (sig SI) :-
-  principal_sigof S SI',
-  sigmatch SI' SI.
-
-principal_sigof (struct []) [].
-principal_sigof ((S, Decl) :: Decls) ((S, Spec) :: Specs) :-
-  principal_sigof S Decl Spec Assumptions,
-  assumemany Assumptions (sigof Decls Specs).
-  
-
-We need a predicate that relates definitions to specifications:
-
-```makam
