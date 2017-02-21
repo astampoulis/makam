@@ -88,6 +88,8 @@ appexpr -> f:baseexpr^ args:repWHITE(baseexpr)
 namepref -> "^n" / "ⁿ" ;
 
 baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
+          / id:ltoken(("_" x:ident << "_" ^ x >> / "_" << "_" >>))
+            << autospan_un mkCapturingVar id >>
           / id:ltoken(identnamed)  << autospan_un mkVar id >>
           / x:ltoken( ( namepref id:ident << id >>) ) << autospan_un mkNameVar x >>
           / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>

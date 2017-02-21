@@ -118,9 +118,7 @@ constructor_polytypes : [Arity Constructors PolyTypes]
 
 constructor_polytypes _ [] [].
 constructor_polytypes TypVars (ConstructorType :: Constructors) (PolyType :: PolyTypes) :-
-  print_string "abstracting: ", print ConstructorType,
   applymany PolyType TypVars ConstructorType,
-  print_string "abstracted: ", print PolyType,
   constructor_polytypes TypVars Constructors PolyTypes.
 ```
 
@@ -133,11 +131,10 @@ cannot capture the `TypVars` variables:
 wfprogram (datatype (datatype_declaration ConstructorDecls) Program') :-
   (dt:(typeconstructor T) -> ([PolyTypes]
     openmany (ConstructorDecls dt) (pfun tvars constructor_decls => (
-      constructor_polytypes tvars constructor_decls PolyTypes)))),
-  (dt:(typeconstructor T) ->
+      constructor_polytypes tvars constructor_decls PolyTypes)),
     openmany (Program' dt) (pfun constructors program' =>
       assumemany (constructor_info dt) constructors PolyTypes
-      (wfprogram program'))).
+      (wfprogram program')))).
 ```
 
 In order to be able to refer to datatypes and constructors, we will need type- and term-level
@@ -153,7 +150,7 @@ typeof (constr Constructor Args) (tconstr TypConstr TypArgs) :-
   map typeof Args Typs.
 ```
 
-We will also need pattern matching:
+We will also need patterns:
 
 ```makam
 patt_constr : constructor -> pattlist T T' -> patt T T'.
@@ -178,15 +175,57 @@ wfprogram
   (main
     (letrec
       (dbindnext (fun append => dbindbase (
-      [ lamt (fun a => lam (tconstr llist [a]) (fun l1 => lam #_ (fun l2 =>
+      [ lamt (fun a => lam (tconstr llist [a]) (fun l1 => lam _ (fun l2 =>
         case_or_else l1
           (patt_constr lcons [patt_var, patt_var])
             (dbindnext (fun hd => dbindnext (fun tl => dbindbase (
-            constr lcons [hd, app (app (appt append #_) tl) l2]))))
+            constr lcons [hd, app (app (appt append _) tl) l2]))))
           l2))) ])))
       (dbindnext (fun append => dbindbase (
 
-    (app (app (appt append #_) (constr lcons [zero, constr lnil []])) (constr lcons [zero, constr lnil []]))
+    (app (app (appt append _) (constr lcons [zero, constr lnil []])) (constr lcons [zero, constr lnil []]))
   
 )))))))))) ?
+```
+
+The semantics, if needed:
+```makam
+patt_to_term (patt_constr Constructor Args) (constr Constructor Args') S' S :-
+  pattlist_to_termlist Args Args' S' S.
+
+eval (constr C Args) (constr C Args') :-
+  map eval Args Args'.
+
+eval : program -> program -> prop.
+
+eval (let E P') P'' :-
+  eval E V, eval (P' V) P''.
+
+eval (datatype D P') (datatype D P'') :-
+  (dt:(typeconstructor T) ->
+    intromany CS (pfun cs => ([P'c P''c]
+    applymany (P' dt) cs P'c,
+    applymany (P'' dt) cs P''c,
+    eval P'c P''c))).
+
+eval (main E) (main V) :-
+  eval E V.
+```
+
+Example:
+
+```makam
+(eq _PROGRAM (
+
+    (datatype
+      (datatype_declaration (fun llist => dbindnext (fun a => dbindbase (
+      [ [] (* nil *) ,
+        [a, tconstr llist [a]] (* cons of a * list a *) ]))))
+      (fun llist => dbindnext (fun lnil => dbindnext (fun lcons => dbindbase (
+
+    (main (constr lcons [zero, constr lnil []]))
+
+    )))))),
+ wfprogram _PROGRAM,
+ eval _PROGRAM FINAL) ?
 ```
