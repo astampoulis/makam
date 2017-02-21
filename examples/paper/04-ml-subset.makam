@@ -119,11 +119,11 @@ argumentsof : constructor -> typeconstructor T -> dbind typ T (list typ) -> prop
 
 open_constructors : [T C]
   typeconstructor T -> subst typ T -> constructor_declaration C -> (subst constructor C -> prop) -> prop.
-open_constructors _ _ cdnil P :- P snil.
+open_constructors _ _ cdnil P :- P [].
 open_constructors TC TVars (cdcons ConstructorType CS) P :-
   applymany PolyC TVars ConstructorType,
   (c:constructor ->
-   argumentsof c TC PolyC -> open_constructors TC Subst CS (pfun cs => P (scons c cs))).
+   argumentsof c TC PolyC -> open_constructors TC Subst CS (pfun cs => P (c :: cs))).
 
 wfprogram (datatype_declaration Constructors Rest) :-
   (dt:(typeconstructor T) ->

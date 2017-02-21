@@ -86,8 +86,8 @@ precise types:
 
 ```makam
 subst : type -> type -> type.
-snil : subst A unit.
-scons : A -> subst A T -> subst A (A * T).
+nil : subst A unit.
+cons : A -> subst A T -> subst A (A * T).
 ```
 
 The predicates are now defined as follows. First, their types are: 
@@ -106,12 +106,12 @@ overloading for constructors; having unambiguous types for constructors means th
 to resolve ambiguity between overloaded predicates easily. 
 
 ```makam
-intromany (dbindbase F) P :- P snil.
+intromany (dbindbase F) P :- P nil.
 intromany (dbindnext F) P :-
-  (x:A -> intromany (F x) (pfun t => P (scons x t))).
+  (x:A -> intromany (F x) (pfun t => P (x :: t))).
 
-applymany (dbindbase Body) snil Body.
-applymany (dbindnext F) (scons X XS) Body :-
+applymany (dbindbase Body) nil Body.
+applymany (dbindnext F) (cons X XS) Body :-
   applymany (F X) XS Body.
 
 openmany F P :-
@@ -123,12 +123,12 @@ Also, we define predicates analogous to `map` and `assumemany` for the
 
 ```makam
 assumemany : [T T'] (A -> B -> prop) -> subst A T -> subst B T' -> prop -> prop.
-assumemany P snil snil Q :- Q.
-assumemany P (scons X XS) (scons Y YS) Q :- (P X Y -> assumemany P XS YS Q).
+assumemany P [] [] Q :- Q.
+assumemany P (X :: XS) (Y :: YS) Q :- (P X Y -> assumemany P XS YS Q).
 
 map : [T T'] (A -> B -> prop) -> subst A T -> subst B T' -> prop.
-map P snil snil.
-map P (scons X XS) (scons Y YS) :- P X Y, map P XS YS.
+map P [] [].
+map P (X :: XS) (Y :: YS) :- P X Y, map P XS YS.
 ```
 
 (Here we have not captured the relationship between the type of tuples `T` and `T'` precisely,
@@ -243,25 +243,25 @@ available, plus the type of the pattern.
 ```makam
 typeof : [T T' Ttyp T'typ] patt T T' -> subst typ T'typ -> subst typ Ttyp -> typ -> prop.
 
-typeof patt_var S' (scons T S') T.
+typeof patt_var S' (cons T S') T.
 typeof patt_wild S S T.
 typeof patt_zero S S nat.
 typeof (patt_succ P) S' S nat :-
   typeof P S' S nat.
 
-typeof_pattlist :
+typeof :
   [T T' Ttyp T'typ] pattlist T T' -> subst typ T'typ -> subst typ Ttyp -> list typ -> prop.
 
 typeof (patt_tuple PS) S' S (product TS) :-
-  typeof_pattlist PS S' S TS.
+  typeof PS S' S TS.
 
-typeof_pattlist patt_nil S S [].
-typeof_pattlist (patt_cons P PS) S3 S1 (T :: TS) :-
-  typeof_pattlist PS S3 S2 TS, typeof P S2 S1 T.
+typeof patt_nil S S [].
+typeof (patt_cons P PS) S3 S1 (T :: TS) :-
+  typeof PS S3 S2 TS, typeof P S2 S1 T.
 
 typeof (case_or_else Scrutinee Pattern Body Else) T' :-
   typeof Scrutinee T,
-  typeof Pattern snil TS T,
+  typeof Pattern nil TS T,
   openmany Body (pfun xs body =>
      (assumemany typeof xs TS (typeof body T'))
   ),
@@ -277,7 +277,7 @@ unification with the scrutinee succeeds.
 
 ```makam
 patt_to_term : [T T'] patt T T' -> term -> subst term T' -> subst term T -> prop.
-patt_to_term patt_var X Subst (scons X Subst).
+patt_to_term patt_var X Subst (cons X Subst).
 patt_to_term patt_wild _ Subst Subst.
 patt_to_term patt_zero zero Subst Subst.
 patt_to_term (patt_succ PN) (succ EN) Subst' Subst :- patt_to_term PN EN Subst' Subst.
@@ -293,7 +293,7 @@ pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
   patt_to_term P T Subst2 Subst1.
 
 eval (case_or_else Scrutinee Pattern Body Else) V :-
-  patt_to_term Pattern TermWithUnifvars snil Unifvars,
+  patt_to_term Pattern TermWithUnifvars nil Unifvars,
   if (eq Scrutinee TermWithUnifvars)  (* reuse unification from the meta-language *)
   then (applymany Body Unifvars Body', eval Body' V)
   else (eval Else V).
