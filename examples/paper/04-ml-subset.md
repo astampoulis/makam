@@ -104,38 +104,40 @@ checking into our predicates.
 
 Let us now proceed to well-formedness for datatype declarations. We will need two auxiliary
 predicates: one that keeps information about a constructor -- which type it belongs to, what
-arguments it expects; and another one that "introduces" constructors into the rest of the
-program -- similar to the `intromany` predicate we have seen before.
-
-```makam
-constructor_info :
-  constructor -> typeconstructor Arity -> dbind typ Arity (list typ) -> prop.
-
-intro_constructors : [Arity Constructors]
-  typeconstructor Arity -> subst typ Arity ->
-  constructor_declaration Constructors -> (subst constructor Constructors -> prop) -> prop.
-
-intro_constructors _ _ [] P :- P [].
-intro_constructors TypConstr TypVars (ConstructorType :: Constructors) P :-
-  applymany PolyType TypVars ConstructorType,
-  (c:constructor ->
-   constructor_info c TypConstr PolyType ->
-   intro_constructors TypConstr TypVars Constructors (pfun cs => P (c :: cs))).
-```
-
-One interesting part in this one is the `applymany`: this is used in the opposite direction
-than what we have used it so far, getting `TypVars` and `ConstructorType` as inputs, and
-producing `PolyType` as an output. This is done so that we abstract over the type variables
+arguments it expects; and another one that abstracts over the type variables
 used in the datatype declaration, creating a polymorphic type for the type of the constructor,
 that can be instantiated with different types at different places.
 
 ```makam
-wfprogram (datatype (datatype_declaration ConstructorDecls) Rest) :-
+constructor_info :
+  typeconstructor Arity -> constructor -> dbind typ Arity (list typ) -> prop.
+
+constructor_polytypes : [Arity Constructors PolyTypes]
+  subst typ Arity ->
+  constructor_declaration Constructors -> subst (dbind typ Arity (list typ)) PolyTypes -> prop.
+
+constructor_polytypes _ [] [].
+constructor_polytypes TypVars (ConstructorType :: Constructors) (PolyType :: PolyTypes) :-
+  print_string "abstracting: ", print ConstructorType,
+  applymany PolyType TypVars ConstructorType,
+  print_string "abstracted: ", print PolyType,
+  constructor_polytypes TypVars Constructors PolyTypes.
+```
+
+One interesting part in this one is the two `applymany` calls: these are used in the opposite
+direction than what we have used it so far, getting `TypVars` and `ConstructorType` as inputs,
+and producing `PolyType` as an output. We need to be careful though to make sure that `PolyType`
+cannot capture the `TypVars` variables:
+
+```makam
+wfprogram (datatype (datatype_declaration ConstructorDecls) Program') :-
+  (dt:(typeconstructor T) -> ([PolyTypes]
+    openmany (ConstructorDecls dt) (pfun tvars constructor_decls => (
+      constructor_polytypes tvars constructor_decls PolyTypes)))),
   (dt:(typeconstructor T) ->
-    openmany (ConstructorDecls dt) (pfun tvars constructor_decls => 
-      intro_constructors dt tvars constructor_decls (pfun constructors => ([Program']
-        applymany (Rest dt) constructors Program',
-        wfprogram Program')))).
+    openmany (Program' dt) (pfun constructors program' =>
+      assumemany (constructor_info dt) constructors PolyTypes
+      (wfprogram program'))).
 ```
 
 In order to be able to refer to datatypes and constructors, we will need type- and term-level
@@ -146,7 +148,7 @@ tconstr : typeconstructor T -> subst typ T -> typ.
 constr : constructor -> list term -> term.
 
 typeof (constr Constructor Args) (tconstr TypConstr TypArgs) :-
-  constructor_info Constructor TypConstr PolyType,
+  constructor_info TypConstr Constructor PolyType,
   applymany PolyType TypArgs Typs,
   map typeof Args Typs.
 ```
@@ -157,7 +159,7 @@ We will also need pattern matching:
 patt_constr : constructor -> pattlist T T' -> patt T T'.
 
 typeof (patt_constr Constructor Args) S' S (tconstr TypConstr TypArgs) :-
-  constructor_info Constructor TypConstr PolyType,
+  constructor_info TypConstr Constructor PolyType,
   applymany PolyType TypArgs Typs,
   typeof Args S' S Typs.
 ```
@@ -165,7 +167,6 @@ typeof (patt_constr Constructor Args) S' S (tconstr TypConstr TypArgs) :-
 As an example, we will define lists, and the append function for them:
 
 ```makam
-%debug+.
 wfprogram
 
   (datatype
@@ -174,7 +175,18 @@ wfprogram
       [a, tconstr llist [a]] (* cons of a * list a *) ]))))
   (fun llist => dbindnext (fun lnil => dbindnext (fun lcons => dbindbase (
 
-  (main (constr lcons [zero, constr lnil []]))
+  (main
+    (letrec
+      (dbindnext (fun append => dbindbase (
+      [ lamt (fun a => lam (tconstr llist [a]) (fun l1 => lam #_ (fun l2 =>
+        case_or_else l1
+          (patt_constr lcons [patt_var, patt_var])
+            (dbindnext (fun hd => dbindnext (fun tl => dbindbase (
+            constr lcons [hd, app (app (appt append #_) tl) l2]))))
+          l2))) ])))
+      (dbindnext (fun append => dbindbase (
+
+    (app (app (appt append #_) (constr lcons [zero, constr lnil []])) (constr lcons [zero, constr lnil []]))
   
-))))) ?
+)))))))))) ?
 ```

@@ -257,8 +257,8 @@ n-ary tuples require a type for pattern lists:
 pattlist : type -> type -> type.
 patt_tuple : pattlist T T' -> patt T T'.
 
-patt_nil : pattlist T T.
-patt_cons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
+nil : pattlist T T.
+cons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
 
 (*
 
@@ -294,8 +294,8 @@ typeof :
 typeof (patt_tuple PS) S' S (product TS) :-
   typeof PS S' S TS.
 
-typeof patt_nil S S [].
-typeof (patt_cons P PS) S3 S1 (T :: TS) :-
+typeof [] S S [].
+typeof (P :: PS) S3 S1 (T :: TS) :-
   typeof PS S3 S2 TS, typeof P S2 S1 T.
 
 typeof (case_or_else Scrutinee Pattern Body Else) T' :-
@@ -328,8 +328,8 @@ pattlist_to_termlist : [T T'] pattlist T T' -> list term -> subst term T' -> sub
 patt_to_term (patt_tuple PS) (tuple ES) Subst' Subst :-
   pattlist_to_termlist PS ES Subst' Subst.
 
-pattlist_to_termlist patt_nil [] Subst Subst.
-pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
+pattlist_to_termlist [] [] Subst Subst.
+pattlist_to_termlist (P :: PS) (T :: TS) Subst3 Subst1 <-
   pattlist_to_termlist PS TS Subst3 Subst2,
   patt_to_term P T Subst2 Subst1.
 
