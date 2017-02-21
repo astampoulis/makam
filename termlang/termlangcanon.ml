@@ -94,7 +94,8 @@ type ctxEnv = { name_to_bvar : (int list) Dict.t ;
                 tpvars         : int ;
                 tpvarnames     : string list ;
                 term_focus     : [ `E of exprU | `T of typ | `None ] ;
-                concrete_bound_names : bool 
+                concrete_bound_names : bool ;
+                resolve_ambiguous_vars : bool
               }
 type ctxState = { name_to_fvar : (int list) Dict.t ;
                   fvar_to_name : string IMap.t ;
@@ -130,7 +131,7 @@ type ctxState = { name_to_fvar : (int list) Dict.t ;
 let empty_env () = 
   { name_to_bvar  = Dict.empty ;  bvars = 0; bvarnames = [] ; typ_of_bvar  = IMap.empty ;
     name_to_tpvar = Dict.empty ; tpvars = 0 ; tpvarnames = [] ;
-    term_focus = `None ; concrete_bound_names = false }
+    term_focus = `None ; concrete_bound_names = false ; resolve_ambiguous_vars = true }
 ;;
 
 let empty_state () =
@@ -770,6 +771,10 @@ let getFocus () = (!termenv).term_focus ;;
 
 let setFocus t = { !termenv with term_focus = t } ;;
 
+let getResolveAmbiguousVars () = (!termenv).resolve_ambiguous_vars ;;
+
+let setResolveAmbiguousVars t = { !termenv with resolve_ambiguous_vars = t } ;;
+  
 let getConcreteBoundMode () = (!termenv).concrete_bound_names ;;
 
 let withConcreteBoundMode mode f =
@@ -997,6 +1002,7 @@ let rec findUnifiableVar kind (vars : int list) ({ classifier = tRes } as eFull)
     match vars with
     | [] -> raise (WrongTermVar(eFull))
     | i :: [] -> [ i ]
+    | _ when not(getResolveAmbiguousVars()) -> raise (WrongTermVar(eFull))
     | _ ->
       (let unifiable = List.map (fun v -> let state = !termstate in
                                           let typ = lookupIndex (kind, v) eFull.loc in
@@ -1267,21 +1273,13 @@ let rec typecheck (e : exprU) : expr =
           typUnify f.classifier (a.classifier **> tD) ;
           typUnify tD tRes ;
           let _ =
-            (* Hack: try to see whether `a` is an already-typed metavariable; in that case,
-               unifying the type can help pick the right constant when typechecking `f`. *)
-            match a.term with
-              `Var(`Concrete(s) as n, None)
-            | `Var(`Abstract(s, _) as n, None) when validTPolyName (string_of_name n) -> begin
-               try
-                 let s = string_of_name n in
-                 let state = !termstate in
-                 let i = Dict.find s state.name_to_meta in
-                 let index = `Meta, i in
-                 let typ = lookupIndex index a.loc in
-                 typUnify typ a.classifier
-               with Not_found -> ()
-              end
-            | _ -> ()
+            (* Hack: try to see whether it is easy to determine the type of `a`, without
+               picking a specific variable when overloading is ambiguous. This typically
+               leads to more information for typechecking `f` and disambiguating constants
+               there. *)
+            if getResolveAmbiguousVars() then
+              Ctx.inenv (setResolveAmbiguousVars false)
+                        (fun _ -> try ignore(typecheck a) with _ -> ())
           in
           let f = typecheck f in
           let a = typecheck a in
