@@ -113,12 +113,14 @@ openmany : [T] dbind A T B -> (subst A T -> B -> prop) -> prop.
 
 (*
 
-Note that we are reusing the same predicate names as before. Makam allows overloading for all
-variable names; expected types are taken into account for resolving variables and disambiguating
-between them, as has been long known to be possible in the bi-directional type-checking
-literature. Type ascription is used when variable resolution is ambiguous.  We also avoid
-overloading for constructors; having unambiguous types for constructors means that they can be used
-to resolve ambiguity between overloaded predicates easily. 
+Note that we are reusing the same predicate names as before. Makam allows overloading for
+all variable names; expected types are taken into account for resolving variables and
+disambiguating between them, as has been long known to be possible in the bi-directional
+type-checking literature. Type ascription is used when variable resolution is
+ambiguous. We also sometimes avoid overloading for constructors; having unambiguous types
+for constructors means that they can be used to resolve ambiguity between overloaded
+predicates easily. However, here we reuse the `nil` and `cons` constructors for `subst`
+so that we can use the sugared form for list-like datatypes (using `[]` and `::`).
 
 *)
 
@@ -126,9 +128,8 @@ intromany (dbindbase F) P :- P nil.
 intromany (dbindnext F) P :-
   (x:A -> intromany (F x) (pfun t => P (x :: t))).
 
-applymany (dbindbase Body) nil Body.
-applymany (dbindnext F) (cons X XS) Body :-
-  applymany (F X) XS Body.
+applymany (dbindbase Body) [] Body.
+applymany (dbindnext F) (X :: XS) Body :- applymany (F X) XS Body.
 
 openmany F P :-
   intromany F (pfun xs => [Body] applymany F xs Body, P xs Body).
@@ -317,7 +318,7 @@ unification with the scrutinee succeeds.
 *)
 
 patt_to_term : [T T'] patt T T' -> term -> subst term T' -> subst term T -> prop.
-patt_to_term patt_var X Subst (cons X Subst).
+patt_to_term patt_var X Subst (X :: Subst).
 patt_to_term patt_wild _ Subst Subst.
 patt_to_term patt_zero zero Subst Subst.
 patt_to_term (patt_succ PN) (succ EN) Subst' Subst :- patt_to_term PN EN Subst' Subst.
@@ -333,7 +334,7 @@ pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
   patt_to_term P T Subst2 Subst1.
 
 eval (case_or_else Scrutinee Pattern Body Else) V :-
-  patt_to_term Pattern TermWithUnifvars nil Unifvars,
+  patt_to_term Pattern TermWithUnifvars [] Unifvars,
   if (eq Scrutinee TermWithUnifvars)  (* reuse unification from the meta-language *)
   then (applymany Body Unifvars Body', eval Body' V)
   else (eval Else V).
