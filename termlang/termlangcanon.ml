@@ -661,13 +661,17 @@ let lookupTIndex (varkind,i) =
 
 ;;
 
+let getResolveAmbiguousVars () = (!termenv).resolve_ambiguous_vars ;;
 
+let setResolveAmbiguousVars t = { !termenv with resolve_ambiguous_vars = t } ;;
+  
 let findMeta loc ?(makeNameMeta = false) s =
 
   let state = !termstate in
   try  Dict.find s state.name_to_meta
   with Not_found ->
-    if not (makeNameMeta || validTPolyName s || s ="_" || String.starts_with s "_") then raise (Not_found);
+    if not (makeNameMeta || validTPolyName s || s ="_" || String.starts_with s "_" || getResolveAmbiguousVars()) then
+      raise (Not_found);
     let newmeta = state.metas in
     let tp      = if makeNameMeta then !(builtinStringType) else newTMeta loc in
     let state   = !termstate in
@@ -770,10 +774,6 @@ let getTypeFocus () =
 let getFocus () = (!termenv).term_focus ;;
 
 let setFocus t = { !termenv with term_focus = t } ;;
-
-let getResolveAmbiguousVars () = (!termenv).resolve_ambiguous_vars ;;
-
-let setResolveAmbiguousVars t = { !termenv with resolve_ambiguous_vars = t } ;;
   
 let getConcreteBoundMode () = (!termenv).concrete_bound_names ;;
 
