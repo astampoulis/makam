@@ -1260,19 +1260,32 @@ let rec typecheck (e : exprU) : expr =
 
       `App( f, a ) ->
 
-(*        let (f,a) = Ctx.bench "typecheck.app" (lazy( *)
-
           let f  = kindcheck_expr f in
           let a  = kindcheck_expr a in
 
           let tD = newTMeta e.loc in
           typUnify f.classifier (a.classifier **> tD) ;
           typUnify tD tRes ;
-        (*   f,a )) *)
-        (* in *)
-        let f = typecheck f in
-        let a = typecheck a in
-        { e with term = `App(f, a) }
+          let _ =
+            (* Hack: try to see whether `a` is an already-typed metavariable; in that case,
+               unifying the type can help pick the right constant when typechecking `f`. *)
+            match a.term with
+              `Var(`Concrete(s) as n, None)
+            | `Var(`Abstract(s, _) as n, None) when validTPolyName (string_of_name n) -> begin
+               try
+                 let s = string_of_name n in
+                 let state = !termstate in
+                 let i = Dict.find s state.name_to_meta in
+                 let index = `Meta, i in
+                 let typ = lookupIndex index a.loc in
+                 typUnify typ a.classifier
+               with Not_found -> ()
+              end
+            | _ -> ()
+          in
+          let f = typecheck f in
+          let a = typecheck a in
+          { e with term = `App(f, a) }
 
     | `Lam( binder, tD, body ) ->
 
