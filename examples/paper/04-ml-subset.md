@@ -226,6 +226,7 @@ Example:
     (main (constr lcons [zero, constr lnil []]))
 
     )))))),
+
  wfprogram _PROGRAM,
  eval _PROGRAM FINAL) ?
 ```
