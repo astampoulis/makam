@@ -2,7 +2,7 @@
 %use "04-ml-subset".
 ```
 
-Let's add type synonyms now:
+Let us proceed to add type synonyms:
 
 ```makam
 type_synonym : dbind typ T typ -> (typeconstructor T -> program) -> program.
@@ -13,8 +13,97 @@ wfprogram (type_synonym Syn Program') :-
   (t:(typeconstructor T) ->
    type_synonym_info t Syn ->
    wfprogram (Program' t)).
+```
 
+Simple enough. How to typecheck them though? We need something like the
+conversion rule:
+
+$\inferrule{\Gamma \vdash e : \tau \\ \tau =_{\delta} \tau'}{\Gamma \vdash e : \tau'}$
+
+Here $=_{\delta}$ means equality up to expanding type synonyms.
+
+We will need a type equality predicate:
+
+```makam
 teq : typ -> typ -> prop.
+```
+
+A naive attempt at the conversion rule would be:
+
+```
+typeof E T :- typeof E T', teq T T'.
+```
+
+However, it is easy to see that this rule leads to divergence:
+it does a recursive call to itself.
+
+We can do a bit better. We only need to use the conversion rule in cases where we
+already know something about the type `T` of the expression, but our typing rules do
+not match that type. In bi-directional typing parlance, instead of analyzing the type
+`T` of the expression `E`, we want to synthesize the type starting from a new
+meta-variable `T'`, and then check that the two types are equal using `teq`.
+So we need to change our rule to only apply in the case where `T` starts with a
+concrete type constructor, rather than when it is an uninstantiated meta-variable.
+
+It is typical for a logic programming language to have a predicate that only succeeds
+when a specific term is uninstantiated (usually called `var`). In Makam this is
+called `refl.isunif` -- the `refl` prefix standing for the fact that we call these
+kinds of predicates "reflective", as they give us extra-logical information about
+the form of a term. Our second attempt thus looks as follows:
+
+```
+typeof E T :- not(refl.isunif T), typeof E T', teq T T'.
+```
+
+Upon further consideration, we see that this rule leads to an infinite loop as well:
+since `teq` should be reflective, for every proof of `typeof E T'` through the other
+rules, a new proof using this rule will be discovered, which will lead to another
+proof for it, etc. One way to fix it is to make sure that this rule is only used once
+at the end, if typing using the other rules fails:
+
+```
+typeof, typeof_cases, typeof_conversion : term -> typ -> prop.
+typeof E T :-
+  if (typeof_cases E T)
+  then success
+  else (typeof_conversion E T).
+typeof_cases (app E1 E2) T' :-
+  typeof E1 (arrow T1 T2),
+  typeof E2 T1.
+...
+typeof_conversion E T :-
+  not(refl.isunif T), typeof_cases E T', teq T T'.
+```
+
+However, this would require changing every typing rule we had. Instead, we can do a
+trick, to force the rule to only fire once for each expression `E`, remembering the
+fact that we have used the rule already:
+
+```makam
+already_in : [A] A -> prop.
+
+typeof E T :-
+  not(refl.isunif T),
+  not(already_in (typeof E)),
+  (already_in (typeof E) -> typeof E T'),
+  teq T T'.
+```
+
+Also, we need to make sure that we also take the conversion rule into account for
+patterns:
+
+```makam
+typeof (P : patt A B) S' S T :-
+  not(refl.isunif T),
+  not(already_in (typeof P)),
+  (already_in (typeof P) -> typeof P S' S T'),
+  teq T T'.
+```
+
+Now let's go and define the actual `teq` predicate. A first approach
+would be to just write out each case individually:
+
+```
 teq (arrow T1 T2) (arrow T1' T2') :- map teq [T1, T2] [T1', T2'].
 teq (product TS) (product TS') :- map teq TS TS'.
 teq (arrowmany TS T) (arrowmany TS' T') :- teq T T', map teq TS TS'.
@@ -29,15 +118,60 @@ teq T' (tconstr TC Args) :-
   type_synonym_info TC Syn,
   applymany Syn Args T,
   teq T' T.
+```
 
-(typeof E T) when not(refl.isunif T), once(typeof E T') :-
-  teq T T'.
-(typeof P S' S T) when not(refl.isunif T), once(typeof P S' S T') :-
-  teq T T'.
-  
+But there's a better way. Let's first see what it looks like:
+
+```makam
+teq_aux : [A] A -> A -> prop.
+
+teq_aux (tconstr TC Args) T' :-
+  type_synonym_info TC Syn,
+  applymany Syn Args T,
+  teq_aux T T'.
+teq_aux T' (tconstr TC Args) :-
+  type_synonym_info TC Syn,
+  applymany Syn Args T,
+  teq_aux T' T.
+teq_aux T T' :- structural teq_aux T T'.
+
+teq T T' :- teq_aux T T'.
+```
+
+That is, we give just the cases that we care about, and then use the higher-order
+`structural` predicate to structurally descend into the type, and use the same
+recursive predicate within each constructor. One thing to note is that we need
+to generalize the type of `teq` to also be able to handle all types of data that
+we will encounter during the recursive traversal, such as lists, functions, etc.
+
+The type of `structural` is of the form:
+
+```
+structural : (forall A. A -> A -> prop) -> (B -> B -> prop) -> prop.
+```
+
+Here we use a higher-rank type, as the predicate that gets passed to `structural`
+will be used at different types in the recursive calls (polymorphic recursion).
+Unfortunately our current implementation of Makam does not support higher-rank
+types; we side-step the issue through a predicate called `dyn.poly` that duplicates
+a term, substituting fresh type variables wherever type variables are used:
+
+```
+dyn.poly : (A -> A -> prop) -> (B -> B -> prop) -> prop.
+```
+
+Other than this, `structural` uses the reflective predicates mentioned above
+in order to handle all potential cases for terms -- functions, atoms, and
+local variables introduced through the `x:var ->` form.
+
+// TODO: Explain how `structural` works in more detail, probably add the code.
+
+Let's try an example out:
+
+```makam
 ascribe : term -> typ -> term.
 typeof (ascribe E T) T :- typeof E T.
-  
+
 wfprogram (
   (type_synonym (dbindnext (fun a => dbindbase (product [a, a])))
   (fun bintuple => 
@@ -50,4 +184,25 @@ wfprogram (
     (tuple [])
   ))
 ))) ?
+```
+
+Let's make sure we don't diverge on type error:
+
+```makam
+ascribe : term -> typ -> term.
+typeof (ascribe E T) T :- typeof E T.
+
+(print_string "expect Impossible:\n",
+wfprogram (
+  (type_synonym (dbindnext (fun a => dbindbase (product [a, a])))
+  (fun bintuple => 
+  
+  main (lam (tconstr bintuple [product [nat, nat]])
+            (fun x => 
+    case_or_else x
+    (patt_tuple [patt_tuple [patt_wild], patt_tuple [patt_wild, patt_wild]])
+    (dbindbase (tuple []))
+    (tuple [])
+  ))
+)))) ?
 ```
