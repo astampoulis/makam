@@ -205,7 +205,8 @@ by using `refl.isunif`.)
 
 We are now ready to proceed to defining the boilerplate generically. We will do this
 as a reusable higher-order predicate for structural recursion, that we will use to
-implement `teq`:
+implement `teq`. We will define it in open recursion style, providing the predicate
+to use on recursive calls as an argument:
 
 ```makam
 structural_recursion : [B] (A -> A -> prop) -> B -> B -> prop.
@@ -231,8 +232,10 @@ structural_recursion Rec (X : A -> B) (Y : A -> B) :-
   (x:A -> structural_recursion Rec x x -> structural_recursion Rec (X x) (Y x)).
 ```
 
-We are done! Now we can define `teq` using `structural_recursion`, only defining
-the non-trivial cases:
+We are done! Now we can define `teq` using `structural_recursion`, through
+an auxiliary predicate called `teq_aux`. We only need to define the non-trivial
+cases for it, using `structural_recursion` for the rest, while tying the
+open recursion knot at the same time:
 
 ```makam
 teq_aux : [A] A -> A -> prop.
@@ -259,6 +262,12 @@ constructor to our `typ` datatype -- even if that uses new types that we have no
 defined before. For example, we did not have to take any special provision to handle
 types we defined earlier such as `dbind` -- everything works out thanks to the
 reflective predicates we are using. (Mention something about the expression problem?)
+
+The one form of terms that `structural_recursion` does not handle are uninstantiated
+unification variables. We find that leaving that as something that we handle whenever
+we define a new predicate that uses `structural_recursion` works fine. In this case,
+`teq` is only supposed to be used with ground terms, so it is fine if we fail when we
+encounter a unification variable.
 
 Let's try an example out:
 
