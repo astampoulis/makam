@@ -47,9 +47,10 @@ concrete type constructor, rather than when it is an uninstantiated meta-variabl
 
 It is typical for a logic programming language to have a predicate that only succeeds
 when a specific term is uninstantiated (usually called `var`). In Makam this is
-called `refl.isunif` -- the `refl` prefix standing for the fact that we call these
-kinds of predicates "reflective", as they give us extra-logical information about
-the form of a term. Our second attempt thus looks as follows:
+called `refl.isunif` -- the `refl` namespace prefix standing for the fact that we
+call these kinds of predicates "reflective", as they give us extra-logical
+information about the form of a term (sometimes referred to as "meta-predicates" in
+Prolog parlance). Our second attempt thus looks as follows:
 
 ```
 typeof E T :- not(refl.isunif T), typeof E T', teq T T'.
@@ -100,11 +101,11 @@ typeof (P : patt A B) S' S T :-
   teq T T'.
 ```
 
-Now let's go and define the actual `teq` predicate. A first approach
-would be to just write out each case individually:
+Now let's go and define the actual `teq` predicate. A first approach would be to just
+write out each case individually:
 
 ```
-teq (arrow T1 T2) (arrow T1' T2') :- map teq [T1, T2] [T1', T2'].
+teq (arrow T1 T2) (arrow T1' T2') :- teq T1 T1', teq T2 T2'.
 teq (product TS) (product TS') :- map teq TS TS'.
 teq (arrowmany TS T) (arrowmany TS' T') :- teq T T', map teq TS TS'.
 teq nat nat.
@@ -120,51 +121,144 @@ teq T' (tconstr TC Args) :-
   teq T' T.
 ```
 
-But there's a better way. Let's first see what it looks like:
+Only the two last cases are important; the rest is boilerplate that performs
+structural recursion through the type. Can we do better than that?
+
+Let us ruminate on a possible solution. We want to handle the case where we have a
+constructor applied to a number of arguments generically, so roughly something
+like:
+
+```
+teq (Constructor Arguments) (Constructor Arguments') :-
+  map teq Arguments Arguments'.
+```
+
+What we mean here, taking the `arrow` rule as an example, is that `Constructor`
+would match with `arrow`, and `Arguments` would get instantiated with the list
+of arguments of the constructor. One thing to be careful about though is that
+the types of arguments are not all the same. As a result, instead of a homogeneous
+list, we need a heterogeneous list. This is simple to represent using the existential
+type, `dyn`:
+
+```
+dyn : type.
+dyn : A -> dyn.
+```
+
+So the type of `Arguments` should be `list dyn` rather than `list typ`. The type
+of `teq` will need to be changed, so that we can apply it for any different type,
+rather than just `typ`:
+
+```
+teq : [A] A -> A -> prop.
+```
+
+Furthermore, since we have a heterogeneous list, we need a `map` that uses
+polymorphic recursion: it needs take a polymorphic function as an argument, so that
+it can be used at different types for different elements of the list.
+
+```
+dyn.map : (forall A. [A] A -> A -> prop) -> list dyn -> list dyn -> prop.
+```
+
+This is in contrast to a type like `[A] (A -> A -> prop) -> list dyn -> list dyn ->
+prop`, which would instantiate the type `A` to the type of the first element of the
+list, making further applications to different types impossible.
+
+Makam currently does not provide higher-rank types as the above type suggests
+-- nor do any \lamprolog implementations that we are aware of. Instead, it provides
+a way to side-step this issue, through a predicate that replaces polymorphic
+type variables with fresh variables, allowing it to be instantiated with new types.
+This is called `dyn.call`, and `dyn.map` can be defined in terms of that:
+
+```
+dyn.call : [B] (A -> A -> prop) -> B -> B -> prop.
+dyn.map : (A -> A -> prop) -> list dyn -> list dyn -> prop.
+dyn.map P [] [].
+dyn.map P (HD :: TL) (HD' :: TL') :- dyn.call P HD HD', dyn.map P TL TL'.
+```
+
+(`dyn.call` is itself defined in terms of a more fundamental predicate `dyn.duphead`
+that creates a fresh version of a single polymorphic constructor with fresh
+type variables.)
+
+Based on these, the only thing missing is a way to actually check whether a term
+is a ground term that can be decomposed into a constructor and a list of arguments.
+Makam provides this in the form of the `refl.headargs` predicate:
+
+```
+refl.headargs : B -> A -> list dyn -> prop.
+```
+
+(Other Prolog implementations also provide predicates towards the same effect;
+for example, SWI-Prolog provides `compound_name_arguments` which is quite similar.
+Though such predicates are not typical in other \lamprolog implementations, they
+should not be viewed as a hack: we could always define these within the language
+if we maintained a discipline, where we added a rule to `refl.headargs` for every
+constructor that we introduce. For example:
+```
+arrowmany : list typ -> typ -> typ.
+refl.headargs (arrowmany TS T) [arrowmany, [dyn TS, dyn T]].
+```
+Maybe taking extra care to check that we are not instantiating a unification
+by using `refl.isunif`.)
+
+We are now ready to proceed to defining the boilerplate generically. We will do this
+as a reusable higher-order predicate for structural recursion, that we will use to
+implement `teq`:
+
+```makam
+structural_recursion : [B] (A -> A -> prop) -> B -> B -> prop.
+
+structural_recursion Rec X Y :-
+  refl.headargs X Constructor Arguments,
+  dyn.map Rec Arguments Arguments',
+  refl.headargs Y Constructor Arguments'.
+```
+
+We also need to handle built-in types, such as the meta-level `int` and `string`
+types, in case they are used as an argument with other constructors: 
+
+```makam
+structural_recursion Rec (X : string) (X : string).
+structural_recursion Rec (X : int) (X : int).
+```
+
+And last, we need to handle the case of the meta-level function type as well:
+
+```makam
+structural_recursion Rec (X : A -> B) (Y : A -> B) :-
+  (x:A -> structural_recursion Rec x x -> structural_recursion Rec (X x) (Y x)).
+```
+
+We are done! Now we can define `teq` using `structural_recursion`, only defining
+the non-trivial cases:
 
 ```makam
 teq_aux : [A] A -> A -> prop.
 
-teq_aux (tconstr TC Args) T' :-
-  type_synonym_info TC Syn,
-  applymany Syn Args T,
-  teq_aux T T'.
-teq_aux T' (tconstr TC Args) :-
-  type_synonym_info TC Syn,
-  applymany Syn Args T,
-  teq_aux T' T.
-teq_aux T T' :- structural teq_aux T T'.
-
 teq T T' :- teq_aux T T'.
+
+teq_aux T T' :-
+  structural_recursion teq_aux T T'.
+
+teq_aux (tconstr TC Args) T' :-
+  type_synonym_info TC Synonym,
+  applymany Synonym Args T,
+  teq_aux T T'.
+
+teq_aux T' (tconstr TC Args) :-
+  type_synonym_info TC Synonym,
+  applymany Synonym Args T,
+  teq_aux T' T.
 ```
 
-That is, we give just the cases that we care about, and then use the higher-order
-`structural` predicate to structurally descend into the type, and use the same
-recursive predicate within each constructor. One thing to note is that we need
-to generalize the type of `teq` to also be able to handle all types of data that
-we will encounter during the recursive traversal, such as lists, functions, etc.
-
-The type of `structural` is of the form:
-
-```
-structural : (forall A. A -> A -> prop) -> (B -> B -> prop) -> prop.
-```
-
-Here we use a higher-rank type, as the predicate that gets passed to `structural`
-will be used at different types in the recursive calls (polymorphic recursion).
-Unfortunately our current implementation of Makam does not support higher-rank
-types; we side-step the issue through a predicate called `dyn.poly` that duplicates
-a term, substituting fresh type variables wherever type variables are used:
-
-```
-dyn.poly : (A -> A -> prop) -> (B -> B -> prop) -> prop.
-```
-
-Other than this, `structural` uses the reflective predicates mentioned above
-in order to handle all potential cases for terms -- functions, atoms, and
-local variables introduced through the `x:var ->` form.
-
-// TODO: Explain how `structural` works in more detail, probably add the code.
+Other than minimizing the boilerplate, the great thing about using
+`structural_recursion` is that no adaptation needs to be done when we add any new
+constructor to our `typ` datatype -- even if that uses new types that we have not
+defined before. For example, we did not have to take any special provision to handle
+types we defined earlier such as `dbind` -- everything works out thanks to the
+reflective predicates we are using. (Mention something about the expression problem?)
 
 Let's try an example out:
 
