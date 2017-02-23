@@ -287,6 +287,7 @@ wfprogram (
     (tuple [])
   ))
 ))) ?
+>> Yes.
 ```
 
 Let's make sure we don't diverge on type error:
@@ -295,7 +296,6 @@ Let's make sure we don't diverge on type error:
 ascribe : term -> typ -> term.
 typeof (ascribe E T) T :- typeof E T.
 
-(print_string "expect Impossible:\n",
 wfprogram (
   (type_synonym (dbindnext (fun a => dbindbase (product [a, a])))
   (fun bintuple => 
@@ -307,5 +307,6 @@ wfprogram (
     (dbindbase (tuple []))
     (tuple [])
   ))
-)))) ?
+))) ?
+>> Impossible.
 ```
