@@ -18,7 +18,7 @@ let : term -> (term -> term) -> term.
 Easy so far.
 
 The inference rule looks like this:
-$\inferrule{\Gamma \vdash e : \tau \\ \vec{a} = \text{fv}(\tau) - \text{fv}(\Gamma) \\ \Gamma, x : \forall \vec{a}.\tau \vdash e' : \tau'}{\Gamma \vdash \text{let} x = e \text{in} e' : \tau'}
+$\inferrule{\Gamma \vdash e : \tau \\ \vec{a} = \text{fv}(\tau) - \text{fv}(\Gamma) \\ \Gamma, x : \forall \vec{a}.\tau \vdash e' : \tau'}{\Gamma \vdash \text{let} x = e \text{in} e' : \tau'}$
 
 (We have not added any side-effectful operations, so no need to add a value restriction.
 
