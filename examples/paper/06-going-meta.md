@@ -64,36 +64,27 @@ typeof (unpackdep E F) T' :-
 ```
 
 OK, let's now add a very simple object language -- the simply typed lambda
-calculus. Let's go again:
+calculus. Let's go again... or actually, let's just import what we have
+already in a separate namespace:
 
 ```makam
+%import "01-base-language" as object.
+
 %extend object.
-
-term : type.
-typ : type.
-
-lam : typ -> (term -> term) -> term.
-app : term -> term -> term.
 intconst : int -> term.
 intplus : term -> term -> term.
 
-arrow : typ -> typ -> typ.
 tint : typ.
 
-typeof : term -> typ -> prop.
-wftype : typ -> prop.
-typeof (lam T F) (arrow T T') :- (x:term -> typeof x T -> typeof (F x) T'), wftype T.
-typeof (app E1 E2) T' :- typeof E1 (arrow T T'), typeof E2 T.
 typeof (intconst _) tint.
 typeof (intplus E1 E2) tint :- typeof E1 tint, typeof E2 tint.
-
-wftype (arrow T1 T2) :- wftype T1, wftype T2.
-wftype tint.
 %end.
 ```
 
-TODO: We could go with just integers, and add equality... Though that could
-make it difficult to show any point.
+(Note: we're just importing the previous literate development into a different
+namespace. Unfortunately I can't import the further developments right now,
+probably some issue with the importing code, but I think it's fine to skip for now.
+We could go with just defining a new language anew though.)
 
 Now let's turn these into dependent objects:
 
@@ -105,6 +96,21 @@ typ : object.typ -> depclassifier.
 ext : depclassifier.
 
 depclassify (term E) (typ T) :- object.typeof E T.
+```
+
+To classify types, we'll need to make sure they're well-formed. For the time
+being, all types are well-formed by construction, but let's prepare for the
+future:
+
+```makam
+%extend object.
+wftype : typ -> prop.
+wftype_cases : [A] A -> A -> prop.
+
+wftype T :- wftype_cases T T.
+wftype_cases T T :- structural wftype_cases T T.
+%end.
+
 depclassify (typ T) ext :- object.wftype T.
 ```
 
@@ -140,7 +146,7 @@ typeof (metaterm E) T :-
   refl.isnvar E,
   depclassify E (typ T).
   
-wftype (metatyp T) :-
+wftype_cases (metatyp T) (metatyp T) :-
   refl.isnvar T,
   depclassify T ext.
 %end.
@@ -182,9 +188,9 @@ map P (subst L) (subst L') :- map P L L'.
 %end.
 
 openterm : object.ctx object.term -> depobject.
-opentyp : object.subst object.typ -> object.typ -> depclassifier.
+ctxtyp : object.subst object.typ -> object.typ -> depclassifier.
 
-depclassify (openterm CtxE) (opentyp Typs T) :-
+depclassify (openterm CtxE) (ctxtyp Typs T) :-
   object.openctx CtxE (pfun vars typs e => [Units]
     object.map (pfun t u => object.wftype t) typs (Units : object.subst unit),
     object.map eq typs Typs,
@@ -199,7 +205,7 @@ metaterm : depobject -> subst term -> term.
 
 typeof (metaterm E ES) T :-
   refl.isnvar E,
-  depclassify E (opentyp Typs T),
+  depclassify E (ctxtyp Typs T),
   object.map object.typeof ES Typs.
 %end.
 
@@ -211,13 +217,15 @@ depsubst_cases Var (openterm CtxE) (object.metaterm Var Subst) Result :-
 Let's try the final thing:
 
 ```makam
-typeof
+(eq _FUNCTION
   (lamdep ext (fun t1 =>
-  (lamdep ext (fun t2 =>
-  (lamdep (opentyp (object.subst [object.metatyp t1]) (object.metatyp t2)) (fun x_e =>
-  (packdep (openterm (object.ctx (object.subst []) (bindbase (object.lam _ (fun x =>
-    object.metaterm x_e #SUBST
-  ))))) (tuple []) (fun _ => product [])))))))) T ?
+    (lamdep ext (fun t2 =>
+    (lamdep (ctxtyp (object.subst [object.metatyp t1]) (object.metatyp t2)) (fun x_e =>
+    (packdep (openterm (object.ctx (object.subst []) (bindbase (object.lam _ (fun x =>
+      object.tuple [object.metaterm x_e #SUBST, object.intconst 5]
+    ))))) (tuple []) (fun _ => product [])))))))),
+ typeof _FUNCTION FUNCTION_TYPE,
+ typeof (appdep (appdep _FUNCTION (typ object.tint)) (typ (object.product [object.tint, object.tint]))) APPLIED_TYPE) ?
 ```
 
 Note that we can infer both the type of the lambda abstraction and the substitution
