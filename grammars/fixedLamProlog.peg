@@ -88,6 +88,8 @@ appexpr -> f:baseexpr^ args:repWHITE(baseexpr)
 namepref -> "^n" / "ⁿ" ;
 
 baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
+          / id:ltoken(("_" x:ident << "_" ^ x >> / "_" << "_" >>))
+            << autospan_un mkCapturingVar id >>
           / id:ltoken(identnamed)  << autospan_un mkVar id >>
           / x:ltoken( ( namepref id:ident << id >>) ) << autospan_un mkNameVar x >>
           / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>
@@ -144,8 +146,8 @@ apptyp -> x:loced(typconstr)
 
 typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
 
-basetyp -> id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
-         / id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+basetyp -> id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+         / id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
          / t:lparenthesized(lmonotyp)   << t >>
 
 binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")
