@@ -1,4 +1,4 @@
-We will start with encoding a version of System F in λProlog. We define two new meta-types to
+We will start with encoding a version of the simply typed lambda calculus in λProlog. We define two new meta-types to
 represent the two sorts of our object language: terms and types. We also define the `typeof`
 relation that corresponds to the typing judgement of the language.
 
@@ -11,15 +11,14 @@ typeof : term -> typ -> prop.
 Defining the basic forms of the λ-calculus is very easy, thanks to the support of higher-order
 abstract syntax in higher-order logic programming. We can reuse the meta-level function type in
 order to implement object-level binding. This is because the meta-level function space is
-/parametric/ -- that is, the body of a function is a value that can just mention the argument as-is,
+*parametric* -- that is, the body of a function is a value that can just mention the argument as-is,
 instead of being a computation that can inspect the specific value of an argument. Therefore,
 meta-level functions exactly represent an object-level binding of a single variable, without
-introducing /exotic terms/.
+introducing *exotic terms*.
 
 ```makam
 app    : term -> term -> term.
 lam    : typ -> (term -> term) -> term.
-
 arrow  : typ -> typ -> typ.
 ```
 
@@ -33,7 +32,7 @@ typeof (app E1 E2) T' :-
 ```
 
 In logic programming, the goal of a rule is written first, followed by the premises; the `:-`
-operator can be read as "is implied by," and `,` is logical conjuction. We use capital letters for
+operator can be read as "is implied by," and comma is logical conjuction. We use capital letters for
 unification variables.
 
 The rule for lambda functions is similarly straightforward: 

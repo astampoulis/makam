@@ -1,6 +1,8 @@
+<!--
 ```makam
 %use "01-base-language".
 ```
+-->
 
 As we've seen, single-variable binding as in the lambda abstraction can be handled easily through
 higher-order abstract syntax. Let us now explore how to encode other forms of binding.
@@ -20,11 +22,11 @@ even refer to the potential elements of the fresh `list` -- we can only refer to
 full.
 
 Instead, we would like a type that represents all types of the form:
- - `term` (binding no variables)
- - `term -> term` (binding a single variable)
- - `term -> (term -> term)` (binding two variables)
- - `term -> (term -> (term -> term))` (binding three variables)
-etc.
+
+- `term` (binding no variables)
+- `term -> term` (binding a single variable)
+- `term -> (term -> term)` (binding two variables)
+- `term -> (term -> (term -> term))` (binding three variables) etc.
 
 We can encode such a type inductively in λProlog, as follows:
 
@@ -64,7 +66,7 @@ operations:
 We can define three equivalent operations as predicates, for the multiple binding
 case: 
 
-- a generalization of application, for substituting all the variables in a `bindmany` 
+-- *a generalization of application*, for substituting all the variables in a `bindmany` 
 
 ```makam
 applymany : bindmany A B -> list A -> B -> prop.
@@ -73,7 +75,7 @@ applymany (bindnext F) (HD :: TL) Body :-
   applymany (F HD) TL Body.
 ```
 
-- local introduction of multiple fresh variables at once within a predicate P; a list
+-- *local introduction of multiple fresh variables at once* within a predicate P; a list
   of the variables is passed to it 
 
 ```makam
@@ -83,9 +85,12 @@ intromany (bindnext F) P :-
   (x:A -> intromany (F x) (fun tl => P (x :: tl))).
 ```
 
-- local introduction of a number of assumptions of the form `P X Y` within a predicate
-   `Q`. This is intended to be used, for example, for introducing assumptions for predicates
-   such as `typeof`, taking a list of term variables and a list of types, in the same order.
+-- *local introduction of a number of assumptions* of the form `P X Y` within a predicate
+   `Q`.
+   
+This is intended to be used, for example, for introducing assumptions
+for predicates such as `typeof`, taking a list of term variables and a
+list of types, in the same order.
 
 ```makam
 assumemany : (A -> B -> prop) -> list A -> list B -> prop -> prop.

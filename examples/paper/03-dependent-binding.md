@@ -1,6 +1,8 @@
+<!--
 ```makam
 %use "02-binding-forms".
 ```
+-->
 
 The type system of λProlog can be viewed as a particular subset of System Fω: namely, it is the
 simply typed lambda calculus extended with prenex polymorphism and simple type constructors of the
@@ -159,6 +161,7 @@ typeof (letrec Defs Body) T' :-
   ).
 ```
 
+## Patterns
 We can also use the same 'dependency' trick for other, more complicated forms of binding. One such
 example which we sketch below is linear ordered binding as in the case of patterns. The point is
 that having explicit support in our metalanguage only for single-variable binding, as is standard in

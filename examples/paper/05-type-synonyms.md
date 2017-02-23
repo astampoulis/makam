@@ -1,6 +1,8 @@
+<!--
 ```makam
 %use "04-ml-subset".
 ```
+-->
 
 Let us proceed to add type synonyms:
 
@@ -18,7 +20,13 @@ wfprogram (type_synonym Syn Program') :-
 Simple enough. How to typecheck them though? We need something like the
 conversion rule:
 
-$\inferrule{\Gamma \vdash e : \tau \\ \tau =_{\delta} \tau'}{\Gamma \vdash e : \tau'}$
+\begin{displaymath}
+\inferrule{
+  \Gamma \vdash e : \tau \\ \tau =_{\delta} \tau'
+}{
+  \Gamma \vdash e : \tau'
+}
+\end{displaymath}
 
 Here $=_{\delta}$ means equality up to expanding type synonyms.
 
@@ -82,7 +90,6 @@ fact that we have used the rule already:
 
 ```makam
 already_in : [A] A -> prop.
-
 typeof E T :-
   not(refl.isunif T),
   not(already_in (typeof E)),

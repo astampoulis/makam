@@ -1,8 +1,10 @@
 (Text is very much WIP.)
 
+<!--
 ```makam
 %use "05-type-synonyms".
 ```
+-->
 
 Let's now do Hindley-Milner let-polymorphism:
 
@@ -13,9 +15,17 @@ let : term -> (term -> term) -> term.
 Easy so far.
 
 The inference rule looks like this:
-$\inferrule{\Gamma \vdash e : \tau \\ \vec{a} = \text{fv}(\tau) - \text{fv}(\Gamma) \\ \Gamma, x : \forall \vec{a}.\tau \vdash e' : \tau'}{\Gamma \vdash \text{let} x = e \text{in} e' : \tau'}$
+\begin{displaymath}
+\inferrule{
+  \Gamma \vdash e : \tau \\
+  \vec{a} = \text{fv}(\tau) - \text{fv}(\Gamma) \\
+  \Gamma, x : \forall \vec{a}.\tau \vdash e' : \tau'
+}{
+  \Gamma \vdash \text{let} \; x = e \; \text{in} \; e' : \tau'
+}
+\end{displaymath}
 
-(We have not added any side-effectful operations, so no need to add a value restriction.
+(We have not added any side-effectful operations, so no need to add a value restriction.)
 
 This is easy to transcribe in Makam, assuming a predicate for generalizing a type:
 
@@ -29,8 +39,8 @@ typeof (let E F) T' :-
 ```
 
 So we need to do the following:
-- something that picks out free-variables from a term -- or, in our setting, uninstantiated
-  meta-variables
+
+- something that picks out free-variables from a term -- or, in our setting, uninstantiated meta-variables
 - something that picks out free-variables from the local context
 - a way to turn something that includes meta-variables into a `forall` type
 

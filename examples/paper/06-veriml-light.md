@@ -1,6 +1,8 @@
+<!--
 ```makam
 %use "05-type-synonyms".
 ```
+-->
 
 Let us now add one more meta level: make our object language a meta-language as well!
 That is, we will add the ability to our object language to manipulate terms of a different
@@ -160,7 +162,9 @@ OK, now let's see if we can do better:
 ```makam
 typeof
   (lamdep ext (fun t =>
-  (packdep (term (object.lam (object.metatyp t) (fun x => x))) (tuple []) (fun _ => product [])))) T ?
+  (packdep
+     (term (object.lam (object.metatyp t) (fun x => x)))
+     (tuple []) (fun _ => product [])))) T ?
 ```
 
 We can also handle the case of non-closed terms, using contextual types:
@@ -225,7 +229,37 @@ Let's try the final thing:
       object.tuple [object.metaterm x_e #SUBST, object.intconst 5]
     ))))) (tuple []) (fun _ => product [])))))))),
  typeof _FUNCTION FUNCTION_TYPE,
- typeof (appdep (appdep _FUNCTION (typ object.tint)) (typ (object.product [object.tint, object.tint]))) APPLIED_TYPE) ?
+
+ typeof 
+  (appdep (appdep 
+    _FUNCTION 
+    (typ object.tint)) 
+    (typ (object.product [object.tint])))
+ APPLIED_TYPE) ?
+>> Yes:
+>> SUBST := fun t1 t2 x_e x => subst (cons x nil),
+>> FUNCTION_TYPE :=
+>>  pidep ext (fun t1 =>
+>>  pidep ext (fun t2 =>
+>>  pidep (ctxtyp (object.subst (cons (object.metatyp t1) nil)) (object.metatyp t2))
+>>  (fun x_e =>
+>>    sigdep 
+>>      (ctxtyp (subst nil) 
+>>       (arrow
+>>         (object.metatyp t1)
+>>         (product (cons (object.metatyp t2) (cons tint nil)))))
+>>     (fun _ => product nil)))),
+>> APPLIED_TYPE :=
+>>  pidep (ctxtyp
+>>    (object.subst (cons object.tint nil))
+>>    (object.product (cons object.tint nil)))
+>>  (fun x_e =>
+>>    sigdep (ctxtyp
+>>      (subst nil)
+>>      (arrow
+>>        object.tint
+>>        (product (cons (object.product (cons object.tint nil)) (cons tint nil)))))
+>>    (fun _ => product nil))
 ```
 
 Note that we can infer both the type of the lambda abstraction and the substitution

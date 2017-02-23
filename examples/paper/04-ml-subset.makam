@@ -37,7 +37,7 @@ typeof (appt E T) (TF T) :-
 
 One thing to note is that in a pen-and-paper version we would need to define a new context that
 keeps track of type variables that are in scope (typically named $\Delta$), and an auxiliary
-judgement of the form $\Delta \vdash \tau \text{wf}$ that checks that all type variables used
+judgement of the form $\Delta \vdash \tau \; \text{wf}$ that checks that all type variables used
 in $\tau$ are in scope. Here we get type well-formedness for free. Furthermore, if we had to
 keep track of further information about type variables (e.g. their kind), we could have added
 an assumption of the form `kindof a K ->`. Since the local assumption context can carry rules
@@ -98,13 +98,14 @@ and a list of constructors; constructors themselves have a name and a list of ar
 typeconstructor : type -> type.
 constructor : type.
 
-constructor_declaration : type -> type.
-nil : constructor_declaration unit.
-cons : list typ -> constructor_declaration T -> constructor_declaration (constructor * T).
+ctor_declaration : type -> type.
+nil : ctor_declaration unit.
+cons : list typ -> ctor_declaration T ->
+         ctor_declaration (constructor * T).
 datatype_declaration : type -> type -> type.
 datatype_declaration : 
-  (typeconstructor Arity -> dbind typ Arity (constructor_declaration Constructors)) ->
-  datatype_declaration Arity Constructors.
+  (typeconstructor Arity -> dbind typ Arity (ctor_declaration Constructors)) ->
+  datatype_declaration Arity Ctors.
 
 datatype :
   datatype_declaration Arity Constructors ->
@@ -130,19 +131,19 @@ that can be instantiated with different types at different places.
 constructor_info :
   typeconstructor Arity -> constructor -> dbind typ Arity (list typ) -> prop.
 
-constructor_polytypes : [Arity Constructors PolyTypes]
+constructor_polytypes : [Arity Ctors PolyTypes]
   subst typ Arity ->
-  constructor_declaration Constructors -> subst (dbind typ Arity (list typ)) PolyTypes -> prop.
+  ctor_declaration Ctors -> subst (dbind typ Arity (list typ)) PolyTypes -> prop.
 
 constructor_polytypes _ [] [].
-constructor_polytypes TypVars (ConstructorType :: Constructors) (PolyType :: PolyTypes) :-
-  applymany PolyType TypVars ConstructorType,
-  constructor_polytypes TypVars Constructors PolyTypes.
+constructor_polytypes TypVars (CtorType :: CtorTypes) (PolyType :: PolyTypes) :-
+  applymany PolyType TypVars CtorType,
+  constructor_polytypes TypVars CtorTypes PolyTypes.
 
 (*
 
 One interesting part in this one is the two `applymany` calls: these are used in the opposite
-direction than what we have used it so far, getting `TypVars` and `ConstructorType` as inputs,
+direction than what we have used it so far, getting `TypVars` and `CtorType` as inputs,
 and producing `PolyType` as an output. We need to be careful though to make sure that `PolyType`
 cannot capture the `TypVars` variables:
 
@@ -191,13 +192,11 @@ As an example, we will define lists, and the append function for them:
 *)
 
 wfprogram
-
   (datatype
     (datatype_declaration (fun llist => dbindnext (fun a => dbindbase (
     [ [] (* nil *) ,
       [a, tconstr llist [a]] (* cons of a * list a *) ]))))
   (fun llist => dbindnext (fun lnil => dbindnext (fun lcons => dbindbase (
-
   (main
     (letrec
       (dbindnext (fun append => dbindbase (
@@ -208,9 +207,9 @@ wfprogram
             constr lcons [hd, app (app (appt append _) tl) l2]))))
           l2))) ])))
       (dbindnext (fun append => dbindbase (
-
-    (app (app (appt append _) (constr lcons [zero, constr lnil []])) (constr lcons [zero, constr lnil []]))
-  
+    (app (app (appt append _)
+      (constr lcons [zero, constr lnil []]))
+      (constr lcons [zero, constr lnil []]))
 )))))))))) ?
 
 (*
