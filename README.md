@@ -7,6 +7,7 @@ This program is free software, licensed under the GPLv3 (see LICENSE).
 
 ### Introduction
 
+test
 Makam is a metalanguage that eases implementation of languages with rich type systems, supporting
 concise and modular language definitions, aimed at allowing rapid prototyping and experimentation
 with new programming language research ideas. The design of Makam is based on higher-order logic
