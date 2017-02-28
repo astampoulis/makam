@@ -1,6 +1,8 @@
+<!--
 ```makam
 %use "02-binding-forms".
 ```
+-->
 
 The type system of λProlog can be viewed as a particular subset of System Fω: namely, it is the
 simply typed lambda calculus extended with prenex polymorphism and simple type constructors of the
@@ -86,8 +88,8 @@ precise types:
 
 ```makam
 subst : type -> type -> type.
-snil : subst A unit.
-scons : A -> subst A T -> subst A (A * T).
+nil : subst A unit.
+cons : A -> subst A T -> subst A (A * T).
 ```
 
 The predicates are now defined as follows. First, their types are: 
@@ -98,21 +100,22 @@ applymany : [T] dbind A T B -> subst A T -> B -> prop.
 openmany : [T] dbind A T B -> (subst A T -> B -> prop) -> prop.
 ```
 
-Note that we are reusing the same predicate names as before. Makam allows overloading for all
-variable names; expected types are taken into account for resolving variables and disambiguating
-between them, as has been long known to be possible in the bi-directional type-checking
-literature. Type ascription is used when variable resolution is ambiguous.  We also avoid
-overloading for constructors; having unambiguous types for constructors means that they can be used
-to resolve ambiguity between overloaded predicates easily. 
+Note that we are reusing the same predicate names as before. Makam allows overloading for
+all variable names; expected types are taken into account for resolving variables and
+disambiguating between them, as has been long known to be possible in the bi-directional
+type-checking literature. Type ascription is used when variable resolution is
+ambiguous. We also sometimes avoid overloading for constructors; having unambiguous types
+for constructors means that they can be used to resolve ambiguity between overloaded
+predicates easily. However, here we reuse the `nil` and `cons` constructors for `subst`
+so that we can use the sugared form for list-like datatypes (using `[]` and `::`).
 
 ```makam
-intromany (dbindbase F) P :- P snil.
+intromany (dbindbase F) P :- P nil.
 intromany (dbindnext F) P :-
-  (x:A -> intromany (F x) (pfun t => P (scons x t))).
+  (x:A -> intromany (F x) (pfun t => P (x :: t))).
 
-applymany (dbindbase Body) snil Body.
-applymany (dbindnext F) (scons X XS) Body :-
-  applymany (F X) XS Body.
+applymany (dbindbase Body) [] Body.
+applymany (dbindnext F) (X :: XS) Body :- applymany (F X) XS Body.
 
 openmany F P :-
   intromany F (pfun xs => [Body] applymany F xs Body, P xs Body).
@@ -123,12 +126,12 @@ Also, we define predicates analogous to `map` and `assumemany` for the
 
 ```makam
 assumemany : [T T'] (A -> B -> prop) -> subst A T -> subst B T' -> prop -> prop.
-assumemany P snil snil Q :- Q.
-assumemany P (scons X XS) (scons Y YS) Q :- (P X Y -> assumemany P XS YS Q).
+assumemany P [] [] Q :- Q.
+assumemany P (X :: XS) (Y :: YS) Q :- (P X Y -> assumemany P XS YS Q).
 
 map : [T T'] (A -> B -> prop) -> subst A T -> subst B T' -> prop.
-map P snil snil.
-map P (scons X XS) (scons Y YS) :- P X Y, map P XS YS.
+map P [] [].
+map P (X :: XS) (Y :: YS) :- P X Y, map P XS YS.
 ```
 
 (Here we have not captured the relationship between the type of tuples `T` and `T'` precisely,
@@ -158,6 +161,7 @@ typeof (letrec Defs Body) T' :-
   ).
 ```
 
+## Patterns
 We can also use the same 'dependency' trick for other, more complicated forms of binding. One such
 example which we sketch below is linear ordered binding as in the case of patterns. The point is
 that having explicit support in our metalanguage only for single-variable binding, as is standard in
@@ -222,8 +226,8 @@ n-ary tuples require a type for pattern lists:
 pattlist : type -> type -> type.
 patt_tuple : pattlist T T' -> patt T T'.
 
-patt_nil : pattlist T T.
-patt_cons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
+nil : pattlist T T.
+cons : patt T1 T2 -> pattlist T2 T3 -> pattlist T1 T3.
 ```
 
 We can now encode a single-branch "case-or-else" statement as follows:
@@ -243,25 +247,25 @@ available, plus the type of the pattern.
 ```makam
 typeof : [T T' Ttyp T'typ] patt T T' -> subst typ T'typ -> subst typ Ttyp -> typ -> prop.
 
-typeof patt_var S' (scons T S') T.
+typeof patt_var S' (cons T S') T.
 typeof patt_wild S S T.
 typeof patt_zero S S nat.
 typeof (patt_succ P) S' S nat :-
   typeof P S' S nat.
 
-typeof_pattlist :
+typeof :
   [T T' Ttyp T'typ] pattlist T T' -> subst typ T'typ -> subst typ Ttyp -> list typ -> prop.
 
 typeof (patt_tuple PS) S' S (product TS) :-
-  typeof_pattlist PS S' S TS.
+  typeof PS S' S TS.
 
-typeof_pattlist patt_nil S S [].
-typeof_pattlist (patt_cons P PS) S3 S1 (T :: TS) :-
-  typeof_pattlist PS S3 S2 TS, typeof P S2 S1 T.
+typeof [] S S [].
+typeof (P :: PS) S3 S1 (T :: TS) :-
+  typeof PS S3 S2 TS, typeof P S2 S1 T.
 
 typeof (case_or_else Scrutinee Pattern Body Else) T' :-
   typeof Scrutinee T,
-  typeof Pattern snil TS T,
+  typeof Pattern nil TS T,
   openmany Body (pfun xs body =>
      (assumemany typeof xs TS (typeof body T'))
   ),
@@ -277,7 +281,7 @@ unification with the scrutinee succeeds.
 
 ```makam
 patt_to_term : [T T'] patt T T' -> term -> subst term T' -> subst term T -> prop.
-patt_to_term patt_var X Subst (scons X Subst).
+patt_to_term patt_var X Subst (X :: Subst).
 patt_to_term patt_wild _ Subst Subst.
 patt_to_term patt_zero zero Subst Subst.
 patt_to_term (patt_succ PN) (succ EN) Subst' Subst :- patt_to_term PN EN Subst' Subst.
@@ -287,13 +291,13 @@ pattlist_to_termlist : [T T'] pattlist T T' -> list term -> subst term T' -> sub
 patt_to_term (patt_tuple PS) (tuple ES) Subst' Subst :-
   pattlist_to_termlist PS ES Subst' Subst.
 
-pattlist_to_termlist patt_nil [] Subst Subst.
-pattlist_to_termlist (patt_cons P PS) (T :: TS) Subst3 Subst1 <-
+pattlist_to_termlist [] [] Subst Subst.
+pattlist_to_termlist (P :: PS) (T :: TS) Subst3 Subst1 <-
   pattlist_to_termlist PS TS Subst3 Subst2,
   patt_to_term P T Subst2 Subst1.
 
 eval (case_or_else Scrutinee Pattern Body Else) V :-
-  patt_to_term Pattern TermWithUnifvars snil Unifvars,
+  patt_to_term Pattern TermWithUnifvars [] Unifvars,
   if (eq Scrutinee TermWithUnifvars)  (* reuse unification from the meta-language *)
   then (applymany Body Unifvars Body', eval Body' V)
   else (eval Else V).
