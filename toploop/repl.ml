@@ -6,7 +6,7 @@ open Termlangprolog;;
 open Termlangext;;
 open Termlangrefl;;
 
-let version = "0.5" ;;
+let version = Version.version;;
 
 let makam_parser = FixedLamProlog.parse_prologcmd ;;
 let print_now s = Printf.printf "%s%!" s ;;
@@ -15,6 +15,9 @@ let meta_print_exception : (exn -> unit) ref =
   ref (fun e -> print_now "Uncaught OCaml-level exception; use bytecode Makam toplevel to debug.\n")
 ;;
 
+let _ =
+  Benchmark.precise_clock := (fun () -> (Mtime.Span.to_ns (Mtime_clock.elapsed ()) *. 1e-9) -. !Benchmark.pausedtimeelapsed)
+;;
 
 (* Backtracking for ProofGeneral *)
 

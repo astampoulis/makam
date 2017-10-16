@@ -6,9 +6,10 @@ let enabled : bool ref = ref false ;;
 (* let pausetimes : (float * float) list ref = ref [] ;; *)
 let pausedtimeelapsed = ref 0.0 ;;
 
-let time =
-  fun () -> (Mtime.to_ns (Mtime.elapsed ()) *. 1e-9) -. !pausedtimeelapsed
-;;
+(* mtime doesn't work in node, so this is a hack to make it optional *)
+let precise_clock = ref (fun () -> 1.0);;
+
+let time () = !precise_clock ();;
   
 let starttime () = time () ;;
 

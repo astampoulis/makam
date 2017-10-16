@@ -41,7 +41,7 @@ configure:
 # OASIS_STOP
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
-MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/)
+MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))
 
 .PHONY: js md2makam md2makam-watch
 

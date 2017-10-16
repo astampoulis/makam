@@ -8,7 +8,7 @@ homepage: "http://astampoulis.github.io/"
 dev-repo: "https://github.com/astampoulis/makam.git"
 bug-reports: "https://github.com/astampoulis/makam/issues"
 available: [
-  "ocaml-version" >= "4.02"
+  "ocaml-version" >= "4.04"
 ]
 substs: [ "makam" ]
 build: [
@@ -22,6 +22,6 @@ depends: [
   "mtime"
   "uucp"
   "pa_monad_custom"
-  "js_of_ocaml"
+  "js_of_ocaml" {< "3.0"}
   "camlp4"
 ]

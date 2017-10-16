@@ -6,7 +6,7 @@ open Termlangprolog;;
 open Termlangext;;
 open Termlangrefl;;
 
-let version = Repl.version;;
+let version = Version.version;;
 
 let makam_parser = FixedLamProlog.parse_prologcmd ;;
 let print_now s = Printf.printf "%s%!" s ;;
