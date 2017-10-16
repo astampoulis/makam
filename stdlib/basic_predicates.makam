@@ -1,6 +1,9 @@
 eq : A -> A -> prop.
 eq X X.
 
+eqv : [A]A -> A -> prop.
+eqv X X.
+
 apply : (A1 -> A2 -> B) -> A1 -> A2 -> B -> prop.
 apply F X1 X2 (F X1 X2).
 

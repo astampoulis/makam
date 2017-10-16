@@ -8,19 +8,21 @@
 
 %use list.
 %use string.
+
+%use demand.
+%use testing.
+
 %use dyn.
 %use tuple.
 %use option.
+%use set.
 %use map.
 %use fluid.
 
 %use bind.
 
 %use generic.
-%use demand.
 
 %use morerefl.
 
 %use vars.
-
-%use testing.

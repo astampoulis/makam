@@ -1,0 +1,80 @@
+set : type -> type.
+
+nil : set A.
+cons : A -> set A -> set A.
+
+%extend set.
+remove, remove_if_member : set A -> A -> set A -> prop.
+remove_if_member nil A nil.
+remove_if_member (cons A S') A' Result :-
+  if (eqv A A')
+  then (remove_if_member S' A' Result)
+  else (remove_if_member S' A' S'', eq Result (cons A S'')).
+
+remove (cons A S') A' Result :-
+  if (eqv A A')
+  then (remove_if_member S' A' Result)
+  else (remove S' A' S'', eq Result (cons A S'')).
+
+member : set A -> A -> set A -> prop.
+member (cons A S') A' Result :-
+  if (eqv A A')
+  then (remove_if_member S' A' Result)
+  else (member S' A' S'', eq Result (cons A S'')).
+
+ccons : A -> set A -> set A -> prop.
+ccons A S S when (member S A _).
+ccons A S (cons A S) when not(member S A _).
+
+merge : set A -> set A -> set A -> prop.
+merge S nil S.
+merge S (cons A S') Result :- merge S S' S'', ccons A S'' Result.
+
+diff : set A -> set A -> set A -> prop.
+diff S nil S.
+diff S (cons A S') Result :- remove_if_member S A S'', diff S'' S' Result.
+  
+%end.
+
+eqv (nil : set A) nil.
+eqv (cons A B) C :- set.member C A B', eqv B' B''.
+
+%extend tests.
+set : testsuite.
+
+testcase set :- (set.remove [1,2,3,4] 1 R, eq R [2,3,4]).
+testcase set :- (set.remove [2,3,4,1] 1 R, eq R [2,3,4]).
+testcase set :- (set.remove [1,2,3,4,1] 1 R, eq R [2,3,4]).
+testcase set :- (not(set.remove [2,3,4] 1 R)).
+testcase set :- (not(set.remove [] X R)).
+
+testcase set :- (set.member [1,2,3,4] 1 _).
+testcase set :- (set.member [2,3,4,1] 1 _).
+testcase set :- (not(set.member [2,3,4] 1 _)).
+testcase set :- (set.member [1,2,3,4,1] 1 X, not(set.member X 1 _)).
+testcase set :- (set.member [1,2,3,4,1] 1 X, set.member X 2 _).
+
+testcase set :- (set.ccons 1 [1,2,3,4] X, eq X [1,2,3,4]).
+testcase set :- (set.ccons 1 [1,2,3,4,1] X, eq X [1,2,3,4,1]).
+testcase set :- (set.ccons 1 [2,3,4,1] X, eq X [2,3,4,1]).
+testcase set :- (set.ccons 1 [2,3,4,2] X, eq X [1,2,3,4,2]).
+
+testcase set :- (eqv 1 1).
+testcase set :- (eqv A A).
+testcase set :- (eqv ([1,2,3,4,1]: set A) [4,3,1,2]).
+testcase set :- (eqv ([1,1]: set A) [1,1,1,1,1,1,1,1]).
+testcase set :- (not(eqv ([1,1]: set A) [2,3,4])).
+testcase set :- (eqv ([[1,1], [1,2,3], [3,2,1]]: set (set A)) [[1],[1,2,3]]).
+
+testcase set :- (set.merge [] [1,2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2] [3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2,3] [2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2,3,4] [1,2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [[1,2,3], [1,1]] [[1,2],[1,1]] X, eqv X [[1], [1,2], [1,2,3]]).
+
+testcase set :- (set.diff [] [1] X, eqv X []).
+testcase set :- (set.diff [1,1] [1] X, eqv X []).
+testcase set :- (set.diff [2,1] [1] X, eqv X [2]).
+testcase set :- (set.diff [1,2,3,4,2,3,4] [2,3] X, eqv X [1,4]).
+
+%end.

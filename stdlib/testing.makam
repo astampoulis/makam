@@ -17,7 +17,7 @@ handle_result Successes Failures when not(eq Failures []) <-
   length Successes SuccessN, tostring SuccessN SuccessS,
   length Failures FailureN, tostring FailureN FailureS,
   foldl string.append ""
-  [ "\n\n=== TESTS FAILED (", SuccessS, " passed, ", FailureS, ") ===\n\n" ] S,
+  [ "\n\n=== TESTS FAILED (", SuccessS, " passed, ", FailureS, " failed) ===\n\n" ] S,
   print_string S,
   failure.
 
@@ -34,7 +34,7 @@ run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Fa
 run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
   then (
-    if (clause.premise TestCase)
+    if (once(clause.premise TestCase))
     then (run_test Suites (TestCase :: Successes) Failures (testcase X) TL)
     else (handle_failure TestCase, run_test Suites Successes (TestCase :: Failures) (testcase X) TL)
   )
@@ -44,5 +44,9 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
 %end.
 
 run_tests Suites <-
-  print_string "\n\n=== RUNNING TESTS ===\n",
-  demand.aux_demand (testing_private.run_test Suites [] []) (testcase X).
+  map tostring Suites (SuitesStrs : list string),
+  foldl (pfun cur elm res => [X] string.append cur "- " X, string.append X elm res) "" SuitesStrs SuitesStr,
+  foldl string.append ""
+  [ "\n\n=== RUNNING TESTS (test suites: ", SuitesStr, ")\n" ] Str,
+  print_string Str,
+  once(demand.aux_demand (testing_private.run_test Suites [] []) (testcase X)).
