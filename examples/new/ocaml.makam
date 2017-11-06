@@ -220,14 +220,11 @@ typeof (projrec E Field) T <-
   once (typeof E (tbase Tbase TS)).
 
 guess_type : map string A -> string -> prop.
-guess_type Map Tbase <-
-  map.headtail Map (Key, _) _,
+guess_type ((Key, _) :: _) Tbase <-
+  print "guessing!",
   field_def Key _ Tbase.
 
-teq : typ -> typ -> prop.
-teq X Y <- (eq X Y; (nf X Z, nf Y Z)).
-
-eqT_instance (eqT teq).
+eqv X Y <- (nf X Z, nf Y Z).
 
 typeof (record FieldsTerms) (tbase Tbase TS) <-
 
@@ -236,7 +233,7 @@ typeof (record FieldsTerms) (tbase Tbase TS) <-
   map kindof TS KS,
 
   map.mapvalues (fun a => typapply a TS) FieldsSpec FieldsTypes',
-  map.equal FieldsTypes FieldsTypes',
+  eqv FieldsTypes FieldsTypes',
   map.mapvalues typeof FieldsTerms FieldsTypes.
 
 
@@ -277,7 +274,7 @@ typeofpatt (precord FieldsPatts) (tbase Tbase TS) <-
   map.mapvalues typeofpatt FieldsPatts FieldsTypes,
   map kindof TS KS,
   map.mapvalues (fun a => typapply a TS) FieldsSpec FieldsTypes',
-  map.equal FieldsTypes FieldsTypes'.
+  eqv FieldsTypes FieldsTypes'.
 
 
 typebranch T T' Branch <-
@@ -350,7 +347,7 @@ sigitem_new_assumptions : sigitem -> list prop -> prop.
 typdef_new_assumptions  : string -> list knd -> typdef -> list prop -> prop.
 
 sigof (strlet Name E)
-      (sigval Name T') <- typeof (let E (bindone _ (fun y => y))) T, teq T T'.
+      (sigval Name T') <- typeof (let E (bindone _ (fun y => y))) T, eqv T T'.
 
 sigof (strlet_ E)
       (sigmany [])     <- typeof (let E (bindone _ (fun y => y))) T.
@@ -428,7 +425,7 @@ typdef_new_assumptions TName KS (typdef_variant Constructors) ( (type_variant_de
 
 typdef_new_assumptions TName KS (typdef_record Fields) ( (type_record_def TName KS Map) ::
                                                          FieldAssumptions ) <-
-  map.fromlist _ _ Fields Map,
+  map.from_list Fields Map,
   map (pfun nt res => [Name Tconstr] eq nt (Name, Tconstr), eq res (field_def Name Tconstr TName) )
       Fields FieldAssumptions.
 

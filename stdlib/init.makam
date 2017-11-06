@@ -1,10 +1,9 @@
 %use basic_predicates.
 %use connectives.
+%use eqv.
 %use clause.
 %use typ.
 %use guard.
-
-%use eq_typeclass.
 
 %use list.
 %use string.

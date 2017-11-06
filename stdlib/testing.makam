@@ -44,8 +44,10 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
 %end.
 
 run_tests Suites <-
-  map tostring Suites (SuitesStrs : list string),
-  foldl (pfun cur elm res => [X] string.append cur "- " X, string.append X elm res) "" SuitesStrs SuitesStr,
+  if (refl.isunif Suites)
+  then (eq SuitesStr "all")
+  else (map tostring Suites (SuitesStrs : list string),
+        foldl (pfun cur elm res => [X] string.append cur "- " X, string.append X elm res) "" SuitesStrs SuitesStr),
   foldl string.append ""
   [ "\n\n=== RUNNING TESTS (test suites: ", SuitesStr, ")\n" ] Str,
   print_string Str,

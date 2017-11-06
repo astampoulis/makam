@@ -19,7 +19,7 @@ freevars_aux_ Acc (F : A -> B) Res <-
   (x:A -> freevars_dontadd x -> freevars_aux Acc (F x) Res).
 
 freevars Root Result <-
-  freevars_aux [] Root Result', unique _ Result' Result.
+  freevars_aux [] Root Result', unique Result' Result.
 
   
 (* unifvars *)
@@ -37,9 +37,16 @@ unifvars_aux_ (Acc : list A) (X : A) Result when refl.isunif X <-
 unifvars_aux_ Acc X Result when refl.isunif X <-
   refl.decomposeunif X _ Args, unifvars_aux Acc Args Result.
 
-unifvars Root Result <-
-  unifvars_aux [] Root Result', unique (eqT refl.sameunif) Result' Result.
+reified_unif : type -> type.
+reified_unif : A -> reified_unif A.
+without_eqv_refl (_ : reified_unif Z).
+eqv (reified_unif X) (reified_unif Y) when refl.sameunif X Y.
 
+unifvars Root Result <-
+  unifvars_aux [] Root Result',
+  map (apply reified_unif) Result' Result'',
+  unique Result'' Result''',
+  map (apply reified_unif) Result Result'''.
 
 (* deepguard *)
 deepguard : A -> B -> prop -> prop.

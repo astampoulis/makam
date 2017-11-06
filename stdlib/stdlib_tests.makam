@@ -1,0 +1,70 @@
+icase : type.
+icase : string -> icase.
+eqv (icase S1) (icase S2) :- string.uppercase S1 S1', string.uppercase S2 S2', eq S1' S2'.
+
+list : testsuite.
+
+testcase list :- (contains 1 [1,2,3]).
+testcase list :- (contains 2 [1,2,3]).
+testcase list :- (not(contains 4 [1,2,3])).
+testcase list :- contains (icase "LaLa") [icase "lala"].
+
+set : testsuite.
+
+testcase set :- (set.remove [1,2,3,4] 1 R, eq R [2,3,4]).
+testcase set :- (set.remove [2,3,4,1] 1 R, eq R [2,3,4]).
+testcase set :- (set.remove [1,2,3,4,1] 1 R, eq R [2,3,4]).
+testcase set :- (not(set.remove [2,3,4] 1 R)).
+testcase set :- (not(set.remove [] X R)).
+
+testcase set :- (set.member [1,2,3,4] 1 _).
+testcase set :- (set.member [2,3,4,1] 1 _).
+testcase set :- (not(set.member [2,3,4] 1 _)).
+testcase set :- (set.member [1,2,3,4,1] 1 X, not(set.member X 1 _)).
+testcase set :- (set.member [1,2,3,4,1] 1 X, set.member X 2 _).
+
+testcase set :- (set.ccons 1 [1,2,3,4] X, eq X [1,2,3,4]).
+testcase set :- (set.ccons 1 [1,2,3,4,1] X, eq X [1,2,3,4,1]).
+testcase set :- (set.ccons 1 [2,3,4,1] X, eq X [2,3,4,1]).
+testcase set :- (set.ccons 1 [2,3,4,2] X, eq X [1,2,3,4,2]).
+
+testcase set :- (eqv 1 1).
+testcase set :- (eqv A A).
+testcase set :- (eqv ([1,2,3,4,1]: set A) [4,3,1,2]).
+testcase set :- (eqv ([1,1]: set A) [1,1,1,1,1,1,1,1]).
+testcase set :- (not(eqv ([1,1]: set A) [2,3,4])).
+testcase set :- (eqv ([[1,1], [1,2,3], [3,2,1]]: set (set A)) [[1],[1,2,3]]).
+
+testcase set :- (set.merge [] [1,2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2] [3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2,3] [2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [1,2,3,4] [1,2,3,4] X, eqv X [1,2,3,4]).
+testcase set :- (set.merge [[1,2,3], [1,1]] [[1,2],[1,1]] X, eqv X [[1], [1,2], [1,2,3]]).
+
+testcase set :- (set.diff [] [1] X, eqv X []).
+testcase set :- (set.diff [1,1] [1] X, eqv X []).
+testcase set :- (set.diff [2,1] [1] X, eqv X [2]).
+testcase set :- (set.diff [1,2,3,4,2,3,4] [2,3] X, eqv X [1,4]).
+
+map : testsuite.
+
+testcase map :- (map.remove [("hello", 1)] "hello" R1 R2, eq R1 1, eq R2 []).
+testcase map :- (map.remove [("hello", 1), ("foo", 2)] "hello" R1 R2, eq R1 1, eq R2 [("foo", 2)]).
+testcase map :- (not(map.remove [("hello", 1)] "foo" R1 R2)).
+
+testcase map :- (map.remove_if_member [("hello", 1)] "hello" R, eq R []).
+testcase map :- (map.remove_if_member [("hello", 1), ("foo", 2)] "hello" R, eq R [("foo", 2)]).
+testcase map :- (map.remove_if_member [("hello", 1)] "foo" [("hello", 1)]).
+
+testcase map :- (eqv [("hello", 1), ("foo", 2)] [("foo", 2), ("hello", 1)]).
+testcase map :- (not(eqv [("hello", 1), ("foo", 2)] [("hello", 2), ("foo", 2)])).
+testcase map :- (eqv [(icase "hello", 1), (icase "foo", 2)] [(icase "Foo", 2), (icase "HELLO", 1)]).
+testcase map :- (eqv [(icase "hello", icase "a"), (icase "foo", icase "b")] [(icase "Foo", icase "B"), (icase "HELLO", icase "A")]).
+
+testcase map :- (map.add_new [("hello", 1)] ("foo", 2) R, eqv R [("hello", 1), ("foo", 2)]).
+testcase map :- (not(map.add_new [("hello", 1)] ("hello", 2) R)).
+
+testcase map :- (map.add_or_update [("hello", 1)] ("foo", 2) R, eqv R [("hello", 1), ("foo", 2)]).
+testcase map :- (map.add_or_update [("hello", 1)] ("hello", 2) R, eqv R [("hello", 2)]).
+
+run_tests X ?

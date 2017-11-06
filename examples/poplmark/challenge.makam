@@ -35,14 +35,19 @@ subtypeof (tforall S1 S2) (tforall T1 T2) <-
 
 (* Adding records. (page 9) *)
 
-trecord : list (string * typ) -> typ.
+trecord : map string typ -> typ.
 
-(* TODO: maps are not well-suited to that; in general the equality for values needs to be rethought *)
+submap : (B -> B -> prop) -> map A B -> map A B -> map A B -> prop.
+submap SubRel MapA MapB MapR <-
+  map.to_list MapB MapBList,
+  foldl (pfun mA keyvalB mA' =>
+    [Key ValA ValB](eq keyvalB (Key, ValB),
+    map.remove mA Key ValA mA',
+    SubRel ValA ValB))
+  MapA MapBList MapR. 
+
 subtypeof (trecord Map1) (trecord Map2) <-
-  map.fromlist (eqT eq) (eqT subtypeof) Map1 Map1',
-  map.fromlist (eqT eq) (eqT subtypeof) Map2 Map2',
-  map.diff Map1' Map2' _.
-
+  submap subtypeof Map1 Map2 _.
 
 testcase poplmark_tests <-
   (x:typ ->
@@ -51,6 +56,7 @@ testcase poplmark_tests <-
 testcase poplmark_tests <-
   (x:typ -> y:typ ->
     subtypeof (trecord [ ("a", x), ("c", x), ("b", x) ]) (trecord [ ("b", ttop), ("a", ttop) ])).
+
 
 testcase poplmark_tests <-
   (x:typ ->
@@ -165,13 +171,14 @@ eval E E' <- evalstepfull E E'', eval E'' E'.
 
 (* Adding records and pattern matching *)
 
+(*
 erecord : list (string * term) -> term.
 proj : term -> string -> term.
 let : term -> patt A -> binddep A term.
 
 patt : type.
 pvar : term -> patt.
-
+*)
 
 
 run_tests [poplmark_tests] ?
