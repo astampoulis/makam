@@ -49,7 +49,7 @@ let mkTm v ls =
     autospan_fold mkApp (autospan_un mkVar { content = v ; span = span }) ls ;;
 let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 
-let lambda_prolog_toplevel_parser : (syntax_type -> (unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ _ -> None) ;;
+let makam_toplevel_parser : (syntax_type -> (unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ _ -> None) ;;
 let last_command_span : UChannel.span ref = ref None ;;
 
 let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun"; "pfun" ];;
@@ -283,11 +283,11 @@ clauseBM -> c:clause ;
 ident_or_str -> s:ident << s >> / s:str << s >>
 
 directive -> "use" repplus(white) s:token(ident_or_str)
-             << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!lambda_prolog_toplevel_parser syntax)) s >>
+             << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s >>
            / "import" repplus(white) s:token(ident_or_str) token("as") m:token(ident)
-           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!lambda_prolog_toplevel_parser syntax)) ~modul:m s >>
+           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:m s >>
            / "import" repplus(white) s:token(ident)
-           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!lambda_prolog_toplevel_parser syntax)) ~modul:s s >>
+           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:s s >>
            / "extend" s:token(ident)
            << fun () -> Termlangcanon.global_enter_module s >>
            / "end"
@@ -302,7 +302,7 @@ directive -> "use" repplus(white) s:token(ident_or_str)
            << fun () -> global_reset () >>
            / "usenew" repplus(white) s:token(ident_or_str)
              << fun () -> global_reset () ;
-                                  Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!lambda_prolog_toplevel_parser syntax)) s >>
+                                  Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s >>
            / "curmodule"
            << fun () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
 
@@ -470,7 +470,7 @@ lparenthesized(p) ->  x:ltoken("(")^ p:p y:ltoken(")") << { content = p.content 
 
 <<
 
-lambda_prolog_toplevel_parser :=
+makam_toplevel_parser :=
   (fun syntax memocells resetmemo input ->
    let oldmemo = !_memotable in
    let oldlr   = LRHash.copy _lrinfo in

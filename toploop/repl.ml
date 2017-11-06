@@ -8,7 +8,7 @@ open Termlangrefl;;
 
 let version = Version.version;;
 
-let makam_parser = FixedLamProlog.parse_prologcmd ;;
+let makam_parser = MakamGrammar.parse_prologcmd ;;
 let print_now s = Printf.printf "%s%!" s ;;
 
 let meta_print_exception : (exn -> unit) ref =
@@ -70,8 +70,8 @@ let forget_to_state s =
 exception ParsingError;;
 
 let _ =
-  let prevparser = !FixedLamProlog.lambda_prolog_toplevel_parser in
-  FixedLamProlog.lambda_prolog_toplevel_parser :=
+  let prevparser = !MakamGrammar.makam_toplevel_parser in
+  MakamGrammar.makam_toplevel_parser :=
     (fun syntax memo mode input ->
       let res = prevparser syntax memo mode input in
       match res, UChannel.reached_eof input with
@@ -96,7 +96,7 @@ let rec repl files : unit =
   in
   let old_debug = ref false in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in
-  let last_cmd_span () = UChannel.string_of_span !FixedLamProlog.last_command_span in
+  let last_cmd_span () = UChannel.string_of_span !MakamGrammar.last_command_span in
   let rec loop input : unit = 
     let recover () =
       let furthest = UChannel.flush_to_furthest input in
@@ -145,7 +145,7 @@ let rec repl files : unit =
       | Termlangcanon.NotInModule ->
 	(Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
 	   (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
-      | FixedLamProlog.Forget(s) ->
+      | MakamGrammar.Forget(s) ->
         (forget_to_state s; loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
         (print_now ("\nIncomplete parse at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
@@ -177,7 +177,7 @@ let output_log () =
 
 let load_init_files () =
   let loadfile s =
-    global_load_file_resolved (fun syntax -> Peg.parse_of_file (!FixedLamProlog.lambda_prolog_toplevel_parser syntax)) s
+    global_load_file_resolved (fun syntax -> Peg.parse_of_file (!MakamGrammar.makam_toplevel_parser syntax)) s
   in
   loadfile (global_resolve_filename "stdlib/init.makam") ;
   if Sys.file_exists "init.makam" then loadfile "init.makam" ;
