@@ -1659,10 +1659,18 @@ let global_restore_module_and_dir state' =
                               module_extension_stack = state'.module_extension_stack ;
                               current_directory = state'.current_directory }
 ;;
-  
+
+type syntax_type = [ `Makam | `Markdown ] ;;
+
+let syntax_type_of (s: string) =
+  match Path.ext (Path.of_string s) with
+    Some "md" -> Some `Markdown
+  | Some "makam" -> Some `Makam
+  | _ -> None
+;;
 
 let global_load_file_resolved ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) =
+    (pars : syntax_type -> string -> (unit -> unit) list) (filename : string) =
 
   let state = !globalstate in
   let fullmodul =
@@ -1690,7 +1698,8 @@ let global_load_file_resolved ?modul
   else begin
 
     let cur_dir = Path.of_string filename |> Path.parent |> Path.to_string in
-    let res = pars filename in
+    let syntax = Option.default `Makam (syntax_type_of filename) in
+    let res = pars syntax filename in
     let updateLoadedModules () =
 
       let state' = !globalstate in
@@ -1754,8 +1763,12 @@ let global_add_directory dir =
 ;;
 
 let global_load_file ?modul
-    (pars : string -> (unit -> unit) list) (filename : string) =
-  let filename = if String.ends_with filename ".makam" then filename else filename ^ ".makam" in
+    (pars : syntax_type -> string -> (unit -> unit) list) (filename : string) =
+  let filename =
+    match syntax_type_of filename with
+      Some _ -> filename
+    | None -> filename ^ ".makam"
+  in
   global_load_file_resolved ?modul:modul pars (global_resolve_filename filename)
 ;;
 

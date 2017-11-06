@@ -2,7 +2,7 @@
 
 <!--
 ```makam
-%use "05-type-synonyms".
+%use "05-type-synonyms.md".
 ```
 -->
 

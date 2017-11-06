@@ -1,6 +1,6 @@
 <!--
 ```makam
-%use "05-type-synonyms".
+%use "05-type-synonyms.md".
 ```
 -->
 
@@ -70,7 +70,7 @@ calculus. Let's go again... or actually, let's just import what we have
 already in a separate namespace:
 
 ```makam
-%import "01-base-language" as object.
+%import "01-base-language.md" as object.
 
 %extend object.
 intconst : int -> term.

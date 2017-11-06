@@ -1,6 +1,6 @@
 <!--
 ```makam
-%use "04-ml-subset".
+%use "04-ml-subset.md".
 ```
 -->
 

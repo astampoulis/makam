@@ -1,6 +1,6 @@
 <!--
 ```makam
-%use "02-binding-forms".
+%use "02-binding-forms.md".
 ```
 -->
 

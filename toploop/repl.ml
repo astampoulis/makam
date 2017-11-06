@@ -72,8 +72,8 @@ exception ParsingError;;
 let _ =
   let prevparser = !FixedLamProlog.lambda_prolog_toplevel_parser in
   FixedLamProlog.lambda_prolog_toplevel_parser :=
-    (fun memo mode input ->
-      let res = prevparser memo mode input in
+    (fun syntax memo mode input ->
+      let res = prevparser syntax memo mode input in
       match res, UChannel.reached_eof input with
 	Some(_, uc), false ->
 	  print_now ("\nParsing error at " ^ (UChannel.string_of_loc (UChannel.loc uc)) ^ ".\n");
@@ -177,7 +177,7 @@ let output_log () =
 
 let load_init_files () =
   let loadfile s =
-    global_load_file_resolved (Peg.parse_of_file !(FixedLamProlog.lambda_prolog_toplevel_parser)) s
+    global_load_file_resolved (fun syntax -> Peg.parse_of_file (!FixedLamProlog.lambda_prolog_toplevel_parser syntax)) s
   in
   loadfile (global_resolve_filename "stdlib/init.makam") ;
   if Sys.file_exists "init.makam" then loadfile "init.makam" ;

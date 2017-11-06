@@ -1,6 +1,6 @@
 <!--
 ```makam
-%use "03-dependent-binding".
+%use "03-dependent-binding.md".
 ```
 -->
 

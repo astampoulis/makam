@@ -1,6 +1,6 @@
 <!--
 ```makam
-%use "01-base-language".
+%use "01-base-language.md".
 ```
 -->
 
