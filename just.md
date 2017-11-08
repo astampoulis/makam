@@ -179,6 +179,12 @@ The term former $M \& j$:
 ampersand : iterm -> just -> iterm.
 ```
 
+Its type is:
+
+```makam
+box : itype -> itype.
+```
+
 The typing rule is:
 $$
 \frac{\Gamma \vdash_I M : A \;\;\;\;\; [\![ A ]\!] = T \;\;\;\;\; \Gamma \vdash_J j : T}
@@ -195,8 +201,6 @@ vdash_I (ampersand M J) (box A) :-
 ```
 
 ```makam
-box : itype -> itype.
-
 letbox : iterm -> (bindone just (bindone iterm iterm)) -> iterm.
 
 vdash_I (letbox M F) B :-
@@ -212,7 +216,7 @@ jtrue : just.
 ebool : etype.
 bracket ibool ebool.
 vdash_J jtrue ebool.
-vdash_I (ampersand (boolconst true) jtrue) T ?
+vdash_I (ampersand btrue jtrue) T ?
 
 jnot : just.
 earrow : etype -> etype -> etype.
@@ -310,6 +314,10 @@ vdash_I (letallobox ES F) (box A) :-
   bindmany.open F (fun js prebody =>
     bindmany.open prebody (fun xs body =>
       assume_many vdash_J js JTS (
-        assume_many vdash_I xs AS (
-          vdash_I body A)))).
+        assume_many vdash_I xs AS {prop| [M J]
+          eq body (M, J),
+          vdash_I M A,
+          bracket A T,
+          vdash_J J T
+  |}))).
 ```

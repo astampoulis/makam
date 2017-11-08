@@ -12,7 +12,7 @@ share: [
   "stdlib/connectives.makam" {"stdlib/connectives.makam"}
   "stdlib/demand.makam" {"stdlib/demand.makam"}
   "stdlib/dyn.makam" {"stdlib/dyn.makam"}
-  "stdlib/eq_typeclass.makam" {"stdlib/eq_typeclass.makam"}
+  "stdlib/eqv.makam" {"stdlib/eqv.makam"}
   "stdlib/fluid.makam" {"stdlib/fluid.makam"}
   "stdlib/generic.makam" {"stdlib/generic.makam"}
   "stdlib/guard.makam" {"stdlib/guard.makam"}
@@ -21,8 +21,10 @@ share: [
   "stdlib/map.makam" {"stdlib/map.makam"}
   "stdlib/morerefl.makam" {"stdlib/morerefl.makam"}
   "stdlib/option.makam" {"stdlib/option.makam"}
-  "stdlib/option.makam" {"stdlib/string.makam"}
-  "stdlib/option.makam" {"stdlib/testing.makam"}
+  "stdlib/set.makam" {"stdlib/set.makam"}
+  "stdlib/stdlib_tests.makam" {"stdlib/stdlib_tests.makam"}
+  "stdlib/string.makam" {"stdlib/string.makam"}
+  "stdlib/testing.makam" {"stdlib/testing.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}
   "stdlib/vars.makam" {"stdlib/vars.makam"}

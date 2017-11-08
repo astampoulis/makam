@@ -101,6 +101,8 @@ vdash_I (ifthenelse B M N) A :-
 <pre class="makam"><code>vdash_J : just =&gt; etype.</code></pre>
 <p>The term former <span class="math inline">\(M \&amp; j\)</span>:</p>
 <pre class="makam"><code>ampersand : iterm -&gt; just -&gt; iterm.</code></pre>
+<p>Its type is:</p>
+<pre class="makam"><code>box : itype -&gt; itype.</code></pre>
 <p>The typing rule is: <span class="math display">\[
 \frac{\Gamma \vdash_I M : A \;\;\;\;\; [\![ A ]\!] = T \;\;\;\;\; \Gamma \vdash_J j : T}
      {\Gamma \vdash_I M \&amp; j : \square{A}}
@@ -110,9 +112,7 @@ vdash_I (ifthenelse B M N) A :-
   vdash_I M A,
   bracket A T,
   vdash_J J T.</code></pre>
-<pre class="makam"><code>box : itype -&gt; itype.
-
-letbox : iterm -&gt; (bindone just (bindone iterm iterm)) -&gt; iterm.
+<pre class="makam"><code>letbox : iterm -&gt; (bindone just (bindone iterm iterm)) -&gt; iterm.
 
 vdash_I (letbox M F) B :-
   vdash_I M (box A),
@@ -127,7 +127,7 @@ jtrue : just.
 ebool : etype.
 bracket ibool ebool.
 vdash_J jtrue ebool.
-vdash_I (ampersand (boolconst true) jtrue) T ?
+vdash_I (ampersand btrue jtrue) T ?
 
 jnot : just.
 earrow : etype -&gt; etype -&gt; etype.
@@ -225,7 +225,11 @@ vdash_I (letallobox ES F) (box A) :-
   bindmany.open F (fun js prebody =&gt;
     bindmany.open prebody (fun xs body =&gt;
       assume_many vdash_J js JTS (
-        assume_many vdash_I xs AS (
-          vdash_I body A)))).</code></pre>
+        assume_many vdash_I xs AS {prop| [M J]
+          eq body (M, J),
+          vdash_I M A,
+          bracket A T,
+          vdash_J J T
+  |}))).</code></pre>
 </body>
 </html>
