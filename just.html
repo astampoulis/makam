@@ -146,7 +146,7 @@ vdash_I inot (arrow ibool ibool).
 
 vdash_I (ampersand inot jnot) T?
 
-vdash_I (letbox (ampersand (boolconst true) jtrue)
+vdash_I (letbox (ampersand btrue jtrue)
           (bindone _ (fun s =&gt;
           (bindone _ (fun x =&gt;
           ampersand (app inot x) (japp jnot s)))))) T ?
@@ -174,19 +174,20 @@ eval : iterm -&gt; iterm -&gt; prop.
 value : iterm -&gt; prop.
 
 value (lam F).
-value (boolconst B).
+value (btrue).
+value (bfalse).
 
 eval V V when value V.
 
 eval (app E1 E2) V :-
   eval E1 (lam F),
   eval E2 V2,
-  bindone.apply F V2 V.
+  eq (F V2) V.
 
-eval (ifthenelse (boolconst true) ET EF) V :-
+eval (ifthenelse (btrue) ET EF) V :-
   eval ET V.
 
-eval (ifthenelse (boolconst false) ET EF) V :-
+eval (ifthenelse (bfalse) ET EF) V :-
   eval EF V.
 
 eval (ampersand M J) (ampersand V J) :-
@@ -231,5 +232,9 @@ vdash_I (letallobox ES F) (box A) :-
           bracket A T,
           vdash_J J T
   |}))).</code></pre>
+<pre class="makam"><code>vdash_I (lamt (box ibool) (bindone _ (fun x =&gt;
+        letallobox [x] (bindnext _ (fun s  =&gt; bindend (
+                       (bindnext _ (fun x&#39; =&gt; bindend (
+                       (x&#39;, s)))))))))) T ?</code></pre>
 </body>
 </html>
