@@ -52,7 +52,7 @@ let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 let makam_toplevel_parser : (syntax_type -> (unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ _ -> None) ;;
 let last_command_span : UChannel.span ref = ref None ;;
 
-let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun"; "pfun" ];;
+let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun"; "pfun"; "sort" ];;
 
 exception Forget of string ;;
 
@@ -133,6 +133,11 @@ ltyp  -> s:ltoken("[") adhoc:repWHITE(token(ident)) e:ltoken("]") t:lmonotyp
       / t:lmonotyp << t >>
 
 lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
+          / t:multtyp^ token("=>")
+            startloc:(epsilon << UChannel.loc _input >>)
+            e:lmonotyp
+            endloc:(epsilon << UChannel.loc _input >>)
+            << autospan_bin _tArrow t (autospan_bin _tArrow e (autospan_un (_tVar ~args:[]) { content = "prop" ; span = UChannel.mk_span startloc endloc })) >>
           / t:multtyp^                            << t >>
 
 multtyp -> t:apptyp^ token("*") e:multtyp         << autospan_bin _tTuple t e >>
@@ -148,6 +153,7 @@ typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
 
 basetyp -> id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
          / id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
+         / id:ltoken("sort")   << { content = { _tType with loc = id.span } ; span = id.span } >>
          / t:lparenthesized(lmonotyp)   << t >>
 
 binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")

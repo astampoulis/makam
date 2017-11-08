@@ -1,0 +1,3 @@
+[submodule "makam-highlight"]
+	path = makam-highlight
+	url = git@github.com:astampoulis/makam-highlight
