@@ -47,6 +47,9 @@ let mkTm v ls =
       | [] -> None
     in
     autospan_fold mkApp (autospan_un mkVar { content = v ; span = span }) ls ;;
+let mkTmConst spanFrom v =
+    autospan_un mkVar { content = v ; span = spanFrom.span }
+;;
 let mkLamO ?(loc = None) (s,t) = mkLamO ~loc:loc s t ;;
 
 let makam_toplevel_parser : (syntax_type -> (unit -> unit) list Peg.parser_t) ref = ref (fun _ _ _ _ -> None) ;;
@@ -97,10 +100,10 @@ baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
             << autospan_un mkString s >>
 
           (* lists *)
-          / token("[") es:repSEP(lexpr, ",") token("]")
+          / token("[") es:repSEP(lexpr, ",") nilspan:ltoken("]")
             << List.fold_left
                (fun cur elm -> mkTm "cons" [ elm ; cur ])
-               (mkTm "nil" [])
+               (mkTmConst nilspan "nil")
                (List.rev es) >>
 
           (* tuples *)
@@ -162,17 +165,17 @@ clause   -> goal:lexpr^ token("when") cond:prop token("<-") premise:prop
              << mkTm "whenclause" [ goal ; cond ; premise ] >>
           / goal:lexpr^ token("when") cond:prop token(":-") premise:prop
              << mkTm "whenclause" [ goal ; cond ; premise ] >>             
-          / goal:lexpr^ token("when") cond:prop
-             << mkTm "whenclause" [ goal ; cond ; mkTm "success" [] ] >>
+          / goal:lexpr^ token("when") cond:prop endspan:loced(epsilon)
+             << mkTm "whenclause" [ goal ; cond ; mkTmConst endspan "success" ] >>
           / goal:lexpr^ x:token("<-") premise:prop
             << mkTm "clause" [ goal ; premise ] >>
           / goal:lexpr^ x:token(":-") premise:prop
             << mkTm "clause" [ goal ; premise ] >>
-          / goal:lexpr^
-            << mkTm "clause" [ goal ; mkTm "success" [] ] >>
+          / goal:lexpr^ endspan:loced(epsilon)
+            << mkTm "clause" [ goal ; mkTmConst endspan "success" ] >>
 
-prop     -> bf:newmetas ps:repplusSEP(hyp, ",") 
-            << let p = Utils.ExtList.foldnonempty (fun q1 q2 -> mkTm "and" [ q1 ; q2 ]) (mkTm "success" [])
+prop     -> bf:newmetas ps:repplusSEP(hyp, ",") endspan:loced(epsilon)
+            << let p = Utils.ExtList.foldnonempty (fun q1 q2 -> mkTm "and" [ q1 ; q2 ]) (mkTmConst endspan "success")
                        (fun x -> x) ps in
                bf p >>
 
@@ -204,13 +207,13 @@ hyp1     -> token("(") newvars:repWHITE(newvar)
           / h:hyp2 << h >>
 
 hyp2     -> token("(") p:prop token(")") << p >>
-          / token("(") mult:repplusSEP(hyp^, ";") token(")")
-            << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTm "failure" [])
+          / token("(") mult:repplusSEP(hyp^, ";") endspan:ltoken(")")
+            << Utils.ExtList.foldnonempty (fun r elm -> mkTm "or" [ r ; elm ]) (mkTmConst endspan "failure")
                (fun x -> x) mult >>
           / token("once") token("(") p:prop token(")") << mkTm "once" [ p ] >>
           / p:lexpr^ << p >>
 
-assumption -> x:lexpr^ << mkTm "clause" [ x ; mkTm "success" [] ] >>
+assumption -> x:lexpr^ endspan:loced(epsilon) << mkTm "clause" [ x ; mkTmConst endspan "success" ] >>
             / token("(") c:clause token(")") << c >>
 
 newvar   -> id:ltoken(ident^) token(":") t:basetyp token("->") << { content = (id.content, Some t.content) ; span = id ---> t } >>

@@ -132,7 +132,6 @@ to_string (tforall T1 T2) S <-
                        lambda z:Z. s z) : (All X21 <: Top. (All X46 <: X21. (All X71 <: X21. (X21 -> X46) -> X71 -> X46)))
 *)
 
-
 testcase poplmark_tests <-
   typeof (lamt ttop (bindone "X" (fun X =>
           lamt X (bindone "S" (fun S =>
@@ -140,7 +139,7 @@ testcase poplmark_tests <-
           lam (tarrow X S) (bindone "s" (fun s =>
           lam Z            (bindone "z" (fun z =>
           app s z))))))))))) T,
-(* typ.to_string T "∀X<:⊤.∀S<:X.∀Z<:X.((X → S) → (Z → S))", *)
+ typ.to_string T "∀X<:⊤.∀S<:X.∀Z<:X.((X → S) → (Z → S))",
  (eq_nounif T
         (tforall ttop (bindone "X" (fun aX =>
          tforall aX    (bindone "S" (fun aS =>

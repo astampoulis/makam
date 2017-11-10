@@ -23,5 +23,6 @@
 %use generic.
 
 %use morerefl.
+%use reify.
 
 %use vars.

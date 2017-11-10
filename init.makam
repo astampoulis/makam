@@ -4,3 +4,4 @@
 %directory "examples/peg".
 %directory "examples/experiments".
 %directory "examples/paper".
+%directory "examples".

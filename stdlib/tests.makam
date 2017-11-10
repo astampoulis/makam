@@ -1,3 +1,5 @@
+%extend stdlib_tests.
+
 icase : type.
 icase : string -> icase.
 eqv (icase S1) (icase S2) :- string.uppercase S1 S1', string.uppercase S2 S2', eq S1' S2'.
@@ -39,7 +41,7 @@ testcase set :- (set.merge [] [1,2,3,4] X, eqv X [1,2,3,4]).
 testcase set :- (set.merge [1,2] [3,4] X, eqv X [1,2,3,4]).
 testcase set :- (set.merge [1,2,3] [2,3,4] X, eqv X [1,2,3,4]).
 testcase set :- (set.merge [1,2,3,4] [1,2,3,4] X, eqv X [1,2,3,4]).
-testcase set :- (set.merge [[1,2,3], [1,1]] [[1,2],[1,1]] X, eqv X [[1], [1,2], [1,2,3]]).
+testcase set :- (set.merge [([1,2,3] : set int), [1,1]] [[1,2],[1,1]] X, eqv X [[1], [1,2], [1,2,3]]).
 
 testcase set :- (set.diff [] [1] X, eqv X []).
 testcase set :- (set.diff [1,1] [1] X, eqv X []).
@@ -56,15 +58,18 @@ testcase map :- (map.remove_if_member [("hello", 1)] "hello" R, eq R []).
 testcase map :- (map.remove_if_member [("hello", 1), ("foo", 2)] "hello" R, eq R [("foo", 2)]).
 testcase map :- (map.remove_if_member [("hello", 1)] "foo" [("hello", 1)]).
 
-testcase map :- (eqv [("hello", 1), ("foo", 2)] [("foo", 2), ("hello", 1)]).
-testcase map :- (not(eqv [("hello", 1), ("foo", 2)] [("hello", 2), ("foo", 2)])).
-testcase map :- (eqv [(icase "hello", 1), (icase "foo", 2)] [(icase "Foo", 2), (icase "HELLO", 1)]).
-testcase map :- (eqv [(icase "hello", icase "a"), (icase "foo", icase "b")] [(icase "Foo", icase "B"), (icase "HELLO", icase "A")]).
+testcase map :- (eqv ([("hello", 1), ("foo", 2)] : map A B) [("foo", 2), ("hello", 1)]).
+testcase map :- (not(eqv ([("hello", 1), ("foo", 2)] : map A B) [("hello", 2), ("foo", 2)])).
+testcase map :- (eqv ([(icase "hello", 1), (icase "foo", 2)] : map A B) [(icase "Foo", 2), (icase "HELLO", 1)]).
+testcase map :- (eqv ([(icase "hello", icase "a"), (icase "foo", icase "b")] : map A B) [(icase "Foo", icase "B"), (icase "HELLO", icase "A")]).
 
 testcase map :- (map.add_new [("hello", 1)] ("foo", 2) R, eqv R [("hello", 1), ("foo", 2)]).
 testcase map :- (not(map.add_new [("hello", 1)] ("hello", 2) R)).
 
 testcase map :- (map.add_or_update [("hello", 1)] ("foo", 2) R, eqv R [("hello", 1), ("foo", 2)]).
 testcase map :- (map.add_or_update [("hello", 1)] ("hello", 2) R, eqv R [("hello", 2)]).
+
+
+%end.
 
 run_tests X ?

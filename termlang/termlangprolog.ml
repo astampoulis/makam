@@ -785,13 +785,15 @@ let pattneutToExpr, pattcanonToExpr, pattheadToExpr =
 
   let rec aux_canon fvars (p : pattcanon) : expr =
 
-    match p.term with
-        `LamMany(binders, body) ->
+    match pattEtaShort p, p.term with
+        None, `LamMany(binders, body) ->
           let body' = aux_neut fvars body in
           List.fold_right
             (fun ( { term = (s,t) } as elm ) body ->
               { elm with term = `Lam(s,t,body) ; extra = ExprExtras.empty () })
             binders body'
+      | Some hd, _ ->
+         aux_head fvars hd
 
   and aux_appmany (e : expr) (l : expr list) (l' : unit typinfo list) =
 

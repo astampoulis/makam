@@ -1023,12 +1023,19 @@ let rec findUnifiableVar kind (vars : int list) ({ classifier = tRes } as eFull)
        unifvars)
 
   in
-  match unifvars with
-  | [] -> raise (WrongTermVar(eFull))
-  | i::_ -> (let index = kind, i in
-             let typ = lookupIndex index eFull.loc in
-             typUnify typ tRes ;
-             index)
+  let returnResult i =
+    let index = kind, i in
+    let typ = lookupIndex index eFull.loc in
+    typUnify typ tRes ;
+    index
+  in
+  match unifvars, eFull with
+  | [], _ -> raise (WrongTermVar(eFull))
+  (* This is a hack so that normal lists are the default when we overload nil/cons.
+     TODO: find a better way to do this *)
+  | l, { term = `Var (`Concrete(s), _) } when List.mem s [ "nil"; "cons" ] ->
+     returnResult (List.last l)
+  | i::_, _ -> returnResult i
 
 ;;
 

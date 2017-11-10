@@ -375,6 +375,23 @@ new_builtin_predicate "debug" ( _tProp  **> _tProp )
       return ())
 ;;
 
+new_builtin_predicate "debugfull" ( _tProp  **> _tProp )
+  (fun _ -> fun [ p ] ->
+    let open RunCtx.Monad in
+    perform
+      _ <-- return () ;
+      let prev = !_DEBUG in
+      let _ = _DEBUG := true in
+      let p = match p.term with `LamMany([], p) -> p | _ -> assert false in
+      _ <-- ifte (try demand p with e -> (_DEBUG := prev; raise e))
+            (fun _ -> _DEBUG := prev; return ())
+            (lazy(perform
+               _ <-- return () ;
+               let _ = _DEBUG := prev in
+               mzero)) ;
+      return ())
+;;
+
 new_builtin_predicate "trace" ( (~* "A") **> _tProp **> _tProp )
   (fun _ -> fun [ g ; cont ] ->
     let open RunCtx.Monad in

@@ -21,8 +21,9 @@ share: [
   "stdlib/map.makam" {"stdlib/map.makam"}
   "stdlib/morerefl.makam" {"stdlib/morerefl.makam"}
   "stdlib/option.makam" {"stdlib/option.makam"}
+  "stdlib/reify.makam" {"stdlib/reify.makam"}
   "stdlib/set.makam" {"stdlib/set.makam"}
-  "stdlib/stdlib_tests.makam" {"stdlib/stdlib_tests.makam"}
+  "stdlib/tests.makam" {"stdlib/tests.makam"}
   "stdlib/string.makam" {"stdlib/string.makam"}
   "stdlib/testing.makam" {"stdlib/testing.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
