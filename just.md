@@ -7,6 +7,13 @@ header-includes:
   <script src="livereload-js/dist/livereload.js?host=localhost"></script>
 ---
 
+<!--
+```makam
+assume_reset : A -> prop -> prop.
+assume_reset T P :- refl.assume_reset T P.
+```
+-->
+
 # Sorts
 
 We first create the sorts.
@@ -32,7 +39,7 @@ just : sort. (* J *)
 The sort of types of $\vdash_J$:
 
 ```makam
-etype : sort.  (* [[ A ]] *)
+jtype : sort.  (* [[ A ]] *)
 ```
 
 We are now done with sorts.
@@ -40,7 +47,7 @@ We are now done with sorts.
 Now, `bracket` is a (computational) function from $\textsf{Prop}_0$ to $\textsf{Prop}_J$:
 
 ```makam
-bracket : itype => etype.
+bracket : itype -> jtype -> prop.
 ```
 
 # Constructors for terms
@@ -82,7 +89,7 @@ ibool : itype.
 This is just the base type system, representing the $\vdash_I$ typing judgement:
 
 ```makam
-vdash_I : iterm => itype.
+vdash_I : iterm -> itype -> prop.
 ```
 
 Rule for $$
@@ -170,94 +177,157 @@ We get $T := B \to B$ for any $B$.
 The typing judgement $\vdash_J$:
 
 ```makam
-vdash_J : just => etype.
+vdash_J : just -> jtype -> prop.
 ```
 
-The term former $M \& j$:
-
-```makam
-ampersand : iterm -> just -> iterm.
-```
-
-Its type is:
+It's all about the box type:
 
 ```makam
 box : itype -> itype.
 ```
 
-The typing rule is:
+And the box type only needs one rule which is both an elimination and an introduction rule:
 $$
-\frac{\Gamma \vdash_I M : A \;\;\;\;\; [\![ A ]\!] = T \;\;\;\;\; \Gamma \vdash_J j : T}
-     {\Gamma \vdash_I M \& j : \square{A}}
+\frac{\Gamma \vdash_I N_i : \square A_i \;\;\;\;\;
+      \vec{x_i : A_i} \vdash_I M : A \;\;\;\;\;
+      \vec{s_i : [\![ A_i ]\!]} \vdash_J j : [\![ A ]\!]}
+     {\Gamma \vdash_I \texttt{let}_{\square} \; \vec{(x\&s)} = \vec{N} \; \texttt{in} \; (M, j)
+      : \square A }
 $$
 
-The rule is written as:
+First let's create the binding structure for $\texttt{let}_{\square}$: this is
+a sequence of simultaneous bindings of a term variable $x$ and a justification variable $s$. The body of the binding is a pair $(M, j)$:
 
 ```makam
-vdash_I (ampersand M J) (box A) :-
-  vdash_I M A,
-  bracket A T,
-  vdash_J J T.
+boxbind : type -> type.
+body    : A -> boxbind A.
+bind    : (iterm -> just -> boxbind A) -> boxbind A.
 ```
 
+Using this, the constructor for $\texttt{let}_{\square}$ is:
+
 ```makam
-letbox : iterm -> (bindone just (bindone iterm iterm)) -> iterm.
+letbox : list iterm -> boxbind (iterm * just) -> iterm.
+```
 
-vdash_I (letbox M F) B :-
-  vdash_I M (box A),
+Let's also write the predicate for opening up this binding structure, giving us
+a list of fresh variables $\vec{x}$ and $\vec{s}$ as long as the body of the
+structure:
+
+```makam
+open : boxbind (iterm * just) ->
+       (list iterm -> list just -> iterm -> just -> prop) -> prop.
+
+open (body (M, J)) P :- P [] [] M J.
+
+open (bind (fun x s => B' x s)) P :-
+  (x:iterm -> s:just ->
+    open (B' x s) (pfun xs ss m j => P (x :: xs) (s :: ss) m j)).
+```
+
+Now for the typing rule. The main complication is that we need to drop all
+assumptions for the $\vdash_I$ judgement when type-checking the term $M$,
+replacing them with the $\Gamma' = \vec{x : A}$ context:
+
+```makam
+vdash_I_let_box_body : list itype -> itype ->
+                       list iterm -> list just ->
+                       iterm -> just -> prop.
+
+vdash_I_let_box_body AS A XS SS M J :-
+  assume_reset vdash_I (
+    assume_many vdash_I XS AS (vdash_I M A)
+  ),
+  map bracket AS TS,
   bracket A T,
-  bindone.open F (fun s f' =>
-    bindone.open f' (fun x m' => {prop|
-      (vdash_J s T ->
-       vdash_I x A ->
-       vdash_I m' B) |})).
+  assume_many vdash_J SS TS (vdash_J J T).
 
+vdash_I (letbox NS F) (box A) :-
+  map vdash_I NS BoxedAS,
+  map (apply box) AS BoxedAS,
+  open F (vdash_I_let_box_body AS A).
+```
+
+Adding booleans as a concrete type, to get an example:
+
+```makam
 jtrue : just.
-ebool : etype.
-bracket ibool ebool.
-vdash_J jtrue ebool.
-vdash_I (ampersand btrue jtrue) T ?
+jfalse : just.
+jbool : jtype.
+bracket ibool jbool.
+vdash_J jtrue jbool.
+vdash_J jfalse jbool.
+```
 
-jnot : just.
-earrow : etype -> etype -> etype.
-bracket (arrow A1 A2) (earrow T1 T2) :-
-  bracket A1 T1,
-  bracket A2 T2.
-vdash_J jnot (earrow ebool ebool).
+And adding $\lambda x:A.M$, where we explicitly set the type $A$ of the variable $x$:
+
+```makam
+lam : itype -> (iterm -> iterm) -> iterm.
+vdash_I (lam A F) (arrow A B) :-
+  (x:iterm -> vdash_I x A -> vdash_I (F x) B).
+```
+
+Now we are ready for the example:
+
+```makam
+vdash_I (lam (box ibool) (fun x =>
+         letbox [x]
+                (bind (fun x' s =>
+                  body (x', s))))) T ?
+
+>> Yes:
+>> T := arrow (box ibool) (box ibool)
+```
+
+But, if we try to reuse $x$, we do not get a well-typed term:
+
+```makam
+vdash_I (lam (box ibool) (fun x =>
+         letbox [x]
+                (bind (fun x' s =>
+                  body (x, s))))) T ?
+
+>> Impossible.
+```
+
+We now add an arrow type for justifications:
+
+```makam
+jarrow : jtype -> jtype -> jtype.
+bracket (arrow A1 A2) (jarrow T1 T2) :-
+  bracket A1 T1, bracket A2 T2.
 
 japp : just -> just -> just.
 vdash_J (japp J1 J2) T2 :-
-  vdash_J J1 (earrow T1 T2),
-  vdash_J J2 T1.
+  vdash_J J1 (jarrow T1 T2), vdash_J J2 T1.
+```
 
+Now let's try to type the proof of $\square(A \to B) \to \square A \to \square B$:
+
+```makam
+a : itype. ja : jtype. bracket a ja.
+b : itype. jb : jtype. bracket b jb.
+
+vdash_I (lam (box (arrow a b)) (fun f =>
+        (lam (box a)           (fun x =>
+        (letbox [f, x] (bind (fun f' j_f' =>
+                       (bind (fun x' j_x' =>
+                       (body (app f' x', japp j_f' j_x')))))))))))
+        T ?
+>> Yes:
+>> T := arrow (box (arrow a b)) (arrow (box a) (box b))
+```
+
+
+Some extra stuff:
+
+```
 inot : iterm.
 vdash_I inot (arrow ibool ibool).
-
-vdash_I (ampersand inot jnot) T?
-
-vdash_I (letbox (ampersand btrue jtrue)
-          (bindone _ (fun s =>
-          (bindone _ (fun x =>
-          ampersand (app inot x) (japp jnot s)))))) T ?
-
-itermbig : type.
-itypebig : type.
-jambdas : bindmany just iterm -> itermbig.
-jarrows : list etype -> itype -> itypebig.
-
-typeofbig : itermbig -> itypebig -> prop.
-
-typeofbig (jambdas F) (jarrows TS A) :-
-  bindmany.open F (fun xs body => {prop|
-    assume_many vdash_J xs TS
-      (vdash_I body A) |}).
-
-japp : itermbig -> list just -> iterm.
-vdash_I (japp E JS) A :-
-  typeofbig E (jarrows TS A),
-  map vdash_J JS TS.
+```
 
 
+```makam
 eval : iterm -> iterm -> prop.
 
 value : iterm -> prop.
@@ -278,54 +348,4 @@ eval (ifthenelse (btrue) ET EF) V :-
 
 eval (ifthenelse (bfalse) ET EF) V :-
   eval EF V.
-
-eval (ampersand M J) (ampersand V J) :-
-  eval M V.
-
-eval (letbox M F) V :-
-  eval M (ampersand M' J),
-  bindone.apply F J PreBody,
-  bindone.apply PreBody M' Body,
-  eval Body V.
-
-eval (japp (jambdas F) JS) V :-
-  bindmany.apply F JS Body,
-  eval Body V.
-
-lamt : itype -> bindone iterm iterm -> iterm.
-vdash_I (lamt A F) (arrow A B) :-
-  bindone.open F (fun x body => {prop|
-    (vdash_I x A ->
-     vdash_I body B) |}).
-
-(bracket A TA ->
-vdash_I (lamt (box A) (bindone _ (fun x =>
-        letbox x (bindone _ (fun s =>
-                 (bindone _ (fun x' =>
-                 x'))))))) T) ?
-
-
-(* alternative to ampersand + letbox *)
-letallobox : list iterm -> bindmany just (bindmany iterm (iterm * just)) -> iterm.
-
-vdash_I (letallobox ES F) (box A) :-
-  map (apply box) AS TS,
-  map vdash_I ES TS,
-  map bracket AS JTS,
-  bindmany.open F (fun js prebody =>
-    bindmany.open prebody (fun xs body =>
-      assume_many vdash_J js JTS (
-        assume_many vdash_I xs AS {prop| [M J]
-          eq body (M, J),
-          vdash_I M A,
-          bracket A T,
-          vdash_J J T
-  |}))).
-```
-
-```makam
-vdash_I (lamt (box ibool) (bindone _ (fun x =>
-        letallobox [x] (bindnext _ (fun s  => bindend (
-                       (bindnext _ (fun x' => bindend (
-                       (x', s)))))))))) T ?
 ```
