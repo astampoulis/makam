@@ -1,69 +1,93 @@
 %use ocaml.
 
+ocaml : testsuite. %testsuite ocaml.
+
 (* examples *)
 
-typeof (let
-         (lam (fun f => lam (fun g => lam (fun x =>
-	  app f (app g x)))))
-	 (fun compose => compose)) X ?
+>> typeof (let
+            (lam (fun f => lam (fun g => lam (fun x =>
+            app f (app g x)))))
+            (fun compose => compose)) X ?
 
-typeof (letrec
-         (bindmutrec
-	 (bcons (fun compose => bnil (cons
-         (lam (fun f => lam (fun g => lam (fun x =>
-	  app f (app g x)))))
-	 nil))))
-	 (bcons (fun compose => bnil compose))) X ?
+>> Yes:
+>> X := tpi ktype (fun c => tpi ktype (fun a => tpi ktype (fun b => tarrow (tarrow b c) (tarrow (tarrow a b) (tarrow a c))))).
 
-typeof (letrec
-         (bindmutrec
-	   (bcons (fun 
-	   append => bnil [
-	   lam (fun x => lam (fun y =>
-	   match x
-             [ bindrel (bcons (fun hd => bcons (fun tl => bnil 
-	       (pconstr "Cons" (ptuple [ pvar hd, pvar tl ]),
-		constr "Cons" (tuple [ hd, app (app append tl) y ]))))),
+>> typeof (letrec
+           (bindmutrec
+           (bcons (fun compose => bnil (cons
+           (lam (fun f => lam (fun g => lam (fun x =>
+            app f (app g x)))))
+           nil))))
+           (bcons (fun compose => bnil compose))) X ?
 
-	       bindrel (bnil
-	       (pconstrun "Nil", y)) ]))])))
-          (bcons (fun append => bnil append))) Y?
+>> Yes:
+>> X := tpi ktype (fun c => tpi ktype (fun a => tpi ktype (fun b => tarrow (tarrow b c) (tarrow (tarrow a b) (tarrow a c))))).
 
-sigof (strmany
-	 [ strletrec
-	   (bindmutrec (bcons (fun append => bnil [
-	   lam (fun x => lam (fun y =>
-	   match x
-	     [ bindrel (bcons (fun hd => bcons (fun tl => bnil
-		( pconstr "Cons" (ptuple [pvar hd, pvar tl]),
-		  constr "Cons" (tuple [hd, app (app append tl) y]) )))),
-	       bindrel (bnil
-		( pconstrun "Nil",
-		  y )) ]))]))),
-           strlet "g" (named "append") ]) S ?
+>> typeof (letrec
+           (bindmutrec
+             (bcons (fun
+             append => bnil [
+             lam (fun x => lam (fun y =>
+             match x
+               [ bindrel (bcons (fun hd => bcons (fun tl => bnil
+                 (pconstr "Cons" (ptuple [ pvar hd, pvar tl ]),
+                  constr "Cons" (tuple [ hd, app (app append tl) y ]))))),
 
-sigof (strmany
-        [strtypesingle "tree" [ktype] (typdef_variant
-           [ ("Leaf", csdefunit),
-	     ("Node", csdef (typconstr (bcons (fun a => bnil (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
-	 strlet "isempty"
-           (lam (fun t => match t
-	      [ bindrel (bcons (fun top => bnil
-		   ( pconstr "Node" (ptuple [pwild, pvar top, pwild]),
-		     top ))) ]))]) S ?
+                 bindrel (bnil
+                 (pconstrun "Nil", y)) ]))])))
+            (bcons (fun append => bnil append))) Y?
 
-sigof (strmany
-         [ strtypesingle "test1" [ktype, ktype] (typdef_eq
-	    (typconstr (bcons (fun a => bcons (fun b => bnil (
-		   tprod [ tbase "list" [a],
-		           tbase "list" [ tbase "list" [ tprod [b, a] ] ] ])))))),
-	   strtypesingle "test2" [ktype] (typdef_eq
-	    (typconstr (bcons (fun a => bnil (
-		   tbase "test1" [a, a]))))),
-	   strlet "f" (lam (fun x => ascribe x (tbase "test2" [tbase "unit" []]) )),
-	   strlet "g" (app (named "f")
-			  (tuple [ construn "Nil",
-			          constr "Cons" (tuple [ (constr "Cons" (tuple [tuple [construn "Unit", construn "Unit"], construn "Nil"])) ,
-				                         constr "Cons" (tuple [construn "Nil", construn "Nil"])])])) ]) S ?
+>> Yes:
+>> Y := tpi ktype (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil)))).
 
 
+
+>> sigof (strmany
+           [ strletrec
+             (bindmutrec (bcons (fun append => bnil [
+             lam (fun x => lam (fun y =>
+             match x
+               [ bindrel (bcons (fun hd => bcons (fun tl => bnil
+                  ( pconstr "Cons" (ptuple [pvar hd, pvar tl]),
+                    constr "Cons" (tuple [hd, app (app append tl) y]) )))),
+                 bindrel (bnil
+                  ( pconstrun "Nil",
+                    y )) ]))]))),
+             strlet "g" (named "append") ]) S ?
+
+>> Yes:
+>> S := sigmany (cons (sigmany (cons (sigval "append" (tpi ktype (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil)))))) nil)) (cons (sigval "g" (tpi ktype (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil)))))) nil)).
+
+
+
+>> sigof (strmany
+          [strtypesingle "tree" [ktype] (typdef_variant
+             [ ("Leaf", csdefunit),
+               ("Node", csdef (typconstr (bcons (fun a => bnil (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
+           strlet "isempty"
+             (lam (fun t => match t
+                [ bindrel (bcons (fun top => bnil
+                     ( pconstr "Node" (ptuple [pwild, pvar top, pwild]),
+                       top ))) ]))]) S ?
+
+>> Yes:
+>> S := sigmany (cons (sigtype (cons "tree" nil) (cons (cons ktype nil) nil) (cons (typdef_variant (cons (tuple "Leaf" csdefunit) (cons (tuple "Node" (csdef (typconstr (bcons (fun a => bnil (tprod (cons (tbase "tree" (cons a nil)) (cons a (cons (tbase "tree" (cons a nil)) nil))))))))) nil))) nil)) (cons (sigval "isempty" (tpi ktype (fun b => tarrow (tbase "tree" (cons b nil)) b))) nil)).
+
+
+
+>> sigof (strmany
+           [ strtypesingle "test1" [ktype, ktype] (typdef_eq
+              (typconstr (bcons (fun a => bcons (fun b => bnil (
+                     tprod [ tbase "list" [a],
+                             tbase "list" [ tbase "list" [ tprod [b, a] ] ] ])))))),
+             strtypesingle "test2" [ktype] (typdef_eq
+              (typconstr (bcons (fun a => bnil (
+                     tbase "test1" [a, a]))))),
+             strlet "f" (lam (fun x => ascribe x (tbase "test2" [tbase "unit" []]) )),
+             strlet "g" (app (named "f")
+                            (tuple [ construn "Nil",
+                                    constr "Cons" (tuple [ (constr "Cons" (tuple [tuple [construn "Unit", construn "Unit"], construn "Nil"])) ,
+                                                           constr "Cons" (tuple [construn "Nil", construn "Nil"])])])) ]) S ?
+
+>> Yes:
+>> S := sigmany (cons (sigtype (cons "test1" nil) (cons (cons ktype (cons ktype nil)) nil) (cons (typdef_eq (typconstr (bcons (fun a => bcons (fun b => bnil (tprod (cons (tbase "list" (cons a nil)) (cons (tbase "list" (cons (tbase "list" (cons (tprod (cons b (cons a nil))) nil)) nil)) nil)))))))) nil)) (cons (sigtype (cons "test2" nil) (cons (cons ktype nil) nil) (cons (typdef_eq (typconstr (bcons (fun a => bnil (tbase "test1" (cons a (cons a nil))))))) nil)) (cons (sigval "f" (tarrow (tbase "test2" (cons (tbase "unit" nil) nil)) (tbase "test2" (cons (tbase "unit" nil) nil)))) (cons (sigval "g" (tbase "test2" (cons (tbase "unit" nil) nil))) nil)))).

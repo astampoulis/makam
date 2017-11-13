@@ -1,6 +1,7 @@
 <!--
 ```makam
 %use "02-binding-forms.md".
+%testsuite literate_tests.
 ```
 -->
 
@@ -324,7 +325,7 @@ Example of pattern matching: predecessor for nats.
  eval (app _PRED zero) PRED_OF_ZERO,
  eval (app _PRED (succ (succ zero))) PRED_OF_TWO) ?
 >> Yes:
->> T := arrow nat nat
->> PRED_OF_ZERO := zero
->> PRED_OF_TWO := succ zero
+>> T := arrow nat nat,
+>> PRED_OF_ZERO := zero,
+>> PRED_OF_TWO := succ zero.
 ```

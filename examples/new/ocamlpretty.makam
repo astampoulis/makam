@@ -62,11 +62,9 @@ pretty_ X S when refl.isnvar X <- nameofvar X S.
 
 %extend ocaml.
 
-print_type : typ -> prop.
-print_type T <-
+show_type : typ -> string -> prop.
+show_type T S <-
   gracewithnames T T',
-  pretty T' S,
-  string.concat [ "\n\n", S, "\n\n" ] S',
-  print_string S'.
+  pretty T' S.
 
 %end.

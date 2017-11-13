@@ -1,6 +1,7 @@
 <!--
 ```makam
 %use "04-ml-subset.md".
+%testsuite literate_tests.
 ```
 -->
 

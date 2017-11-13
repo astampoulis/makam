@@ -2,7 +2,10 @@ testsuite : type.
 
 testcase : testsuite -> prop.
 
+run_tests : testsuite -> prop.
 run_tests : list testsuite -> prop.
+
+run_tests (X : testsuite) :- run_tests [ X ] .
 
 %extend testing_private.
 
@@ -40,8 +43,20 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   )
   else (run_test Suites Successes Failures (testcase X) TL).
 
+print_tests_aux : prop -> list clause -> prop.
+print_tests_aux (testcase Suite) [].
+print_tests_aux (testcase Suite) (HD :: TL) :-
+ if (eq HD (clause (testcase Suite) Prem))
+ then (print Prem)
+ else success,
+ print_tests_aux (testcase Suite) TL.
 
 %end.
+
+print_tests : testsuite -> prop.
+
+print_tests Suite :-
+  once(demand.aux_demand testing_private.print_tests_aux (testcase Suite)).
 
 run_tests Suites <-
   if (refl.isunif Suites)

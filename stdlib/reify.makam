@@ -91,95 +91,6 @@ eq_nounif : [A]A -> A -> prop.
 (* TODO: something (other than the bvar situation) is introducing multiple cases into reify, figure it out. *)
 eq_nounif A B :- once(reify A Areified), once(reify B Breified), eq Areified Breified.
 
-%extend stdlib_tests.
-
-reify : testsuite.
-
-term : type.
-unit : term.
-app : term -> term -> term.
-lam : (term -> term) -> term.
-freevar : string -> term.
-
-reify : [A]A -> reified A -> prop.
-reify X Y :- once(.reify X Y).
-
-testcase reify :- reify "lala" X, eq X (reified.const "lala").
-testcase reify :- reify unit X, eq X (reified.term unit []).
-testcase reify :- reify (app unit unit) X, eq X (reified.term app [reified.term unit [], reified.term unit []]).
-testcase reify :- reify (fun (x: term) => "a") X, eq X (reified.lambda (fun x => reified.const "a")).
-testcase reify :- reify (fun (x: term) => x) X, eq X (reified.lambda (fun x => reified.bvar x [])).
-testcase reify :- (z:term -> (reify z (X z), eq (X z) (reified.nvar z []))).
-testcase reify :- reify app X, eq X (reified.lambda (fun a => reified.lambda (fun b => reified.term app [reified.bvar a [], reified.bvar b []]))).
-testcase reify :- reify X R, eq R (reified.unifvar I [] X).
-testcase reify :- reify (X, X) R, eq R (reified.term tuple [reified.unifvar I1 [] X, reified.unifvar I2 [] X]), eq I1 I2.
-testcase reify :- reify (X, Y) R, eq R (reified.term tuple [reified.unifvar I1 [] X, reified.unifvar I2 [] Y]), not(eq I1 I2).
-testcase reify :- reify (fun (x:term->term) => x) R, eq R (reified.lambda (fun b => reified.bvar b [])).
-testcase reify :- reify (fun (x:term) => E x) R, eq R (reified.lambda (fun x => reified.unifvar I [reified.bvar x []] (E x))).
-
-(* TODO: testcases for reflect *)
-(* TODO: testcases for reflect . reify *)
-
-testcase reify :- reify lam X, reflect X Q, eq Q lam.
-
-(* double reify and reflect *)
-testcase reify :- eq X0 lam, reify X0 X1, reify X1 X2, reflect X2 X3, reflect X3 X4, eq X4 lam.
-testcase reify :- (z:term -> ([X0 X1 X2 X3 X4](eq X0 (fun (w:term->term) => z), reify X0 X1, reify X1 X2, reflect X2 X3, reflect X3 X4, eq X4 X0))).
-testcase reify :- (z:term -> ([X0 X1 X2 X3 X4](eq X0 (fun (w:term->term) => w), reify X0 X1, reify X1 X2, reflect X2 X3, reflect X3 X4, eq X4 X0))).
-testcase reify :- (z:term -> ([X0 X1 X2 X3 X4](eq X0 (fun (w:term->term) => w z), reify X0 X1, reify X1 X2, reflect X2 X3, reflect X3 X4, eq X4 X0))).
-testcase reify :- (z:(term -> term) -> ([X0 X1 X2 X3 X4](eq X0 (fun (w:(term->term)->term) => w z), reify X0 X1, reify X1 X2, reflect X2 X3, reflect X3 X4, eq X4 X0))).
-
-
-testcase reify :-
-  eq Term (fun z => app (lam (fun x => app E1 (E2 x))) (app z (freevar "test"))),
-  eq Reified (fun z =>
-             (reified.term app [
-              reified.term lam [
-                reified.lambda (fun x =>
-                  reified.term app [
-                    reified.unifvar Index1 [] E1,
-                    reified.unifvar Index2 [reified.bvar x []] (E2 x)
-                  ]
-                )
-              ],
-              reified.term app [
-                reified.nvar z [],
-                reified.term freevar [reified.const "test"]
-              ]
-            ])),
-  (z:term -> (reify (Term z) (R z),
-              eq (R z) (Reified z),
-              not(eq Index1 Index2),
-              reflect (R z) (Term' z),
-              eq_nounif (Term z) (Term' z),
-              reify (Term' z) (R' z),
-              eq_nounif (R z) (R' z))).
-
-testcase reify :-
-  eq Term (fun z => app (lam (fun x => app E1 (E2 x))) (app z (freevar "test"))),
-  eq Reified (fun z =>
-             (reified.term app [
-              reified.term lam [
-                reified.lambda (fun x =>
-                  reified.term app [
-                    reified.unifvar _ [] E1,
-                    reified.unifvar _ [reified.bvar x []] (E2 x)
-                  ]
-                )
-              ],
-              reified.term app [
-                reified.nvar z [],
-                reified.term freevar [reified.const "test"]
-              ]
-            ])),
-  (z:term -> (reflect (Reified z) (T z),
-              eq_nounif (T z) (Term z),
-              reify (T z) (Reified' z),
-              eq (Reified' z) (Reified z))).
-
-%end.
-
-
 
 eqv_aux : [A]reified A -> reified A -> (prop -> prop) -> (prop -> prop) -> prop.
 eqv_args : [A B]reified_args A B -> reified_args A B -> (prop -> prop) -> (prop -> prop) -> prop.
@@ -221,11 +132,3 @@ eqv (X: reified A) (Y: reified A) :-
 
 unif_alpha_eqv : [A]A -> A -> prop.
 unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
-
-
-%extend stdlib_tests.
-testcase reify :- unif_alpha_eqv (X: string) (Y: string).
-testcase reify :- not(unif_alpha_eqv (dyn (X: string)) (dyn (Y: int))).
-testcase reify :- unif_alpha_eqv (lam X) (lam Y).
-testcase reify :- not(unif_alpha_eqv (app X Y) (app W W)).
-%end.

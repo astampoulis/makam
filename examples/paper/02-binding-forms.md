@@ -1,6 +1,7 @@
 <!--
 ```makam
 %use "01-base-language.md".
+%testsuite literate_tests.
 ```
 -->
 
@@ -141,7 +142,7 @@ For example, the following query returns:
 ```makam
 typeof (lammany (bindnext (fun x => bindnext (fun y => bindbase (tuple [x, y]))))) T ?
 >> Yes:
->> T := arrowmany [T1, T2] (product [T1, T2])
+>> T := arrowmany [T1, T2] (product [T1, T2]).
 ```
 
 Adding the corresponding `appmany` construct for simultaneous application is straightforward. We can

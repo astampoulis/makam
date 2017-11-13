@@ -1,0 +1,22 @@
+all_tests : testsuite.
+%testsuite all_tests.
+
+%use "stdlib/tests".
+
+%use "new/testocaml".
+
+%use "new/testcases_ocaml".
+
+%use "small/systemf".
+
+%use "big/testocaml".
+
+%use "big/testveriml".
+
+%use "big/testurweb".
+
+%use "big/testf2tal".
+
+%constraints-.
+run_tests X ?
+>> Yes.

@@ -100,7 +100,7 @@ let _DEBUG_CONSTRAINTS : bool ref = ref false ;;
 let _BENCHMARK      : bool ref = Benchmark.enabled ;;
 let _LOGGING        : bool ref = ref false ;;
 let _ONLY_TYPECHECK : bool ref = ref false ;;
-
+let last_query_successful : bool option ref = ref None ;;
 
 let metaindex     (_, idx, _, _) = idx ;;
 let metasubst     (_, _, subst, _) = subst ;;
@@ -3315,9 +3315,13 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
     _ <-- mapM (uncurry nameUnify) nu ;
     let _ = if print then Printf.printf "\n%a\n" Pattneut.alphaSanitizedPrint goal'' in
 
-    _     <-- (demand goal'') //
+    _     <-- (perform
+                 _ <-- demand goal'';
+                 let _ = last_query_successful := Some true in
+                 return ()) //
               (lazy(perform
-                       let _ = if print then Printf.printf "Impossible.\n" in
+                       let _ = if print then Printf.printf "Impossible.\n\n" in
+                       let _ = last_query_successful := Some false in
                        mzero)) ;
 
     state <-- getstate ;
@@ -3343,12 +3347,14 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
                ~sep:"\n" String.print) constraints'
       in
 
-      Printf.printf "Yes%s\n%a%s"
+      Printf.printf "Yes%s\n%a%s%s"
       dotOrColon
 
-      (List.print ~first:"" ~last:"\n" ~sep:",\n"
+      (List.print ~first:"" ~last:"" ~sep:",\n"
          (Pair.print ~first:"" ~last:"" ~sep:" := "
-            String.print String.print)) combined
+          String.print String.print)) combined
+
+      (if List.is_empty combined then "\n" else ".\n\n")
 
       constraintsOrNot
     in

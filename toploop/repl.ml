@@ -25,21 +25,23 @@ let get_full_state () =
   let doit _ x = !x in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9) = "", "", "", "", "", "", "", "", "", "" in
+       a6, a7, a8, a9, a10) = "", "", "", "", "", "", "", "", "", "", "" in
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
-   doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK)
+   doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
+   doit a10 last_query_successful)
 ;;
 
 let set_full_state st =
   let doit a x = x := a in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9) = st in
+       a6, a7, a8, a9, a10) = st in
   ignore
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
-   doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK)
+   doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
+   doit a10 last_query_successful)
 ;;
 
 let next_state_name = 
@@ -56,7 +58,8 @@ let statedict =
 ;;
 
 let store_state () =
-  statedict := Dict.add (next_state_name ()) (get_full_state ()) !statedict
+  let name = next_state_name () in
+  statedict := Dict.add name (get_full_state ()) !statedict
 ;;
 
 let forget_to_state s =
@@ -145,6 +148,12 @@ let rec repl files : unit =
       | Termlangcanon.NotInModule ->
 	(Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
 	   (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
+      | MakamGrammar.NoTestSuite ->
+         (Printf.printf "In %s:\n  Test suite has not been specified, use %%testsuite directive.\n%!"
+            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
+      | MakamGrammar.NoQueryToTest ->
+         (Printf.printf "In %s:\n  Last command was not a query.\n%!"
+            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | MakamGrammar.Forget(s) ->
         (forget_to_state s; loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
@@ -220,6 +229,9 @@ let main () =
   if not doexit then repl [];
   print_now "\n";
   benchmark_results ();
-  output_log ()
+  output_log ();
+  match !last_query_successful with
+  | None | Some true -> ()
+  | Some false -> exit 1
 ;;
 

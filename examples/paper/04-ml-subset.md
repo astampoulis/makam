@@ -1,6 +1,7 @@
 <!--
 ```makam
 %use "03-dependent-binding.md".
+%testsuite literate_tests.
 ```
 -->
 
@@ -231,3 +232,10 @@ Example:
  wfprogram _PROGRAM,
  eval _PROGRAM FINAL) ?
 ```
+
+<!--
+```makam
+>> Yes:
+>> FINAL := datatype (datatype_declaration (fun llist => dbindnext (fun a => dbindbase (cons nil (cons (cons a (cons (tconstr llist (cons a nil)) nil)) nil))))) (fun llist => dbindnext (fun lnil => dbindnext (fun lcons => dbindbase (main (constr lcons (cons zero (cons (constr lnil nil) nil))))))).
+```
+-->

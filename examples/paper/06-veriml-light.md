@@ -1,6 +1,7 @@
 <!--
 ```makam
 %use "05-type-synonyms.md".
+%testsuite literate_tests.
 ```
 -->
 
@@ -147,7 +148,7 @@ metatyp : depobject -> typ.
 typeof (metaterm E) T :-
   refl.isnvar E,
   depclassify E (typ T).
-  
+
 wftype_cases (metatyp T) (metatyp T) :-
   refl.isnvar T,
   depclassify T ext.
@@ -230,36 +231,36 @@ Let's try the final thing:
     ))))) (tuple []) (fun _ => product [])))))))),
  typeof _FUNCTION FUNCTION_TYPE,
 
- typeof 
-  (appdep (appdep 
-    _FUNCTION 
-    (typ object.tint)) 
+ typeof
+  (appdep (appdep
+    _FUNCTION
+    (typ object.tint))
     (typ (object.product [object.tint])))
  APPLIED_TYPE) ?
 >> Yes:
->> SUBST := fun t1 t2 x_e x => subst (cons x nil),
+>> SUBST := fun t1 t2 x_e x => object.subst (cons x nil),
 >> FUNCTION_TYPE :=
->>  pidep ext (fun t1 =>
->>  pidep ext (fun t2 =>
->>  pidep (ctxtyp (object.subst (cons (object.metatyp t1) nil)) (object.metatyp t2))
->>  (fun x_e =>
->>    sigdep 
->>      (ctxtyp (subst nil) 
->>       (arrow
->>         (object.metatyp t1)
->>         (product (cons (object.metatyp t2) (cons tint nil)))))
->>     (fun _ => product nil)))),
+    pidep ext (fun t1 =>
+    pidep ext (fun t2 =>
+    pidep (ctxtyp (object.subst (cons (object.metatyp t1) nil)) (object.metatyp t2))
+    (fun x_e =>
+      sigdep
+        (ctxtyp (object.subst nil)
+         (object.arrow
+           (object.metatyp t1)
+           (object.product (cons (object.metatyp t2) (cons object.tint nil)))))
+       (fun _ => product nil)))),
 >> APPLIED_TYPE :=
->>  pidep (ctxtyp
->>    (object.subst (cons object.tint nil))
->>    (object.product (cons object.tint nil)))
->>  (fun x_e =>
->>    sigdep (ctxtyp
->>      (subst nil)
->>      (arrow
->>        object.tint
->>        (product (cons (object.product (cons object.tint nil)) (cons tint nil)))))
->>    (fun _ => product nil))
+    pidep (ctxtyp
+      (object.subst (cons object.tint nil))
+      (object.product (cons object.tint nil)))
+    (fun x_e =>
+      sigdep (ctxtyp
+        (object.subst nil)
+        (object.arrow
+          object.tint
+          (object.product (cons (object.product (cons object.tint nil)) (cons object.tint nil)))))
+      (fun _ => product nil)).
 ```
 
 Note that we can infer both the type of the lambda abstraction and the substitution

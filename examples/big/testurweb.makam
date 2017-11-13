@@ -1,24 +1,58 @@
 %use urweb.
 
-hnf (tapp (tapp (trowmap ktype ktype) (tlam ktype (fun x => tarrow x x))) (trowunion (trowsingleton (tname "test") (tpi ktype (fun x => x))) C)) X ?
+urweb : testsuite. %testsuite urweb.
 
-(rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) (trowsingleton X1 T2))) ?
+>> hnf (tapp (tapp (trowmap ktype ktype) (tlam ktype (fun x => tarrow x x))) (trowunion (trowsingleton (tname "test") (tpi ktype (fun x => x))) C)) X ?
+
+>> Yes:
+>> X := trowunion (trowsingleton (tname "test") (tarrow (tpi ktype (fun x => x)) (tpi ktype (fun x => x)))) (tapp (tapp (trowmap ktype ktype) (tlam ktype (fun x => tarrow x x))) C).
+
+
+>> (rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) (trowsingleton X1 T2))) ?
+
+>> Yes.
+
 
 %constraints+.
-(rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) X3), eq X3 (trowsingleton X4 T1)) ?
 
-(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
- teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
-     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') Z))) ?
+>> (rows_disjoint_assume (trowsingleton X1 T1) (trowsingleton X2 T2) (rows_disjoint_prove (trowsingleton X2 T1) X3), eq X3 (trowsingleton X4 T1)) ?
 
-(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
- teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
-     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q)))) ?
+>> Impossible.
 
-(eq T1 (tbase "a"), eq T2 (tbase "b"), eq T3 (tbase "c"),
- teq (trowunion (trowsingleton (tname "a") T1) (trowunion (trowsingleton X T2) (trowsingleton Y T3)))
-     (trowunion (trowsingleton X T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q))),
- eq Z (trowempty ktype)) ?
+
+>> (eq _T1 (tbase "a"), eq _T2 (tbase "b"), eq _T3 (tbase "c"),
+    teq (trowunion (trowsingleton (tname "a") _T1) (trowunion (trowsingleton _X _T2) (trowsingleton Y _T3)))
+        (trowunion (trowsingleton _X _T2) (trowunion (trowsingleton (tname "a") T1') Z))) ?
+
+>> Yes:
+>> Y := Y,
+>> T1' := tbase "a",
+>> Z := trowsingleton Y (tbase "c").
+
+
+>> (eq _T1 (tbase "a"), eq _T2 (tbase "b"), eq _T3 (tbase "c"),
+    teq (trowunion (trowsingleton (tname "a") _T1) (trowunion (trowsingleton _X _T2) (trowsingleton Y _T3)))
+        (trowunion (trowsingleton _X _T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q)))) ?
+
+>> Yes:
+>> T1' := tbase "a",
+>> Y := Y,
+>> Z := Z,
+>> Q := Q.
+
+(* TODO: Add constraints for Z and Q *)
+
+
+>> (eq _T1 (tbase "a"), eq _T2 (tbase "b"), eq _T3 (tbase "c"),
+    teq (trowunion (trowsingleton (tname "a") _T1) (trowunion (trowsingleton _X _T2) (trowsingleton Y _T3)))
+        (trowunion (trowsingleton _X _T2) (trowunion (trowsingleton (tname "a") T1') (trowunion Z Q))),
+    eq Z (trowempty ktype)) ?
+
+>> Yes:
+>> T1' := tbase "a",
+>> Y := Y,
+>> Z := trowempty ktype,
+>> Q := trowsingleton Y (tbase "c").
 
 
 (*
@@ -26,21 +60,27 @@ fun proj [nm :: Name] [t :: Type] [r :: {Type}]
 [[nm] ~ r] (x : $([nm = t] ++ r)) = x.nm
 *)
 
-typeof 
-   (lamt (kname)      (fun nm =>
-   (lamt (ktype)      (fun t =>
-   (lamt (krow ktype) (fun r =>
-   (rowneedcon (trowsingleton nm tunit) r
-   (lam  (trowtype (trowunion (trowsingleton nm t) r)) (fun x =>
-   rowproject x nm))))))))) T ?
+>> typeof
+     (lamt (kname)      (fun nm =>
+     (lamt (ktype)      (fun t =>
+     (lamt (krow ktype) (fun r =>
+     (rowneedcon (trowsingleton nm tunit) r
+     (lam  (trowtype (trowunion (trowsingleton nm t) r)) (fun x =>
+     rowproject x nm))))))))) T ?
 
-typeof 
-   (lamt (kname)      (fun nm =>
-   (lamt (ktype)      (fun t =>
-   (lamt (krow ktype) (fun r =>
-   (rowneedcon (trowsingleton nm tunit) r
-   (lam  (trowtype (trowunion r (trowsingleton nm t))) (fun x =>
-   rowproject x nm))))))))) T ?
+>> Yes:
+>> T := tpi kname (fun nm => tpi ktype (fun t => tpi (krow ktype) (fun r => trowconstraint (trowsingleton nm tunit) r (tarrow (trowtype (trowunion (trowsingleton nm t) r)) t)))).
+
+>> typeof
+     (lamt (kname)      (fun nm =>
+     (lamt (ktype)      (fun t =>
+     (lamt (krow ktype) (fun r =>
+     (rowneedcon (trowsingleton nm tunit) r
+     (lam  (trowtype (trowunion r (trowsingleton nm t))) (fun x =>
+     rowproject x nm))))))))) T ?
+
+>> Yes:
+>> T := tpi kname (fun nm => tpi ktype (fun t => tpi (krow ktype) (fun r => trowconstraint (trowsingleton nm tunit) r (tarrow (trowtype (trowunion r (trowsingleton nm t))) t)))).
 
 `( letdef "proj"
    (lamt (kname)      (fun nm =>
@@ -59,26 +99,34 @@ typeof
    (lam  t            (fun a =>
    rowunion x (rowsingleton nm a)))))))))))) ).
 
-typeof extend T ?
+>> typeof extend T ?
+>> Yes:
+>> T := tpi kname (fun nm_0 => tpi ktype (fun t_1 => tpi (krow ktype) (fun r_2 => trowconstraint (trowsingleton nm_0 tunit) r_2 (tarrow (trowtype r_2) (tarrow t_1 (trowtype (trowunion r_2 (trowsingleton nm_0 t_1)))))))).
 
 (*
 fun weird [nm :: Name] [t :: Type] [r :: {Type}]
 [[nm] ~ r] (x : $r) (a : t) = rowproject (rowunion x (rowsingleton nm a)) nm
 *)
-typeof 
-   (lamt (kname)      (fun nm =>
-   (lamt (ktype)      (fun t =>
-   (lamt (krow ktype) (fun r =>
-   (rowneedcon (trowsingleton nm tunit) r
-   (lam  (trowtype r) (fun x =>
-   (lam  (t)          (fun a =>
-   rowproject (rowunion x (rowsingleton nm a)) nm))))))))))) T ?
+
+>> typeof
+     (lamt (kname)      (fun nm =>
+     (lamt (ktype)      (fun t =>
+     (lamt (krow ktype) (fun r =>
+     (rowneedcon (trowsingleton nm tunit) r
+     (lam  (trowtype r) (fun x =>
+     (lam  (t)          (fun a =>
+     rowproject (rowunion x (rowsingleton nm a)) nm))))))))))) T ?
+
+>> Yes:
+>> T := tpi kname (fun nm => tpi ktype (fun t => tpi (krow ktype) (fun r => trowconstraint (trowsingleton nm tunit) r (tarrow (trowtype r) (tarrow t t))))).
 
 
-(* the following, but unfortunately type inference is not robust yet in the presence of metas -- so not all modifications that should work do work. *)
+(* the following works, but unfortunately type inference is not robust yet in the presence of metas -- so not all modifications that should work do work. *)
 
-typeof (app (magic (appt proj (tname "test1"))) (rowunion (rowsingleton (tname "test1") eunit) (rowsingleton (tname "test2") eunit))) X ?
+>> typeof (app (magic (appt proj (tname "test1"))) (rowunion (rowsingleton (tname "test1") eunit) (rowsingleton (tname "test2") eunit))) X ?
 
+>> Yes:
+>> X := tunit.
 
 
 (*
@@ -94,27 +142,29 @@ type folder
       (tlam (krow ktype) (fun r =>
       (tpi  (karrow (krow ktype) ktype) (fun tf =>
       (tarrow (tpi kname (fun nm =>
-	      (tpi ktype (fun t =>
-	      (tpi (krow ktype) (fun r =>
-	      (trowconstraint (trowsingleton nm tunit) r
-	      (tarrow (tapp tf r) (tapp tf (trowunion (trowsingleton nm t) r))))))))))
+              (tpi ktype (fun t =>
+              (tpi (krow ktype) (fun r =>
+              (trowconstraint (trowsingleton nm tunit) r
+              (tarrow (tapp tf r) (tapp tf (trowunion (trowsingleton nm t) r))))))))))
       (tarrow (tapp tf (trowempty _))
       (tapp tf r))))))) ).
 
-      
 
-(* 
+
+(*
 fun countFields [ts :: {Type}] (fl : folder ts) : int =
     @fl [fn _ => int] (fn [nm ::_] [v ::_] [r ::_] [[nm] ~ r] n => n + 1) 0 fl
 *)
 
-(typeof (lamt (krow ktype) (fun ts =>
-       (lam  (tapp folder ts) (fun fl =>
-       app (appt fl (tlam #_ (fun x => tint)))
-	   (lamt #_ (fun nm =>
-	   (lamt #_ (fun v =>
-	   (lamt #_ (fun r =>
-	   (rowneedcon (trowsingleton nm tunit) r
-	   (lam  #_ (fun n => intplus n (intconst 1)))))))))))))) T,
-teq T (tpi (krow ktype) (fun ts => tarrow (tapp folder ts) (tarrow tint tint)))) ?
+>> (typeof (lamt (krow ktype) (fun ts =>
+          (lam  (tapp folder ts) (fun fl =>
+           app (appt fl (tlam #_ (fun x => tint)))
+           (lamt #_ (fun nm =>
+           (lamt #_ (fun v =>
+           (lamt #_ (fun r =>
+           (rowneedcon (trowsingleton nm tunit) r
+           (lam  #_ (fun n => intplus n (intconst 1)))))))))))))) T,
+   teq T (tpi (krow ktype) (fun ts => tarrow (tapp folder ts) (tarrow tint tint)))) ?
 
+>> Yes:
+>> T := tpi (krow ktype) (fun ts => tarrow (tapp folder ts) (tarrow (tapp (tlam (krow ktype) (fun x => tint)) (trowempty ktype)) (tapp (tlam (krow ktype) (fun x => tint)) ts))).

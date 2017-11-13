@@ -97,6 +97,12 @@ let (process_input : string -> unit) input =
       | Termlangcanon.NotInModule ->
 	(Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
 	   (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
+      | MakamGrammar.NoTestSuite ->
+         (Printf.printf "In %s:\n  Test suite has not been specified, use %%testsuite directive.\n%!"
+            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
+      | MakamGrammar.NoQueryToTest ->
+         (Printf.printf "In %s:\n  Last command was not a query.\n%!"
+            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
         (print_now ("\nIncomplete parse at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
       | e ->

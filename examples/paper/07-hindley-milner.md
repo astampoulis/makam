@@ -3,6 +3,7 @@
 <!--
 ```makam
 %use "05-type-synonyms.md".
+%testsuite literate_tests.
 ```
 -->
 
@@ -137,7 +138,7 @@ Example, easy:
 ```makam
 typeof (let (lam _ (fun x => x)) (fun id => id)) T ?
 >> Yes:
->> T := forall (fun a => arrow a a)
+>> T := forall (fun a => arrow a a).
 ```
 
 Another example, where the problem of naive generalization shows up:
@@ -146,7 +147,7 @@ Another example, where the problem of naive generalization shows up:
 typeof (let (lam _ (fun x => let x (fun y => y)))
             (fun z => z)) T ?
 >> Yes:
->> T := forall (fun a => arrow a a)
+>> T := forall (fun a => arrow a a).
 ```
 
 (Just checking the issue where we don't remove all unification variables in the context -- this
@@ -157,5 +158,5 @@ is a hack, if we need to do this we can show the above in two steps instead:)
   typeof (let (lam _ (fun x => let x (fun y => y)))
             (fun z => z)) T) ?
 >> Yes:
->> T := forall (fun a => arrow a (forall (fun b => b)))
+>> T := forall (fun a => arrow a (forall (fun b => b))).
 ```

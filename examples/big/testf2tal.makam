@@ -1,0 +1,102 @@
+%use f2tal.
+
+f2tal : testsuite. %testsuite f2tal.
+
+useexample : string -> prop.
+
+useexample "fact". 
+(* useexample "twice". *)
+(* useexample "id". *)
+
+
+
+(* examples *)
+
+example : term -> prop.
+
+
+
+example
+  (term (app
+        (term (fix tint tint (fun f n => term (if0 (term n #_)
+                                                   (term (iconst 1) #_)
+                                                   (term (op pmult
+						             (term n #_)
+							     (term (app (term f #_)
+							                (term (op pminus (term n #_)
+									                 (term (iconst 1) #_))
+									      #_)) #_)) #_)) #_)) #_)
+        (term (iconst 6) #_)) #_)
+<- useexample "fact".
+
+example
+ (term (lamt (fun a =>
+       term (fix (tarrow a a) #_ (fun unused1 => fun f =>
+       term (fix a            #_ (fun unused2 => fun x =>
+       term (app (term f #_) (term (app (term f #_) (term x #_)) #_)) #_)) #_)) #_)) #_)
+<- useexample "twice".
+
+example
+ (term (lamt (fun a =>
+       term (fix a #_ (fun unused1 => fun x => term x #_)) #_)) #_)
+<- useexample "id".
+
+
+
+examplek : termk -> prop.
+
+`( define examplek (fun res => {prop| example X, typeof X T, translateprog X E, optkT E res, typeofk E |}) ).
+
+
+examplec : termc -> prop.
+
+`( define examplec (fun res => {prop| examplek E, translatec_prog E res |}) ).
+
+
+
+(* --------------------- tests *)
+
+
+(* System F ~~> Κ *)
+
+>> (examplek X, typeofk X) ?
+
+>> Yes:
+>> X := appk (valk (fixk (bnil (tuple (cons tint (cons (tpi (bnil (cons tint nil))) nil)) (fun anon1244_0_0 => bcons (fun anon1327_1_1 => bcons (fun anon1333_2_2 => bnil (if0k (valk anon1327_1_1 tint) (appk (valk anon1333_2_2 (tpi (bnil (cons tint nil)))) nil (cons (valk (iconst 1) tint) nil)) (letk (dkop pminus (valk anon1327_1_1 tint) (valk (iconst 1) tint)) (fun x_3_3 => appk (valk anon1244_0_0 (tpi (bnil (cons tint (cons (tpi (bnil (cons tint nil))) nil))))) nil (cons (valk x_3_3 tint) (cons (valk (fixk (bnil (tuple (cons tint nil) (fun anon1508_4_4 => bcons (fun anon1574_5_5 => bnil (letk (dkop pmult (valk anon1327_1_1 tint) (valk anon1574_5_5 tint)) (fun x_6_6 => appk (valk anon1333_2_2 (tpi (bnil (cons tint nil)))) nil (cons (valk x_6_6 tint) nil)))))))) (tpi (bnil (cons tint nil)))) nil))))))))))) (tpi (bnil (cons tint (cons (tpi (bnil (cons tint nil))) nil))))) nil (cons (valk (iconst 6) tint) (cons (valk (fixk (bnil (tuple (cons tint nil) (fun anon1698_0_0 => bcons (fun anon1763_1_1 => bnil (haltk tint (valk anon1763_1_1 tint))))))) (tpi (bnil (cons tint nil)))) nil)).
+
+(* after some beautification: 
+appk
+ (valk 
+ (fixk anon1015_0.f (tuple [anon1093_1.n : tint, anon1099_2.k : tint -> void])
+  
+  if0k(n,
+     appk k [iconst 1],
+     (letk (pminus n 1)
+	   (fun x_3.x =>
+		appk f [x,
+			lamk (tuple [anon1318_5.y : tint])
+                             (letk (pmult n y)
+				   (fun x_6.z =>
+					appk k z))])))))
+
+[iconst 6, lamk [ anon1604_0.n : tint ] (haltk tint n) ]
+*)
+
+
+(* K ~~> C *)
+
+
+>> (examplec _R, erasetypes _R R') ?
+
+>> Yes:
+>> R' := letc (dcunpack (v (packc (ttup nil) (v (tupc (cons (v (fixc (bnil (tuple (cons (ttup nil) (cons tint (cons (tex (fun b_0_0 => ttup (cons (tpi (bnil (cons b_0_0 (cons tint nil)))) (cons b_0_0 nil)))) nil))) (fun anon107_0 => bcons (fun anon205_1 => bcons (fun anon211_2 => bcons (fun anon217_3 => bnil (letc (dcval (v (packc (ttup nil) (v (tupc (cons (v anon107_0) (cons (v anon205_1) nil)))) (tex (fun b_4_4 => ttup (cons (tpi (bnil (cons b_4_4 (cons tint (cons (tex (fun b_5_5 => ttup (cons (tpi (bnil (cons b_5_5 (cons tint nil)))) (cons b_5_5 nil)))) nil))))) (cons b_4_4 nil)))))) (fun anon231_4 => if0c (v anon211_2) (letc (dcunpack (v anon217_3) (fun anon345_5 anon346_6 => letc (dcproj nzero (v anon346_6) (fun anon370_7 => letc (dcproj (nsucc nzero) (v anon346_6) (fun anon394_8 => appc (v anon370_7) (cons (v anon394_8) (cons (v (iconst 1)) nil))))))))) (letc (dcop pminus (v anon211_2) (v (iconst 1)) (fun anon502_5 => letc (dcunpack (v anon231_4) (fun anon535_6 anon536_7 => letc (dcproj nzero (v anon536_7) (fun anon560_8 => letc (dcproj (nsucc nzero) (v anon536_7) (fun anon584_9 => appc (v anon560_8) (cons (v anon584_9) (cons (v anon502_5) (cons (v (packc (ttup (cons (tex (fun b_10_10 => ttup (cons (tpi (bnil (cons b_10_10 (cons tint nil)))) (cons b_10_10 nil)))) (cons tint nil))) (v (tupc (cons (v (fixc (bnil (tuple (cons (ttup (cons (tex (fun b_10_10 => ttup (cons (tpi (bnil (cons b_10_10 (cons tint nil)))) (cons b_10_10 nil)))) (cons tint nil))) (cons tint nil)) (fun anon733_10 => bcons (fun anon815_11 => bcons (fun anon821_12 => bnil (letc (dcval (v (packc (ttup (cons (tex (fun b_13_13 => ttup (cons (tpi (bnil (cons b_13_13 (cons tint nil)))) (cons b_13_13 nil)))) (cons tint nil))) (v (tupc (cons (v anon733_10) (cons (v anon815_11) nil)))) (tex (fun b_13_13 => ttup (cons (tpi (bnil (cons b_13_13 (cons tint nil)))) (cons b_13_13 nil)))))) (fun anon835_13 => letc (dcproj nzero (v anon815_11) (fun anon919_14 => letc (dcproj (nsucc nzero) (v anon815_11) (fun anon943_15 => letc (dcop pmult (v anon943_15) (v anon821_12) (fun anon970_16 => letc (dcunpack (v anon919_14) (fun anon1006_17 anon1007_18 => letc (dcproj nzero (v anon1007_18) (fun anon1031_19 => letc (dcproj (nsucc nzero) (v anon1007_18) (fun anon1055_20 => appc (v anon1031_19) (cons (v anon1055_20) (cons (v anon970_16) nil)))))))))))))))))))))))) (cons (v (tupc (cons (v anon217_3) (cons (v anon211_2) nil)))) nil)))) (tex (fun b_10_10 => ttup (cons (tpi (bnil (cons b_10_10 (cons tint nil)))) (cons b_10_10 nil)))))) nil))))))))))))))))))))))) (cons (v (tupc nil)) nil)))) (tex (fun b_0_0 => ttup (cons (tpi (bnil (cons b_0_0 (cons tint (cons (tex (fun b_1_1 => ttup (cons (tpi (bnil (cons b_1_1 (cons tint nil)))) (cons b_1_1 nil)))) nil))))) (cons b_0_0 nil)))))) (fun anon1662_0 anon1663_1 => letc (dcproj nzero (v anon1663_1) (fun anon1266_2 => letc (dcproj (nsucc nzero) (v anon1663_1) (fun anon1290_3 => appc (v anon1266_2) (cons (v anon1290_3) (cons (v (iconst 6)) (cons (v (packc (ttup nil) (v (tupc (cons (v (fixc (bnil (tuple (cons (ttup nil) (cons tint nil)) (fun anon1436_4 => bcons (fun anon1518_5 => bcons (fun anon1524_6 => bnil (letc (dcval (v (packc (ttup nil) (v (tupc (cons (v anon1436_4) (cons (v anon1518_5) nil)))) (tex (fun b_7_7 => ttup (cons (tpi (bnil (cons b_7_7 (cons tint nil)))) (cons b_7_7 nil)))))) (fun anon1538_7 => haltc tint (v anon1524_6))))))))))) (cons (v (tupc nil)) nil)))) (tex (fun b_4_4 => ttup (cons (tpi (bnil (cons b_4_4 (cons tint nil)))) (cons b_4_4 nil)))))) nil))))))))).
+
+
+>> (examplec R, typeofc R) ?
+
+>> Yes:
+>> R := letc (dcunpack (valc (packc (ttup nil) (valc (tupc (cons (valc (fixc (bnil (tuple (cons (ttup nil) (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))) (fun zcode_0_0 => bcons (fun anon13843_1_1 => bcons (fun anon13849_2_2 => bcons (fun anon13855_3_3 => bnil (letc (dcval (valc (packc (ttup nil) (valc (tupc (cons (valc zcode_0_0 (tpi (bnil (cons (ttup nil) (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil)))))) (cons (valc anon13843_1_1 (ttup nil)) nil))) (ttup (cons (tpi (bnil (cons (ttup nil) (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons (ttup nil) nil)))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons b_4 nil))))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons b_4 nil))))) (fun anon13306_4_4 => if0c (valc anon13849_2_2 tint) (letc (dcunpack (valc anon13855_3_3 (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (fun b_4 anon14125_6_6 => letc (dcproj nzero (valc anon14125_6_6 (ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (fun anon14131_7_7 => letc (dcproj (nsucc nzero) (valc anon14125_6_6 (ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (fun anon14134_8_8 => appc (valc anon14131_7_7 (tpi (bnil (cons b_4 (cons tint nil))))) (cons (valc anon14134_8_8 b_4) (cons (valc (iconst 1) tint) nil))))))))) (letc (dcop pminus (valc anon13849_2_2 tint) (valc (iconst 1) tint) (fun x_5_5 => letc (dcunpack (valc anon13306_4_4 (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons b_4 nil))))) (fun b_4 anon19223_7_7 => letc (dcproj nzero (valc anon19223_7_7 (ttup (cons (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons b_4 nil)))) (fun anon19229_8_8 => letc (dcproj (nsucc nzero) (valc anon19223_7_7 (ttup (cons (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil))))) (cons b_4 nil)))) (fun anon19232_9_9 => appc (valc anon19229_8_8 (tpi (bnil (cons b_4 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil)))))) (cons (valc anon19232_9_9 b_4) (cons (valc x_5_5 tint) (cons (valc (packc (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil))) (valc (tupc (cons (valc (fixc (bnil (tuple (cons (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil))) (cons tint nil)) (fun zcode_10_10 => bcons (fun anon18817_11_11 => bcons (fun anon18823_12_12 => bnil (letc (dcval (valc (packc (ttup (cons (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil)))) (cons tint nil))) (valc (tupc (cons (valc zcode_10_10 (tpi (bnil (cons (ttup (cons (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil)))) (cons tint nil))) (cons tint nil))))) (cons (valc anon18817_11_11 (ttup (cons (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil)))) (cons tint nil)))) nil))) (ttup (cons (tpi (bnil (cons (ttup (cons (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil)))) (cons tint nil))) (cons tint nil)))) (cons (ttup (cons (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil)))) (cons tint nil))) nil)))) (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil))))) (tex (fun b_13 => ttup (cons (tpi (bnil (cons b_13 (cons tint nil)))) (cons b_13 nil))))) (fun anon18411_13_13 => letc (dcproj nzero (valc anon18817_11_11 (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil)))) (fun anon18415_14_14 => letc (dcproj (nsucc nzero) (valc anon18817_11_11 (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil)))) (fun anon18415_15_15 => letc (dcop pmult (valc anon18415_15_15 tint) (valc anon18823_12_12 tint) (fun x_16_16 => letc (dcunpack (valc anon18415_14_14 (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (fun b_4 anon19176_18_18 => letc (dcproj nzero (valc anon19176_18_18 (ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (fun anon19182_19_19 => letc (dcproj (nsucc nzero) (valc anon19176_18_18 (ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (fun anon19185_20_20 => appc (valc anon19182_19_19 (tpi (bnil (cons b_4 (cons tint nil))))) (cons (valc anon19185_20_20 b_4) (cons (valc x_16_16 tint) nil))))))))))))))))))))))) (tpi (bnil (cons (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil))) (cons tint nil))))) (cons (valc (tupc (cons (valc anon13855_3_3 (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (cons (valc anon13849_2_2 tint) nil))) (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil)))) nil))) (ttup (cons (tpi (bnil (cons (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil))) (cons tint nil)))) (cons (ttup (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) (cons tint nil))) nil)))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) nil)))))))))))))))))))))) (tpi (bnil (cons (ttup nil) (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil)))))) (cons (valc (tupc nil) (ttup nil)) nil))) (ttup (cons (tpi (bnil (cons (ttup nil) (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))))) (cons (ttup nil) nil)))) (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))))) (cons b_0 nil))))) (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))))) (cons b_0 nil))))) (fun b_0 anon21650_1_1 => letc (dcproj nzero (valc anon21650_1_1 (ttup (cons (tpi (bnil (cons b_0 (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))))) (cons b_0 nil)))) (fun anon21656_2_2 => letc (dcproj (nsucc nzero) (valc anon21650_1_1 (ttup (cons (tpi (bnil (cons b_0 (cons tint (cons (tex (fun b_0 => ttup (cons (tpi (bnil (cons b_0 (cons tint nil)))) (cons b_0 nil)))) nil))))) (cons b_0 nil)))) (fun anon21659_3_3 => appc (valc anon21656_2_2 (tpi (bnil (cons b_0 (cons tint (cons (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil)))) nil)))))) (cons (valc anon21659_3_3 b_0) (cons (valc (iconst 6) tint) (cons (valc (packc (ttup nil) (valc (tupc (cons (valc (fixc (bnil (tuple (cons (ttup nil) (cons tint nil)) (fun zcode_4_4 => bcons (fun anon21571_5_5 => bcons (fun anon21577_6_6 => bnil (letc (dcval (valc (packc (ttup nil) (valc (tupc (cons (valc zcode_4_4 (tpi (bnil (cons (ttup nil) (cons tint nil))))) (cons (valc anon21571_5_5 (ttup nil)) nil))) (ttup (cons (tpi (bnil (cons (ttup nil) (cons tint nil)))) (cons (ttup nil) nil)))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (fun anon21262_7_7 => haltc tint (valc anon21577_6_6 tint)))))))))) (tpi (bnil (cons (ttup nil) (cons tint nil))))) (cons (valc (tupc nil) (ttup nil)) nil))) (ttup (cons (tpi (bnil (cons (ttup nil) (cons tint nil)))) (cons (ttup nil) nil)))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) (tex (fun b_4 => ttup (cons (tpi (bnil (cons b_4 (cons tint nil)))) (cons b_4 nil))))) nil))))))))).
+
+
+(* unfortunately twice doesn't work as expected -- the problem seems to be that no
+   tail call optimization as called in the paper is done. *)

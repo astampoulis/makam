@@ -4,11 +4,6 @@
 %use extutils.
 
 
-useexample : string -> prop.
-useexample "fact". 
-(* useexample "twice". *)
-(* useexample "id". *)
-
 (* --------------
    Phase 1.
    System F
@@ -322,62 +317,6 @@ optkT (appk V TS VS) (appk V' TS VS') <-
   (if eq V (valk (fixk F) _) then not(bindmany_apply F TS (_, (fun x => Body))) else success),
   optkV V V', map optkV VS VS'.
 
-(* examples *)
-
-example : term -> prop.
-
-
-
-example
-  (term (app
-        (term (fix tint tint (fun f n => term (if0 (term n #_)
-                                                   (term (iconst 1) #_)
-                                                   (term (op pmult
-						             (term n #_)
-							     (term (app (term f #_)
-							                (term (op pminus (term n #_)
-									                 (term (iconst 1) #_))
-									      #_)) #_)) #_)) #_)) #_)
-        (term (iconst 6) #_)) #_)
-<- useexample "fact".
-
-example
- (term (lamt (fun a =>
-       term (fix (tarrow a a) #_ (fun unused1 => fun f =>
-       term (fix a            #_ (fun unused2 => fun x =>
-       term (app (term f #_) (term (app (term f #_) (term x #_)) #_)) #_)) #_)) #_)) #_)
-<- useexample "twice".
-
-example
- (term (lamt (fun a =>
-       term (fix a #_ (fun unused1 => fun x => term x #_)) #_)) #_)
-<- useexample "id".
-
-
-
-examplek : termk -> prop.
-
-`( define examplek (fun res => {prop| example X, typeof X T, translateprog X E, optkT E res, typeofk E |}) ).
-
-([X] examplek X, typeofk X, print "System F ~~> λK", print X) ?
-
-(* after some beautification: 
-appk
- (valk 
- (fixk anon1015_0.f (tuple [anon1093_1.n : tint, anon1099_2.k : tint -> void])
-  
-  if0k(n,
-     appk k [iconst 1],
-     (letk (pminus n 1)
-	   (fun x_3.x =>
-		appk f [x,
-			lamk (tuple [anon1318_5.y : tint])
-                             (letk (pmult n y)
-				   (fun x_6.z =>
-					appk k z))])))))
-
-[iconst 6, lamk [ anon1604_0.n : tint ] (haltk tint n) ]
-*)
 
 (* TIME: about 3 hours so far *)
 
@@ -700,10 +639,6 @@ translatec_val (valk (fixk Fix) T)
 (* time: about +2 hours *)
 (* debugging: +1 hour (problem in valfv, boxed types not handled right)  *)
 
-examplec : termc -> prop.
-
-`( define examplec (fun res => {prop| examplek E, translatec_prog E res |}) ).
-
 
 erasetypes : [A] A -> A -> prop.
 erasetypes (X : typc) (X : typc).
@@ -732,16 +667,7 @@ erasetypes (if0c V E E') (if0c V' E2 E2') <- erasetypes V V', map erasetypes [E,
 erasetypes (haltc T E) (haltc T E') <- erasetypes E E'.
 erasetypes (X : bvalc) X <- newnmeta (fun x => eq x X).
 
-([R R']examplec R, erasetypes R R', print R') ?
 
-
-(* %debug+. *)
-([R]examplec R, typeofc R, print "λK ~~> λC", print R) ?
-(* %debug-. *)
-
-
-(* unfortunately twice doesn't work as expected -- the problem seems to be that no
-   tail call optimization as called in the paper is done. *)
 
 (* ------------------------
    Phase 4.

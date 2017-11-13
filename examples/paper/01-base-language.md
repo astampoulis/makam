@@ -1,3 +1,10 @@
+<!--
+```makam
+literate_tests : testsuite.
+%testsuite literate_tests.
+```
+-->
+
 We will start with encoding a version of the simply typed lambda calculus in λProlog. We define two new meta-types to
 represent the two sorts of our object language: terms and types. We also define the `typeof`
 relation that corresponds to the typing judgement of the language.
@@ -54,7 +61,7 @@ calculus, as we can issue queries for the `typeof` relation to Makam:
 ```makam
 typeof (lam _ (fun x => x)) T' ?
 >> Yes:
->> T' := arrow T T
+>> T' := arrow T T.
 ```
 
 One benefit of using λProlog instead of rolling our own type-checker is that the occurs check is
@@ -102,7 +109,7 @@ Executing a query with a tuple yields the correct result:
 ```makam
 typeof (lam _ (fun x => lam _ (fun y => tuple (cons x (cons y nil))))) T ?
 >> Yes:
->> T := arrow T1 (arrow T2 (product (cons T1 (cons T2 nil))))
+>> T := arrow T1 (arrow T2 (product (cons T1 (cons T2 nil)))).
 ```
 
 So far we have only introduced the predicate `typeof` for typing. In the same way, we can introduce
