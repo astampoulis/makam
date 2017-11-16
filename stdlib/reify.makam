@@ -18,9 +18,18 @@ reified_args : type -> type -> type.
 nil : reified_args A A.
 cons : reified A -> reified_args B C -> reified_args (A -> B) C.
 
+%extend reified_args.
+map : [A B C C' D]
+      (reified A -> reified B -> prop) ->
+      reified_args C D -> reified_args C' D -> prop.
+map P [] [].
+map P (HD :: TL) (HD' :: TL') :- dyn.call P HD HD', map P TL TL'.
+%end.
+
+
 %extend reified.
 
-unifvar : int -> reified_args A B -> B -> reified B.
+unifvar : int -> reified_args A B -> int -> B -> reified B.
 term : A -> reified_args A B -> reified B.
 const : A -> reified A.
 bvar : A -> reified_args A B -> reified B.
@@ -37,7 +46,8 @@ reify : [A]A -> reified A -> prop.
 reify_args : [A B]args A B -> reified_args A B -> prop.
 reify_var : [A]A -> reified A -> prop.
 
-reify X (reified.unifvar I SubstR X) when refl.isunif(X) :-
+reify X (reified.unifvar I SubstR Metalevel X) when refl.isunif(X) :-
+  refl.unifmetalevel X Metalevel,
   refl.decomposeunif X I SubstDyn,
   dyn.to_args SubstDyn Subst,
   reify_args Subst SubstR.
@@ -67,7 +77,7 @@ reify_args (HD :: TL) (HD_R :: TL_R) :- reify HD HD_R, reify_args TL TL_R.
 reflect : [A]reified A -> A -> prop.
 reflect : [A B]reified_args A B -> args A B -> prop.
 
-reflect (reified.unifvar I SubstR X) Z :-
+reflect (reified.unifvar I SubstR _ X) Z :-
   reflect SubstR Subst, dyn.from_args Subst SubstDyn, refl.recomposeunif X SubstDyn Z.
 
 reflect (reified.term Head ArgsR) Z :-
@@ -97,11 +107,11 @@ eqv_args : [A B]reified_args A B -> reified_args A B -> (prop -> prop) -> (prop 
 eqv_assigned : int -> prop.
 eqv_unifvars : int -> int -> prop.
 
-eqv_aux (reified.unifvar I1 Args1 _) (reified.unifvar I2 Args2 _) Ctx Ctx'
+eqv_aux (reified.unifvar I1 Args1 Metalevel _) (reified.unifvar I2 Args2 Metalevel _) Ctx Ctx'
     when Ctx(eqv_unifvars I1 I2) :-
   eqv_args Args1 Args2 Ctx Ctx'.
 
-eqv_aux (reified.unifvar I1 Args1 (_: A)) (reified.unifvar I2 Args2 (_: A)) Ctx Ctx''
+eqv_aux (reified.unifvar I1 Args1 Metalevel (_: A)) (reified.unifvar I2 Args2 Metalevel (_: A)) Ctx Ctx''
     when Ctx( {prop| not(eqv_assigned I1), not(eqv_assigned I2) |} ) :-
    eq Ctx' (pfun k =>
      (eqv_assigned I1 -> eqv_assigned I2 ->
@@ -127,8 +137,41 @@ eqv_args [] [] Ctx Ctx.
 eqv_args (HD :: TL) (HD' :: TL') Ctx Ctx'' :-
   eqv_aux HD HD' Ctx Ctx', eqv_args TL TL' Ctx' Ctx''.
 
+(* without_eqv_refl (X : reified A). *)
+(* This is not strictly necessary; if two reified representations are exactly equal,
+   then they should be equivalent as well with the identity unification variable renaming.
+   Leaving this out is also slightly faster, as equality is the same as unification in this
+   case (the unification variables present in reify.unifvar are unifiable iff their reified
+   versions are identical), and is thus natively implemented. *)
+
 eqv (X: reified A) (Y: reified A) :-
   eqv_aux X Y (fun x => x) _.
 
+
 unif_alpha_eqv : [A]A -> A -> prop.
 unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
+
+
+
+
+pattern_match : [A]A -> A -> prop.
+pmatch_aux : [A]reified A -> reified A -> prop.
+
+pattern_match A B :- once(reify A AR), once(reify B BR), pmatch_aux AR BR.
+
+
+pmatch_aux (reified.unifvar _ _ _ L) R :- reflect R R', eq L R'.
+
+pmatch_aux (reified.term Head Args) (reified.term Head Args') :-
+  reified_args.map pmatch_aux Args Args'.
+
+pmatch_aux (reified.bvar Head Args) (reified.bvar Head Args') :-
+  reified_args.map pmatch_aux Args Args'.
+
+pmatch_aux (reified.nvar Head Args) (reified.nvar Head Args') :-
+  reified_args.map pmatch_aux Args Args'.
+
+pmatch_aux (reified.const Const) (reified.const Const).
+
+pmatch_aux (reified.lambda F) (reified.lambda F') :-
+  (x:A -> pmatch_aux (F x) (F' x)).

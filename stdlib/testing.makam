@@ -5,6 +5,7 @@ testcase : testsuite -> prop.
 run_tests : testsuite -> prop.
 run_tests : list testsuite -> prop.
 
+verbose_run_tests : prop.
 run_tests (X : testsuite) :- run_tests [ X ] .
 
 %extend testing_private.
@@ -37,6 +38,7 @@ run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Fa
 run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
   then (
+    if (verbose_run_tests) then print TestCase else success,
     if (once(clause.premise TestCase))
     then (run_test Suites (TestCase :: Successes) Failures (testcase X) TL)
     else (handle_failure TestCase, run_test Suites Successes (TestCase :: Failures) (testcase X) TL)

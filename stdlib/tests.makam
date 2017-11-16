@@ -103,11 +103,12 @@ testcase reify :- reify (fun (x: term) => "a") X, eq X (reified.lambda (fun x =>
 testcase reify :- reify (fun (x: term) => x) X, eq X (reified.lambda (fun x => reified.bvar x [])).
 testcase reify :- (z:term -> (reify z (X z), eq (X z) (reified.nvar z []))).
 testcase reify :- reify app X, eq X (reified.lambda (fun a => reified.lambda (fun b => reified.term app [reified.bvar a [], reified.bvar b []]))).
-testcase reify :- reify X R, eq R (reified.unifvar I [] X).
-testcase reify :- reify (X, X) R, eq R (reified.term tuple [reified.unifvar I1 [] X, reified.unifvar I2 [] X]), eq I1 I2.
-testcase reify :- reify (X, Y) R, eq R (reified.term tuple [reified.unifvar I1 [] X, reified.unifvar I2 [] Y]), not(eq I1 I2).
+testcase reify :- reify X R, eq R (reified.unifvar I [] 0 X).
+testcase reify :- (x:term -> ([X R] reify X R, eq R (reified.unifvar I [] 1 X))).
+testcase reify :- reify (X, X) R, eq R (reified.term tuple [reified.unifvar I1 [] 0 X, reified.unifvar I2 [] 0 X]), eq I1 I2.
+testcase reify :- reify (X, Y) R, eq R (reified.term tuple [reified.unifvar I1 [] 0 X, reified.unifvar I2 [] 0 Y]), not(eq I1 I2).
 testcase reify :- reify (fun (x:term->term) => x) R, eq R (reified.lambda (fun b => reified.bvar b [])).
-testcase reify :- reify (fun (x:term) => E x) R, eq R (reified.lambda (fun x => reified.unifvar I [reified.bvar x []] (E x))).
+testcase reify :- reify (fun (x:term) => E x) R, eq R (reified.lambda (fun x => reified.unifvar I [reified.bvar x []] 0 (E x))).
 
 (* TODO: testcases for reflect *)
 (* TODO: testcases for reflect . reify *)
@@ -129,8 +130,8 @@ testcase reify :-
               reified.term lam [
                 reified.lambda (fun x =>
                   reified.term app [
-                    reified.unifvar Index1 [] E1,
-                    reified.unifvar Index2 [reified.bvar x []] (E2 x)
+                    reified.unifvar Index1 [] 0 E1,
+                    reified.unifvar Index2 [reified.bvar x []] 0 (E2 x)
                   ]
                 )
               ],
@@ -154,8 +155,8 @@ testcase reify :-
               reified.term lam [
                 reified.lambda (fun x =>
                   reified.term app [
-                    reified.unifvar _ [] E1,
-                    reified.unifvar _ [reified.bvar x []] (E2 x)
+                    reified.unifvar _ [] 0 E1,
+                    reified.unifvar _ [reified.bvar x []] 0 (E2 x)
                   ]
                 )
               ],
@@ -177,7 +178,50 @@ testcase reify :- unif_alpha_eqv (X: string) (Y: string).
 testcase reify :- not(unif_alpha_eqv (dyn (X: string)) (dyn (Y: int))).
 testcase reify :- unif_alpha_eqv (lam X) (lam Y).
 testcase reify :- not(unif_alpha_eqv (app X Y) (app W W)).
+testcase reify :- not({prop|(x:term -> ([With_x] unif_alpha_eqv (With_x: term) (Without_x: term))) |}).
 
 
+(* ------------------- pattern_match *)
+
+pattern_match : testsuite. %testsuite pattern_match.
+
+>> pattern_match (app E1 E2) (app (freevar "a") (freevar "b")) ?
+>> Yes:
+>> E1 := freevar "a",
+>> E2 := freevar "b".
+
+>> pattern_match (app E1 E2) (app A B) ?
+>> Yes:
+>> A := A,
+>> B := B,
+>> E1 := A,
+>> E2 := B.
+
+>> pattern_match (app E1 E2) A ?
+>> Impossible.
+
+>> pattern_match (app E E) (app X1 X2) ?
+>> Yes:
+>> E := E,
+>> X1 := E,
+>> X2 := E.
+
+>> pattern_match (app (lam F) E) (app X1 X2) ?
+>> Impossible.
+
+>> pattern_match (app (lam F) E) (app (lam G) X2) ?
+>> Yes:
+>> F := F,
+>> E := E,
+>> G := F,
+>> X2 := E.
+
+let_in : term -> (term -> term) -> term.
+
+>> pattern_match (let_in A B) (let_in (app (freevar "a") (freevar "b"))
+                                   (fun x => app x unit)) ?
+>> Yes:
+>> A := app (freevar "a") (freevar "b"),
+>> B := fun x => app x unit.
 
 %end.
