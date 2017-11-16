@@ -8,7 +8,7 @@ Homepage:    http://astampoulis.github.io/
 License:     GPL-3
 Plugins:     DevFiles (0.4)
 BuildTools:  ocamlbuild
-OCamlVersion:          >= 4.02.0
+OCamlVersion:          >= 4.04
 AlphaFeatures:         ocamlbuild_more_args
 XOCamlBuildPluginTags: package(js_of_ocaml.ocamlbuild)
 XOCamlBuildExtraArgs:  -byte-plugin

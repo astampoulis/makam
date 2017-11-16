@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ocaml/opam:ubuntu-16.04_ocaml-4.04.2
+    environment:
+      - TERM: "xterm"
+    steps:
+      - checkout
+
+      - run: &compile
+          name: Install dependencies and compile Makam
+          command: opam pin add --yes .
+
+      - run: &tests
+          name: Run Tests
+          command: opam config exec make makam-tests
+
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - build

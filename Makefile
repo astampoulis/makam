@@ -40,11 +40,12 @@ configure:
 
 # OASIS_STOP
 
+makam-tests:
+	makam --run-tests all_tests
+
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))
 MAKAM_MARKDOWN_FILES=$(foreach file, $(shell find examples -name \*.md), --file $(file):/$(file))
-
-.PHONY: js md2makam md2makam-watch
 
 js:
 	$(OCAMLBUILD) -plugin-tag "package(js_of_ocaml.ocamlbuild)" -no-links js/browser.byte
@@ -55,3 +56,5 @@ md2makam:
 
 md2makam-watch:
 	while true; do inotifywait -e modify `git ls-files --cached --others */*.md` && find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk; done
+
+.PHONY: js md2makam md2makam-watch makam-tests
