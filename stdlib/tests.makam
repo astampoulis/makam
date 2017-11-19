@@ -1,5 +1,14 @@
 %extend stdlib_tests.
 
+(* ------------------- builtins *)
+
+builtins : testsuite.
+
+testcase builtins :- not(refl.open_constraints X).
+testcase builtins :- guard X success, refl.open_constraints X.
+testcase builtins :- guard X success, not(refl.open_constraints Y).
+testcase builtins :- guard X success, eq X "foo", not(refl.open_constraints X).
+
 (* ------------------- eqv *)
 
 icase : type.

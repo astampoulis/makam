@@ -1,0 +1,70 @@
+term : type.
+typ  : type.
+
+lam : (term -> term) -> term .
+app : term -> term -> term .
+eunit : term .
+
+arrow : typ -> typ -> typ .
+tunit : typ .
+
+bf : type.
+done : bf.
+
+typeof_aux : list bf -> term -> typ -> prop.
+typeof_rec : list bf -> term -> typ -> prop .
+typeof_var : term -> typ -> prop.
+
+typeof_aux BF (lam E') (arrow T1 T2) :-
+  (x:term -> typeof_var x T1 -> typeof_rec BF (E' x) T2).
+
+typeof_aux BF (app E1 E2) T' :-
+  typeof_rec BF E1 (arrow T T'),
+  typeof_rec BF E2 T.
+
+typeof_aux BF eunit tunit.
+
+typeof_aux BF X T when typeof_var X T' :- eq T T'.
+
+(*
+typeof_rec BF E T :- typeof_aux BF E T.
+*)
+
+typeof_rec (BF :: Rest) E T when refl.isunif BF :-
+  guard BF (typeof_rec (BF :: Rest) E T).
+
+typeof_rec (BF :: Rest) E T when not(refl.isunif BF) :-
+  typeof_aux Rest E T.
+
+
+(* TODO: instead of doing depth-constrained search, have a predicate that triggers one
+   level down if open constraints still exist. *)
+
+typeof_exact : int -> term -> typ -> prop.
+typeof_exact 0 E T :-
+  typeof_rec [done, BF1] E T, not(refl.open_constraints BF1).
+typeof_exact 1 E T :-
+  withall (typeof_rec [done, BF1, BF2] E T) {prop| eq BF1 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2) |}.
+typeof_exact 2 E T :-
+  withall (typeof_rec [done, BF1, BF2, BF3] E T) (withall (eq BF1 done) {prop| eq BF2 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2), not(refl.open_constraints BF3) |}).
+typeof_exact 3 E T :-
+  withall (typeof_rec [done, BF1, BF2, BF3, BF4] E T) (withall (eq BF1 done) (withall (eq BF2 done) {prop| eq BF3 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2), not(refl.open_constraints BF3), not(refl.open_constraints BF4) |})).
+
+
+typeof_leastfrom : int -> int -> term -> typ -> prop.
+typeof_leastfrom N N'' E T :- ((typeof_exact N E T, eq N'' N); (plus N 1 N', not(eq N' 4), typeof_leastfrom N' N'' E T)).
+
+typeof : term -> typ -> prop.
+typeof E T :- typeof_leastfrom 0 N E T, print_string "depth needed: ", print N.
+
+%constraints+.
+
+bool : typ.
+f : term.
+typeof_aux BF f (arrow tunit (arrow tunit bool)).
+
+typeof (lam (fun x => eunit)) T ?
+typeof E tunit ?
+typeof E (arrow tunit tunit) ?
+typeof E bool ?
+

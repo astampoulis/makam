@@ -3167,6 +3167,19 @@ module BuiltinProps = struct
     end | _ -> assert false)
   ;;
 
+  let _eiWithall = new_builtin_predicate "withall" (_tProp **> _tProp **> _tProp)
+    (fun _ -> function [ { term = `LamMany([], p1) } ;
+                         { term = `LamMany([], p2) } ] -> begin perform
+          states <-- getall (perform
+                               _ <-- demand p1 ;
+                               state <-- getbacktrackstate ;
+                               return state);
+          msum (List.map (fun state -> lazy(perform
+                                         _ <-- setstate state;
+                                         demand p2)) states)
+    end | _ -> assert false)
+  ;;
+
   let _eiOnce = new_builtin_predicate "once" (_tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p) } ] -> begin perform
 
