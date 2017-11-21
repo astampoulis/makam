@@ -1,7 +1,7 @@
 term : type.
 typ  : type.
 
-lam : (term -> term) -> term .
+lam : typ -> (term -> term) -> term .
 app : term -> term -> term .
 eunit : term .
 
@@ -15,44 +15,43 @@ typeof_aux : list bf -> term -> typ -> prop.
 typeof_rec : list bf -> term -> typ -> prop .
 typeof_var : term -> typ -> prop.
 
-typeof_aux BF (lam E') (arrow T1 T2) :-
+typeof_aux BF (lam T1 E') (arrow T1 T2) :-
   (x:term -> typeof_var x T1 -> typeof_rec BF (E' x) T2).
 
-typeof_aux BF (app E1 E2) T' :-
-  typeof_rec BF E1 (arrow T T'),
-  typeof_rec BF E2 T.
+typeof_aux BF X T when typeof_var X T.
 
 typeof_aux BF eunit tunit.
 
-typeof_aux BF X T when typeof_var X T' :- eq T T'.
-
-(*
-typeof_rec BF E T :- typeof_aux BF E T.
-*)
+typeof_aux BF (app E1 E2) T' :-
+  typeof_rec BF E1 (arrow T T'), typeof_rec BF E2 T.
 
 typeof_rec (BF :: Rest) E T when refl.isunif BF :-
-  guard BF (typeof_rec (BF :: Rest) E T).
+  guard BF (typeof_aux Rest E T).
 
 typeof_rec (BF :: Rest) E T when not(refl.isunif BF) :-
   typeof_aux Rest E T.
 
-
-(* TODO: instead of doing depth-constrained search, have a predicate that triggers one
-   level down if open constraints still exist. *)
-
-typeof_exact : int -> term -> typ -> prop.
-typeof_exact 0 E T :-
-  typeof_rec [done, BF1] E T, not(refl.open_constraints BF1).
-typeof_exact 1 E T :-
-  withall (typeof_rec [done, BF1, BF2] E T) {prop| eq BF1 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2) |}.
-typeof_exact 2 E T :-
-  withall (typeof_rec [done, BF1, BF2, BF3] E T) (withall (eq BF1 done) {prop| eq BF2 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2), not(refl.open_constraints BF3) |}).
-typeof_exact 3 E T :-
-  withall (typeof_rec [done, BF1, BF2, BF3, BF4] E T) (withall (eq BF1 done) (withall (eq BF2 done) {prop| eq BF3 done, not(refl.open_constraints BF1), not(refl.open_constraints BF2), not(refl.open_constraints BF3), not(refl.open_constraints BF4) |})).
-
-
 typeof_leastfrom : int -> int -> term -> typ -> prop.
-typeof_leastfrom N N'' E T :- ((typeof_exact N E T, eq N'' N); (plus N 1 N', not(eq N' 4), typeof_leastfrom N' N'' E T)).
+bf_force : bf -> list bf -> prop.
+bf_limit : int -> prop.
+
+bf_limit 4.
+generate : int -> list bf -> prop.
+generate 0 [BF].
+generate N (BF :: Rest) when lessthan 0 N true :- plus N' 1 N, generate N' Rest.
+
+typeof_leastfrom N Nres E T when bf_limit Nlimit, lessthan N Nlimit true :-
+  generate N Rest,
+  if (withall(typeof_rec (BF :: Rest) E T) (bf_force BF Rest)) then
+    (eq Nres N)
+  else
+    (plus N 1 N', typeof_leastfrom N' Nres E T).
+
+bf_force BF (BFnew :: Rest) :-
+  if (withall (eq BF done) (not(refl.open_constraints BFnew))) then
+    success
+  else
+    (withall (eq BF done) (bf_force BFnew Rest)).
 
 typeof : term -> typ -> prop.
 typeof E T :- typeof_leastfrom 0 N E T, print_string "depth needed: ", print N.
@@ -61,10 +60,52 @@ typeof E T :- typeof_leastfrom 0 N E T, print_string "depth needed: ", print N.
 
 bool : typ.
 f : term.
+
 typeof_aux BF f (arrow tunit (arrow tunit bool)).
 
-typeof (lam (fun x => eunit)) T ?
-typeof E tunit ?
-typeof E (arrow tunit tunit) ?
-typeof E bool ?
 
+
+tlam : (typ -> term) -> term.
+tapp : term -> typ -> term.
+pi : (typ -> typ) -> typ.
+
+typeof_aux BF (tlam E) (pi F) :-
+  (a:typ -> typeof_rec BF (E a) (F a)).
+
+typeof_aux BF (tapp E T) T' :-
+  typeof_rec BF E (pi F),
+  eq (F T) T'.
+
+
+breadthfirst : testsuite. %testsuite breadthfirst.
+
+typeof (lam T1 (fun x => eunit)) T ?
+>> Yes:
+>> T1 := T1,
+>> T := arrow T1 tunit.
+
+typeof E tunit ?
+>> Yes:
+>> E := eunit.
+
+typeof E (arrow tunit tunit) ?
+>> Yes:
+>> E := lam tunit (fun x => eunit).
+
+typeof E bool ?
+>> Yes:
+>> E := app (app f eunit) eunit.
+
+
+(* TODO: trying to fix variable case. *)
+tata : typ.
+typeof E (arrow tata tata) ?
+
+typeof I (pi (fun a => arrow a a)) ?
+typeof K (pi (fun a => pi (fun b => arrow a (arrow b a)))) ?
+typeof S (pi (fun a => pi (fun b => pi (fun c => arrow (arrow a (arrow b c)) (arrow (arrow a b) (arrow a c)))))) ?
+
+typeof (tlam (fun a => tlam (fun b => tlam (fun c => lam (arrow a (arrow b c)) (fun f =>
+        lam (arrow a b) (fun get_a_to_b =>
+        lam a (fun get_a =>
+        app (app f get_a) (app get_a_to_b get_a)))))))) T ?
