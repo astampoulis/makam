@@ -17,4 +17,6 @@ all_tests : testsuite.
 
 %use "big/testf2tal".
 
+%use "experiments/breadthfirst".
+
 %constraints-.

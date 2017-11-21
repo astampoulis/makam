@@ -20,16 +20,14 @@ typeof_aux BF (lam T1 E') (arrow T1 T2) :-
 
 typeof_aux BF X T when typeof_var X T.
 
-typeof_aux BF eunit tunit.
-
+(* TODO: move this earlier and see... *)
 typeof_aux BF (app E1 E2) T' :-
   typeof_rec BF E1 (arrow T T'), typeof_rec BF E2 T.
 
+typeof_aux BF eunit tunit.
+
 typeof_rec (BF :: Rest) E T when refl.isunif BF :-
   guard BF (typeof_aux Rest E T).
-
-typeof_rec (BF :: Rest) E T when not(refl.isunif BF) :-
-  typeof_aux Rest E T.
 
 typeof_leastfrom : int -> int -> term -> typ -> prop.
 bf_force : bf -> list bf -> prop.
@@ -79,29 +77,35 @@ typeof_aux BF (tapp E T) T' :-
 
 breadthfirst : testsuite. %testsuite breadthfirst.
 
-typeof (lam T1 (fun x => eunit)) T ?
+>> typeof (lam T1 (fun x => eunit)) T ?
 >> Yes:
 >> T1 := T1,
 >> T := arrow T1 tunit.
 
-typeof E tunit ?
+>> typeof E tunit ?
 >> Yes:
 >> E := eunit.
 
-typeof E (arrow tunit tunit) ?
+>> typeof E (arrow bool tunit) ?
 >> Yes:
->> E := lam tunit (fun x => eunit).
+>> E := lam bool (fun x => eunit).
 
-typeof E bool ?
+>> typeof E bool ?
 >> Yes:
 >> E := app (app f eunit) eunit.
 
 
 (* TODO: trying to fix variable case. *)
-tata : typ.
-typeof E (arrow tata tata) ?
+foo : typ.
+>> typeof E (arrow foo foo) ?
+>> Yes:
+>> E := lam foo (fun x => x).
 
-typeof I (pi (fun a => arrow a a)) ?
+>> typeof I (pi (fun a => arrow a a)) ?
+>> Yes:
+>> I := tlam (fun a => lam a (fun x => x)).
+
+(*
 typeof K (pi (fun a => pi (fun b => arrow a (arrow b a)))) ?
 typeof S (pi (fun a => pi (fun b => pi (fun c => arrow (arrow a (arrow b c)) (arrow (arrow a b) (arrow a c)))))) ?
 
@@ -109,3 +113,4 @@ typeof (tlam (fun a => tlam (fun b => tlam (fun c => lam (arrow a (arrow b c)) (
         lam (arrow a b) (fun get_a_to_b =>
         lam a (fun get_a =>
         app (app f get_a) (app get_a_to_b get_a)))))))) T ?
+*)

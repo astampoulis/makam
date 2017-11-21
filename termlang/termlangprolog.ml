@@ -3175,8 +3175,8 @@ module BuiltinProps = struct
                                state <-- getbacktrackstate ;
                                return state);
           msum (List.map (fun state -> lazy(perform
-                                         _ <-- setstate state;
-                                         demand p2)) states)
+                                              _ <-- setstate state;
+                                              demand p2)) states)
     end | _ -> assert false)
   ;;
 
