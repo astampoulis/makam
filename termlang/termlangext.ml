@@ -276,6 +276,16 @@ new_builtin_predicate "lowercase" ( _tString **> _tString **> _tProp ) begin
     pattcanonUnifyFull res (_PofString (String.lowercase str') ~loc:str.loc))
 end;;
 
+new_builtin_predicate "contains" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ str1; str2 ] -> perform
+    str1  <-- chasePattcanon [] str1 ;
+    str1' <-- _PtoString str1 ;
+    str2  <-- chasePattcanon [] str2 ;
+    str2' <-- _PtoString str2 ;
+    moneOrMzero (String.exists str1' str2'))
+end;;
+
 builtin_leave_module ();;
 
 

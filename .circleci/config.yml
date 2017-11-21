@@ -14,7 +14,7 @@ jobs:
 
       - run: &tests
           name: Run Tests
-          command: opam config exec make makam-tests
+          command: cd ~ && opam config exec makam --run-tests all_tests
 
 workflows:
   version: 2
