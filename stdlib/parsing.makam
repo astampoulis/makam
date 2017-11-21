@@ -1,16 +1,20 @@
+(* TODO: maybe action_peg is not needed *)
+(* TODO: applicable_rules_get optimization *)
+(* TODO: namespace everything below peg? *)
+
 peg : type -> type.
 
 action_peg : type -> type.
 
 bind : peg A -> (A -> action_peg B) -> action_peg B.
-concat : peg A -> action_peg B -> action_peg B.
+seq : peg A -> action_peg B -> action_peg B.
 action : B -> action_peg B.
 choices : list (action_peg A) -> action_peg A.
 lift : peg A -> action_peg A.
 
 anychar : peg string. 
 charclass : string -> peg string.
-char : string -> peg string.
+exact : string -> peg string.
 neg : peg A -> peg A.
 lookahead : peg A -> peg unit.
 option : peg A -> peg (option A).
@@ -24,7 +28,7 @@ builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins
 
 builtin anychar.
 builtin (charclass _).
-builtin (char _).
+builtin (exact _).
 builtin (neg _).
 builtin (lookahead _).
 builtin (option _).
@@ -44,7 +48,7 @@ parse (bind PegA PegB) S Res :-
   else
      eq Res none.
 
-parse (concat PegA PegB) S Res :-
+parse (seq PegA PegB) S Res :-
   if (parse PegA S (some (_, S'))) then
      parse PegB S' Res
   else
@@ -67,15 +71,16 @@ parse (anychar) [] none.
 
 parse (anychar) (HD :: TL) (some (HD, TL)).
 
-parse (charclass S) (HD :: TL) (some (HD, TL)) :-
+parse (charclass S) (HD :: TL) Res :-
   if (string.contains S HD) then
     eq Res (some (HD, TL))
   else
     eq Res none.
 
-parse (char S) (HD :: TL) Res :-
-  if (eq S HD) then
-    eq Res (some (HD, TL))
+parse (exact S) Input Res :-
+  string.explode S List,
+  if (append List Rest Input) then
+    eq Res (some (S, Rest))
   else
     eq Res none.
 
@@ -109,7 +114,10 @@ rule : [A] peg A -> action_peg A -> prop.
 %end.
 
 parse P S Res when not(peg.builtin P) :-
-  refl.rules_get (peg.rule P _) Rules,
+  refl.rules_get peg.rule Rules,
+  filter (pfun rule => [Premise Guard]
+    (eq rule (clause (peg.rule P _) Premise); eq rule (whenclause (peg.rule P _) Guard Premise)))
+  Rules Rules',
   map (pfun rule res => [Def Loc LocS]
     if (eq rule (clause (peg.rule P Def) success)) then
       eq res Def
@@ -117,31 +125,93 @@ parse P S Res when not(peg.builtin P) :-
       (locget rule Loc, tostring Loc LocS, 
        print_string "\n-- Error at PEG definition rule at ", print_string LocS, print_string "\n",
        failure))
-  Rules Defs,
+  Rules' Defs,
   parse (choices Defs) S Res.
 
-parse : [A] action_peg A -> string -> A -> prop.
+parse : [A] action_peg A -> string -> (A * string) -> prop.
 
-parse PegA S A :- string.explode S CharList, parse PegA CharList (some (A, [])).
+parse PegA S (A, S') :- string.explode S CharList, parse PegA CharList (some (A, Rest)), string.explode S' Rest.
 
 
 parsing : testsuite. %testsuite parsing.
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" Res, Res S) ?
+>> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
 >> Yes:
->> S := "ih".
+>> S := "ih",
+>> Rest := "".
 
->> (parse (bind anychar (fun a => concat (charclass " \n\t") (action a))) "a " Res) ?
+>> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
 >> Yes:
->> Res := "a".
+>> Res := ("a", "").
 
+>> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
+>> Yes:
+>> Res := ("a", "!").
 
 rep : peg A -> peg (list A).
 
 peg.rule (rep P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
 peg.rule (rep P) (action []).
 
-parse (lift (rep (exact "a"))) "aaa" Res ?
+>> parse (lift (rep (exact "hi"))) "hihi" Res ?
 >> Yes:
->> Res := [ "a", "a", "a" ].
+>> Res := ([ "hi", "hi" ], "").
 
+repplus : peg A -> peg (list A).
+
+peg.rule (repplus P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+
+whitespace : peg unit.
+peg.rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
+
+>> parse (seq whitespace (action unit)) "   return " Res ?
+>> Yes:
+>> Res := (unit, "return ").
+
+token : peg A -> peg A.
+peg.rule (token P) (seq (option whitespace) (lift P)).
+
+>> parse (seq (token (exact "return")) (lift (token (exact "true")))) " return true " Res ?
+>> Yes:
+>> Res := ("true", " ").
+
+ident : type.
+ident : list string -> ident.
+
+ident : peg ident.
+identfirst, identrest : peg string.
+
+peg.rule identfirst (lift (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ_")).
+peg.rule identrest (lift (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ_1234567890'")).
+
+peg.rule ident (bind identfirst (fun hd => bind (rep identrest) (fun tl => action (ident (hd :: tl))))).
+
+cterm : type.
+clam : ident -> cterm -> cterm.
+cvar : ident -> cterm.
+capp : cterm -> list cterm -> cterm.
+
+cterm, cterm0, cterm1, cterm2 : peg cterm.
+
+peg.rule cterm (lift cterm0).
+
+peg.rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token (exact "."))
+                 (bind cterm0 (fun body => action (clam var body)))))).
+
+peg.rule cterm0 (lift cterm1).
+
+peg.rule cterm1 (bind cterm2 (fun hd => bind (repplus (inject (seq whitespace (lift cterm2)))) (fun tl => action (capp hd tl)))).
+
+peg.rule cterm1 (bind cterm2 (fun hd => action hd)).
+
+peg.rule cterm2 (bind (token ident) (fun var => action (cvar var))).
+
+peg.rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
+
+parse (lift cterm) "λ x.x" Res ?
+>> Yes:
+>> Res := (clam (ident ["x"]) (cvar (ident ["x"])), "").
+
+parse (lift cterm) "λf.λg.λx.f (g x)" Res ?
+>> Yes:
+>> Res := ((clam (ident (cons "f" nil)) (clam (ident (cons "g" nil)) (clam (ident (cons "x" nil)) (capp (cvar (ident (cons "f" nil))) (cons (capp (cvar (ident (cons "g" nil))) (cons (cvar (ident (cons "x" nil))) nil)) nil))))), "").

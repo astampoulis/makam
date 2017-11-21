@@ -81,6 +81,7 @@ find Pred (HD :: TL) Res <- if (Pred HD) then eq Res HD else find Pred TL Res.
 
 (* Keep only elements that succeed on a predicate *)
 filter : (A -> prop) -> list A -> list A -> prop.
+filter Pred [] [].
 filter Pred (HD :: TL) Res <-
   if (Pred HD)
   then (eq Res (HD :: TL'), filter Pred TL TL')
