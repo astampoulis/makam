@@ -18,11 +18,10 @@ typeof_var : term -> typ -> prop.
 typeof_aux BF (lam T1 E') (arrow T1 T2) :-
   (x:term -> typeof_var x T1 -> typeof_rec BF (E' x) T2).
 
-typeof_aux BF X T when typeof_var X T.
-
-(* TODO: move this earlier and see... *)
 typeof_aux BF (app E1 E2) T' :-
   typeof_rec BF E1 (arrow T T'), typeof_rec BF E2 T.
+
+typeof_aux BF X T when typeof_var X T.
 
 typeof_aux BF eunit tunit.
 
@@ -52,7 +51,7 @@ bf_force BF (BFnew :: Rest) :-
     (withall (eq BF done) (bf_force BFnew Rest)).
 
 typeof : term -> typ -> prop.
-typeof E T :- typeof_leastfrom 0 N E T, print_string "depth needed: ", print N.
+typeof E T :- typeof_leastfrom 0 N E T.
 
 %constraints+.
 
@@ -95,7 +94,8 @@ breadthfirst : testsuite. %testsuite breadthfirst.
 >> E := app (app f eunit) eunit.
 
 
-(* TODO: trying to fix variable case. *)
+%extend TODO.
+
 foo : typ.
 >> typeof E (arrow foo foo) ?
 >> Yes:
@@ -105,12 +105,15 @@ foo : typ.
 >> Yes:
 >> I := tlam (fun a => lam a (fun x => x)).
 
-(*
-typeof K (pi (fun a => pi (fun b => arrow a (arrow b a)))) ?
-typeof S (pi (fun a => pi (fun b => pi (fun c => arrow (arrow a (arrow b c)) (arrow (arrow a b) (arrow a c)))))) ?
+>> typeof K (pi (fun a => pi (fun b => arrow a (arrow b a)))) ?
+>> Yes:
+>> K := tlam (fun a => tlam (fun b => lam a (fun x => lam b (fun y => x)))).
 
-typeof (tlam (fun a => tlam (fun b => tlam (fun c => lam (arrow a (arrow b c)) (fun f =>
+>> typeof S (pi (fun a => pi (fun b => pi (fun c => arrow (arrow a (arrow b c)) (arrow (arrow a b) (arrow a c)))))) ?
+>> Yes:
+>> S := (tlam (fun a => tlam (fun b => tlam (fun c => lam (arrow a (arrow b c)) (fun f =>
         lam (arrow a b) (fun get_a_to_b =>
         lam a (fun get_a =>
-        app (app f get_a) (app get_a_to_b get_a)))))))) T ?
-*)
+        app (app f get_a) (app get_a_to_b get_a)))))))).
+
+%end.

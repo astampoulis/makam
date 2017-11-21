@@ -2,6 +2,10 @@ testsuite : type.
 
 testcase : testsuite -> prop.
 
+%extend TODO.
+testcase : testsuite -> prop.
+%end.
+
 run_tests : testsuite -> prop.
 run_tests : list testsuite -> prop.
 
