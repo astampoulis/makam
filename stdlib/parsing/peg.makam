@@ -1,0 +1,116 @@
+(* TODO: namespace everything below peg? *)
+
+peg : type -> type.
+
+bind : peg A -> (A -> peg B) -> peg B.
+seq : peg A -> peg B -> peg B.
+action : B -> peg B.
+choices : list (peg A) -> peg A.
+
+anychar : peg string. 
+charclass : string -> peg string.
+exact : string -> peg string.
+neg : peg A -> peg A.
+lookahead : peg A -> peg unit.
+option : peg A -> peg (option A).
+empty : peg unit.
+void : peg A.
+
+builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
+
+builtin (bind _ _).
+builtin (seq _ _).
+builtin (action _).
+builtin (choices _).
+builtin anychar.
+builtin (charclass _).
+builtin (exact _).
+builtin (neg _).
+builtin (lookahead _).
+builtin (option _).
+builtin (empty).
+builtin (void).
+
+parse : [A]peg A -> list string -> option (A * list string) -> prop.
+
+
+parse (bind PegA PegB) S Res :-
+  if (parse PegA S (some (A, S'))) then
+     parse (PegB A) S' Res
+  else
+     eq Res none.
+
+parse (seq PegA PegB) S Res :-
+  if (parse PegA S (some (_, S'))) then
+     parse PegB S' Res
+  else
+     eq Res none.
+
+parse (action B) S (some (B, S)).
+
+parse (choices []) S none.
+
+parse (choices (HD :: TL)) S Res :-
+  if (parse HD S (some R)) then
+    eq Res (some R)
+  else
+    parse (choices TL) S Res.
+
+
+parse (anychar) [] none.
+
+parse (anychar) (HD :: TL) (some (HD, TL)).
+
+parse (charclass S) (HD :: TL) Res :-
+  if (string.contains S HD) then
+    eq Res (some (HD, TL))
+  else
+    eq Res none.
+
+parse (exact S) Input Res :-
+  string.explode S List,
+  if (append List Rest Input) then
+    eq Res (some (S, Rest))
+  else
+    eq Res none.
+
+parse (neg P) S Res :-
+  if (parse P S (some _)) then
+    eq Res none
+  else
+    eq Res (some (unit, S)).
+
+parse (lookahead P) S Res :-
+  if (parse P S (some _)) then
+    eq Res (some (unit, S))
+  else
+    eq Res none.
+
+parse (option P) S Res :-
+  if (parse P S (some (A, S'))) then
+    eq Res (some (some A, S'))
+  else
+    eq Res (some (none, S)).
+
+parse (empty) S (some (unit, S)).
+
+parse (void) S none.
+
+
+rule : [A] peg A -> peg A -> prop.
+
+parse P S Res when not(builtin P) :-
+  refl.rules_get_applicable (rule P _) Rules,
+  map (pfun def res => [Def Loc LocS]
+    if (eq def (clause (rule P Def) success)) then
+      eq res Def
+    else
+      (locget def Loc, tostring Loc LocS, 
+       print_string "\n-- Error at PEG definition rule at ", print_string LocS, print_string "\n",
+       failure))
+  Rules Defs,
+  parse (choices Defs) S Res.
+
+parse : [A] peg A -> string -> (A * string) -> prop.
+
+parse PegA S (A, S') :- string.explode S CharList, parse PegA CharList (some (A, Rest)), string.explode S' Rest.

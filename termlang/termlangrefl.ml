@@ -203,6 +203,29 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "rules_get_applicable" ( ~* "A" **> (_tList _tClause) **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ pred ; unif ] -> begin perform
+
+        pred <-- pattcanonRenormalize pred ;
+        pred <-- chasePattcanon [] pred ;
+
+        match pred.term with
+            `LamMany(_, body) ->
+              perform
+                  let idx  =   headPredicate body in
+                  cs       <-- findConstructors idx ;
+                  state    <-- getbacktrackstate ;
+                  csAppl   <-- mapM (fun c -> perform
+                                                applies <-- constructorApplies state body c ;
+                                                return (if applies then Some c else None)) cs;
+                  let cs'  = List.filter_map identity csAppl in
+                  cs''     <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') ;
+                  pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs'')
+
+    end | _ -> assert false)
+  ;;
+
   new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] -> begin
       (let open RunCtx.Monad in
@@ -605,9 +628,7 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
 
   | `Var(_, Some (`Free, idx)), [ query ] when idx = _eiCmdQuery ->
 
-    (perform
-           _ <-- queryGoal ~print:true query ;
-           return ()) // (lazy(return ()))
+    ifte (queryGoal ~print:true query) (fun _ -> return ()) (lazy(return ()))
 
   | _ -> mzero
   end

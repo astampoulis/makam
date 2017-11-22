@@ -1,7 +1,8 @@
 %directory "examples/lib".
 %directory "examples/big".
 %directory "examples/small".
-%directory "examples/peg".
+(* %directory "examples/peg". *) (* deprecated *)
 %directory "examples/experiments".
 %directory "examples/paper".
 %directory "examples".
+%directory ".".
