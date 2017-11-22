@@ -1,8 +1,28 @@
 %extend string.
 
 concat : list string -> string -> prop.
+
+concat_backwards : list string -> list (reified string) -> list string -> prop.
+
+concat_backwards [] [] [].
+
+concat_backwards Consume (reified.unifvar _ _ _ X :: Rest) Consume'' :-
+  prefix Prefix Consume Consume',
+  string.explode X Prefix,
+  concat_backwards Consume' Rest Consume''.
+
+concat_backwards Consume (reified.const S :: Rest) Consume'' :-
+  string.explode S SL,
+  append SL Consume' Consume,
+  concat_backwards Consume' Rest Consume''.
+
 concat Strings Result <-
-  foldl append "" Strings Result.
+  if (refl.isunif Result) then
+    foldl append "" Strings Result
+  else (
+    map reify Strings StringsR,
+    string.explode Result ResultL,
+    concat_backwards ResultL StringsR []
+  ).
 
 %end.
-

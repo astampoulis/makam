@@ -224,4 +224,9 @@ let_in : term -> (term -> term) -> term.
 >> A := app (freevar "a") (freevar "b"),
 >> B := fun x => app x unit.
 
+
+(* ------------------- string *)
+
+
+
 %end.

@@ -74,6 +74,9 @@ concat LS L <-
   map catenable LS LS', reverse LS' LS'rev,
   foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
 
+prefix : list A -> list A -> list A -> prop.
+prefix [] L L.
+prefix (PrefHD :: PrefTL) (PrefHD :: TL) Rest :- prefix PrefTL TL Rest.
 
 (* Find element matching a predicate *)
 find : (A -> prop) -> list A -> A -> prop.
