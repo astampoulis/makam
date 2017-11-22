@@ -78,7 +78,7 @@ and  runEnv =
     { retemp_constr_for_pred : prop list IMap.t ;
       renvars                : (name * typ) list }
 
-and  constraintT = 
+and  constraintT =
   [ `Unif of name list * pattneut * pattneut
   | `UnifCanon of name list * pattcanon * pattcanon
   | `Demand of int * int option * pattneut * runEnv
@@ -115,8 +115,8 @@ let mut_logstackdepth = ref 0 ;;
 
 module RunCtx =
   struct
-    
-    module BaseMonad = 
+
+    module BaseMonad =
       struct
         include StateEnvMutableMonad.Make(struct
           type state = runState ;;
@@ -132,7 +132,7 @@ module RunCtx =
        It models backtracking computations as pairs of a success and a failure continuation.
     *)
 
-    module Monad = 
+    module Monad =
     struct
 
       type 'a m = 'a twoContMonad ;;
@@ -244,11 +244,11 @@ module RunCtx =
       let bfmapM f l = bfbindlist (List.map f l);;
 
       let foldM    (type a) (type b) (f : a -> b -> a m) (s : a) (l : b list) : a m =
-        List.fold_left (fun s e -> 
+        List.fold_left (fun s e ->
                         perform s' <-- s ;
                                 f s' e) (return s) l ;;
 
-      let benchM (type a) (s : string) (e : a m) : a m = 
+      let benchM (type a) (s : string) (e : a m) : a m =
         { twocont = fun ksucceed kfail ->
           let start = ref (Benchmark.time ()) in
           let ksucceed res kfail =
@@ -258,7 +258,7 @@ module RunCtx =
             ksucceed res kfail
           in
           e.twocont ksucceed kfail }
-      ;;            
+      ;;
 
 
       let logM (type a) (s : string Lazy.t) (e : a m) : a m =
@@ -294,7 +294,7 @@ module RunCtx =
                       setstate { state with rstermstate = termstate' } ;
                       return res)
       ;;
-        
+
       let getstate = lift BaseMonad.getstate ;;
 
       let getbacktrackstate = lift BaseMonad.getbacktrackstate ;;
@@ -319,7 +319,7 @@ module RunCtx =
         include BaseMonad.DictHash ;;
         let addM k v a = lift (addM k v a) ;;
         let modify_defM def k f a = lift (modify_defM def k f a) ;;
-      end;; 
+      end;;
 
       module Ref = struct
         include BaseMonad.Ref ;;
@@ -352,14 +352,14 @@ let empty_run_state termstate =
     rstermstate = termstate ;
     rsmutbacktrack = StateEnvMutableMonad.rootbt () ;
     rslogstackdepth = mut_logstackdepth ;
-    rsopengoals = [] ; 
+    rsopengoals = [] ;
     rsmetaswithconstraints = ISet.empty ;
     rstraced_predicates = ISet.empty
   }
 ;;
 
 let empty_run_ctx termstate =
-  { env = empty_run_env () ; 
+  { env = empty_run_env () ;
     state = empty_run_state termstate } ;;
 
 let clearRunMetas state =
@@ -430,7 +430,7 @@ let log logname e =
      Benchmark.return res)
   else Lazy.force e ;;
 
-let magiclog logname e = 
+let magiclog logname e =
   if !_LOGGING then
     (let stackdepth = !mut_logstackdepth in
      mut_logstackdepth := stackdepth + 1;
@@ -447,7 +447,7 @@ let magiclog logname e =
 
 
 let bench s e = Benchmark.cumulative s e ;;
-  
+
 let profile benchname logname e = bench benchname (lazy(log logname e)) ;;
 
 
@@ -482,7 +482,7 @@ let gatherApps (e : expr) : expr * expr list * unit typinfo list =
 ;;
 
 let reapplyApps (pf : expr) (pargs : expr list) (tapps : unit typinfo list) =
-  List.fold_left2 
+  List.fold_left2
     (fun cur parg tapp -> { tapp with term = `App(cur, parg) })
     pf pargs tapps
 ;;
@@ -543,7 +543,7 @@ let pattcanonShift, pattneutShift, pattheadShift =
           { e with term = `LamMany(binders, pattneutShift n c' body) }
 
   and pattneutShift n c (e : pattneut) : pattneut =
-    
+
     match e.term with
         `AppMany(hd, args, typs) ->
           { e with term = `AppMany(pattheadShift n c hd,
@@ -555,13 +555,13 @@ let pattcanonShift, pattneutShift, pattheadShift =
 
 
   and pattheadShift n c (e : patthead) : patthead =
-    
+
     match e.term with
       | `Var(s, (`Bound, i)) when i >= c -> { e with term = `Var(s, (`Bound, i+n)) }
       | _ -> e
-        
+
   and pattsubstShift n c (e : subst) : subst =
-    
+
     match e with
         `Subst(subst, substinv, typs, names) ->
           `Subst(List.map (pattcanonShift n c) subst, None, typs, names)
@@ -578,7 +578,7 @@ let pattheadToCanon (p : patthead) : pattcanon =
   let canon = { p with term = `LamMany([], neut) } in
   canon
 
-;;  
+;;
 
 let pattneutToCanon (p : pattneut) : pattcanon =
   { p with term = `LamMany([], p) }
@@ -586,14 +586,14 @@ let pattneutToCanon (p : pattneut) : pattcanon =
 
 
 let rec pattEtaShort (p : pattcanon) : patthead option =
-  
+
   let `LamMany(lams, body) = p.term in
 
   match body.term with
 
       `Meta(_) -> None
 
-    | `AppMany(hd, args, _) -> 
+    | `AppMany(hd, args, _) ->
 
       let level = List.length lams in
       let isbound idx p =
@@ -606,7 +606,7 @@ let rec pattEtaShort (p : pattcanon) : patthead option =
               |        Some { term = `Var(_, (`Bound, j)) } when idx = j -> true
               | _ -> false
           end
-        
+
       in
       let isidsubst =
 
@@ -645,7 +645,7 @@ let invertSubst (subst : pattcanon list) : substinv option =
         (match e with
 
           | Some( { term = `Var(s,(`Bound,j)) } as e' ) ->
-              
+
             let e' = { e' with term = `Var(s, (`Bound, i)) ; extra = PattExtras.empty () } in
             (match nth_set j boundsinv e' with
                 Some boundsinv' -> aux tl (i-1) newsinv boundsinv'
@@ -657,7 +657,7 @@ let invertSubst (subst : pattcanon list) : substinv option =
             (match nth_set j newsinv e' with
                 Some newsinv' -> aux tl (i-1) newsinv' boundsinv
               | None -> None)
-            
+
           | _ -> None)
 
   in
@@ -672,12 +672,12 @@ let invertSubstNeut (p : pattneut) : pattneut =
   match p.term with
 
     `Meta(s,i,`Subst(subst,_,typs,bound),typfull) ->
-      
+
       let inv = invertSubst subst in
       { p with term = `Meta(s,i,`Subst(subst,inv,typs,bound),typfull) }
 
   | `AppMany _ -> p
-        
+
 ;;
 
 
@@ -686,7 +686,7 @@ let freshenPatt (newnvar : int) (e : pattneut) : pattneut =
   let rec aux_canon c e =
 
     match e.term with
-        
+
         `LamMany(binders, e') ->
 
           let n = List.length binders in
@@ -700,24 +700,24 @@ let freshenPatt (newnvar : int) (e : pattneut) : pattneut =
         { e with term = `AppMany(aux_head c hd, List.map (aux_canon c) args, typs) }
 
       | `Meta(s, i, subst, typfull) ->
-        
+
         let subst' = aux_subst c subst in
         { e with term = `Meta(s, i, subst', typfull) }
 
   and aux_head c e =
 
     match e.term with
-      
+
       | `Var(s, (`Bound, i)) when i = c -> { e with term = `Var(s, (`New, newnvar)) }
 
       | _ -> e
 
   and aux_subst c e =
-    
+
     match e with
-        
+
         `Subst(subst, substinv, typs, names) ->
-          
+
           let subst' = List.map (aux_canon c) subst in
           `Subst(subst', None, typs, names)
 
@@ -739,8 +739,8 @@ let exprToPatt (e : expr) : pattneut =
   let rec aux_canon bound (e : expr) : pattcanon =
 
     match e.term with
-      | `Lam(_) -> 
-          
+      | `Lam(_) ->
+
         let bound', lams, body = gatherLam [] [] e in
         { e with term = `LamMany(lams, aux_neut bound' body) ; extra = PattExtras.empty () }
 
@@ -748,9 +748,9 @@ let exprToPatt (e : expr) : pattneut =
 
         let body = aux_neut bound e in
         { e with term = `LamMany([], body) ; extra = PattExtras.empty () }
-               
+
   and aux_neut bound (e : expr) : pattneut =
-    
+
     let ef, eargs, tapps = gatherApps e in
     let eargs' = List.map (aux_canon bound) eargs in
 
@@ -801,7 +801,7 @@ let pattneutToExpr, pattcanonToExpr, pattheadToExpr =
       (fun body arg typ ->
         { typ with term = `App(body, arg) ; extra = ExprExtras.empty () })
       e l l'
-            
+
   and aux_neut fvars (p : pattneut) : expr =
 
     match p.term with
@@ -817,7 +817,7 @@ let pattneutToExpr, pattcanonToExpr, pattheadToExpr =
                       extra = ExprExtras.empty () }
         in
         aux_appmany head subst typs
-            
+
   and aux_head fvars (p : patthead) : expr =
 
     match p.term with
@@ -829,7 +829,7 @@ let pattneutToExpr, pattcanonToExpr, pattheadToExpr =
       | `Const(o)             -> { p with term = `Const(o) ; extra = ExprExtras.empty () }
 
   and aux_subst fvars (p : subst) : expr list * unit typinfo list =
-    
+
     match p with
         `Subst(subst, substinv, typs, names) ->
         List.map (aux_canon fvars) subst, typs
@@ -839,7 +839,7 @@ let pattneutToExpr, pattcanonToExpr, pattheadToExpr =
   let timername = "pattToExpr" in
   (fun fvars p -> Benchmark.cumulative timername (lazy(aux_neut fvars p))),
   (fun fvars p -> Benchmark.cumulative timername (lazy(aux_canon fvars p))),
-  (fun fvars p -> Benchmark.cumulative timername (lazy(aux_head fvars p)))  
+  (fun fvars p -> Benchmark.cumulative timername (lazy(aux_head fvars p)))
 
 ;;
 
@@ -855,12 +855,12 @@ let idSubst (ts : typ list) (bound : name list) : pattcanon list =
 ;;
 
 let getIntermediateArrows (ts : typ list) (t : typ) l =
-  
+
   if ts = [] then [], t
   else
     (let tres, interm =
        List.fold_right (fun elm (t, interm) ->
-         let t' = 
+         let t' =
            { term = `Arrow(elm, t) ; classifier = () ;
              loc = UChannel.combine_span elm.loc t.loc ; extra = TypExtras.empty () }
          in
@@ -881,7 +881,7 @@ let intersectSubst (subst1 : pattcanon list) (subst2 : pattcanon list) : pattcan
             | _ -> None)
       | _ -> None
   in
-  
+
   List.combine subst1 subst2 |>
   List.filter_map
   (fun (e1, e2) ->
@@ -922,7 +922,7 @@ struct
                        ExprU.print ~debug:false strout e;
                        IO.close_out strout) es
   ;;
-    
+
 end;;
 
 module Pattneut = PattPrinter(struct
@@ -975,7 +975,7 @@ module CheapPrint = struct
       `LamMany(_, body) -> neut depth oc body
   let neutdepth d oc p = neut (-d) oc p
   let canondepth d oc p = canon (-d) oc p
-  let neut oc p = neut 0 oc p 
+  let neut oc p = neut 0 oc p
   let canon oc p = canon 0 oc p
 
 end;;
@@ -998,7 +998,7 @@ let highlightMetas (p : pattneut) : pattneut =
 module DynArray = RunCtx.Monad.DynArray ;;
 module DictHash = RunCtx.Monad.DictHash ;;
 
-let addRunMeta_mutable ?(mode = `General) level = 
+let addRunMeta_mutable ?(mode = `General) level =
   let state = !tempstate in
   let env = !tempenv in
   let i = state.rsmetas in
@@ -1014,7 +1014,7 @@ let addRunMeta_mutable ?(mode = `General) level =
   i
 ;;
 
-let addRunMeta ?(mode = `General) level = 
+let addRunMeta ?(mode = `General) level =
   inmonad ~statewrite:true (fun _ -> addRunMeta_mutable ~mode:mode level)
 ;;
 
@@ -1030,7 +1030,7 @@ let setMetaParent_mutable (i : int) ?(substlen = 0) (p : pattneut) : unit =
   let state' = { state with rsmeta_parent = IMap.add i (p, substlen) state.rsmeta_parent } in
   tempstate := state'
 ;;
-  
+
 
 let setMetaParent (i : int) ?(substlen = 0) (p : pattneut) : unit RunCtx.Monad.m =
   inmonad ~statewrite:true (fun _ -> setMetaParent_mutable i ~substlen:substlen p)
@@ -1043,7 +1043,7 @@ let addConstraint_mutable (i1 : int) (c : constraintT) : unit =
                                               state.rsmeta_constraints ;
                             rsmetaswithconstraints = ISet.add i1 state.rsmetaswithconstraints }
 ;;
-  
+
 let addConstraint (i1 : int) (c : constraintT) : unit RunCtx.Monad.m =
   inmonad ~statewrite:true (fun _ -> addConstraint_mutable i1 c)
 ;;
@@ -1063,7 +1063,7 @@ let getConstraints_mutable (i : int) : constraintT list =
   clearConstraints_mutable i ;
   List.rev res
 ;;
-  
+
 let getConstraints (i : int) : constraintT list RunCtx.Monad.m = inmonad ~statewrite:true (fun _ -> getConstraints_mutable i);;
 
 let setConstraints_mutable (i : int) (x : constraintT list) : unit =
@@ -1113,7 +1113,7 @@ let setMetaMode (i : int) (m : metamode) : unit RunCtx.Monad.m =
   inmonad ~statewrite:true (fun _ -> setMetaMode_mutable i m);;
 
 let chaseName_mutable (n : name) : name =
-  let rec chase n = 
+  let rec chase n =
     match n with
       `Abstract(s, i) -> (match getMetaParent_mutable i with
                                None -> n
@@ -1136,7 +1136,7 @@ let pattMeta ?(subst = `Subst([], Some (IMap.empty, IMap.empty), [], []))
   { term = `Meta(name, idx, subst, typfull) ;
     classifier = typ ;
     loc = loc ; extra = PattExtras.empty () }
-;;    
+;;
 
 
 (* we could reuse normal higher-order pattern matching to do name unification,
@@ -1239,14 +1239,14 @@ let countArrows (t : typ) : int * typ =
 let rec pattcanonEtaLong_mutable ?(only_top = false) (e : pattcanon) : pattcanon =
 
   match e.term with
-    
+
     `LamMany( lams, body ) ->
-      
+
       let nlams = List.length lams in
       let narrows, rng = countArrows e.classifier in
       assert (nlams <= narrows) ;
       if only_top && nlams == narrows then begin
-        
+
         (* optimization: keep info to see whether renormalization will ever be needed *)
         (* let extra = PattExtras.castout e.extra in
         let renormneed = match rng.term with `TVar(_, Some (`Meta, _), _) -> `Maybe | _ -> `Never in
@@ -1297,7 +1297,7 @@ and pattsubstEtaExpand_mutable (s : subst) (t : typ) l : ((name * typ) typinfo l
   match s with
 
     `Subst(args, _, argsinfo, names) ->
-      
+
         let argsT, rangeT = gatherArrows t in
         let newones = List.length argsT in
         let (lamsinfo, args', argsinfo') = makeArgs argsT rangeT l in
@@ -1354,7 +1354,7 @@ exception NeutToCanon of pattcanon ;;
 let rec pattneutSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p : pattneut) : pattneut =
 
   match p.term with
-    
+
     `AppMany( { term = `Var(_, (`Bound, i)) }, args, argsinfo ) when i >= curbound && i - curbound < List.length sigma ->
 
       let idx = i - curbound in
@@ -1426,7 +1426,7 @@ and reapplyAppsPatt args argsinfo body : pattneut =
     res
 
 
-and pattsubstSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (s : subst) : subst = 
+and pattsubstSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (s : subst) : subst =
 
   match s with
 
@@ -1438,7 +1438,7 @@ and pattsubstSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (s : s
 and pattcanonSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p : pattcanon) : pattcanon =
 
   match p.term with
-    
+
     `LamMany(info, body) ->
       (try
          let body' = pattneutSubstAux (curbound + List.length info) substbound sigma body in
@@ -1453,7 +1453,7 @@ and pattcanonSubstAux curbound substbound (sigma : pattcanon Lazy.t list) (p : p
 let pattneutSubstMany s p =
   pattneutSubstAux 0 0 (List.map (fun x -> lazy(x)) s) p
 ;;
-  
+
 let pattcanonSubstMany s p = pattcanonSubstAux 0 0 (List.map (fun x -> lazy(x)) s) p ;;
 
 (* ---- hereditary substitution ends *)
@@ -1497,7 +1497,7 @@ let pattcanonTypUnify ?(allow_instantiation = true) (p1 : pattcanon) (p2 : pattc
   intermlang begin fun _ ->
 
   let b = typUnifyBool ~allow_instantiation:allow_instantiation p1.classifier p2.classifier in
-        
+
   if !_DEBUG && not b then (let t1 = prepareTypeForUser p1.classifier in
                             let t2 = prepareTypeForUser p2.classifier in
                             Printf.printf " !! %a ~t %a FAILED\n%!" Typ.print t1 Typ.print t2) ;
@@ -1507,16 +1507,16 @@ let pattcanonTypUnify ?(allow_instantiation = true) (p1 : pattcanon) (p2 : pattc
   end
 
 ;;
-    
+
 
 let pattneutTypUnify ?(allow_instantiation = true) (p1 : pattneut) (p2 : pattneut) : unit =
 
   if !_DEBUG then Printf.printf "%a ~(t)~ %a\n%!" Pattneut.print p1 Pattneut.print p2 ;
-  
+
   intermlang begin fun _ ->
 
   let b = typUnifyBool ~allow_instantiation:allow_instantiation p1.classifier p2.classifier in
-        
+
   if !_DEBUG && not b then (let t1 = prepareTypeForUser p1.classifier in
                             let t2 = prepareTypeForUser p2.classifier in
                             Printf.printf " !! %a ~t %a FAILED\n%!" Typ.print t1 Typ.print t2) ;
@@ -1562,13 +1562,13 @@ let rec chasePattneut_mutable ?(deep = false) ?(update = false)
   (* let open PUBench in *)
   match p.term with
 
-    `Meta(s,i,subst,typfull) -> 
+    `Meta(s,i,subst,typfull) ->
 
       let parent = getMetaParent_mutable i in
 
       (match parent, subst with
 
-        | None, `Subst([], _, _, _) -> p          
+        | None, `Subst([], _, _, _) -> p
 
         | None, _ ->
           let subst' = chaseSubst_mutable ~deep:deep ~update:update bound i subst in
@@ -1589,13 +1589,13 @@ let rec chasePattneut_mutable ?(deep = false) ?(update = false)
                 setMetaParent_mutable i expanded ~substlen:slen;
                 expanded
               | _ -> parent)
-            | _ -> parent); 
-            
+            | _ -> parent);
+
           in
           *)
 
           let neut' = expandMeta subst slen parent in
-                                     
+
           chasePattneut_mutable ~deep:deep bound neut')
 
   | `AppMany( { term = `Var(n, i) } as hd, args, argsinfo ) when deep ->
@@ -1639,7 +1639,7 @@ and chaseSubst_mutable ?(deep = false) ?(update = false) (bound : name list) (id
   match subst with
 
     `Subst(s, inv, typs, names) ->
-      
+
       let s' = List.map pattcanonRenormalize_mutable s in
       let s' = List.map (chasePattcanon_mutable ~deep:deep bound) s' in
       if update then updateMetaBoundNames_mutable idx s' ;
@@ -1683,14 +1683,14 @@ let chasePattcanon ?(deep = false) bound p =
 let applySubstInverse (metalevel : int) (bound : name list)
                       (subst : subst)
                       (p : pattneut) : (pattneut option) =
-  
+
   let substhere, newsinv, boundsinv =
     match subst with
-      `Subst(subst, Some(newsinv, boundsinv), _, _) -> subst, newsinv, boundsinv 
+      `Subst(subst, Some(newsinv, boundsinv), _, _) -> subst, newsinv, boundsinv
     | _ -> assert false
   in
   let findAvailableBound subst boundsinv i : pattcanon option =
-    
+
     match IMap.Exceptionless.find i boundsinv with
       | Some { term = `Var(s,(`Bound,j)) } -> Some (List.nth subst (List.length subst - j - 1))
       | Some _ -> assert false
@@ -1702,7 +1702,7 @@ let applySubstInverse (metalevel : int) (bound : name list)
 
       let l = List.length bound - startbound in
       match p.term with
-          
+
           `AppMany(hd, args, argsinfo) ->
 
             let hd'     = auxhead bound startbound hd in
@@ -1714,20 +1714,20 @@ let applySubstInverse (metalevel : int) (bound : name list)
             with _ -> None)
 
 
-        | `Meta(s,i,`Subst(subst',subst'inv,ts,bound'),tfull) -> 
+        | `Meta(s,i,`Subst(subst',subst'inv,ts,bound'),tfull) ->
 
           let parent = getMetaParent_mutable i in
           let metalevel' = getMetaLevel_mutable i in
           updateMetaBoundNames_mutable i subst' ;
           (match parent with
-                 
+
               Some _ ->
-                   
+
                 let p' = chasePattneut_mutable bound p in
                 auxneut bound startbound ~nonewmetas:nonewmetas p'
-                  
+
             | None ->
-              
+
               let addNew () =
 
                 let newmetaidx = addRunMeta_mutable (Some metalevel) in
@@ -1774,7 +1774,7 @@ let applySubstInverse (metalevel : int) (bound : name list)
               let subst' = ExtList.option_map (auxcanon ~nonewmetas:true bound startbound) subst' in
               match subst', metalevel' > metalevel with
 
-                  None, _ | _, true -> 
+                  None, _ | _, true ->
 
                     if istop || nonewmetas then None else addNew ()
 
@@ -1788,9 +1788,9 @@ let applySubstInverse (metalevel : int) (bound : name list)
       let l = List.length bound - startbound in
       match p.term with
 
-          `Var(s, (`New,i)) when i < metalevel -> Some p 
+          `Var(s, (`New,i)) when i < metalevel -> Some p
 
-        | `Var(s,(`New,i)) -> 
+        | `Var(s,(`New,i)) ->
 
           (match IMap.Exceptionless.find i newsinv with
 
@@ -1800,11 +1800,11 @@ let applySubstInverse (metalevel : int) (bound : name list)
             | None   ->  None)
 
         | `Var(s,(`Free,i)) -> Some p
-          
+
         | `Var(s,(`Bound,i)) when i < l -> Some p
 
         | `Var(s,(`Bound,i)) when IMap.mem (i-l) boundsinv ->
-          
+
           let b  = IMap.find (i-l) boundsinv in
           let b' = pattheadShift l b in
           Some b'
@@ -1837,13 +1837,13 @@ let fastApplyEmptySubst
     (metalevel : int) bound (p : pattneut) : bool =
 
   let rec auxneut bound startbound (p : pattneut) =
-    
+
     match p.term with
-      
+
     | `AppMany(hd,args,argsinfo) ->
-      
+
       auxhead bound startbound hd && (List.for_all (auxcanon bound startbound) args)
-        
+
     | `Meta(s,idx,`Subst(subst', _, ts, bound'), tfull) ->
 
       raise FastApplyHasMetas
@@ -1880,7 +1880,7 @@ let pattOccursCheck ?(nonrigid = false) (i : int) (p : pattneut) : bool =
 
     match p.term with
 
-         `AppMany(_, args, _) -> List.for_all (auxcanon seen) args 
+         `AppMany(_, args, _) -> List.for_all (auxcanon seen) args
 
        | `Meta(_,j,_,_) when i == j || ISet.mem j seen -> false
 
@@ -1894,7 +1894,7 @@ let pattOccursCheck ?(nonrigid = false) (i : int) (p : pattneut) : bool =
             else true)
 
   and auxcanon seen p =
-    
+
     match p.term with
          `LamMany(_, body) -> auxneut seen body
 
@@ -2016,7 +2016,7 @@ let invertAndUnify ((_, idx1, subst1, _) as m) bound (p1 : pattneut) (p2 : pattn
       unifyDirectly m p1 p2
 
   | `Subst([], _, _, _), `AppMany(_, args, _), _ ->
-      
+
       (try
          let isOK = fastApplyEmptySubst metalevel bound p2 in
          if isOK then unifyDirectly m p1 p2
@@ -2067,7 +2067,7 @@ let chasedPattUnify_mutable (bound : name list) (p1 : pattneut) (p2 : pattneut) 
   match ds1, ds2, p1, p2 with
 
     (* unification of imitation variables *)
-    
+
     | true, _, { term = `Meta(_, idx1, _, _) }, { term = `Meta(_, idx2, _, _) } when idx1 == idx2 ->
 
       emptyConstraints
@@ -2112,9 +2112,9 @@ let chasedPattUnify_mutable (bound : name list) (p1 : pattneut) (p2 : pattneut) 
               { p2 with term = `Meta(s, idx, substnew, typfull) ; extra = PattExtras.empty () }
 
           | _ -> assert false
-      
+
       in
-      
+
       setMetaParent_mutable (metaindex m1) par ~substlen:(List.length (metasubstmain m1)) ;
 
       let _ = if !_DEBUG then Printf.printf "   ~ %a ~imit~ %a --!>\n   ~= %a := %a\n%!"
@@ -2134,7 +2134,7 @@ let chasedPattUnify_mutable (bound : name list) (p1 : pattneut) (p2 : pattneut) 
       in
       let m1mode = getMetaMode_mutable idx1 in
       let m1lvl  = getMetaLevel_mutable idx1 in
-      
+
       matchMode m1mode m1lvl hd ;
       if List.length idsubst <> List.length args then mzero "different subst len" ;
 
@@ -2174,7 +2174,7 @@ let chasedPattUnify_mutable (bound : name list) (p1 : pattneut) (p2 : pattneut) 
         let _                      = if !_DEBUG then Printf.printf "   ~ %a ~ %a --!>\n   ~= %a := %a\n%!"
                                Pattneut.print p1 Pattneut.print p2 Pattneut.print p1 Pattneut.print newmeta
         in
-        
+
         setMetaParent_mutable (metaindex m1) newmeta ~substlen:(List.length (metasubstmain m1)) ;
         getConstraints_mutable (metaindex m1)
 
@@ -2210,8 +2210,8 @@ let chasedPattUnify bound p1 p2 =
 ;;
 
 (* Fast-failure for unification between p1 and p2. Compares free variables
-   at the same positions up to a certain depth. 
-   
+   at the same positions up to a certain depth.
+
    The chase1 and chase2 labels control whether we are allowed to chase
    metavariables in the first and second patterns. *)
 
@@ -2234,22 +2234,22 @@ let fastFailUnify_mutable ?(chase1 = false) (p1 : pattneut) ?(chase2 = false) (p
        match p.term with
          `Meta(_, idx, _, _) -> metachase p idx
        | _ -> p
-         
+
   in
-  
+
   let rec fastFailUnify depth (p1 : pattneut) (p2 : pattneut) : bool =
 
        let p1 = if chase1 then roughChase p1 else p1 in
        let p2 = if chase2 then roughChase p2 else p2 in
        match p1.term, p2.term with
 
-       | `AppMany({ term = `Var(_, (`Free, idx1)) }, _, _), `AppMany({ term = `Var(_, (`Free, idx2)) }, _, _) 
+       | `AppMany({ term = `Var(_, (`Free, idx1)) }, _, _), `AppMany({ term = `Var(_, (`Free, idx2)) }, _, _)
        | `AppMany({ term = `Var(_, (`New, idx1))  }, _, _), `AppMany({ term = `Var(_, (`New, idx2))  }, _, _)
          when idx1 <> idx2 ->
 
          false
 
-       | `AppMany({ term = `Var(_, (`Free, _)) }, _, _), `AppMany({ term = `Var(_, (`New, _))  }, _, _) 
+       | `AppMany({ term = `Var(_, (`Free, _)) }, _, _), `AppMany({ term = `Var(_, (`New, _))  }, _, _)
        | `AppMany({ term = `Var(_, (`New, _))  }, _, _), `AppMany({ term = `Var(_, (`Free, _)) }, _, _) ->
 
          false
@@ -2265,16 +2265,16 @@ let fastFailUnify_mutable ?(chase1 = false) (p1 : pattneut) ?(chase2 = false) (p
        | `AppMany({ term = `Var(_, (`New, _))  }, args1, _), `AppMany({ term = `Var(_, (`New, _))  }, args2, _)
          when depth < max_depth && List.length args1 == List.length args2 ->
 
-         let canon p1 p2 = 
-           
+         let canon p1 p2 =
+
            match p1.term, p2.term with
-             
+
              `LamMany([], body1), `LamMany([], body2) ->
-               
+
                fastFailUnify (depth+1) body1 body2
-                 
+
            | _ -> true
-             
+
          in
          List.for_all2 canon args1 args2
 
@@ -2290,12 +2290,12 @@ let fastFailUnify_mutable ?(chase1 = false) (p1 : pattneut) ?(chase2 = false) (p
 
 let pattUnify_mutable, pattUnifyCanon_mutable =
 
-  let abstractNamesAllowedFor idx = 
+  let abstractNamesAllowedFor idx =
     match idx with `Bound, _ | `New, _ -> true | _ -> false
   in
 
   let nameUnifyLams { term = (n1,_) } { term =  (n2,_) } = nameUnify_mutable n1 n2 in
-        
+
   let rec pattUnify (bound : name list) (p1 : pattneut) (p2 : pattneut) : constraintT list =
 
     if !_DEBUG then Printf.printf "%a ~~ %a\n%!" Pattneut.print p1 Pattneut.print p2;
@@ -2311,7 +2311,7 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
 
     let p1' = invertSubstNeut p1 in
     let p2' = invertSubstNeut p2 in
-      
+
     match p1'.term, p2'.term with
 
       | `AppMany(head1, args1, _), `AppMany(head2, args2, _) ->
@@ -2319,20 +2319,20 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
         pattUnifyHead head1 head2 ;
         let cs = List.map2 (pattUnifyCanon bound) args1 args2 in
         List.flatten cs
-          
+
       | `Meta(m1), `Meta(m2) ->
 
         begin
         match metaSolvable m1, metaSolvable m2 with
 
           | true, true ->
-        
+
             let l1 = getMetaLevel_mutable (metaindex m1) in
             let l2 = getMetaLevel_mutable (metaindex m2) in
             let (pa, pb) = if l1 > l2 then p1', p2' else p2', p1' in
 
             (try
-               
+
                chasedPattUnify_mutable bound pa pb
 
              with PattUnifyError _ ->
@@ -2368,7 +2368,7 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
       then ignore(nameUnify_mutable n1 n2)
 
     | (`Const(o1)), (`Const(o2)) ->
-      
+
       let t1 = intermlang (chaseTypeDeep p1.classifier) in
       let t2 = intermlang (chaseTypeDeep p2.classifier) in
 
@@ -2398,8 +2398,8 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
           (* let _ = assert (List.length lams1 == List.length lams2) in *)
           let ns = List.map2 nameUnifyLams lams1 lams2 in
           let bound = List.rev ns ++ bound in
-          pattUnify bound body1 body2 
-        
+          pattUnify bound body1 body2
+
   in
 
   let pattUnify ?(bound = []) (p1 : pattneut) (p2 : pattneut) : (constraintT list) =
@@ -2449,8 +2449,8 @@ and handleConstraint_mutable c =
   match c with
     `Unif(bound,p1,p2) -> pattUnifyFull_mutable ~bound:bound p1 p2
   | `UnifCanon(bound,p1,p2) -> pattcanonUnifyFull_mutable ~bound:bound p1 p2
-  | (`Demand(idx,_,p,env) as demand) -> 
-    let isconcrete = 
+  | (`Demand(idx,_,p,env) as demand) ->
+    let isconcrete =
      (match getMetaParent_mutable idx with
          Some (p, _) ->
            (match (chasePattneut_mutable [] p).term with
@@ -2468,13 +2468,13 @@ and handleConstraint_mutable c =
 
 let pattunifytimer = "pattern unification" ;;
 
-let pattUnifyFull_mutable ?(bound = []) p1 p2 = 
+let pattUnifyFull_mutable ?(bound = []) p1 p2 =
   profile pattunifytimer
       (lazy(Printf.sprintf "pattunify %a %a" CheapPrint.neut p1 CheapPrint.neut p2))
       (lazy(pattUnifyFull_mutable ~bound:bound p1 p2))
 ;;
 
-let pattcanonUnifyFull_mutable ?(bound = []) p1 p2 = 
+let pattcanonUnifyFull_mutable ?(bound = []) p1 p2 =
   profile pattunifytimer
       (lazy(Printf.sprintf "pattcanonunify %a %a" CheapPrint.canon p1 CheapPrint.canon p2))
       (lazy(pattcanonUnifyFull_mutable ~bound:bound p1 p2))
@@ -2488,7 +2488,7 @@ let pattUnifyFull ?(bound = []) p1 p2 =
     match res with
       | Some res -> return res
       | None -> mzero
-;;  
+;;
 
 let pattcanonUnifyFull ?(bound = []) p1 p2 =
   let open RunCtx.Monad in
@@ -2497,14 +2497,14 @@ let pattcanonUnifyFull ?(bound = []) p1 p2 =
     match res with
       | Some res -> return res
       | None -> mzero
-;;  
+;;
 
 
 
 (* reconstruct lambda abstractions for metavariables *)
 let reconstructLambdas (t : typ) (boundnames : name list) (p : pattneut) : pattcanon =
 
-  match (chaseType t).term with 
+  match (chaseType t).term with
     `Arrow(_,_) ->
       (let typs, rng = gatherArrows t in
        let ntyps = List.length typs in
@@ -2517,7 +2517,7 @@ let reconstructLambdas (t : typ) (boundnames : name list) (p : pattneut) : pattc
        let comb = List.combine boundnames typs in
        let lamsinfo =
          List.map
-           (fun (name, typ) -> 
+           (fun (name, typ) ->
              match (chaseType typ).term with
                `Arrow(dom,_) -> { p with term = (name, dom) ; classifier = typ }
              | _ -> assert false)
@@ -2558,7 +2558,7 @@ let getInfoFromClause (p : pattneut) =
         when idx = _eiWhenClause ->
       let idx' = headPredicate goal in
       (idx', goal, Some cond, premise)
-        
+
     | _ -> raise (MalformedClause(p))
 ;;
 
@@ -2614,7 +2614,7 @@ let setTracedIndex_mutable shouldbetraced goalidx =
 
 let setTraced_mutable shouldbetraced p =
   let p = pattneutRenormalize_mutable p in
-  let goalidx = 
+  let goalidx =
     match p.term with
         `LamMany(_, p') -> headPredicate p'
   in
@@ -2633,7 +2633,7 @@ let setTracedIndex shouldbetraced idx =
 
 
 let shiftTMetas addtmetas t =
-  let rec taux t = 
+  let rec taux t =
     match t.term with
       `Arrow(t1, t2) -> { t with term = `Arrow(taux t1, taux t2) }
     | `TVar(name, Some(`Meta, i), args) -> { t with term = `TVar(name, Some(`Meta, i+addtmetas), args) }
@@ -2646,7 +2646,7 @@ let shiftTMetas addtmetas t =
   (* Check that the goal does not specialize type variables.
      E.g. for the predicate test : A -> prop,
      the clause: clause (test "hello") success
-     should not be allowed. 
+     should not be allowed.
      Works by instantiating polymorphic variables in the signature of the predicate
      with new free type variables,
      and then checking type unification between the inferred type of the goal and
@@ -2671,7 +2671,7 @@ let checkWellformedClause e goalpatt =
 
   let state        = !termstate in
   let b            = typUnifyBool typ_actual typ_expected in
-  
+
   termstate := state ;
 
   if b then termstate := origstate else
@@ -2680,9 +2680,9 @@ let checkWellformedClause e goalpatt =
      termstate := origstate ;
      raise (MalformedClauseTypecase(goalpatt, texp, tact)))
 
-;;        
-      
-       
+;;
+
+
 let exprToProp ((e, nameunifs) : expr * nameunifs) : prop =
 
   let e' = chaseTypesInExpr ~replaceUninst:true e in
@@ -2748,10 +2748,10 @@ let shiftMetasTyp addtmetas t =
 
 
 let shiftMetas addmetas addtmetas pr : pattneut =
-  let rec auxneut p = 
+  let rec auxneut p =
     let p = { p with classifier = taux p.classifier ; extra = PattExtras.empty () } in
     match p.term with
-        `AppMany(head, args, argsinfo) -> 
+        `AppMany(head, args, argsinfo) ->
           let head' = auxhead head in
           let args' = List.map auxcanon args in
           let argsinfo' = List.map tinfoaux argsinfo in
@@ -2784,7 +2784,7 @@ let shiftMetas addmetas addtmetas pr : pattneut =
 ;;
 
 let shiftMetasNameunifs addmetas nu : nameunifs =
-  let naux = shiftMetasName addmetas in 
+  let naux = shiftMetasName addmetas in
   List.map (Pair.map naux) nu
 ;;
 
@@ -2835,7 +2835,7 @@ let addTempConstructor idx p =
 ;;
 
 let resetTempConstructors idx =
-  
+
   let open RunCtx.Monad in
   perform
     env <-- getenv ;
@@ -2848,7 +2848,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
 
-  let debugEnter pred = 
+  let debugEnter pred =
     if !_DEBUG then
       perform
           let _ = if !_DEBUG then Printf.printf "*** %a\n%!" Pattneut.print newgoal in
@@ -2870,7 +2870,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
       x
   in
 
-  let debugTraceEnter goalidx goal = 
+  let debugTraceEnter goalidx goal =
     if !_DEBUG_DEMAND || isTraced_mutable goalidx then
       (let highlighted = highlightMetas goal in
        let chased = chasePattneut_mutable ~deep:true [] highlighted in
@@ -2892,7 +2892,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
           | None -> Printf.printf "Failed %a\n%!" Pattneut.print chased ; mzero)
           (*   Some x -> Printf.printf "Exit %a\n%!" (CheapPrint.neutdepth 3) chased ; return x *)
           (* | None -> Printf.printf "Failed %a\n%!" (CheapPrint.neutdepth 3) chased ; mzero) *)
-    else 
+    else
       f
   in
 
@@ -2901,7 +2901,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
     let indebug = ref false in
     let trace = ref "" in
     perform
-      (result, ccond, cpremise, cg') <-- inmonad ~statewrite:true (fun _ -> try 
+      (result, ccond, cpremise, cg') <-- inmonad ~statewrite:true (fun _ -> try
 
         tempstate := initstate ;
 
@@ -2913,7 +2913,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
         let c', nu = allocateMetas_mutable constructor in
 
         let cgoalidx, cgoal, ccond, cpremise, c' = getInfoFromUnchasedClause_mutable c' in
-        
+
         let cg', indebug', trace' = debugTraceEnter cgoalidx cgoal in
 
         trace := trace' ;
@@ -2921,7 +2921,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
 
         pattUnifyFull_mutable newgoal cgoal ;
         ignore(List.map (uncurry nameUnify_mutable) nu) ;
-        
+
         true, ccond, Some cpremise, Some cg'
 
         with PattUnifyError _ -> false, None, None, None) ;
@@ -2952,11 +2952,11 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
     return ()
 
 and ensureStateRestored p =
-  
+
   (* some builtin command doesn't backtrack properly --
      couldn't find it so this is a temporary remedy *)
   let open RunCtx.Monad in
-  perform 
+  perform
     state <-- getbacktrackstate ;
     ifte p return (lazy(perform
                           setstate state ;
@@ -2982,12 +2982,43 @@ and demand p =
 and demandNormal p =
   logM (lazy(Printf.sprintf "demand %a" CheapPrint.neut p))
        (_demandNormal p)
+
+and constructorApplies initstate goal constructor =
+  let open RunCtx.Monad in
+  perform
+    state <-- getbacktrackstate;
+    res <-- ifte
+      (perform
+         (result, ccond) <-- inmonad ~statewrite:true (fun _ -> try
+              tempstate := initstate ;
+
+              (try
+                 let _, cgoal, _, _ = getInfoFromClause (constructor.patt) in
+                 fastFailUnify_mutable goal cgoal ~chase1:true ~chase2:constructor.prophasrunmetas
+               with MalformedClause(_) | UnknownPredicate(_) -> ()) ;
+
+              let c', nu = allocateMetas_mutable constructor in
+
+              let _, cgoal, ccond, _, _ = getInfoFromUnchasedClause_mutable c' in
+              pattUnifyFull_mutable goal cgoal ;
+              ignore(List.map (uncurry nameUnify_mutable) nu) ;
+
+              true, ccond
+
+              with PattUnifyError _ -> false, None) ;
+
+         moneOrMzero result ;
+         (match ccond with Some ccond -> demand ccond | None -> return ()))
+      (fun _ -> return true)
+      (lazy(return false));
+    setstate state;
+    return res
 ;;
 
 
 let defineClause (e : exprU) : unit RunCtx.Monad.m =
   let open RunCtx.Monad in
-  perform 
+  perform
       (idx, clause) <-- intermlang (fun _ -> checkClause e) ;
       state         <-- getstate ;
       _             <-- setstate { state with rsconstr_for_pred = IMap.modify_def [] idx (fun l -> l++[clause]) state.rsconstr_for_pred } ;
@@ -3013,7 +3044,7 @@ module BuiltinProps = struct
   (* success *)
   let _eiSuccess = new_builtin_predicate "success" (_tProp)
     (fun _ -> function [ ] -> begin perform
-        
+
         return ()
 
     end | _ -> assert false)
@@ -3022,7 +3053,7 @@ module BuiltinProps = struct
   (* failure *)
   let _eiFailure = new_builtin_predicate "failure" (_tProp)
     (fun _ -> function [ ] -> begin perform
-        
+
         mzero
 
     end | _ -> assert false)
@@ -3032,7 +3063,7 @@ module BuiltinProps = struct
   let _eiAnd = new_builtin_predicate "and" (_tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
                          { term = `LamMany([], p2) } ] -> begin perform
-        
+
         _ <-- demand p1 ;
         _ <-- demand p2 ;
         return ()
@@ -3044,7 +3075,7 @@ module BuiltinProps = struct
   let _eiOr = new_builtin_predicate "or" (_tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
                          { term = `LamMany([], p2) } ] -> begin perform
-        
+
         state <-- getbacktrackstate ;
         (demand p1) // (lazy(perform
                           _ <-- setstate state;
@@ -3056,13 +3087,13 @@ module BuiltinProps = struct
   (* (x:t -> p) *)
   let _eiNewvar = new_builtin_predicate "newvar" (( ~* "A" **> _tProp) **> _tProp)
     (fun _ -> function [ p ] -> begin perform
-        
+
         p     <-- pattcanonRenormalize p ;
         p'    <-- chasePattcanon [] p ;
         (match p'.term with
           `LamMany( [ { term = name, typ } ], p'') ->
             perform
-              env  <-- getenv; 
+              env  <-- getenv;
               env' <-- allocateFvar name typ;
               _    <-- intermlang (fun _ -> kindcheck_type typ) ;
               let p'' = freshenPatt (List.length env.renvars) p'' in
@@ -3075,7 +3106,7 @@ module BuiltinProps = struct
   (* [x:A]P *)
   let _eiNewmeta = new_builtin_predicate "newmeta" (( ~* "A" **> _tProp) **> _tProp)
     (fun _ -> function [ p ] -> begin perform
-        
+
         p     <-- pattcanonRenormalize p ;
         p'    <-- chasePattcanon [] p ;
         (match p'.term with
@@ -3087,7 +3118,7 @@ module BuiltinProps = struct
               let subst' = [ { term = `LamMany( [], meta ); classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } ] in
               let p'' = pattneutSubstMany subst' p'' in
               demand p''
-                
+
         | _ -> assert false)
 
     end | _ -> assert false)
@@ -3117,7 +3148,7 @@ module BuiltinProps = struct
   (* [x:A]P *)
   let _eiNewNmeta = new_builtin_predicate "newnmeta" (( ~* "A" **> _tProp) **> _tProp)
     (fun _ -> function [ p ] -> begin perform
-        
+
         p     <-- pattcanonRenormalize p ;
         p'    <-- chasePattcanon [] p ;
         (match p'.term with
@@ -3138,7 +3169,7 @@ module BuiltinProps = struct
   (* (c -> p) *)
   let _eiAssume = new_builtin_predicate "assume"  (_tClause **> _tProp **> _tProp)
     (fun _ -> function [ c; { term = `LamMany([], p) } ] -> begin perform
-        
+
          (* the check below would not work, even though it's disabled elsewhere anyway *)
          (* _           <-- intermlang (checkWellformedClause p1) ; *)
          c              <-- chasePattcanon [] c ;
@@ -3150,7 +3181,7 @@ module BuiltinProps = struct
 
     end | _ -> assert false)
   ;;
-  
+
 
   let _eiIFTE = new_builtin_predicate "ifte" (_tProp **> _tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
@@ -3177,7 +3208,7 @@ module BuiltinProps = struct
 
   let _eiGuard = new_builtin_predicate "guard" ( ~* "A" **> _tProp **> _tProp )
     (fun _ -> function [ g ; { term = `LamMany([], p) } ] -> begin perform
-        
+
         g <-- chasePattcanon [] g ;
         match g.term with
 
@@ -3193,12 +3224,12 @@ module BuiltinProps = struct
 
   let _eiRemovableGuard = new_builtin_predicate "removableguard" ( _tUnit **> ~* "A" **> _tProp **> _tProp )
     (fun _ -> function [ r ; g ; { term = `LamMany([], p) } ] -> begin perform
-        
+
         g <-- chasePattcanon [] g ;
         r <-- chasePattcanon [] r ;
 
         match r.term, g.term with
-            
+
           `LamMany(_, { term = `Meta(_,removeidx,_,_) }),
           `LamMany(_, { term = `Meta(_,guardidx,_,_) }) ->
             perform
@@ -3212,7 +3243,7 @@ module BuiltinProps = struct
 
     end | _ -> assert false)
   ;;
- 
+
 end;;
 
 
@@ -3240,7 +3271,7 @@ let getMeta s t (i : int) : pattcanon RunCtx.Monad.m =
            boundnames <-- getMetaBoundNames i ;
            res <-- inmonad (fun _ -> interm (fun _ -> reconstructLambdas t boundnames p)) ;
            return res
-       | None   -> 
+       | None   ->
          (let meta = { term = `Meta(s,i,`Subst([],None,[],[]),t) ; classifier = t ; loc = None ; extra = PattExtras.empty () } in
           let canon = { term = `LamMany([], meta) ; classifier = t ; loc = None ; extra = PattExtras.empty () } in
           chasePattcanon ~deep:true [] canon)
@@ -3249,15 +3280,15 @@ let getMeta s t (i : int) : pattcanon RunCtx.Monad.m =
 let getOpenConstraints () : pattcanon list RunCtx.Monad.m =
 
   let open RunCtx.Monad in
- 
-  let fixConstraint (c : constraintT) : pattcanon option RunCtx.Monad.m = 
+
+  let fixConstraint (c : constraintT) : pattcanon option RunCtx.Monad.m =
     match c with
       `Demand(_,_,c,_) -> perform
                          c <-- pattneutRenormalize c ;
                          c' <-- chasePattcanon [] c ;
                          return (Some c')
     | `Unif(_,n1,n2) -> return (Some
-                        { n1 with term = `LamMany([], 
+                        { n1 with term = `LamMany([],
                         { n1 with term = `AppMany( { n1 with term = `Var(`Concrete("eq"), (`Free, 0)) },
                                                    [ pattneutToCanon n1 ; pattneutToCanon n2 ],
                                                    [ { n1 with term = () } ; { n2 with term = () } ]) }) })
@@ -3270,25 +3301,25 @@ let getOpenConstraints () : pattcanon list RunCtx.Monad.m =
   in
 
   perform
-    
+
     is <-- inmonad ~statewrite:false (fun _ -> (!tempstate).rsmetaswithconstraints) ;
     c  <-- inmonad ~statewrite:false (fun _ -> List.map getConstraints_mutable (ISet.elements is)) ;
     cs <-- mapM fixConstraint (List.flatten c) ;
     return (List.filter_map id cs)
-    
+
 
 ;;
-    
+
 
 let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx.Monad.m =
 
-  let care_about n = 
+  let care_about n =
     not (isNameMeta n || String.starts_with n "_")
   in
-  
+
   (* TODO: meta handling is weird here, figure out proper way to do it *)
   let open RunCtx.Monad in
-  perform 
+  perform
     goal'     <-- intermlang (fun _ -> checkQuery goal) ;
     newmetas  <-- intermlang (fun _ ->
                                 let state = !termstate in
@@ -3315,14 +3346,16 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
     _ <-- mapM (uncurry nameUnify) nu ;
     let _ = if print then Printf.printf "\n%a\n" Pattneut.alphaSanitizedPrint goal'' in
 
-    _     <-- (perform
-                 _ <-- demand goal'';
-                 let _ = last_query_successful := Some true in
-                 return ()) //
-              (lazy(perform
-                       let _ = if print then Printf.printf "Impossible.\n\n" in
-                       let _ = last_query_successful := Some false in
-                       mzero)) ;
+    _     <-- ifte
+                (perform
+                   _ <-- demand goal'';
+                   let _ = last_query_successful := Some true in
+                   return ())
+                (fun _ -> return ())
+                (lazy(perform
+                         let _ = if print then Printf.printf "Impossible.\n\n" in
+                         let _ = last_query_successful := Some false in
+                         mzero)) ;
 
     state <-- getstate ;
     metas <-- mapM (fun (i, s, t) -> perform
@@ -3415,7 +3448,7 @@ let prolog_handler e =
    -----------------------------
  *)
 let globalprolog_do ?(failure = lazy(raise PrologError)) e =
-  
+
   let state = { !globalprologstate with rstermstate = !globalstate } in
   let ctx = { env = empty_run_env () ; state = state } in
   let (res, state') = prolog_handler (lazy(observe RunCtx.BaseMonad.return failure e ctx)) in
@@ -3439,9 +3472,7 @@ let global_query goal =
   globalprolog_do (* ~failure:impossibleGoal *)
     (perform
        goal <-- intermlang goal ;
-       (perform
-           _ <-- queryGoal ~print:true goal ;
-           return ()) // (lazy(return ())))
+       ifte (queryGoal ~print:true goal) (fun _ -> return ()) (lazy(return ())))
 ;;
 
 let global_trace b goal =

@@ -9,7 +9,9 @@ all_tests : testsuite.
 
 %use "small/systemf".
 
+%extend old.
 %use "big/testocaml".
+%end.
 
 %use "big/testveriml".
 

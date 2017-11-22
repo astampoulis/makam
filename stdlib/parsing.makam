@@ -105,10 +105,8 @@ rule : [A] peg A -> peg A -> prop.
 %end.
 
 parse P S Res when not(peg.builtin P) :-
-  refl.rules_get peg.rule Rules,
-  filter (pfun rule => [Premise Guard]
-    (eq rule (clause (peg.rule P _) Premise); eq rule (whenclause (peg.rule P _) Guard Premise)))
-  Rules Rules',
+  refl.rules_get_applicable (peg.rule P _) Rules,
+
   map (pfun rule res => [Def Loc LocS]
     if (eq rule (clause (peg.rule P Def) success)) then
       eq res Def
@@ -116,7 +114,7 @@ parse P S Res when not(peg.builtin P) :-
       (locget rule Loc, tostring Loc LocS, 
        print_string "\n-- Error at PEG definition rule at ", print_string LocS, print_string "\n",
        failure))
-  Rules' Defs,
+  Rules Defs,
   parse (choices Defs) S Res.
 
 parse : [A] peg A -> string -> (A * string) -> prop.
