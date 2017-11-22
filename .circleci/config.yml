@@ -14,7 +14,19 @@ jobs:
 
       - run: &tests
           name: Run Tests
-          command: opam config exec -- makam --run-tests all_tests
+          command: opam config exec make makam-tests
+
+      - run: &compile-js
+          name: Compile Makam.js
+          command: opam config exec make js
+
+      - run: &tests-js
+          name: Run Tests for Makam.js
+          command: |
+            curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            echo '%use "stdlib/parsing/tests". run_tests X ?' | node js/ | tee output | grep SUCCESSFUL
+            cat output
 
 workflows:
   version: 2
