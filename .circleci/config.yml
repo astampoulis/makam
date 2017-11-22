@@ -16,7 +16,7 @@ jobs:
 
       - run: &compile
           name: Install dependencies and compile Makam
-          command: opam pin add --yes .
+          command: opam pin add --yes . && opam upgrade makam
 
       - save_cache:
           key: v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
