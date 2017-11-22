@@ -3,6 +3,8 @@ all_tests : testsuite.
 
 %use "stdlib/tests".
 
+%use "stdlib/parsing/tests".
+
 %use "new/testocaml".
 
 %use "new/testcases_ocaml".

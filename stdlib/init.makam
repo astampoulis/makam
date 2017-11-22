@@ -26,3 +26,5 @@
 %use reify.
 
 %use vars.
+
+%import "parsing/peg" as peg.

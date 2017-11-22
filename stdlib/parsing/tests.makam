@@ -1,0 +1,88 @@
+%use peg.
+
+parsing : testsuite. %testsuite parsing.
+
+>> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
+>> Yes:
+>> S := "ih",
+>> Rest := "".
+
+>> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
+>> Yes:
+>> Res := ("a", "").
+
+>> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
+>> Yes:
+>> Res := ("a", "!").
+
+rep : peg A -> peg (list A).
+
+rule (rep P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+rule (rep P) (action []).
+
+>> parse (rep (exact "hi")) "hihi" Res ?
+>> Yes:
+>> Res := ([ "hi", "hi" ], "").
+
+repplus : peg A -> peg (list A).
+
+rule (repplus P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+
+whitespace : peg unit.
+rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
+
+>> parse (seq whitespace (action unit)) "   return " Res ?
+>> Yes:
+>> Res := (unit, "return ").
+
+token : peg A -> peg A.
+rule (token P) (seq (option whitespace) P).
+
+>> parse (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
+>> Yes:
+>> Res := ("true", " ").
+
+ident : type.
+ident : list string -> ident.
+
+ident : peg ident.
+identfirst, identrest : peg string.
+
+rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
+rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
+
+rule ident (bind identfirst (fun hd => bind (rep identrest) (fun tl => action (ident (hd :: tl))))).
+
+cterm : type.
+clam : ident -> cterm -> cterm.
+cvar : ident -> cterm.
+capp : cterm -> list cterm -> cterm.
+
+cterm, cterm0, cterm1, cterm2 : peg cterm.
+
+rule cterm cterm0.
+
+rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token (exact "."))
+                 (bind cterm0 (fun body => action (clam var body)))))).
+
+rule cterm0 cterm1.
+
+rule cterm1 (bind cterm2 (fun hd => bind (repplus (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
+
+rule cterm1 cterm2.
+
+rule cterm2 (bind (token ident) (fun var => action (cvar var))).
+
+rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
+
+>> parse cterm "λ x.x" Res ?
+>> Yes:
+>> Res := (clam (ident ["x"]) (cvar (ident ["x"])), "").
+
+>> parse cterm "λf.λg.λx.f (g x)" Res ?
+>> Yes:
+>> Res := ((clam (ident (cons "f" nil)) (clam (ident (cons "g" nil)) (clam (ident (cons "x" nil)) (capp (cvar (ident (cons "f" nil))) (cons (capp (cvar (ident (cons "g" nil))) (cons (cvar (ident (cons "x" nil))) nil)) nil))))), "").
+
+>> parse cterm "λ καλημέρα. κόσμε" Res ?
+>> Yes:
+>> Res := (clam (ident ["κ", "α", "λ", "η", "μ", "έ", "ρ", "α"]) (cvar (ident ["κ", "ό", "σ", "μ", "ε"])), "").
