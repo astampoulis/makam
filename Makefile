@@ -43,6 +43,11 @@ configure:
 makam-tests:
 	makam --run-tests all_tests
 
+makam-js-tests:
+	echo '%use "stdlib/parsing/tests". run_tests X ?' | node js/ | tee output | grep SUCCESSFUL
+	cat output
+	rm output
+
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))
 MAKAM_MARKDOWN_FILES=$(foreach file, $(shell find examples -name \*.md), --file $(file):/$(file))
@@ -57,4 +62,4 @@ md2makam:
 md2makam-watch:
 	while true; do inotifywait -e modify `git ls-files --cached --others */*.md` && find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk; done
 
-.PHONY: js md2makam md2makam-watch makam-tests
+.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests

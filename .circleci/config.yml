@@ -27,16 +27,15 @@ jobs:
           command: opam config exec make makam-tests
 
       - run: &compile-js
-          name: Compile Makam.js
-          command: opam config exec make js
+          name: Install Node.js and compile Makam.js
+          command:  |
+            opam config exec make js
+            curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
+            sudo apt-get install -y nodejs
 
       - run: &tests-js
           name: Run Tests for Makam.js
-          command: |
-            curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            echo '%use "stdlib/parsing/tests". run_tests X ?' | node js/ | tee output | grep SUCCESSFUL
-            cat output
+          command: make makam-js-tests
 
 workflows:
   version: 2
