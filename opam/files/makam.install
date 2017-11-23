@@ -31,4 +31,5 @@ share: [
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}
   "stdlib/vars.makam" {"stdlib/vars.makam"}
+  "stdlib/dyn_expansion.makam" {"stdlib/dyn_expansion.makam"}
 ]

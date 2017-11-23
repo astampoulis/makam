@@ -8,6 +8,7 @@ term : type.
 typ  : type.
 
 lam : (term -> term) -> term .
+lam : typ -> (term -> term) -> term.
 app : term -> term -> term .
 eunit : term .
 
@@ -18,6 +19,9 @@ typeof : term -> typ -> prop .
 typeof eunit tunit .
 
 typeof (lam E) (arrow T1 T2) <-
+  (x:term -> typeof x T1 -> typeof (E x) T2) .
+
+typeof (lam T1 E) (arrow T1 T2) <-
   (x:term -> typeof x T1 -> typeof (E x) T2) .
 
 typeof (app E1 E2) T2 <-

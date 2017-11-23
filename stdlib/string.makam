@@ -26,3 +26,42 @@ concat Strings Result <-
   ).
 
 %end.
+
+%extend builtin.
+tostring : [A]A -> string -> prop.
+tostring X S :- .tostring X S.
+
+print_string : string -> prop.
+print_string X :- .print_string X.
+%end.
+
+tostring, tostring_def : [A]A -> string -> prop.
+tostring X S :- if (tostring_def X S) then success else (builtin.tostring X S).
+
+print_string : [A]A -> prop.
+print_string (S : string) :- builtin.print_string S.
+
+
+expansion : type.
+expansion : list string -> expansion.
+
+%extend expansion.
+isconcrete : expansion -> prop.
+isconcrete E when not(refl.isunif E), eq E (expansion L), not(refl.isunif L) :-
+  map (pfun s => not(refl.isunif s)) L.
+%end.
+
+without_eqv_refl (_ : expansion).
+
+eqv (expansion A) (expansion B) when expansion.isconcrete (expansion A) :-
+  string.concat A A',
+  string.concat B A'.
+
+eqv (expansion A) (expansion B) when not(expansion.isconcrete (expansion A)), expansion.isconcrete (expansion B) :-
+  string.concat B B',
+  string.concat A B'.
+
+tostring_def (expansion X) S when expansion.isconcrete (expansion X) :-
+  string.concat X S.
+
+print_string (X : expansion) :- tostring X S, builtin.print_string S.
