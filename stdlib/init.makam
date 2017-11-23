@@ -6,7 +6,6 @@
 %use guard.
 
 %use list.
-%use string.
 
 %use demand.
 %use testing.
@@ -24,6 +23,8 @@
 
 %use morerefl.
 %use reify.
+
+%use string.
 
 %use vars.
 

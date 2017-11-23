@@ -131,6 +131,10 @@ baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
           / s:loced( ( token(["]) str:rep(strchar) ["] << str |> String.concat "" >> ) )
             << autospan_un mkString s >>
 
+          (* string expansions *)
+          / token("`") l:rep(expansion) nilspan:loced("`")
+            << mkTm "expansion" [ mkList nilspan l ] >>
+
           (* lists *)
           / token("[") es:repSEP(lexpr, ",") nilspan:ltoken("]")
             << mkList nilspan es >>
@@ -251,7 +255,15 @@ def       -> ids:repplusSEP(token(ident^), ",")  token(":") t:typ
 (* base/profiling versions *)
 
 prologcmd1 ->
-             d:defBM token(".") << fun () -> (
+             token("`(") p:hyp token(")") token(".")
+             << fun () -> (global_set_last_query None;
+                          if !_ONLY_TYPECHECK then
+                             (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
+                          else
+                             (Benchmark.cumulative "total staged commands"
+                                (lazy(Termlangrefl.global_staged_command p.content)))) >>
+
+           / d:defBM token(".") << fun () -> (
                 global_set_last_query None;
                 Benchmark.cumulative "total defs"
                 (lazy(List.iter (uncurry global_define) d))) >>
@@ -262,14 +274,6 @@ prologcmd1 ->
                                                  else
                                                   (Benchmark.cumulative "total clauses"
                                                     (lazy(Termlangprolog.global_new_clause c.content)))) >>
-           / token("`(") p:hyp token(")") token(".")
-             << fun () -> (global_set_last_query None;
-                          if !_ONLY_TYPECHECK then
-                             (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
-                          else
-                             (Benchmark.cumulative "total staged commands"
-                                (lazy(Termlangrefl.global_staged_command p.content)))) >>
-
            / p:hyp token("?") << fun () -> (global_set_last_query (Some p);
                                             if !_ONLY_TYPECHECK then
                                              (Benchmark.cumulative "total queries"
@@ -497,6 +501,16 @@ strchar ->  s:escapechar << Utils.unescape s >>
          / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
 str     -> token(["]) str:rep(strchar) ["] << str |> String.concat "" >>
 
+(* string expansions *)
+expansion_char ->
+    s:escapechar << Utils.unescape s >>
+  / s:"\\`"       << "`" >>
+  / s:"\\$"       << "$" >>
+  / !"`" !"$" c:.     << ([ c ] |> UString.implode) |> UString.to_string >>
+
+expansion ->
+   str:loced( (s:repplus(expansion_char) << s |> String.concat "" >>) ) << autospan_un mkString str >>
+ / "${" t:lexpr token("}") << t >>
 
 ocamlrevchar  -> !"<<" c:. << c >>
 ocamlrevtext  -> cs:repplus(ocamlrevchar) << (cs |> UString.implode) |> UString.to_string >>

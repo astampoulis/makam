@@ -224,4 +224,52 @@ let_in : term -> (term -> term) -> term.
 >> A := app (freevar "a") (freevar "b"),
 >> B := fun x => app x unit.
 
+
+(* ------------------- string *)
+
+>> string.concat [ "foo", "bar" ] X ?
+>> Yes:
+>> X := "foobar".
+
+>> string.concat [] X ?
+>> Yes:
+>> X := "".
+
+>> string.concat [ "foo", X ] "foobar" ?
+>> Yes:
+>> X := "bar".
+
+>> string.concat [ X, "bar" ] "foobar" ?
+>> Yes:
+>> X := "foo".
+
+>> string.concat [ X, "bar" ] "foobaz" ?
+>> Impossible.
+
+>> string.concat [ "fo", X, "ar" ] "foobar" ?
+>> Yes:
+>> X := "ob".
+
+>> string.concat [ F, "o", O, "b", A, "r", Z ] "foobar" ?
+>> Yes:
+>> F := "f",
+>> O := "o",
+>> A := "a",
+>> Z := "".
+
+>> eqv `hello${X}world!` `hello world!` ?
+>> Yes:
+>> X := " ".
+
+>> eqv `hello world!` `hello${X}world!` ?
+>> Yes:
+>> X := " ".
+
+>> eqv `hello ${"world"}!` `hello world!` ?
+>> Yes.
+
+>> ((pfun x => eqv `hello ${x}!` `hello world!`) X) ?
+>> Yes:
+>> X := "world".
+
 %end.

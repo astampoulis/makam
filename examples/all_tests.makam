@@ -5,6 +5,10 @@ all_tests : testsuite.
 
 %use "stdlib/parsing/tests".
 
+%extend dyn_expansion.
+%use "stdlib/dyn_expansion".
+%end.
+
 %use "new/testocaml".
 
 %use "new/testcases_ocaml".

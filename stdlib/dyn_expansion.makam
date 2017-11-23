@@ -1,0 +1,39 @@
+(* expansions that allow quotes of types other than `string`,
+   by using `tostring`. These are optional and not imported by default. *)
+
+dyn_expansion : type.
+dyn_expansion_list : type.
+expansion : dyn_expansion_list -> dyn_expansion.
+
+eval_dyn_expansion : dyn_expansion -> expansion -> prop.
+
+nil : dyn_expansion_list.
+cons : A -> dyn_expansion_list -> dyn_expansion_list.
+
+eval_dyn_expansion (expansion []) (expansion []).
+eval_dyn_expansion (expansion (X :: TL)) (expansion (HD :: TL')) when not(typ.eq X (Z : string)) :-
+  tostring X HD, eval_dyn_expansion (expansion TL) (expansion TL').
+
+cons : string -> dyn_expansion_list -> dyn_expansion_list.
+eval_dyn_expansion (expansion ((HD : string) :: TL)) (expansion (HD :: TL')) :-
+  eval_dyn_expansion (expansion TL) (expansion TL').
+
+without_eqv_refl (X : dyn_expansion).
+
+eqv A B :-
+  eval_dyn_expansion A A',
+  eval_dyn_expansion B B',
+  eqv A' B'.
+
+tostring_def (X: dyn_expansion) S :-
+  eval_dyn_expansion X X',
+  tostring X' S.
+
+print_string (X: dyn_expansion) :-
+  tostring X S, print_string S.
+
+dyn_expansion : testsuite. %testsuite dyn_expansion.
+
+>> tostring `${true} or ${false}` X ?
+>> Yes:
+>> X := "true or false".
