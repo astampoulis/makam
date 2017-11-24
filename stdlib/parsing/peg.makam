@@ -2,7 +2,7 @@
 
 peg : type -> type.
 
-bind : peg A -> (A -> peg B) -> peg B.
+bind : peg A -> string -> (A -> peg B) -> peg B.
 seq : peg A -> peg B -> peg B.
 action : B -> peg B.
 choices : list (peg A) -> peg A.
@@ -10,15 +10,14 @@ choices : list (peg A) -> peg A.
 anychar : peg string. 
 charclass : string -> peg string.
 exact : string -> peg string.
-neg : peg A -> peg A.
+neg : peg A -> peg unit.
 lookahead : peg A -> peg unit.
-option : peg A -> peg (option A).
 empty : peg unit.
 void : peg A.
 
 builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
 
-builtin (bind _ _).
+builtin (bind _ _ _).
 builtin (seq _ _).
 builtin (action _).
 builtin (choices _).
@@ -27,14 +26,13 @@ builtin (charclass _).
 builtin (exact _).
 builtin (neg _).
 builtin (lookahead _).
-builtin (option _).
 builtin (empty).
 builtin (void).
 
 parse : [A]peg A -> list string -> option (A * list string) -> prop.
 
 
-parse (bind PegA PegB) S Res :-
+parse (bind PegA _ PegB) S Res :-
   if (parse PegA S (some (A, S'))) then
      parse (PegB A) S' Res
   else
@@ -86,12 +84,6 @@ parse (lookahead P) S Res :-
   else
     eq Res none.
 
-parse (option P) S Res :-
-  if (parse P S (some (A, S'))) then
-    eq Res (some (some A, S'))
-  else
-    eq Res (some (none, S)).
-
 parse (empty) S (some (unit, S)).
 
 parse (void) S none.
@@ -99,7 +91,9 @@ parse (void) S none.
 
 rule : [A] peg A -> peg A -> prop.
 
-parse P S Res when not(builtin P) :-
+get_peg_definition : [A] peg A -> peg A -> prop.
+
+get_peg_definition P Res when not(builtin P) :-
   refl.rules_get_applicable (rule P _) Rules,
   map (pfun def res => [Def Loc LocS]
     if (eq def (clause (rule P Def) success)) then
@@ -109,7 +103,11 @@ parse P S Res when not(builtin P) :-
        print_string `\n-- Error at PEG definition rule at ${LocS}\n`,
        failure))
   Rules Defs,
-  parse (choices Defs) S Res.
+  eq Res (choices Defs).
+
+parse P S Res when not(builtin P) :-
+  get_peg_definition P P',
+  parse P' S Res.
 
 parse : [A] peg A -> string -> (A * string) -> prop.
 

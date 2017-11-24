@@ -2,22 +2,22 @@
 
 parsing : testsuite. %testsuite parsing.
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
+>> (parse (bind anychar "a" (fun a => bind anychar "b" (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
 >> Yes:
 >> S := "ih",
 >> Rest := "".
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
+>> parse (bind anychar "a" (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
 >> Yes:
 >> Res := ("a", "").
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
+>> parse (bind anychar "a" (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
 >> Yes:
 >> Res := ("a", "!").
 
 rep : peg A -> peg (list A).
 
-rule (rep P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+rule (rep P) (bind P "hd" (fun hd => bind (rep P) "tl" (fun tl => action (hd :: tl)))).
 rule (rep P) (action []).
 
 >> parse (rep (exact "hi")) "hihi" Res ?
@@ -26,7 +26,7 @@ rule (rep P) (action []).
 
 repplus : peg A -> peg (list A).
 
-rule (repplus P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+rule (repplus P) (bind P "hd" (fun hd => bind (rep P) "tl" (fun tl => action (hd :: tl)))).
 
 whitespace : peg unit.
 rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
@@ -34,6 +34,10 @@ rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
 >> parse (seq whitespace (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
+
+option : peg A -> peg (option A).
+rule (option P) (bind P "res" (fun res => action (some res))).
+rule (option P) (action none).
 
 token : peg A -> peg A.
 rule (token P) (seq (option whitespace) P).
@@ -51,7 +55,7 @@ identfirst, identrest : peg string.
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun hd => bind (rep identrest) (fun tl => action (ident (hd :: tl))))).
+rule ident (bind identfirst "hd" (fun hd => bind (rep identrest) "tl" (fun tl => action (ident (hd :: tl))))).
 
 cterm : type.
 clam : ident -> cterm -> cterm.
@@ -62,18 +66,18 @@ cterm, cterm0, cterm1, cterm2 : peg cterm.
 
 rule cterm cterm0.
 
-rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token (exact "."))
-                 (bind cterm0 (fun body => action (clam var body)))))).
+rule cterm0 (seq (token (exact "λ")) (bind (token ident) "var" (fun var => seq (token (exact "."))
+                 (bind cterm0 "body" (fun body => action (clam var body)))))).
 
 rule cterm0 cterm1.
 
-rule cterm1 (bind cterm2 (fun hd => bind (repplus (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
+rule cterm1 (bind cterm2 "hd" (fun hd => bind (repplus (seq whitespace cterm2)) "tl" (fun tl => action (capp hd tl)))).
 
 rule cterm1 cterm2.
 
-rule cterm2 (bind (token ident) (fun var => action (cvar var))).
+rule cterm2 (bind (token ident) "var" (fun var => action (cvar var))).
 
-rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
+rule cterm2 (seq (token (exact "(")) (bind cterm0 "t" (fun t => seq (token (exact ")")) (action t)))).
 
 >> parse cterm "λ x.x" Res ?
 >> Yes:

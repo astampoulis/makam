@@ -506,6 +506,7 @@ expansion_char ->
     s:escapechar << Utils.unescape s >>
   / s:"\\`"       << "`" >>
   / s:"\\$"       << "$" >>
+  / s:"$" &(!"{") << "$" >>
   / !"`" !"$" c:.     << ([ c ] |> UString.implode) |> UString.to_string >>
 
 expansion ->
