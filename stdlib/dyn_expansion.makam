@@ -25,15 +25,15 @@ eqv A B :-
   eval_dyn_expansion B B',
   eqv A' B'.
 
-tostring_def (X: dyn_expansion) S :-
+show_def (X: dyn_expansion) S :-
   eval_dyn_expansion X X',
-  tostring X' S.
+  show X' S.
 
 print_string (X: dyn_expansion) :-
   tostring X S, print_string S.
 
 dyn_expansion : testsuite. %testsuite dyn_expansion.
 
->> tostring `${true} or ${false}` X ?
+>> show `${true} or ${false}` X ?
 >> Yes:
 >> X := "true or false".

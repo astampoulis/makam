@@ -106,7 +106,7 @@ parse P S Res when not(builtin P) :-
       eq res Def
     else
       (locget def Loc, tostring Loc LocS, 
-       print_string "\n-- Error at PEG definition rule at ", print_string LocS, print_string "\n",
+       print_string `\n-- Error at PEG definition rule at ${LocS}\n`,
        failure))
   Rules Defs,
   parse (choices Defs) S Res.

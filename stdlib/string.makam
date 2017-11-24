@@ -2,16 +2,16 @@
 
 concat : list string -> string -> prop.
 
-concat_backwards : list string -> list (reified string) -> list string -> prop.
+concat_backwards : list string -> list string -> list string -> prop.
 
 concat_backwards [] [] [].
 
-concat_backwards Consume (reified.unifvar _ _ _ X :: Rest) Consume'' :-
+concat_backwards Consume (X :: Rest) Consume'' when refl.isunif X :-
   prefix Prefix Consume Consume',
   string.explode X Prefix,
   concat_backwards Consume' Rest Consume''.
 
-concat_backwards Consume (reified.const S :: Rest) Consume'' :-
+concat_backwards Consume (S :: Rest) Consume'' when refl.isconst S :-
   string.explode S SL,
   append SL Consume' Consume,
   concat_backwards Consume' Rest Consume''.
@@ -20,23 +20,21 @@ concat Strings Result <-
   if (refl.isunif Result) then
     foldl append "" Strings Result
   else (
-    map reify Strings StringsR,
     string.explode Result ResultL,
-    concat_backwards ResultL StringsR []
+    concat_backwards ResultL Strings []
   ).
 
 %end.
 
 %extend builtin.
-tostring : [A]A -> string -> prop.
-tostring X S :- .tostring X S.
-
 print_string : string -> prop.
 print_string X :- .print_string X.
 %end.
 
-tostring, tostring_def : [A]A -> string -> prop.
-tostring X S :- if (tostring_def X S) then success else (builtin.tostring X S).
+show, show_def : [A]A -> string -> prop.
+show X S :- if (show_def X S) then success else (tostring X S).
+
+show_def (X: string) X.
 
 print_string : [A]A -> prop.
 print_string (S : string) :- builtin.print_string S.
@@ -61,7 +59,7 @@ eqv (expansion A) (expansion B) when not(expansion.isconcrete (expansion A)), ex
   string.concat B B',
   string.concat A B'.
 
-tostring_def (expansion X) S when expansion.isconcrete (expansion X) :-
+show_def (expansion X) S when expansion.isconcrete (expansion X) :-
   string.concat X S.
 
-print_string (X : expansion) :- tostring X S, builtin.print_string S.
+print_string (X : expansion) when show X S :- builtin.print_string S.
