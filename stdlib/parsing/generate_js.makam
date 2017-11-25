@@ -101,6 +101,9 @@ quote_term_js : [A]reified A -> string -> prop.
 
 quote_terms_js : [A B]reified_args A B -> string -> prop.
 
+quote_terms_js X Result
+  when refl.isunif X, locget X X_Loc, tostring X_Loc LocS, print_string `At ${LocS}, uninstantiated reified arguments.\n`.
+
 quote_terms_js [] "".
 quote_terms_js (Head :: Tail) Result :-
   quote_term_js Head HeadS,
@@ -123,7 +126,6 @@ quote_term_js (reified.const (I : int)) I_js :-
 (* here we need to antiquote the result of `P` *)
 quote_term_js (reified.nvar P []) Result :-
   quote_parse_res_js P PRes,
-  quote_terms_js Args ArgsS,
   expansion.str `(\${${PRes}})` Result.
 
 quote_var_js : [A]A -> string -> prop.
@@ -148,7 +150,7 @@ quote_term_js (reified.lambda (F : A -> B)) Result :-
 
 gen_parse_js (action X) Input Offset DictName Dict Dict Result :-
   reify X X_Reified,
-  debug(withall (quote_term_js X_Reified X_js) (success)),
+  quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
 
 

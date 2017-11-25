@@ -42,7 +42,7 @@ lambda : (A -> reified B) -> reified (A -> B).
 isbvar : [A]A -> prop.
 %end.
 
-reify : [A]A -> reified A -> prop.
+reify, reify1, reify2, reify3, reify4, reify5, reify6 : [A]A -> reified A -> prop.
 reify_args : [A B]args A B -> reified_args A B -> prop.
 reify_var : [A]A -> reified A -> prop.
 
@@ -52,30 +52,50 @@ reify X (reified.unifvar I SubstR Metalevel X) when refl.isunif(X) :-
   dyn.to_args SubstDyn Subst,
   reify_args Subst SubstR.
 
-reify X (reified.term Head ArgsR)
-    when refl.headargs X Head ArgsDyn, refl.isbaseterm X,
-         not(refl.isbvar Head), not(refl.isnvar Head) :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
+reify X Y when not(refl.isunif X) :- reify1 X Y.
 
-reify X (reified.const X) when refl.isconst X.
+reify1 X R :-
+  if (reify_var X Y) then (eq R Y) else reify2 X R.
 
-reify (X : A -> B) (reified.lambda X_R) when not(reify_var X _) :-
+reify2 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isbvar Head) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.bvar Head ArgsR))
+  else reify3 X R.
+
+reify3 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isnvar Head) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.nvar Head ArgsR))
+  else reify4 X R.
+
+reify4 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isbaseterm X) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.term Head ArgsR))
+  else reify5 X R.
+
+reify5 X R :-
+  if (refl.isconst X) then
+    (eq R (reified.const X))
+  else reify6 X R.
+
+reify6 (X : A -> B) (reified.lambda X_R) :-
   (x:A -> refl.isbvar x -> reify_var x (reified.bvar x []) -> ([Body]
    reify (X x) Body, eq Body (X_R x))).
 
-reify X Y when not(refl.isunif X), reify_var X Y.
-
-reify X (reified.bvar Head ArgsR) when refl.headargs X Head ArgsDyn, refl.isbvar Head :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
-
-reify X (reified.nvar Head ArgsR) when refl.headargs X Head ArgsDyn, not(refl.isbvar Head), refl.isnvar Head :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
+reify_args X _ when refl.isunif X, locget X Loc, tostring Loc S,
+       print_string `At ${S}, reify_args with uninstantiated variable.\n`, failure.
 
 reify_args [] [].
 reify_args (HD :: TL) (HD_R :: TL_R) :- reify HD HD_R, reify_args TL TL_R.
 
 reflect : [A]reified A -> A -> prop.
 reflect : [A B]reified_args A B -> args A B -> prop.
+
+reflect X _
+  when refl.isunif X, locget X Loc, tostring Loc S,
+       print_string `At ${S}, reflect with uninstantiated variable.\n`, failure.
 
 reflect (reified.unifvar I SubstR _ X) Z :-
   reflect SubstR Subst, dyn.from_args Subst SubstDyn, refl.recomposeunif X SubstDyn Z.
