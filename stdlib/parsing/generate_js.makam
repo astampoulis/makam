@@ -317,17 +317,12 @@ eval_parser_js Function_js Input Result :-
   js.eval FinalCode ResultS,
   fromstring ResultS (some Result).
 
-cached_prop, actual_cached_prop : [A](A -> prop) -> A -> prop.
-cached_prop P Res :-
-  if (actual_cached_prop P Res) then success else P Res.
-
-cache_prop : (A -> prop) -> cmd -> prop.
-cache_prop P (cmd_newclause (clause (actual_cached_prop P Result) success)) :-
-  P Result.
+cached_toplevel_parser_js : [A] peg A -> string -> prop.
 
 def_parser_js : [A]peg A -> cmd -> prop.
-def_parser_js P Cmd :- cache_prop (gen_toplevel_parser_js P) Cmd.
+def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js P Code) success)) :-
+  gen_toplevel_parser_js P Code.
 
 parse_opt P Input Result :-
-  cached_prop (gen_toplevel_parser_js P) Function_js,
+  if (cached_toplevel_parser_js P Function_js) then success else gen_toplevel_parser_js P Function_js,
   eval_parser_js Function_js Input Result.
