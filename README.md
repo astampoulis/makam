@@ -25,13 +25,36 @@ To read more about Makam, visit my homepage:
 <http://astampoulis.github.io/>
 
 
-### Build instructions
+### Installation
+
+#### Dependencies
+
+- [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
+- `opam switch 4.04.2`
+- [Node.js](https://nodejs.org/en/download/)
+- `opam pin add makam .`
+- `make`
+
+#### Instructions
 
 You first need to install OPAM, the OCaml Package Manager. Instructions are available at:
 
 <http://opam.ocaml.org/doc/Quick_Install.html>
 
-We have been testing using the OCaml 4.02.0 configuration.
+We have been testing using the OCaml 4.04.2 configuration.
+
+You will also need Node.js, which is used for optimized parser generation. Instructions are
+available at:
+
+<https://nodejs.org/en/download/>
+
+Most recent versions of Node.js should work. If you want to run `makam.js` (the
+compiled-to-Javascript version of Makam, using `js_of_ocaml`), a version that supports tail-call
+optimization is needed -- the latest such version is `7.10.1`.
+If you have a different version of `node`, you can install a Node version manager
+like `n` and then switch to this version:
+
+    npm install -g n && n 7.10.1
 
 After you have OPAM installed, you can install Makam:
 
@@ -52,11 +75,19 @@ is useful as a reference point, since there's no tutorial yet:
 
 Look in the `examples` directory.
 
-### Upgrading Makam
-
 It is recommended that you upgrade Makam frequently. OPAM can be used for that:
 
     opam upgrade makam
+
+Alternatively, you can clone the repository and run:
+
+    opam pin add makam .
+
+to install dependencies and
+
+    make
+
+to compile Makam.
 
 ### How to use Makam
 
