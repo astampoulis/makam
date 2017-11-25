@@ -5,6 +5,7 @@ open Termlangcanon;;
 open Termlangprolog;;
 open Termlangext;;
 open Termlangrefl;;
+open Termlangparse;;
 
 let version = Version.version;;
 
@@ -18,6 +19,32 @@ let meta_print_exception : (exn -> unit) ref =
 let _ =
   Benchmark.precise_clock := (fun () -> (Mtime.Span.to_ns (Mtime_clock.elapsed ()) *. 1e-9) -. !Benchmark.pausedtimeelapsed)
 ;;
+
+(* JavaScript support. Requires node; sessions are not persistent. *)
+
+let jseval s =
+  let (inp, outp) = Unix.open_process "node" in
+  BatInnerIO.nwrite outp ("const result = " ^ s ^ "; console.log('>>>>>' + result + '<<<<<');");
+  BatInnerIO.close_out outp;
+  let res = BatInnerIO.read_all inp in
+  BatInnerIO.close_in inp;
+  let (_, suffix) = String.split res ">>>>>" in
+  let (result, _) = String.split suffix "<<<<<" in
+  result
+;;
+
+builtin_enter_module "js" ;;
+
+  new_builtin_predicate "eval" ( _tString **> _tString **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ script ; output ] -> begin perform
+         script <-- chasePattcanon [] script ;
+         script <-- _PtoString script ;
+         pattcanonUnifyFull output (_PofString (jseval script) ~loc:output.loc)
+    end | _ -> assert false)
+  ;;
+
+builtin_leave_module () ;;
 
 (* Backtracking for ProofGeneral *)
 

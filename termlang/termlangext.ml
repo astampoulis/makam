@@ -31,7 +31,7 @@ let new_builtin_predicate_from_functions s t fs =
   new_builtin_predicate s t
   (fun _ -> fun args -> perform
     args' <-- mapM (chasePattcanon ~deep:true []) args ;
-    let f, args, meta = 
+    let f, args, meta =
       let n = List.length args' in
       try
         let (prev, meta, next), i = ExtList.find_partition_index isMeta args' in
@@ -54,7 +54,7 @@ let _PofInt ?(loc = None) i : pattcanon = pattcanonInt i ~loc:loc ;;
 
 let _PtoList  (xs : pattcanon) : pattcanon list RunCtx.Monad.m =
   let open RunCtx.Monad in
-  let rec aux s acc = 
+  let rec aux s acc =
     perform
     s <-- chasePattcanon [] s ;
     match s.term with
@@ -72,8 +72,8 @@ let _PofList ?(loc = None) (t : typ) (xs : pattcanon list) : pattcanon =
                           extra = PattExtras.empty () } |> pattheadToCanon
   in
   let conshead : patthead = { term = `Var( `Concrete("cons"), (`Free, _eiCons) ) ; classifier = t **> _tList t **> _tList t ; loc = loc ; extra = PattExtras.empty () } in
-  let cons hd tl : pattcanon = 
-    let neut = 
+  let cons hd tl : pattcanon =
+    let neut =
       { classifier = _tList t ; loc = loc ;
         term = `AppMany( conshead, [ hd ; tl ], [ _tList t **> _tList t |> _totypinfo ; _tList t |> _totypinfo ] ) ;
         extra = PattExtras.empty () }
@@ -106,7 +106,7 @@ let _PofBool ?(loc = None) (x : bool) : pattcanon =
   if x then ptrue else pfals
 ;;
 
-let _PtoDyn (d : pattcanon) (t : typ) : pattcanon RunCtx.Monad.m = 
+let _PtoDyn (d : pattcanon) (t : typ) : pattcanon RunCtx.Monad.m =
   let open RunCtx.Monad in
   match d.term with
       `LamMany([], { term = `AppMany( { term = `Var(_, (`Free, idx)) }, [ term ], _) }) when idx = _eiDyn ->
@@ -131,13 +131,13 @@ let _PofDyn ?(loc = None) (x : pattcanon) : pattcanon =
   in
   dyn x
 ;;
-    
+
 (* ---------
    Integers.
    --------- *)
 new_builtin_predicate_from_functions "plus" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
   let open RunCtx.Monad in
-  let convertfunc f [ i1 ; i2 ] = 
+  let convertfunc f [ i1 ; i2 ] =
     perform
       i1' <-- _PtoInt i1 ;
       i2' <-- _PtoInt i2 ;
@@ -156,12 +156,12 @@ end;;
 
 new_builtin_predicate_from_functions "mult" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
   let open RunCtx.Monad in
-  let convertfunc f [ i1 ; i2 ] = 
+  let convertfunc f [ i1 ; i2 ] =
     perform
       i1' <-- _PtoInt i1 ;
       i2' <-- _PtoInt i2 ;
       let res = try Some (f i1' i2') with _ -> None in
-      match res with 
+      match res with
           Some i -> return (_PofInt i ~loc:i1.loc)
         | None -> mzero
   in
@@ -187,18 +187,18 @@ new_builtin_predicate "lessthan" ( _tInt **> _tInt **> _tBool **> _tProp ) begin
             i1'' <-- _PtoInt i1' ;
             i2'' <-- _PtoInt i2' ;
             pattcanonUnifyFull res (_PofBool (i1'' < i2'') ~loc:i1.loc)))
-  
+
 end;;
-    
+
 (* ---------
-   Strings. 
+   Strings.
    --------- *)
 
 builtin_enter_module "string" ;;
 
 new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
-  let convertfunc f [ s1 ; s2 ] = 
+  let convertfunc f [ s1 ; s2 ] =
     perform
       s1' <-- _PtoString s1 ;
       s2' <-- _PtoString s2 ;
@@ -227,7 +227,7 @@ new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tStri
     convertfunc (fun strHD strTL -> Some (strHD ^ strTL)) ]
 end
 ;;
-      
+
 new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **> _tProp) begin
   let open RunCtx.Monad in
   [ (function [ ls ] ->
@@ -290,9 +290,9 @@ builtin_leave_module ();;
 
 
 (* --------------
-   Character classes. 
+   Character classes.
    -------------- *)
-let _ = 
+let _ =
   let new_char_class s f =
     (let open RunCtx.Monad in
     let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
@@ -463,4 +463,3 @@ new_builtin_predicate "locset" ( ~* "A" **> _tLoc **> ~* "A" **> _tProp)
       in
       pattcanonUnifyFull res which')
 ;;
-

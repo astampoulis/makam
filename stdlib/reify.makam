@@ -97,9 +97,18 @@ reflect (reified.lambda X_R) X :-
 reflect [] [].
 reflect (HD_R :: TL_R) (HD :: TL) :- reflect HD_R HD, reflect TL_R TL.
 
-eq_nounif : [A]A -> A -> prop.
+
 (* TODO: something (other than the bvar situation) is introducing multiple cases into reify, figure it out. *)
-eq_nounif A B :- once(reify A Areified), once(reify B Breified), eq Areified Breified.
+%extend full_reify.
+reify : [A]A -> reified A -> prop.
+reify X Y :- .reify X Y.
+%end.
+
+reify : [A]A -> reified A -> prop.
+reify X Y :- once(full_reify.reify X Y).
+
+eq_nounif : [A]A -> A -> prop.
+eq_nounif A B :- reify A Areified, reify B Breified, eq Areified Breified.
 
 
 eqv_aux : [A]reified A -> reified A -> (prop -> prop) -> (prop -> prop) -> prop.
@@ -149,7 +158,7 @@ eqv (X: reified A) (Y: reified A) :-
 
 
 unif_alpha_eqv : [A]A -> A -> prop.
-unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
+unif_alpha_eqv X Y :- reify X XR, reify Y YR, eqv XR YR.
 
 
 
@@ -157,7 +166,7 @@ unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
 pattern_match : [A]A -> A -> prop.
 pmatch_aux : [A]reified A -> reified A -> prop.
 
-pattern_match A B :- once(reify A AR), once(reify B BR), pmatch_aux AR BR.
+pattern_match A B :- reify A AR, reify B BR, pmatch_aux AR BR.
 
 
 pmatch_aux (reified.unifvar _ _ _ L) R :- reflect R R', eq L R'.

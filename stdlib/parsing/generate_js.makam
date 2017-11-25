@@ -18,20 +18,24 @@ quote_string_js S Res :- tostring S Res.
 
 gen_parse_js anychar Input Offset DictName Dict Dict Result :-
   expansion.str
-  `(${Offset} < ${Input}.length ? ${Input}[${Offset}++] : null)`
+  `(${Offset} < ${Input}.length
+   ? JSON.stringify(${Input}[${Offset}++])
+   : null)`
   Result.
 
 gen_parse_js (charclass S) Input Offset DictName Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
-  `((${Offset} < ${Input}.length && ${S_js}.includes(${Input}[${Offset}])) ? ${Input}[${Offset}++] : null)`
+  `((${Offset} < ${Input}.length && ${S_js}.includes(${Input}[${Offset}]))
+    ? JSON.stringify(${Input}[${Offset}++])
+    : null)`
   Result.
 
 gen_parse_js (exact S) Input Offset DictName Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
   `(${Input}.startsWith(${S_js}, ${Offset})
-     ? (${Offset} += ${S_js}.length, ${S_js})
+     ? (${Offset} += ${S_js}.length, JSON.stringify(${S_js}))
      : null)`
   Result.
 
@@ -69,7 +73,7 @@ gen_parse_js (bind (P : peg A) Name (F : A -> peg B)) Input Offset DictName Dict
   expansion.str
   `(function() {
      const ${Name} = ${Code};
-     return ${Code'};
+     return (${Name} === null ? null : ${Code'});
    })()`
   Result.
 
@@ -77,7 +81,7 @@ gen_parse_js (seq A B) Input Offset DictName Dict Dict'' Result :-
   gen_parse_js A Input Offset DictName Dict Dict' CodeA,
   gen_parse_js B Input Offset DictName Dict' Dict'' CodeB,
   expansion.str
-  `(${CodeA}, ${CodeB})`
+  `(${CodeA} === null ? null : ${CodeB})`
   Result.
 
 gen_parse_js (choices []) Input Offset DictName Dict Dict "null".
@@ -120,7 +124,7 @@ quote_term_js (reified.const (I : int)) I_js :-
 quote_term_js (reified.nvar P []) Result :-
   quote_parse_res_js P PRes,
   quote_terms_js Args ArgsS,
-  expansion.str `(\${JSON.stringify(${PRes})})` Result.
+  expansion.str `(\${${PRes}})` Result.
 
 quote_var_js : [A]A -> string -> prop.
 latest_quote_var_js : int -> prop.
@@ -133,7 +137,7 @@ quote_term_js (reified.bvar X Args) Result :-
   expansion.str `(${Var}${ArgsS})` Result.
 
 quote_term_js (reified.lambda (F : A -> B)) Result :-
-  latest_quote_var_js I,
+  once(latest_quote_var_js I),
   tostring I VarI,
   expansion.str `x_${VarI}` Var,
   plus I 1 I',
@@ -144,7 +148,7 @@ quote_term_js (reified.lambda (F : A -> B)) Result :-
 
 gen_parse_js (action X) Input Offset DictName Dict Dict Result :-
   reify X X_Reified,
-  quote_term_js X_Reified X_js,
+  debug(withall (quote_term_js X_Reified X_js) (success)),
   expansion.str `\`${X_js}\`` Result.
 
 
@@ -153,7 +157,8 @@ quote_peg_js : [A]peg A -> string -> prop.
 quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 
 gen_parse_js P Input Offset DictName Dict DictRes Result
-  when not(builtin P), quote_peg_js P Key :-
+  when not(builtin P) :-
+  quote_peg_js P Key,
   if (map.find Dict Key _)
   then (eq DictRes Dict)
   else (
@@ -192,13 +197,6 @@ gen_parse_dictionary_js Map Result :-
   }` Result.
 
 
-(*
-%extend js.
-eval : string -> string -> prop.
-eval S S.
-%end.
-*)
-
 parse_opt : [A]peg A -> string -> string -> prop.
 parse_opt P Input Result :-
   gen_parse_js P "input" "offset" "parsers" [] Dict Code,
@@ -212,7 +210,7 @@ parse_opt P Input Result :-
       if (result === null) {
         return "none";
       } else {
-        return \`some((\${result}), \${JSON.stringify(input.substr(offset))})\`;
+        return \`some ( (\${result}), \${JSON.stringify(input.substr(offset))} )\`;
       }
    })(${Input_js}, 0);`
    FinalCode,
@@ -223,7 +221,7 @@ parse_opt P Input Result :-
 (parse_opt (bind anychar "a" (fun a => bind anychar "b" (fun b => action `${b}${a}`))) "hi" _Res, print_string _Res) ?
 
 testit : peg A -> string -> prop.
-testit P Input :- parse_opt P Input Res, print_string Res.
+testit P Input :- {prop|(parse_opt P Input Res, print_string Res, eq "-------gonna fail----" X, fromstring Res X, print X)|}.
 
 rep : peg A -> peg (list A).
 
