@@ -8,15 +8,15 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache: &restore-cache
-          keys:
-            - v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
-            - v1-opam-4.04.2-{{ .Branch }}
-            - v1-opam-4.04.2
+      # - restore_cache: &restore-cache
+      #     keys:
+      #       - v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
+      #       - v1-opam-4.04.2-{{ .Branch }}
+      #       - v1-opam-4.04.2
 
       - run: &compile
           name: Install dependencies and compile Makam
-          command: opam pin add --yes . && opam install makam
+          command: opam pin add --yes .
 
       - run: &install-node
           name: Install Node.js
@@ -24,9 +24,9 @@ jobs:
             curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
             sudo apt-get install -y nodejs
 
-      - save_cache:
-          key: v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
-          paths: ~/.opam
+      # - save_cache:
+      #     key: v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
+      #     paths: ~/.opam
 
       - run: &tests
           name: Run Tests
