@@ -16,7 +16,7 @@ jobs:
 
       - run: &compile
           name: Install dependencies and compile Makam
-          command: opam pin add --yes . && opam upgrade makam
+          command: opam pin add --yes . && opam install makam
 
       - run: &install-node
           name: Install Node.js
@@ -33,9 +33,8 @@ jobs:
           command: opam config exec make makam-tests
 
       - run: &compile-js
-          name: Install Node.js and compile Makam.js
-          command:  |
-            opam config exec make js
+          name: Compile Makam.js
+          command: opam config exec make js
 
       - run: &tests-js
           name: Run Tests for Makam.js
