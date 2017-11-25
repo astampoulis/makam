@@ -16,41 +16,31 @@ quote_string_js S Res :- tostring S Res.
 
 gen_parse_js anychar Dict Dict Result :-
   expansion.str
-  `(function(){
-    if (offset < input.length) {
-      const result = JSON.stringify(input[offset]);
-      offset++;
-      return result;
-    } else return null;})()`
+  `(offset < input.length
+     ? (JSON.stringify(input[offset++]))
+     : null)`
   Result.
 
 gen_parse_js (charclass S) Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
-  `(function(){
-   if (offset < input.length && ${S_js}.includes(input[offset])) {
-      const result = JSON.stringify(input[offset]);
-      offset++;
-      return result;
-    } else return null;})()`
+  `((offset < input.length && ${S_js}.includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null)`
   Result.
 
 gen_parse_js (exact S) Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
-  `(function(){
-   if (input.startsWith(${S_js}, offset)) {
-      const result = JSON.stringify(${S_js});
-      offset += ${S_js}.length;
-      return result;
-    } else return null;})()
-  `
+  `(input.startsWith(${S_js}, offset)
+    ? (offset += ${S_js}.length, JSON.stringify(${S_js}))
+    : null)`
   Result.
 
 gen_parse_js (neg P) Dict Dict' Result :-
   gen_parse_js P Dict Dict' Code,
   expansion.str
-  `(function () {
+  `(function*() {
      const keepOffset = offset;
      const result = ${Code};
      offset = keepOffset;
@@ -61,12 +51,12 @@ gen_parse_js (neg P) Dict Dict' Result :-
 gen_parse_js (lookahead P) Dict Dict' Result :-
   gen_parse_js P Dict Dict' Code,
   expansion.str
-  `(function () {
+  `(yield* (function*() {
      const keepOffset = offset;
      const result = ${Code};
      offset = keepOffset;
      return (result === null ? null : "unit");
-  })()`
+  })())`
   Result.
 
 gen_parse_js empty Dict Dict Result :-
@@ -90,7 +80,7 @@ gen_parse_js (bind (P : peg A) (F : A -> peg B)) Dict Dict'' Result :-
   (a:A -> quote_parse_res_js a Name -> latest_parse_res_js I' ->
    gen_parse_js (F a) Dict' Dict'' Code'),
   expansion.str
-  `(function() {
+  `(yield* (function*() {
      const keepOffset = offset;
      const ${Name} = ${Code};
      if (${Name} === null) {
@@ -103,14 +93,14 @@ gen_parse_js (bind (P : peg A) (F : A -> peg B)) Dict Dict'' Result :-
          return null;
        } else return result;
      }
-   })()`
+   })())`
   Result.
 
 gen_parse_js (seq A B) Dict Dict'' Result :-
   gen_parse_js A Dict Dict' CodeA,
   gen_parse_js B Dict' Dict'' CodeB,
   expansion.str
-  `(function() {
+  `(yield* (function*() {
      const keepOffset = offset;
      const result = ${CodeA};
      if (result === null) {
@@ -123,7 +113,7 @@ gen_parse_js (seq A B) Dict Dict'' Result :-
          return null;
        } else return result;
      }
-   })()`
+   })())`
   Result.
 
 gen_parse_js (choices PS) Dict Dict' Result :-
@@ -140,12 +130,12 @@ gen_parse_js (choices PS) Dict Dict' Result :-
      }`
     CodeNext) (Dict, "") PS (Dict', Blocks),
   expansion.str
-  `(function () {
+  `(yield* (function*() {
      const keepOffset = offset;
      ${Blocks}
      offset = keepOffset;
      return null;
-   })()`
+   })())`
   Result.
 
 quote_term_js : [A]reified A -> string -> prop.
@@ -221,7 +211,7 @@ gen_parse_js P Dict DictRes Result
     eq Dict' ((Key, Expr) :: Dict),
     gen_parse_js P' Dict' DictRes Code,
     expansion.str
-    `(function() {
+    `(function*() {
       const historyEntry = \`${Key}:\${offset}\`;
       const keepOffset = offset;
       if (history.includes(historyEntry)) {
@@ -243,7 +233,7 @@ gen_parse_js P Dict DictRes Result
      Expr
   ),
   expansion.str 
-  `parsers[${Key_js}]()`
+  `yield ${Key_js}`
   Result.
 
 gen_dictionary_js_aux : map string string -> string -> prop.
@@ -280,11 +270,27 @@ gen_toplevel_parser_js P Function_js :-
       const parsers = ${Dict_js};
       const memoize = ${MemoizeDict_js};
       let history = [];
-      const result = ${Code};
-      if (result === null) {
+      const firstGen = (function*() { return ${Code}; })();
+      const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];
+      let lastRes;
+      while (recurseOrResult.length > 0) {
+        const { gen: genTop, val: valTop } = recurseOrResult[recurseOrResult.length-1];
+        if (valTop.done) {
+          lastRes = valTop.value;
+          recurseOrResult.pop();
+          if (recurseOrResult.length > 0) {
+            const { gen, val } = recurseOrResult[recurseOrResult.length - 1];
+            recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
+          }
+        } else {
+          const nextGen = parsers[valTop.value]();
+          recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
+        }
+      }
+      if (lastRes === null) {
         return "none";
       } else {
-        return \`some ( (\${result}), \${JSON.stringify(input.substr(offset))} )\`;
+        return \`some ( (\${lastRes}), \${JSON.stringify(input.substr(offset))} )\`;
       }
    })`
    Function_js.
@@ -297,12 +303,17 @@ eval_parser_js Function_js Input Result :-
   js.eval FinalCode ResultS,
   fromstring ResultS (some Result).
 
-cached_parser_js : [A]peg A -> string -> prop.
+cached_prop, actual_cached_prop : [A](A -> prop) -> A -> prop.
+cached_prop P Res :-
+  if (actual_cached_prop P Res) then success else P Res.
 
-def_parser_js : peg A -> cmd -> prop.
-def_parser_js P (cmd_newclause (clause (cached_parser_js P Code) success)) :-
-  gen_toplevel_parser_js P Code.
+cache_prop : (A -> prop) -> cmd -> prop.
+cache_prop P (cmd_newclause (clause (actual_cached_prop P Result) success)) :-
+  P Result.
+
+def_parser_js : [A]peg A -> cmd -> prop.
+def_parser_js P Cmd :- cache_prop (gen_toplevel_parser_js P) Cmd.
 
 parse_opt P Input Result :-
-  if (cached_parser_js P Function_js) then success else (gen_toplevel_parser_js P Function_js),
+  cached_prop (gen_toplevel_parser_js P) Function_js,
   eval_parser_js Function_js Input Result.
