@@ -45,6 +45,24 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "open_constraints" ( ~* "A" **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ term ] -> begin perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+
+         (* deconstruct *)
+         | `LamMany([], { term = `Meta(_, idx, _, _) }) ->
+            perform
+              state  <-- getstate ;
+              moneOrMzero (Termlangcanon.ISet.mem idx state.rsmetaswithconstraints)
+
+         | _ -> mzero
+
+    end | _ -> assert false)
+  ;;
+
   new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
     (let open RunCtx.Monad in
      fun _ -> function [ patt ; res ] -> begin perform
