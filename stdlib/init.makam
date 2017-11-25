@@ -27,4 +27,6 @@
 
 %use vars.
 
-%import "parsing/peg" as peg.
+%extend peg.
+%use "parsing/init".
+%end.

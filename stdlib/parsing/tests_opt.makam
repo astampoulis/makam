@@ -2,11 +2,11 @@
 
 parsing : testsuite. %testsuite parsing.
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
+>> parse_opt (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
 >> Yes:
 >> Res := ("a", "").
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
+>> parse_opt (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
 >> Yes:
 >> Res := ("a", "!").
 
@@ -15,7 +15,7 @@ rep : peg A -> peg (list A).
 rule (rep P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
 rule (rep P) (action []).
 
->> parse (rep (exact "hi")) "hihi" Res ?
+>> parse_opt (rep (exact "hi")) "hihi" Res ?
 >> Yes:
 >> Res := ([ "hi", "hi" ], "").
 
@@ -26,7 +26,7 @@ rule (repplus P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl))))
 whitespace : peg unit.
 rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
 
->> parse (seq whitespace (action unit)) "   return " Res ?
+>> parse_opt (seq whitespace (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
 
@@ -37,7 +37,7 @@ rule (option P) (action none).
 token : peg A -> peg A.
 rule (token P) (seq (option whitespace) P).
 
->> parse (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
+>> parse_opt (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
 >> Yes:
 >> Res := ("true", " ").
 
@@ -74,40 +74,40 @@ rule cterm2 (bind (token ident) (fun var => action (cvar var))).
 
 rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
 
->> parse cterm "λ x.x" Res ?
+>> parse_opt cterm "λ x.x" Res ?
 >> Yes:
 >> Res := (clam (ident ["x"]) (cvar (ident ["x"])), "").
 
->> parse cterm "λf.λg.λx.f (g x)" Res ?
+>> parse_opt cterm "λf.λg.λx.f (g x)" Res ?
 >> Yes:
 >> Res := ((clam (ident (cons "f" nil)) (clam (ident (cons "g" nil)) (clam (ident (cons "x" nil)) (capp (cvar (ident (cons "f" nil))) (cons (capp (cvar (ident (cons "g" nil))) (cons (cvar (ident (cons "x" nil))) nil)) nil))))), "").
 
->> parse ident "kalimera" Res ?
+>> parse_opt ident "kalimera" Res ?
 >> Yes:
 >> Res := (ident ["k", "a", "l", "i", "m", "e", "r", "a"], "").
 
->> parse cterm "λ καλημέρα. κόσμε" Res ?
+>> parse_opt cterm "λ καλημέρα. κόσμε" Res ?
 >> Yes:
 >> Res := (clam (ident ["κ", "α", "λ", "η", "μ", "έ", "ρ", "α"]) (cvar (ident ["κ", "ό", "σ", "μ", "ε"])), "").
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
+>> (parse_opt (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
 >> Yes:
 >> S := "ih",
 >> Rest := "".
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (`${b}${a}`)))) "hi" (Exp, Rest), expansion.str Exp S) ?
+>> (parse_opt (bind anychar (fun a => bind anychar (fun b => action (`${b}${a}`)))) "hi" (Exp, Rest), expansion.str Exp S) ?
 >> Yes:
 >> S := "ih",
 >> Rest := "".
 
->> parse (action (fun (x: string) => x)) "" (X, _) ?
+>> parse_opt (action (fun (x: string) => x)) "" (X, _) ?
 >> Yes:
 >> X := (fun (x: string) => x).
 
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
 
->> parse (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
+>> parse_opt (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
 >> Yes:
 >> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))).
 

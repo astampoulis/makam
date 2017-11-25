@@ -415,6 +415,33 @@ builtin_enter_module "refl" ;;
 
   ;;
 
+  exception TypStringUninstantiatedTMetas;;
+  new_builtin_predicate "typstring" ( ( ~* "A" ) **> _tString **> _tProp)
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     state <-- getbacktrackstate;
+     p' <-- intermlang (fun _ ->
+              try
+                let p' =
+                 p |> pattcanonToExpr 0
+                   |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true
+                in
+                traverseTypeDeep
+                        ~uninstantiatedMeta:(fun _ -> raise TypStringUninstantiatedTMetas)
+                        p'.classifier;
+                Some p'
+               with TypStringUninstantiatedTMetas -> None);
+     setstate state;
+     match p' with
+       Some p' ->
+       (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
+        pattcanonUnifyFull s (_PofString ~loc:e.loc res))
+     | None -> mzero))
+  ;;
+
   new_builtin_predicate "getunif" ( ~* "A" **> ~* "B" **> _tProp )
     (fun _ -> function [ input ; output ] -> begin
       (let open RunCtx.Monad in

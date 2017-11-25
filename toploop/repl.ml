@@ -24,13 +24,16 @@ let _ =
 
 let jseval s =
   let (inp, outp) = Unix.open_process "node" in
+  (* TODO: I am sure there is a less gross way to do this... *)
   BatInnerIO.nwrite outp ("const result = " ^ s ^ "; console.log('>>>>>' + result + '<<<<<');");
   BatInnerIO.close_out outp;
   let res = BatInnerIO.read_all inp in
   BatInnerIO.close_in inp;
-  let (_, suffix) = String.split res ">>>>>" in
-  let (result, _) = String.split suffix "<<<<<" in
-  result
+  try
+    let (_, suffix) = String.split res ">>>>>" in
+    let (result, _) = String.split suffix "<<<<<" in
+    Some(result)
+  with Not_found -> None
 ;;
 
 builtin_enter_module "js" ;;
@@ -40,7 +43,9 @@ builtin_enter_module "js" ;;
      fun _ -> function [ script ; output ] -> begin perform
          script <-- chasePattcanon [] script ;
          script <-- _PtoString script ;
-         pattcanonUnifyFull output (_PofString (jseval script) ~loc:output.loc)
+         match jseval script with
+           Some res -> pattcanonUnifyFull output (_PofString res ~loc:output.loc)
+         | None -> mzero
     end | _ -> assert false)
   ;;
 

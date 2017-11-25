@@ -2,7 +2,7 @@
 
 peg : type -> type.
 
-bind : peg A -> string -> (A -> peg B) -> peg B.
+bind : peg A -> (A -> peg B) -> peg B.
 seq : peg A -> peg B -> peg B.
 action : B -> peg B.
 choices : list (peg A) -> peg A.
@@ -17,7 +17,7 @@ void : peg A.
 
 builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
 
-builtin (bind _ _ _).
+builtin (bind _ _).
 builtin (seq _ _).
 builtin (action _).
 builtin (choices _).
@@ -32,7 +32,7 @@ builtin (void).
 parse : [A]peg A -> list string -> option (A * list string) -> prop.
 
 
-parse (bind PegA _ PegB) S Res :-
+parse (bind PegA PegB) S Res :-
   if (parse PegA S (some (A, S'))) then
      parse (PegB A) S' Res
   else

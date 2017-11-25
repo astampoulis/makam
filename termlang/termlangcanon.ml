@@ -250,6 +250,7 @@ module Typ =
             Printf.fprintf oc "%s%a -> %a%s" oparen (aux 2) t1 (aux 3) t2 cparen
         | `TVar(s,i,args) ->
             let oparen, cparen = paren (if List.length args = 0 then 1 else 2) in
+            (* TODO need a dequalify as well here for tfvars *)
             Printf.fprintf oc "%s%s%a%a%s" oparen s indexprint i (printargs (aux 1)) args cparen
         | `Forall(_,body) -> Printf.fprintf oc "%a" (aux level) body
         | `TypeSort       -> Printf.fprintf oc "type"
@@ -613,7 +614,7 @@ let findTFVar name () =
      with Not_found -> raise (WrongTypeVar))
   in
   let arity = IMap.find idx state.arity_of_tfvar in
-  (name(*'*), (`Free, idx), arity)
+  (name', (`Free, idx), arity)
 
 ;;
 

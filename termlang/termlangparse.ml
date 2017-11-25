@@ -38,19 +38,25 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
   (fun _ -> fun [ str; e ] ->
     (let open RunCtx.Monad in
      perform
-     let _ = print_string "hello hello!\n" in
      str <-- pattcanonRenormalize str ;
      pstr <-- chasePattcanon ~deep:true [] str ;
-     s <-- _PtoString str ;
-     let getExpr = try Some(Peg.parse_of_string MakamGrammar.parse_lexpr s) with _ -> None in
+     s <-- _PtoString pstr ;
+     let getExpr =
+       try
+         Some(Peg.parse_of_string MakamGrammar.parse_lexpr s)
+       with _ ->
+         None
+     in
      match getExpr with
        None -> mzero
      | Some getExpr -> perform
          expr <-- intermlang getExpr.content ;
          p <-- intermlang (fun _ ->
            try
-             Some(typecheck_and_normalize expr |> fst |> chaseTypesInExpr ~metasAreFine:true ~replaceUninst:true |> exprToPatt |> pattneutToCanon)
-           with _ -> None);
+             (* TODO: handling of unification variables is unclear here *)
+             Some(withConcreteBoundMode true (fun _ -> typecheck_and_normalize expr) |> fst |> chaseTypesInExpr ~metasAreFine:true ~replaceUninst:true |> exprToPatt |> pattneutToCanon)
+           with _ -> None
+         );
          match p with Some p -> pattcanonUnifyFull e p | None -> mzero))
 ;;
 
