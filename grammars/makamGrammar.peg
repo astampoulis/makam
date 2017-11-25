@@ -89,7 +89,8 @@ let query_test startspan endspan premises =
     (mkTmConst endspan "success")
     (fun x -> x) premises
   in
-  mkTm "clause" [ mkTm "testcase" [ mkTmConst startspan testsuite ]; premise ]
+  mkTm "clause" [ mkTm "testcase" [ mkTmConst startspan testsuite ];
+                  { premise with span = startspan ---> endspan } ]
 ;;
 >>
 
