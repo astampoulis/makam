@@ -1,14 +1,14 @@
 (* we assume an `input` variable holding the input,
-   and an `offset` variable holding the index within the input that
-   we are looking at.
+             an `offset` (mutable) variable holding the current index within the input,
+             the `parsers` dictionary of parsing functions for all the user-defined peg used.
    the result of a parsing expression is:
    - an expression holding the value part of the result
-   - mutation of the offset variable to advance what we're looking at. *)
+   - mutation of the offset variable to advance what we're looking at
+   - a new dictionary with any extra needed parsers *)
 
 %extend peg.
 
-gen_parse_js : [A]peg A -> string (* input var *) -> string (* offset var *) -> string (* parser dictionary var *) ->
-                           map string string (* input parser dictionary *) ->
+gen_parse_js : [A]peg A -> map string string (* input parser dictionary *) ->
                            map string string (* output parser dictionary *) ->
                            string (* result expression *) -> prop.
 
@@ -16,60 +16,60 @@ quote_string_js : string -> string -> prop.
 
 quote_string_js S Res :- tostring S Res.
 
-gen_parse_js anychar Input Offset DictName Dict Dict Result :-
+gen_parse_js anychar Dict Dict Result :-
   expansion.str
-  `(${Offset} < ${Input}.length
-   ? JSON.stringify(${Input}[${Offset}++])
+  `(offset < input.length
+   ? JSON.stringify(input[offset++])
    : null)`
   Result.
 
-gen_parse_js (charclass S) Input Offset DictName Dict Dict Result :-
+gen_parse_js (charclass S) Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
-  `((${Offset} < ${Input}.length && ${S_js}.includes(${Input}[${Offset}]))
-    ? JSON.stringify(${Input}[${Offset}++])
+  `((offset < input.length && ${S_js}.includes(input[offset]))
+    ? JSON.stringify(input[offset++])
     : null)`
   Result.
 
-gen_parse_js (exact S) Input Offset DictName Dict Dict Result :-
+gen_parse_js (exact S) Dict Dict Result :-
   quote_string_js S S_js,
   expansion.str
-  `(${Input}.startsWith(${S_js}, ${Offset})
-     ? (${Offset} += ${S_js}.length, JSON.stringify(${S_js}))
+  `(input.startsWith(${S_js}, offset)
+     ? (offset += ${S_js}.length, JSON.stringify(${S_js}))
      : null)`
   Result.
 
-gen_parse_js (neg P) Input Offset DictName Dict Dict' Result :-
-  gen_parse_js P Input Offset DictName Dict Dict' Code,
+gen_parse_js (neg P) Dict Dict' Result :-
+  gen_parse_js P Dict Dict' Code,
   expansion.str
-  `(function () { const temp = ${Offset}; {
-     let ${Offset} = temp;
+  `(function () { const temp = offset; {
+     let offset = temp;
      return (${Code} === null ? "unit" : null);
   }})()`
   Result.
 
-gen_parse_js (lookahead P) Input Offset DictName Dict Dict' Result :-
-  gen_parse_js P Input Offset DictName Dict Dict' Code,
+gen_parse_js (lookahead P) Dict Dict' Result :-
+  gen_parse_js P Dict Dict' Code,
   expansion.str
-  `(function () { const temp = ${Offset}; {
-     let ${Offset} = temp;
+  `(function () { const temp = offset; {
+     let offset = temp;
      return (${Code} === null ? null : "unit");
   }})()`
   Result.
 
-gen_parse_js empty Input Offset DictName Dict Dict Result :-
+gen_parse_js empty Dict Dict Result :-
   expansion.str `"unit"` Result.
 
-gen_parse_js void Input Offset DictName Dict Dict "null".
+gen_parse_js void Dict Dict "null".
 
 (* now on to the more difficult ones *)
 
 quote_parse_res_js : [A]A -> string -> prop.
 
-gen_parse_js (bind (P : peg A) Name (F : A -> peg B)) Input Offset DictName Dict Dict'' Result :-
-  gen_parse_js P Input Offset DictName Dict Dict' Code,
+gen_parse_js (bind (P : peg A) Name (F : A -> peg B)) Dict Dict'' Result :-
+  gen_parse_js P Dict Dict' Code,
   (a:A -> quote_parse_res_js a Name ->
-   gen_parse_js (F a) Input Offset DictName Dict' Dict'' Code'),
+   gen_parse_js (F a) Dict' Dict'' Code'),
   expansion.str
   `(function() {
      const ${Name} = ${Code};
@@ -77,18 +77,18 @@ gen_parse_js (bind (P : peg A) Name (F : A -> peg B)) Input Offset DictName Dict
    })()`
   Result.
 
-gen_parse_js (seq A B) Input Offset DictName Dict Dict'' Result :-
-  gen_parse_js A Input Offset DictName Dict Dict' CodeA,
-  gen_parse_js B Input Offset DictName Dict' Dict'' CodeB,
+gen_parse_js (seq A B) Dict Dict'' Result :-
+  gen_parse_js A Dict Dict' CodeA,
+  gen_parse_js B Dict' Dict'' CodeB,
   expansion.str
   `(${CodeA} === null ? null : ${CodeB})`
   Result.
 
-gen_parse_js (choices []) Input Offset DictName Dict Dict "null".
+gen_parse_js (choices []) Dict Dict "null".
 
-gen_parse_js (choices (HD :: TL)) Input Offset DictName Dict Dict'' Result :-
-  gen_parse_js HD Input Offset DictName Dict Dict' CodeHD,
-  gen_parse_js (choices TL) Input Offset DictName Dict' Dict'' CodeTL,
+gen_parse_js (choices (HD :: TL)) Dict Dict'' Result :-
+  gen_parse_js HD Dict Dict' CodeHD,
+  gen_parse_js (choices TL) Dict' Dict'' CodeTL,
   expansion.str
   `(function () {
      const result = ${CodeHD};
@@ -148,7 +148,7 @@ quote_term_js (reified.lambda (F : A -> B)) Result :-
 
 (* TODO: decide if and how unification variables will be supported. *)
 
-gen_parse_js (action X) Input Offset DictName Dict Dict Result :-
+gen_parse_js (action X) Dict Dict Result :-
   reify X X_Reified,
   quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
@@ -158,7 +158,7 @@ quote_peg_js : [A]peg A -> string -> prop.
 (* TODO: make sure this isn't overly permissive *)
 quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 
-gen_parse_js P Input Offset DictName Dict DictRes Result
+gen_parse_js P Dict DictRes Result
   when not(builtin P) :-
   quote_peg_js P Key,
   if (map.find Dict Key _)
@@ -166,17 +166,22 @@ gen_parse_js P Input Offset DictName Dict DictRes Result
   else (
     get_peg_definition P P',
     eq Dict' ((Key, Expr) :: Dict),
-    gen_parse_js P' Input Offset DictName Dict' DictRes Code,
+    gen_parse_js P' Dict' DictRes Code,
     expansion.str
-    `(function(${DictName}, ${Input}, ${Offset}) { const temp = ${Offset}; {
-        let ${Offset} = temp;
-        return ${Code};
+    `(function(parsers, input, offset) { const temp = offset; {
+        let offset = temp;
+        const result = ${Code};
+        return { result, offset: offset };
      }})`
      Expr
   ),
   quote_string_js Key Key_js,
   expansion.str 
-  `${DictName}[${Key_js}](${DictName}, ${Input}, ${Offset})`
+  `(function() {
+     const result = parsers[${Key_js}](parsers, input, offset);
+     offset = result.offset;
+     return result.result;
+   })()`
   Result.
 
 gen_parse_dictionary_js_aux : map string string -> string -> prop.
@@ -199,9 +204,9 @@ gen_parse_dictionary_js Map Result :-
   }` Result.
 
 
-parse_opt : [A]peg A -> string -> string -> prop.
+parse_opt : [A]peg A -> string -> option (A * string) -> prop.
 parse_opt P Input Result :-
-  gen_parse_js P "input" "offset" "parsers" [] Dict Code,
+  gen_parse_js P [] Dict Code,
   gen_parse_dictionary_js Dict Dict_js,
   quote_string_js Input Input_js,
   expansion.str
@@ -216,21 +221,19 @@ parse_opt P Input Result :-
       }
    })(${Input_js}, 0);`
    FinalCode,
-   js.eval FinalCode Result.
+   js.eval FinalCode ResultS,
+   fromstring ResultS Result.
 
-(parse_opt (charclass "\nabc\t") "allo!" _Res, print_string _Res) ?
+(parse_opt (charclass "\nabc\t") "allo!" Res) ?
 
-(parse_opt (bind anychar "a" (fun a => bind anychar "b" (fun b => action `${b}${a}`))) "hi" _Res, print_string _Res) ?
-
-testit : peg A -> string -> prop.
-testit P Input :- {prop|(parse_opt P Input Res, print_string Res, eq "-------gonna fail----" X, fromstring Res X, print X)|}.
+(parse_opt (bind anychar "a" (fun a => bind anychar "b" (fun b => action `${b}${a}`))) "hi" Res) ?
 
 rep : peg A -> peg (list A).
 
 rule (rep P) (bind P "hd" (fun hd => bind (rep P) "tl" (fun tl => action (hd :: tl)))).
 rule (rep P) (action []).
 
-testit (rep (exact "la")) "lalala, lalala!" ?
+parse_opt (rep (exact "la")) "lalala, lalala!" Y ?
 
 repplus : peg A -> peg (list A).
 
@@ -239,6 +242,6 @@ rule (repplus P) (bind P "hd" (fun hd => bind (rep P) "tl" (fun tl => action (hd
 whitespace : peg unit.
 rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
 
-testit (seq whitespace (action unit)) "   return " ?
+parse_opt (seq whitespace (action unit)) "   return " Y ?
 
 %end.
