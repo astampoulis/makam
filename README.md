@@ -49,12 +49,9 @@ available at:
 <https://nodejs.org/en/download/>
 
 Most recent versions of Node.js should work. If you want to run `makam.js` (the
-compiled-to-Javascript version of Makam, using `js_of_ocaml`), a version that supports tail-call
-optimization is needed -- the latest such version is `7.10.1`.
-If you have a different version of `node`, you can install a Node version manager
-like `n` and then switch to this version:
-
-    npm install -g n && n 7.10.1
+compiled-to-Javascript version of Makam, using `js_of_ocaml`), you need to call node either with
+`--stack-size=65536`, or use a Node version that supports tail-call optimization -- the latest such
+version is `7.10.1` and needs the `--harmony_tailcalls` flag.
 
 After you have OPAM installed, you can install Makam:
 
