@@ -18,6 +18,12 @@ jobs:
           name: Install dependencies and compile Makam
           command: opam pin add --yes . && opam upgrade makam
 
+      - run: &install-node
+          name: Install Node.js
+          command: |
+            curl -sL https://deb.nodesource.com/setup_7.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+
       - save_cache:
           key: v1-opam-4.04.2-{{ .Branch }}-{{ checksum "opam/opam" }}
           paths: ~/.opam
@@ -30,8 +36,6 @@ jobs:
           name: Install Node.js and compile Makam.js
           command:  |
             opam config exec make js
-            curl -sL https://deb.nodesource.com/setup_9.x | sudo -E bash -
-            sudo apt-get install -y nodejs
 
       - run: &tests-js
           name: Run Tests for Makam.js

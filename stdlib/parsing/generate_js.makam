@@ -309,9 +309,9 @@ gen_toplevel_parser_js P Function_js :-
    })`
    Function_js.
 
-eval_parser_js : string -> string -> A -> prop.
+eval_parser_js : [A] peg A -> string -> string -> (A * string) -> prop.
 
-eval_parser_js Function_js Input Result :-
+eval_parser_js P Function_js Input Result :-
   quote_string_js Input Input_js,
   expansion.str `${Function_js}(${Input_js}, 0);` FinalCode,
   js.eval FinalCode ResultS,
@@ -325,4 +325,4 @@ def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js P Code) succes
 
 parse_opt P Input Result :-
   if (cached_toplevel_parser_js P Function_js) then success else gen_toplevel_parser_js P Function_js,
-  eval_parser_js Function_js Input Result.
+  eval_parser_js P Function_js Input Result.
