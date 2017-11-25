@@ -26,8 +26,11 @@ share: [
   "stdlib/tests.makam" {"stdlib/tests.makam"}
   "stdlib/string.makam" {"stdlib/string.makam"}
   "stdlib/testing.makam" {"stdlib/testing.makam"}
+  "stdlib/parsing/init.makam" {"stdlib/parsing/init.makam"}
   "stdlib/parsing/peg.makam" {"stdlib/parsing/peg.makam"}
+  "stdlib/parsing/generate_js.makam" {"stdlib/parsing/generate_js.makam"}
   "stdlib/parsing/tests.makam" {"stdlib/parsing/tests.makam"}
+  "stdlib/parsing/tests_opt.makam" {"stdlib/parsing/tests_opt.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}
   "stdlib/vars.makam" {"stdlib/vars.makam"}

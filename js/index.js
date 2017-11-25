@@ -16,4 +16,4 @@ function repl() {
 
 if (require.main === module) repl();
 
-module.exports = { ...makam, repl: repl };
+module.exports = Object.assign({}, makam, { repl: repl });

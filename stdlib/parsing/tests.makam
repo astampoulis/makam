@@ -21,7 +21,7 @@ rule (rep P) (action []).
 
 repplus : peg A -> peg (list A).
 
-rule (repplus P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
+rule (repplus P) (bind P (fun hd => bind (fastrep P) (fun tl => action (hd :: tl)))).
 
 whitespace : peg unit.
 rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
@@ -110,5 +110,16 @@ hoaslam : (cterm -> cterm) -> cterm.
 >> parse (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
 >> Yes:
 >> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))).
+
+>> (eq _OPEN "λ  hello  . λ world . λ  hello  . λ world . ",
+    eq _WHITESPACE "                                                                                   ",
+    expansion.str `   hello   ` _BODY,
+    expansion.str `${_OPEN} (${_WHITESPACE} ${_OPEN} (${_WHITESPACE} ${_OPEN} (
+                   ${_OPEN} (
+                   ${_WHITESPACE}
+                   ${_WHITESPACE}
+                   ${_BODY}) ${_BODY}) ${_BODY}) ${_BODY})` _STR,
+    parse cterm _STR _X) ?
+>> Yes.
 
 %end.

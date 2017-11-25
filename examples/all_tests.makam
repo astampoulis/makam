@@ -4,6 +4,7 @@ all_tests : testsuite.
 %use "stdlib/tests".
 
 %use "stdlib/parsing/tests".
+%use "stdlib/parsing/tests_opt".
 
 %extend dyn_expansion.
 %use "stdlib/dyn_expansion".

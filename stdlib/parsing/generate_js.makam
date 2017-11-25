@@ -138,6 +138,20 @@ gen_parse_js (choices PS) Dict Dict' Result :-
    })())`
   Result.
 
+gen_parse_js (fastrep P) Dict Dict' Result :-
+  gen_parse_js P Dict Dict' Code,
+  expansion.str
+  `(yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ${Code};
+       if (current === null) break;
+       else result.push(current);
+     }
+     return \`[\${result.join(", ")}]\`;
+   })())`
+  Result.
+
 quote_term_js : [A]reified A -> string -> prop.
 
 quote_terms_js : [A B]reified_args A B -> string -> prop.

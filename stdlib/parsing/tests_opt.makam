@@ -50,7 +50,7 @@ identfirst, identrest : peg string.
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun hd => bind (rep identrest) (fun tl => action (ident (hd :: tl))))).
+rule ident (bind identfirst (fun hd => bind (fastrep identrest) (fun tl => action (ident (hd :: tl))))).
 
 cterm : type.
 clam : ident -> cterm -> cterm.
@@ -73,6 +73,8 @@ rule cterm1 cterm2.
 rule cterm2 (bind (token ident) (fun var => action (cvar var))).
 
 rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
+
+`( def_parser_js cterm ).
 
 >> parse_opt cterm "λ x.x" Res ?
 >> Yes:
@@ -110,5 +112,16 @@ hoaslam : (cterm -> cterm) -> cterm.
 >> parse_opt (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
 >> Yes:
 >> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))).
+
+>> (eq _OPEN "λ  hello  . λ world . λ  hello  . λ world . ",
+    eq _WHITESPACE "                                                                                   ",
+    expansion.str `   hello   ` _BODY,
+    expansion.str `${_OPEN} (${_WHITESPACE} ${_OPEN} (${_WHITESPACE} ${_OPEN} (
+                   ${_OPEN} (
+                   ${_WHITESPACE}
+                   ${_WHITESPACE}
+                   ${_BODY}) ${_BODY}) ${_BODY}) ${_BODY})` _STR,
+    parse_opt cterm _STR _X) ?
+>> Yes.
 
 %end.
