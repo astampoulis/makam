@@ -165,12 +165,17 @@ quote_terms_js (Head :: Tail) Result :-
   quote_terms_js Tail TailS,
   expansion.str ` ${HeadS}${TailS}` Result.
 
+quote_paren_term_js : string -> string -> string -> prop.
+
+quote_paren_term_js HeadS ArgsS Result :-
+  if (eq ArgsS "")
+  then eq Result HeadS
+  else expansion.str `(${HeadS}${ArgsS})` Result.
+
 quote_term_js (reified.term Head Args) Result :-
   refl.headname Head HeadS,
   quote_terms_js Args ArgsS,
-  expansion.str
-  `(${HeadS}${ArgsS})`
-  Result.
+  quote_paren_term_js HeadS ArgsS Result.
 
 quote_term_js (reified.const (S : string)) S_js :-
   quote_string_js S S_js.
@@ -181,7 +186,7 @@ quote_term_js (reified.const (I : int)) I_js :-
 (* here we need to antiquote the result of `P` *)
 quote_term_js (reified.nvar P []) Result :-
   quote_parse_res_js P PRes,
-  expansion.str `(\${${PRes}})` Result.
+  expansion.str `\${${PRes}}` Result.
 
 quote_var_js : [A]A -> string -> prop.
 latest_quote_var_js : int -> prop.
@@ -191,7 +196,7 @@ latest_quote_var_js 0.
 quote_term_js (reified.bvar X Args) Result :-
   quote_var_js X Var,
   quote_terms_js Args ArgsS,
-  expansion.str `(${Var}${ArgsS})` Result.
+  quote_paren_term_js Var ArgsS Result.
 
 quote_term_js (reified.lambda (F : A -> B)) Result :-
   once(latest_quote_var_js I),
@@ -269,6 +274,23 @@ gen_dictionary_js Map Result :-
     ${Entries_js}
   }` Result.
 
+quote_expansion_js : list (reified string) -> list (reified string) -> prop.
+
+quote_expansion_js [] [].
+
+quote_expansion_js (HD :: TL) (reified.const (S' : string) :: TL') :-
+  if (eq HD (reified.const (S : string))) then
+    (eq S' S)
+  else
+    (quote_term_js HD HD', expansion.str `\`${HD'}\`` S'),
+  quote_expansion_js TL TL'.
+
+gen_parse_js (eval (expansion X)) Dict Dict Result :-
+  map reify X X_Reified,
+  quote_expansion_js X_Reified X_Reified',
+  map reflect X_Reified' X',
+  expansion.str (expansion X') X_js,
+  expansion.str `(function(){${X_js}})()` Result.
 
 parse_opt : [A] peg A -> string -> (A * string) -> prop.
 
@@ -304,7 +326,7 @@ gen_toplevel_parser_js P Function_js :-
       if (lastRes === null) {
         return "none";
       } else {
-        return \`some ( (\${lastRes}), \${JSON.stringify(input.substr(offset))} )\`;
+        return \`some ( \${lastRes}, \${JSON.stringify(input.substr(offset))} )\`;
       }
    })`
    Function_js.

@@ -124,4 +124,10 @@ hoaslam : (cterm -> cterm) -> cterm.
     parse_opt cterm _STR _X) ?
 >> Yes.
 
+(* eval tests *)
+
+>> parse_opt (fastrep (bind anychar (fun a => eval `return ${a} == '"a"' ? null : ${a};`))) "tralalala" X ?
+>> Yes:
+>> X := (["t", "r"], "alalala").
+
 %end.

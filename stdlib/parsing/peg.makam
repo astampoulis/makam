@@ -16,6 +16,8 @@ empty : peg unit.
 void : peg A.
 fastrep : peg A -> peg (list A).
 
+eval : expansion -> peg A. (* evaluate in host language. this is only allowed for the js-optimized parsers. *)
+
 builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
 
 builtin (bind _ _).
@@ -30,6 +32,7 @@ builtin (lookahead _).
 builtin (empty).
 builtin (void).
 builtin (fastrep _).
+builtin (eval _).
 
 parse : [A]peg A -> list string -> option (A * list string) -> prop.
 
@@ -47,6 +50,11 @@ parse (seq PegA PegB) S Res :-
      eq Res none.
 
 parse (action B) S (some (B, S)).
+
+parse (eval X) _ _
+  when locget X Loc, tostring Loc LocS,
+       print_string `\n-- At ${LocS}, using parse with eval PEG primitive which is only allowed when using parse_opt.\n`,
+       failure.
 
 parse (choices []) S none.
 
