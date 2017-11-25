@@ -102,8 +102,8 @@ get_peg_definition : [A] peg A -> peg A -> prop.
 
 get_peg_definition P Res when not(builtin P) :-
   refl.rules_get_applicable (rule P _) Rules,
-  map (pfun def res => [Def Loc LocS]
-    if (eq def (clause (rule P Def) success)) then
+  map (pfun def res => [Def Loc LocS Guard]
+    if ((eq def (clause (rule P Def) success); eq def (whenclause (rule P Def) Guard success))) then
       eq res Def
     else
       (locget def Loc, tostring Loc LocS, 
