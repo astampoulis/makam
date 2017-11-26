@@ -124,10 +124,30 @@ hoaslam : (cterm -> cterm) -> cterm.
     parse_opt cterm _STR _X) ?
 >> Yes.
 
-(* eval tests *)
+(* tests specific for parse_opt *)
 
 >> parse_opt (many (bind anychar (fun a => eval `return ${a} == '"a"' ? null : ${a};`))) "tralalala" X ?
 >> Yes:
 >> X := (["t", "r"], "alalala").
+
+
+external : peg cterm.
+
+extern_def external Code
+  when expansion.str
+  `
+  function (input, offset) {
+    if (input.startsWith("identity", offset)) {
+      return { result: 'peg.clam (peg.ident ["x"]) (peg.cvar (peg.ident ["x"]))',
+               newOffset: offset + "identity".length };
+    } else {
+      return { result: null };
+    }
+  }
+  ` Code.
+
+>> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
+>> Yes:
+>> X := [ clam (ident ["x"]) (cvar (ident ["x"])), clam (ident ["x"]) (cvar (ident ["x"])) ].
 
 %end.

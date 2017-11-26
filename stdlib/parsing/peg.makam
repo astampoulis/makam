@@ -7,7 +7,7 @@ seq : peg A -> peg B -> peg B.
 action : B -> peg B.
 choices : list (peg A) -> peg A.
 
-anychar : peg string. 
+anychar : peg string.
 charclass : string -> peg string.
 exact : string -> peg string.
 neg : peg A -> peg unit.
@@ -16,9 +16,11 @@ empty : peg unit.
 void : peg A.
 many : peg A -> peg (list A).
 
-eval : expansion -> peg A. (* evaluate in host language. this is only allowed for the js-optimized parsers. *)
+(* js-only peg expressions: *)
+eval : expansion -> peg A. (* evaluate in host language. needs to return a string of a term of type A *)
 
 builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
+js_builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins supposed to be used only through js generation, with `parse_opt` *)
 
 builtin (bind _ _).
 builtin (seq _ _).
@@ -32,7 +34,8 @@ builtin (lookahead _).
 builtin (empty).
 builtin (void).
 builtin (many _).
-builtin (eval _).
+
+builtin (eval _). js_builtin (eval _).
 
 parse : [A]peg A -> list string -> option (A * list string) -> prop.
 
@@ -50,11 +53,6 @@ parse (seq PegA PegB) S Res :-
      eq Res none.
 
 parse (action B) S (some (B, S)).
-
-parse (eval X) _ _
-  when locget X Loc, tostring Loc LocS,
-       print_string `\n-- At ${LocS}, using parse with eval PEG primitive which is only allowed when using parse_opt.\n`,
-       failure.
 
 parse (choices []) S none.
 
@@ -104,21 +102,57 @@ parse (many P) S Res :-
      parse (many P) S' (some (TL, S'')))
   else (eq Res (some ([], S))).
 
+(* js-specific parsers *)
+parse X _ _
+  when js_builtin X,
+       locget X Loc, tostring Loc LocS,
+       refl.headargs X Head _, refl.headname Head HeadS,
+       print_string `\n-- At ${LocS}, using parse with ${HeadS}, which is a PEG primitive only allowed when using parse_opt.\n`,
+       failure.
+
 rule : [A] peg A -> peg A -> prop.
 
+extern_def : [A] peg A -> string -> prop.
+
 get_peg_definition : [A] peg A -> peg A -> prop.
+get_external_peg_definition : [A] peg A -> string -> prop.
 
 get_peg_definition P Res when not(builtin P) :-
   refl.rules_get_applicable (rule P _) Rules,
+  (*
+  if (eq Rules []) then
+    (locget P Loc, tostring Loc LocS,
+       print_string `\n-- Warning: no PEG definition rules for PEG expression used at ${LocS}\n`,
+       failure)
+  else
+    success,
+  *)
   map (pfun def res => [Def Loc LocS Guard]
-    if ((eq def (clause (rule P Def) success); eq def (whenclause (rule P Def) Guard success))) then
+    if ((eq def (clause (rule P Def) success);
+         (eq def (whenclause (rule P Def) Guard success), Guard))) then
       eq res Def
     else
-      (locget def Loc, tostring Loc LocS, 
+      (locget def Loc, tostring Loc LocS,
        print_string `\n-- Error at PEG definition rule at ${LocS}\n`,
        failure))
   Rules Defs,
   eq Res (choices Defs).
+
+get_external_peg_definition P Res when not(builtin P) :-
+  refl.rules_get_applicable (extern_def P _) Rules,
+  if (eq Rules [Rule]) then
+    success
+  else
+    (locget P Loc, tostring Loc LocS,
+       print_string `\n-- Error: zero or multiple PEG definition rules for external PEG parser used at ${LocS}\n`,
+       failure),
+  if ((eq Rule (clause (extern_def P Code) success);
+      (eq Rule (whenclause (extern_def P Code) Guard success), Guard))) then
+    eq Res Code
+  else
+    (locget Rule Loc, tostring Loc LocS,
+     print_string `\n-- Error at external PEG definition rule at ${LocS}\n`,
+     failure).
 
 parse P S Res when not(builtin P) :-
   get_peg_definition P P',

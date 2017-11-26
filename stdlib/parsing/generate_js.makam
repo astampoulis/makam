@@ -224,8 +224,47 @@ quote_peg_js : [A]peg A -> string -> prop.
 (* TODO: make sure this isn't overly permissive *)
 quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 
+(* external parsers are defined using `extern_def` rules.
+   the parser should be of the form `(input: string, offset: int) => { result: ?string, newOffset: int }`
+*)
+
+gen_parse_js P Dict Dict' Result
+  when not(builtin P), not(refl.isunif P), tostring P Key, not(map.find Dict Key _),
+       extern_def P _ :-
+  quote_string_js Key Key_js,
+  get_external_peg_definition P Code,
+  eq Dict' ((Key, Expr) :: Dict),
+  expansion.str
+    `(function*() {
+      const historyEntry = \`${Key}:\${offset}\`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(\`left recursion found: adding \${historyEntry} to \${history}\`);
+      }
+      if (memoize[${Key_js}][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[${Key_js}][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const data = (function (input, offset) { return (${Code})(input, offset); })(input, offset);
+        if (data.result !== null) offset = data.newOffset;
+        memoize[${Key_js}][keepOffset] = {
+          result: data.result,
+          newOffset: data.result === null ? keepOffset : data.offset
+         };
+        history = historyCopy;
+        return data.result;
+      }
+     })`
+     Expr,
+  expansion.str
+  `yield ${Key_js}`
+  Result.
+
 gen_parse_js P Dict DictRes Result
-  when not(builtin P), not(refl.isunif P) :-
+  when not(builtin P), not(refl.isunif P), not(extern_def P _) :-
   tostring P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
@@ -249,6 +288,7 @@ gen_parse_js P Dict DictRes Result
         let historyCopy = history.slice();
         history.push(historyEntry);
         const result = ${Code};
+        if (result === null) offset = keepOffset;
         memoize[${Key_js}][keepOffset] = { result, newOffset: offset };
         history = historyCopy;
         return result;
@@ -256,7 +296,7 @@ gen_parse_js P Dict DictRes Result
      })`
      Expr
   ),
-  expansion.str 
+  expansion.str
   `yield ${Key_js}`
   Result.
 
