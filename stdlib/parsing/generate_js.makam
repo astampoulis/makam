@@ -348,11 +348,14 @@ eval_parser_js P Function_js Input Result :-
   js.eval FinalCode ResultS,
   fromstring ResultS (some Result).
 
-(* TODO: add a representation of types, this does not work for polymorphic PEGs *)
-cached_toplevel_parser_js : [A] peg A -> string -> prop.
+cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 
 def_parser_js : [A]peg A -> cmd -> prop.
-def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js P Code) success)) :-
+def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
+  (* this does not play well with polymorphism, so we require a monomorphic type.
+     we can have different instantiations of the same polymorphic constant though,
+     hence we store a representation of the type as part of the cached predicate. *)
+  refl.typstring P Typ,
   gen_toplevel_parser_js P Code.
 
 parse_opt P Input Result :-
@@ -362,5 +365,7 @@ parse_opt P Input Result :-
      print_string `-- At ${LocS}, using parse_opt with uninstantiated PEG.\n`,
      failure)
   else success,
-  if (cached_toplevel_parser_js P Function_js) then success else gen_toplevel_parser_js P Function_js,
+  if (refl.typstring P Typ, cached_toplevel_parser_js Typ P Function_js)
+  then success
+  else gen_toplevel_parser_js P Function_js,
   eval_parser_js P Function_js Input Result.
