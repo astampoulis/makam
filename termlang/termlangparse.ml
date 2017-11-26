@@ -57,6 +57,7 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
              Some(withConcreteBoundMode true (fun _ -> typecheck_and_normalize expr) |> fst |> chaseTypesInExpr ~metasAreFine:true ~replaceUninst:true |> exprToPatt |> pattneutToCanon)
            with _ -> None
          );
+         let _ = if (!_DEBUG) then Printf.printf "fromstring:: %s >> %a\n" s (Option.print Pattcanon.print) p in
          match p with Some p -> pattcanonUnifyFull e p | None -> mzero))
 ;;
 
