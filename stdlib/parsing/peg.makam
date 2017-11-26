@@ -14,7 +14,7 @@ neg : peg A -> peg unit.
 lookahead : peg A -> peg unit.
 empty : peg unit.
 void : peg A.
-fastrep : peg A -> peg (list A).
+many : peg A -> peg (list A).
 
 eval : expansion -> peg A. (* evaluate in host language. this is only allowed for the js-optimized parsers. *)
 
@@ -31,7 +31,7 @@ builtin (neg _).
 builtin (lookahead _).
 builtin (empty).
 builtin (void).
-builtin (fastrep _).
+builtin (many _).
 builtin (eval _).
 
 parse : [A]peg A -> list string -> option (A * list string) -> prop.
@@ -98,10 +98,10 @@ parse (empty) S (some (unit, S)).
 
 parse (void) S none.
 
-parse (fastrep P) S Res :-
+parse (many P) S Res :-
   if (parse P S (some (HD, S'))) then
     (eq Res (some (HD :: TL, S'')),
-     parse (fastrep P) S' (some (TL, S'')))
+     parse (many P) S' (some (TL, S'')))
   else (eq Res (some ([], S))).
 
 rule : [A] peg A -> peg A -> prop.

@@ -138,7 +138,7 @@ gen_parse_js (choices PS) Dict Dict' Result :-
    })())`
   Result.
 
-gen_parse_js (fastrep P) Dict Dict' Result :-
+gen_parse_js (many P) Dict Dict' Result :-
   gen_parse_js P Dict Dict' Code,
   expansion.str
   `(yield* (function*() {

@@ -10,21 +10,21 @@ parsing : testsuite. %testsuite parsing.
 >> Yes:
 >> Res := ("a", "!").
 
-rep : peg A -> peg (list A).
+slow_many : peg A -> peg (list A).
 
-rule (rep P) (bind P (fun hd => bind (rep P) (fun tl => action (hd :: tl)))).
-rule (rep P) (action []).
+rule (slow_many P) (bind P (fun hd => bind (slow_many P) (fun tl => action (hd :: tl)))).
+rule (slow_many P) (action []).
 
->> parse (rep (exact "hi")) "hihi" Res ?
+>> parse (slow_many (exact "hi")) "hihi" Res ?
 >> Yes:
 >> Res := ([ "hi", "hi" ], "").
 
-repplus : peg A -> peg (list A).
+once_or_many : peg A -> peg (list A).
 
-rule (repplus P) (bind P (fun hd => bind (fastrep P) (fun tl => action (hd :: tl)))).
+rule (once_or_many P) (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
 
 whitespace : peg unit.
-rule whitespace (seq (repplus (charclass " \n\t")) (action unit)).
+rule whitespace (seq (once_or_many (charclass " \n\t")) (action unit)).
 
 >> parse (seq whitespace (action unit)) "   return " Res ?
 >> Yes:
@@ -50,7 +50,7 @@ identfirst, identrest : peg string.
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun hd => bind (fastrep identrest) (fun tl => action (ident (hd :: tl))))).
+rule ident (bind identfirst (fun hd => bind (many identrest) (fun tl => action (ident (hd :: tl))))).
 
 cterm : type.
 clam : ident -> cterm -> cterm.
@@ -66,7 +66,7 @@ rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token
 
 rule cterm0 cterm1.
 
-rule cterm1 (bind cterm2 (fun hd => bind (repplus (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
+rule cterm1 (bind cterm2 (fun hd => bind (once_or_many (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
 
 rule cterm1 cterm2.
 
