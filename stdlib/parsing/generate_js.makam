@@ -177,12 +177,6 @@ quote_term_js (reified.term Head Args) Result :-
   quote_terms_js Args ArgsS,
   quote_paren_term_js HeadS ArgsS Result.
 
-(* TODO: investigate why we need this; why the nvar gets turned into a term *)
-quote_term_js (reified.term Head Args) Result :-
-  quote_term_js (reified.nvar Head []) HeadS,
-  quote_terms_js Args ArgsS,
-  quote_paren_term_js HeadS ArgsS Result.
-
 quote_term_js (reified.const (S : string)) S_js :-
   quote_string_js S S_js.
 
@@ -190,9 +184,11 @@ quote_term_js (reified.const (I : int)) I_js :-
   tostring I I_js.
 
 (* here we need to antiquote the result of `P` *)
-quote_term_js (reified.nvar P []) Result :-
+quote_term_js (reified.nvar P Args) Result :-
   quote_parse_res_js P PRes,
-  expansion.str `\${${PRes}}` Result.
+  quote_terms_js Args ArgsS,
+  expansion.str `\${${PRes}}` HeadS,
+  quote_paren_term_js HeadS ArgsS Result.
 
 quote_var_js : [A]A -> string -> prop.
 latest_quote_var_js : int -> prop.

@@ -111,6 +111,7 @@ testcase reify :- reify (app unit unit) X, eq X (reified.term app [reified.term 
 testcase reify :- reify (fun (x: term) => "a") X, eq X (reified.lambda (fun x => reified.const "a")).
 testcase reify :- reify (fun (x: term) => x) X, eq X (reified.lambda (fun x => reified.bvar x [])).
 testcase reify :- (z:term -> (reify z (X z), eq (X z) (reified.nvar z []))).
+testcase reify :- (z:(term->term) -> (reify z (X z), eq (X z) (reified.nvar z []))).
 testcase reify :- reify app X, eq X (reified.lambda (fun a => reified.lambda (fun b => reified.term app [reified.bvar a [], reified.bvar b []]))).
 testcase reify :- reify X R, eq R (reified.unifvar I [] 0 X).
 testcase reify :- (x:term -> ([X R] reify X R, eq R (reified.unifvar I [] 1 X))).

@@ -67,7 +67,9 @@ reify3 X R :-
   if (refl.headargs X Head ArgsDyn, refl.isnvar Head) then
     (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
      eq R (reified.nvar Head ArgsR))
-  else reify4 X R.
+  else (if refl.isnvar X then
+    (eq R (reified.nvar X []))
+  else reify4 X R).
 
 reify4 X R :-
   if (refl.headargs X Head ArgsDyn, refl.isbaseterm X) then
@@ -100,16 +102,20 @@ reflect X _
 reflect (reified.unifvar I SubstR _ X) Z :-
   reflect SubstR Subst, dyn.from_args Subst SubstDyn, refl.recomposeunif X SubstDyn Z.
 
+reflect_apply : [A] A -> args A B -> B -> prop.
+reflect_apply X [] X.
+reflect_apply X (HD :: TL) X' :- reflect_apply (X HD) TL X'.
+
 reflect (reified.term Head ArgsR) Z :-
   reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
 
 reflect (reified.const Const) Const.
 
 reflect (reified.nvar Head ArgsR) Z :-
-  reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
+  reflect ArgsR Args, reflect_apply Head Args Z.
 
 reflect (reified.bvar Head ArgsR) Z :-
-  reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
+  reflect ArgsR Args, reflect_apply Head Args Z.
 
 reflect (reified.lambda X_R) X :-
   (x:A -> reflect (reified.bvar x []) x -> reflect (X_R x) (X x)).
