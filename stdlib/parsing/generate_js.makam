@@ -177,6 +177,12 @@ quote_term_js (reified.term Head Args) Result :-
   quote_terms_js Args ArgsS,
   quote_paren_term_js HeadS ArgsS Result.
 
+(* TODO: investigate why we need this; why the nvar gets turned into a term *)
+quote_term_js (reified.term Head Args) Result :-
+  quote_term_js (reified.nvar Head []) HeadS,
+  quote_terms_js Args ArgsS,
+  quote_paren_term_js HeadS ArgsS Result.
+
 quote_term_js (reified.const (S : string)) S_js :-
   quote_string_js S S_js.
 
@@ -204,8 +210,12 @@ quote_term_js (reified.lambda (F : A -> B)) Result :-
   expansion.str `x_${VarI}` Var,
   plus I 1 I',
   (x:A -> quote_var_js x Var -> latest_quote_var_js I' ->
-    (quote_term_js (F x) Body, refl.typstring x Typ)),
-  expansion.str `(fun (${Var}: ${Typ}) => ${Body})` Result.
+    (quote_term_js (F x) Body,
+     if (refl.typstring x Typ) then
+       expansion.str `(${Var}: ${Typ})` Binder
+     else
+       eq Var Binder)),
+  expansion.str `(fun ${Binder} => ${Body})` Result.
 
 (* TODO: decide if and how unification variables will be supported. *)
 
@@ -214,13 +224,12 @@ gen_parse_js (action X) Dict Dict Result :-
   quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
 
-
 quote_peg_js : [A]peg A -> string -> prop.
 (* TODO: make sure this isn't overly permissive *)
 quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 
 gen_parse_js P Dict DictRes Result
-  when not(builtin P) :-
+  when not(builtin P), not(refl.isunif P) :-
   quote_peg_js P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
@@ -339,6 +348,7 @@ eval_parser_js P Function_js Input Result :-
   js.eval FinalCode ResultS,
   fromstring ResultS (some Result).
 
+(* TODO: add a representation of types, this does not work for polymorphic PEGs *)
 cached_toplevel_parser_js : [A] peg A -> string -> prop.
 
 def_parser_js : [A]peg A -> cmd -> prop.
@@ -346,5 +356,11 @@ def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js P Code) succes
   gen_toplevel_parser_js P Code.
 
 parse_opt P Input Result :-
+  if (refl.isunif(P)) then
+    (locget P Loc,
+     tostring Loc LocS,
+     print_string `-- At ${LocS}, using parse_opt with uninstantiated PEG.\n`,
+     failure)
+  else success,
   if (cached_toplevel_parser_js P Function_js) then success else gen_toplevel_parser_js P Function_js,
   eval_parser_js P Function_js Input Result.

@@ -427,7 +427,7 @@ builtin_enter_module "refl" ;;
               try
                 let p' =
                  p |> pattcanonToExpr 0
-                   |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true
+                   |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
                 in
                 traverseTypeDeep
                         ~uninstantiatedMeta:(fun _ -> raise TypStringUninstantiatedTMetas)
