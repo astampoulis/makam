@@ -1,5 +1,7 @@
 %extend peg.
 
+%extend peg_grammar.
+
 ppegbase : peg (peg A).
 ppeg : peg (peg A -> prop).
 
@@ -75,11 +77,19 @@ peg.rule (ppeg) (bind (fastrep (seq (symbol (exact ("/"))) ppegrule)) (fun l =>
 
 `( def_parser_js (ppeg: peg.peg (peg.peg string -> prop)) ).
 
-(peg.parse_opt ppeg "/ x : \"lala\" {  x  } " (_Res, _), _Res (Y : peg.peg string)) ?
+peg_grammar : testsuite. %testsuite peg_grammar.
 
-(peg.parse_opt ppeg "/ x:\"lala\" {  x  } / y:. { y } " (_Res, _), _Res (Y : peg.peg string),
- peg.parse_opt Y "foobar" ResFinal ) ?
+>> (peg.parse_opt ppeg "/ x : \"lala\" {  x  } " (_Res, _), _Res (Y : peg.peg string)) ?
+>> Yes:
+>> Y := choices (cons (bind (exact "lala") (fun a => action a)) nil).
+
+>> (peg.parse_opt ppeg "/ x:\"lala\" {  x  } / y:. { y } " (_Res, _), _Res (Y : peg.peg string),
+     peg.parse_opt Y "foobar" ResFinal ) ?
+>> Yes:
+>> Y := choices (cons (bind (exact "lala") action) (cons (bind anychar action) nil)),
+>> ResFinal := ("f", "oobar").
 
 
+%end.
 %end.
 

@@ -5,6 +5,7 @@ all_tests : testsuite.
 
 %use "stdlib/parsing/tests".
 %use "stdlib/parsing/tests_opt".
+%use "stdlib/parsing/peg_grammar".
 
 %extend dyn_expansion.
 %use "stdlib/dyn_expansion".
