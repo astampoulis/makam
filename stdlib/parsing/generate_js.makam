@@ -226,7 +226,7 @@ quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 
 gen_parse_js P Dict DictRes Result
   when not(builtin P), not(refl.isunif P) :-
-  quote_peg_js P Key,
+  tostring P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
   then (eq DictRes Dict)
