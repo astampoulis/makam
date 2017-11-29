@@ -55,7 +55,8 @@ reify X (reified.unifvar I SubstR Metalevel X) when refl.isunif(X) :-
 reify X Y when not(refl.isunif X) :- reify1 X Y.
 
 reify1 X R :-
-  if (reify_var X Y) then (eq R Y) else reify2 X R.
+  if (refl.isbvar X) then (reify_var X R)
+  else reify2 X R.
 
 reify2 X R :-
   if (refl.headargs X Head ArgsDyn, refl.isbvar Head) then
@@ -83,8 +84,8 @@ reify5 X R :-
   else reify6 X R.
 
 reify6 (X : A -> B) (reified.lambda X_R) :-
-  (x:A -> refl.isbvar x -> reify_var x (reified.bvar x []) -> ([Body]
-   reify (X x) Body, eq Body (X_R x))).
+  (x:A -> refl.isbvar x -> reify_var x (reified.bvar x []) ->
+    (reify (X x) (X_R x))).
 
 reify_args X _ when refl.isunif X, locget X Loc, tostring Loc S,
        print_string `At ${S}, reify_args with uninstantiated variable.\n`, failure.
