@@ -62,7 +62,6 @@ parse (choices (HD :: TL)) S Res :-
   else
     parse (choices TL) S Res.
 
-
 parse (anychar) [] none.
 
 parse (anychar) (HD :: TL) (some (HD, TL)).
@@ -118,7 +117,9 @@ get_peg_definition : [A] peg A -> peg A -> prop.
 get_external_peg_definition : [A] peg A -> string -> prop.
 
 get_peg_definition P Res when not(builtin P) :-
-  refl.rules_get_applicable (rule P _) Rules,
+  refl.assume_get_applicable (rule P _) Rules0,
+  refl.rules_get_applicable (rule P _) Rules1,
+  append Rules0 Rules1 Rules,
   (*
   if (eq Rules []) then
     (locget P Loc, tostring Loc LocS,
@@ -139,7 +140,9 @@ get_peg_definition P Res when not(builtin P) :-
   eq Res (choices Defs).
 
 get_external_peg_definition P Res when not(builtin P) :-
-  refl.rules_get_applicable (extern_def P _) Rules,
+  refl.assume_get_applicable (extern_def P _) Rules0,
+  refl.rules_get_applicable (extern_def P _) Rules1,
+  append Rules0 Rules1 Rules,
   if (eq Rules [Rule]) then
     success
   else
@@ -161,3 +164,33 @@ parse P S Res when not(builtin P) :-
 parse : [A] peg A -> string -> (A * string) -> prop.
 
 parse PegA S (A, S') :- string.explode S CharList, parse PegA CharList (some (A, Rest)), string.explode S' Rest.
+
+
+
+(* now, let's add `letrec`. *)
+
+peg_list : type -> type.
+nil : peg_list unit.
+cons : peg A -> peg_list B -> peg_list (A * B).
+
+peg_list_open : type -> type -> type.
+open_end : B -> peg_list_open unit B.
+open_next : (peg HD -> peg_list_open TL B) -> peg_list_open (HD * TL) B.
+
+%extend peg_list.
+open : [AS A B] peg_list_open AS A -> (peg_list AS -> A -> prop) -> prop.
+open (open_end A) P :- P [] A.
+open (open_next (FA : peg HD -> peg_list_open TL A)) P :-
+  (x:(peg HD) -> open (FA x) (pfun ps a => P (x :: ps) a)).
+
+assume_many : [AS] (peg X -> peg X -> prop) -> peg_list AS -> peg_list AS -> prop -> prop.
+assume_many P [] [] K :- K.
+assume_many P (A :: AS) (B :: BS) K :- dyn.poly P P', (P' A B -> assume_many P AS BS K).
+%end.
+
+letrec : (peg_list_open AS (peg_list AS * peg A)) -> peg A.
+builtin (letrec _).
+
+parse (letrec DefsBody : peg A) Input (Result: option (A * list string))  :-
+  peg_list.open DefsBody (pfun ps defsBody => [Defs Body]
+    (eq defsBody (Defs, Body), peg_list.assume_many rule ps Defs (parse Body Input Result))).

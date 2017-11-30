@@ -122,4 +122,26 @@ hoaslam : (cterm -> cterm) -> cterm.
     parse cterm _STR _X) ?
 >> Yes.
 
+(* use two letrecs to make sure that unique symbols get generated *)
+rec : int -> peg cterm.
+rule (rec I)
+           (letrec (open_next (fun cterm_lambda => open_next (fun cterm_base => open_end
+           ([ (* lambda *)
+             choices [
+               (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token (exact "."))
+                     (bind cterm_lambda (fun body => action (clam var body)))))),
+               cterm_base
+             ],
+             (* base *)
+             choices [
+               bind (token ident) (fun var => action (cvar var)),
+               seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))
+             ]
+          ],
+          cterm_lambda))))).
+
+>> parse (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . x" (X, _) ?
+>> Yes:
+>> X := clam (ident (cons "x" nil)) (clam (ident (cons "y" nil)) (cvar (ident (cons "x" nil)))).
+
 %end.

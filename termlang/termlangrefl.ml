@@ -244,6 +244,30 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "assume_get_applicable" ( ~* "A" **> (_tList _tClause) **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ pred ; unif ] -> begin perform
+
+        pred <-- pattcanonRenormalize pred ;
+        pred <-- chasePattcanon [] pred ;
+
+        match pred.term with
+            `LamMany(_, body) ->
+              perform
+                let idx  =   headPredicate body in
+                env      <-- getenv ;
+                let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
+                state    <-- getbacktrackstate ;
+                csAppl   <-- mapM (fun c -> perform
+                                              applies <-- constructorApplies state body c ;
+                                              return (if applies then Some c else None)) cs;
+                let cs'  = List.filter_map identity csAppl in
+                cs''     <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') ;
+                pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs'')
+
+    end | _ -> assert false)
+  ;;
+
   new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] -> begin
       (let open RunCtx.Monad in
