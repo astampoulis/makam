@@ -19,6 +19,15 @@ remove ((Key', Val') :: Map') Key Val MapR <-
   then (eq Val Val', remove_if_member Map' Key MapR)
   else (remove Map' Key Val MapR', eq MapR ((Key', Val') :: MapR')).
 
+(* Get the first element of a map plus the rest of the map.
+   Can be used to iterate through the map without duplicate key visits. *)
+headtail : map A B -> A -> B -> map A B -> prop.
+headtail ((Key, Val) :: Map') Key Val Map'' :-
+  remove_if_member Map' Key Map''.
+
+empty : map A B -> prop.
+empty [].
+
 (* Find the value corresponding to a key in a map *)
 find : map A B -> A -> B -> prop.
 find Map Key Val <-

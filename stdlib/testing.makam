@@ -2,6 +2,10 @@ testsuite : type.
 
 testcase : testsuite -> prop.
 
+%extend TODO.
+testcase : testsuite -> prop.
+%end.
+
 run_tests : testsuite -> prop.
 run_tests : list testsuite -> prop.
 
@@ -13,25 +17,19 @@ run_tests (X : testsuite) :- run_tests [ X ] .
 handle_result : list clause -> list clause -> prop.
 handle_result Successes [] <-
   length Successes Tests, tostring Tests TestsS,
-  foldl string.append ""
-  [ "\n\n=== TESTS SUCCESSFUL (", TestsS, " passed, 0 failed) ===\n\n" ] S,
-  print_string S.
+  print_string `\n\n=== TESTS SUCCESSFUL (${TestsS} passed, 0 failed) ===\n\n`.
 
 handle_result Successes Failures when not(eq Failures []) <-
   length Successes SuccessN, tostring SuccessN SuccessS,
   length Failures FailureN, tostring FailureN FailureS,
-  foldl string.append ""
-  [ "\n\n=== TESTS FAILED (", SuccessS, " passed, ", FailureS, " failed) ===\n\n" ] S,
-  print_string S,
+  print_string `\n\n=== TESTS FAILED (${SuccessS} passed, ${FailureS} failed) ===\n\n`,
   failure.
 
 handle_failure : clause -> prop.
 handle_failure TestCase <-
   locget TestCase Loc,
   tostring Loc TestCaseS,
-  foldl string.append ""
-  [ "\n-- Test failure for testcase at ", TestCaseS, "\n" ] S,
-  print_string S.
+  print_string `\n-- Test failure for testcase at ${TestCaseS}\n`.
 
 run_test : list testsuite -> list clause -> list clause -> prop -> list clause -> prop.
 run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Failures.
@@ -41,8 +39,7 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
     if (verbose_run_tests) then (
       locget TestCase Loc,
       tostring Loc LocS,
-      foldl string.append "" [ "\n-- Testcase at ", LocS, "\n" ] S,
-      print_string S,
+      print_string `\n-- Testcase at ${LocS}\n`,
       print TestCase
     ) else success,
     if (once(clause.premise TestCase))
@@ -68,10 +65,8 @@ print_tests Suite :-
 
 run_tests Suites <-
   if (refl.isunif Suites)
-  then (eq SuitesStr "all")
+  then (eq SuitesStr " all")
   else (map tostring Suites (SuitesStrs : list string),
-        foldl (pfun cur elm res => [X] string.append cur "- " X, string.append X elm res) "" SuitesStrs SuitesStr),
-  foldl string.append ""
-  [ "\n\n=== RUNNING TESTS (test suites: ", SuitesStr, ")\n" ] Str,
-  print_string Str,
+        foldl (pfun cur elm res => [X] expansion.str `${cur} - ${elm}` res) "" SuitesStrs SuitesStr),
+  print_string `\n\n=== RUNNING TESTS (test suites:${SuitesStr})\n`,
   once(demand.aux_demand (testing_private.run_test Suites [] []) (testcase X)).

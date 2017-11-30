@@ -1,12 +1,12 @@
 %extend peg.
 
-parsing : testsuite. %testsuite parsing.
+parsing_opt : testsuite. %testsuite parsing_opt.
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
+>> parse_opt (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a " Res ?
 >> Yes:
 >> Res := ("a", "").
 
->> parse (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
+>> parse_opt (bind anychar (fun a => seq (charclass " \n\t") (action a))) "a !" Res ?
 >> Yes:
 >> Res := ("a", "!").
 
@@ -15,7 +15,7 @@ slow_many : peg A -> peg (list A).
 rule (slow_many P) (bind P (fun hd => bind (slow_many P) (fun tl => action (hd :: tl)))).
 rule (slow_many P) (action []).
 
->> parse (slow_many (exact "hi")) "hihi" Res ?
+>> parse_opt (slow_many (exact "hi")) "hihi" Res ?
 >> Yes:
 >> Res := ([ "hi", "hi" ], "").
 
@@ -26,7 +26,7 @@ rule (once_or_many P) (bind P (fun hd => bind (many P) (fun tl => action (hd :: 
 whitespace : peg unit.
 rule whitespace (seq (once_or_many (charclass " \n\t")) (action unit)).
 
->> parse (seq whitespace (action unit)) "   return " Res ?
+>> parse_opt (seq whitespace (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
 
@@ -37,7 +37,7 @@ rule (option P) (action none).
 token : peg A -> peg A.
 rule (token P) (seq (option whitespace) P).
 
->> parse (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
+>> parse_opt (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
 >> Yes:
 >> Res := ("true", " ").
 
@@ -74,40 +74,42 @@ rule cterm2 (bind (token ident) (fun var => action (cvar var))).
 
 rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
 
->> parse cterm "λ x.x" Res ?
+`( def_parser_js cterm ).
+
+>> parse_opt cterm "λ x.x" Res ?
 >> Yes:
 >> Res := (clam (ident ["x"]) (cvar (ident ["x"])), "").
 
->> parse cterm "λf.λg.λx.f (g x)" Res ?
+>> parse_opt cterm "λf.λg.λx.f (g x)" Res ?
 >> Yes:
 >> Res := ((clam (ident (cons "f" nil)) (clam (ident (cons "g" nil)) (clam (ident (cons "x" nil)) (capp (cvar (ident (cons "f" nil))) (cons (capp (cvar (ident (cons "g" nil))) (cons (cvar (ident (cons "x" nil))) nil)) nil))))), "").
 
->> parse ident "kalimera" Res ?
+>> parse_opt ident "kalimera" Res ?
 >> Yes:
 >> Res := (ident ["k", "a", "l", "i", "m", "e", "r", "a"], "").
 
->> parse cterm "λ καλημέρα. κόσμε" Res ?
+>> parse_opt cterm "λ καλημέρα. κόσμε" Res ?
 >> Yes:
 >> Res := (clam (ident ["κ", "α", "λ", "η", "μ", "έ", "ρ", "α"]) (cvar (ident ["κ", "ό", "σ", "μ", "ε"])), "").
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
+>> (parse_opt (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
 >> Yes:
 >> S := "ih",
 >> Rest := "".
 
->> (parse (bind anychar (fun a => bind anychar (fun b => action (`${b}${a}`)))) "hi" (Exp, Rest), expansion.str Exp S) ?
+>> (parse_opt (bind anychar (fun a => bind anychar (fun b => action (`${b}${a}`)))) "hi" (Exp, Rest), expansion.str Exp S) ?
 >> Yes:
 >> S := "ih",
 >> Rest := "".
 
->> parse (action (fun (x: string) => x)) "" (X, _) ?
+>> parse_opt (action (fun (x: string) => x)) "" (X, _) ?
 >> Yes:
 >> X := (fun (x: string) => x).
 
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
 
->> parse (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
+>> parse_opt (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
 >> Yes:
 >> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))).
 
@@ -119,7 +121,7 @@ hoaslam : (cterm -> cterm) -> cterm.
                    ${_WHITESPACE}
                    ${_WHITESPACE}
                    ${_BODY}) ${_BODY}) ${_BODY}) ${_BODY})` _STR,
-    parse cterm _STR _X) ?
+    parse_opt cterm _STR _X) ?
 >> Yes.
 
 (* use two letrecs to make sure that unique symbols get generated *)
@@ -140,8 +142,33 @@ rule (rec I)
           ],
           cterm_lambda))))).
 
->> parse (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
+>> parse_opt (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
 >> Yes:
 >> X := clam (ident (cons "x" nil)) (clam (ident (cons "y" nil)) (clam (ident (cons "x" nil)) (cvar (ident (cons "x" nil))))).
+
+(* tests specific for parse_opt *)
+
+>> parse_opt (many (bind anychar (fun a => eval `return ${a} == '"a"' ? null : ${a};`))) "tralalala" X ?
+>> Yes:
+>> X := (["t", "r"], "alalala").
+
+external : peg cterm.
+
+extern_def external Code
+  when expansion.str
+  `
+  function (input, offset) {
+    if (input.startsWith("identity", offset)) {
+      return { result: 'peg.clam (peg.ident ["x"]) (peg.cvar (peg.ident ["x"]))',
+               newOffset: offset + "identity".length };
+    } else {
+      return { result: null };
+    }
+  }
+  ` Code.
+
+>> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
+>> Yes:
+>> X := [ clam (ident ["x"]) (cvar (ident ["x"])), clam (ident ["x"]) (cvar (ident ["x"])) ].
 
 %end.

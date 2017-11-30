@@ -1,3 +1,12 @@
+(* TODO: isnvar is broken for lambdas, investigate. this is a stopgap *)
+%extend builtin.
+%extend refl.
+isnvar : [A]A -> prop.
+isnvar X :- .refl.isnvar X.
+%end.
+%end.
+
+
 %extend refl.
 
 sameunif : A -> A -> prop.
@@ -5,8 +14,14 @@ sameunif X Y <-
   refl.isunif X, refl.isunif Y,
   refl.decomposeunif X I _, refl.decomposeunif Y I _.
 
+islambdaunif : [A]A -> prop.
+islambdaunif X :-
+  if (refl.isunif X) then
+    success
+  else (dyn.eq X (Z : A -> B), (x:A -> islambdaunif (Z x))).
 
-
+isnvar : [A]A -> prop.
+isnvar X when newnmeta (pfun x => (eq x X, not(refl.islambdaunif x))).
 
 %extend userdef.
 

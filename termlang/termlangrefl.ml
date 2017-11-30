@@ -45,6 +45,24 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "open_constraints" ( ~* "A" **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ term ] -> begin perform
+       term <-- pattcanonRenormalize term ;
+       term <-- chasePattcanon [] term ;
+       match term.term with
+
+         (* deconstruct *)
+         | `LamMany([], { term = `Meta(_, idx, _, _) }) ->
+            perform
+              state  <-- getstate ;
+              moneOrMzero (Termlangcanon.ISet.mem idx state.rsmetaswithconstraints)
+
+         | _ -> mzero
+
+    end | _ -> assert false)
+  ;;
+
   new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
     (let open RunCtx.Monad in
      fun _ -> function [ patt ; res ] -> begin perform
@@ -226,6 +244,30 @@ builtin_enter_module "refl" ;;
     end | _ -> assert false)
   ;;
 
+  new_builtin_predicate "assume_get_applicable" ( ~* "A" **> (_tList _tClause) **> _tProp )
+    (let open RunCtx.Monad in
+     fun _ -> function [ pred ; unif ] -> begin perform
+
+        pred <-- pattcanonRenormalize pred ;
+        pred <-- chasePattcanon [] pred ;
+
+        match pred.term with
+            `LamMany(_, body) ->
+              perform
+                let idx  =   headPredicate body in
+                env      <-- getenv ;
+                let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
+                state    <-- getbacktrackstate ;
+                csAppl   <-- mapM (fun c -> perform
+                                              applies <-- constructorApplies state body c ;
+                                              return (if applies then Some c else None)) cs;
+                let cs'  = List.filter_map identity csAppl in
+                cs''     <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') ;
+                pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs'')
+
+    end | _ -> assert false)
+  ;;
+
   new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] -> begin
       (let open RunCtx.Monad in
@@ -395,6 +437,33 @@ builtin_enter_module "refl" ;;
       let b = match t.term with `TVar(_, Some (`Free, _), _) -> true | _ -> false in
       if b then return () else (Printf.printf "wrong call to external predicate expecting concrete type\n"; mzero)
 
+  ;;
+
+  exception TypStringUninstantiatedTMetas;;
+  new_builtin_predicate "typstring" ( ( ~* "A" ) **> _tString **> _tProp)
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     state <-- getbacktrackstate;
+     p' <-- intermlang (fun _ ->
+              try
+                let p' =
+                 p |> pattcanonToExpr 0
+                   |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
+                in
+                traverseTypeDeep
+                        ~uninstantiatedMeta:(fun _ -> raise TypStringUninstantiatedTMetas)
+                        p'.classifier;
+                Some p'
+               with TypStringUninstantiatedTMetas -> None);
+     setstate state;
+     match p' with
+       Some p' ->
+       (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
+        pattcanonUnifyFull s (_PofString ~loc:e.loc res))
+     | None -> mzero))
   ;;
 
   new_builtin_predicate "getunif" ( ~* "A" **> ~* "B" **> _tProp )

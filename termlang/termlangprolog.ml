@@ -873,19 +873,10 @@ let getIntermediateArrows (ts : typ list) (t : typ) l =
 
 let intersectSubst (subst1 : pattcanon list) (subst2 : pattcanon list) : pattcanon list =
 
-  let gethd (p : pattcanon) : patthead option =
-    match p.term with
-        `LamMany([], body) ->
-          (match body.term with
-              `AppMany(hd, [], []) -> Some hd
-            | _ -> None)
-      | _ -> None
-  in
-
   List.combine subst1 subst2 |>
   List.filter_map
   (fun (e1, e2) ->
-    match gethd e1, gethd e2 with
+    match pattEtaShort e1, pattEtaShort e2 with
       | Some { term = `Var(_, (k, n)) }, Some { term = `Var(_, (k', n')) }
         when  k = k' && n = n'
                 -> Some e1
@@ -3195,6 +3186,19 @@ module BuiltinProps = struct
                   _ <-- setstate state;
                     demand p3))
 
+    end | _ -> assert false)
+  ;;
+
+  let _eiWithall = new_builtin_predicate "withall" (_tProp **> _tProp **> _tProp)
+    (fun _ -> function [ { term = `LamMany([], p1) } ;
+                         { term = `LamMany([], p2) } ] -> begin perform
+          states <-- getall (perform
+                               _ <-- demand p1 ;
+                               state <-- getbacktrackstate ;
+                               return state);
+          msum (List.map (fun state -> lazy(perform
+                                              _ <-- setstate state;
+                                              demand p2)) states)
     end | _ -> assert false)
   ;;
 

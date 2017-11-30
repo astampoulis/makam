@@ -5,6 +5,7 @@ open Termlangcanon;;
 open Termlangprolog;;
 open Termlangext;;
 open Termlangrefl;;
+open Termlangparse;;
 
 let version = Version.version;;
 

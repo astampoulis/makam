@@ -44,9 +44,8 @@ makam-tests:
 	makam --run-tests all_tests
 
 makam-js-tests:
-	echo '%use "stdlib/parsing/tests". run_tests X ?' | node js/ | tee output | grep SUCCESSFUL
-	cat output
-	rm output
+	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
+	bash -c "grep SUCCESSFUL output; RES=\$$?; rm output; exit \$$RES"
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))

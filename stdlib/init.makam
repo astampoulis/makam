@@ -6,6 +6,7 @@
 %use guard.
 
 %use list.
+%use string.
 
 %use demand.
 %use testing.
@@ -24,8 +25,8 @@
 %use morerefl.
 %use reify.
 
-%use string.
-
 %use vars.
 
-%import "parsing/peg" as peg.
+%extend peg.
+%use "parsing/init".
+%end.

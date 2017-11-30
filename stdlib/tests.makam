@@ -1,5 +1,14 @@
 %extend stdlib_tests.
 
+(* ------------------- builtins *)
+
+builtins : testsuite.
+
+testcase builtins :- not(refl.open_constraints X).
+testcase builtins :- guard X success, refl.open_constraints X.
+testcase builtins :- guard X success, not(refl.open_constraints Y).
+testcase builtins :- guard X success, eq X "foo", not(refl.open_constraints X).
+
 (* ------------------- eqv *)
 
 icase : type.
@@ -102,6 +111,8 @@ testcase reify :- reify (app unit unit) X, eq X (reified.term app [reified.term 
 testcase reify :- reify (fun (x: term) => "a") X, eq X (reified.lambda (fun x => reified.const "a")).
 testcase reify :- reify (fun (x: term) => x) X, eq X (reified.lambda (fun x => reified.bvar x [])).
 testcase reify :- (z:term -> (reify z (X z), eq (X z) (reified.nvar z []))).
+testcase reify :- (z:(term->term) -> (reify z (X z), eq (X z) (reified.nvar z []))).
+testcase reify :- (x:(string->string->string) -> y:string -> (reify (x y) (X x y), eq (X x y) (reified.lambda (fun z => reified.nvar x [reified.nvar y [], reified.bvar z []])))).
 testcase reify :- reify app X, eq X (reified.lambda (fun a => reified.lambda (fun b => reified.term app [reified.bvar a [], reified.bvar b []]))).
 testcase reify :- reify X R, eq R (reified.unifvar I [] 0 X).
 testcase reify :- (x:term -> ([X R] reify X R, eq R (reified.unifvar I [] 1 X))).

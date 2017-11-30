@@ -42,7 +42,7 @@ lambda : (A -> reified B) -> reified (A -> B).
 isbvar : [A]A -> prop.
 %end.
 
-reify : [A]A -> reified A -> prop.
+reify, reify1, reify2, reify3, reify4, reify5, reify6 : [A]A -> reified A -> prop.
 reify_args : [A B]args A B -> reified_args A B -> prop.
 reify_var : [A]A -> reified A -> prop.
 
@@ -52,24 +52,43 @@ reify X (reified.unifvar I SubstR Metalevel X) when refl.isunif(X) :-
   dyn.to_args SubstDyn Subst,
   reify_args Subst SubstR.
 
-reify X (reified.term Head ArgsR)
-    when refl.headargs X Head ArgsDyn, refl.isbaseterm X,
-         not(refl.isbvar Head), not(refl.isnvar Head) :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
+reify X Y when not(refl.isunif X) :- reify1 X Y.
 
-reify X (reified.const X) when refl.isconst X.
+reify1 X R :-
+  if (refl.isbvar X) then (reify_var X R)
+  else reify2 X R.
 
-reify (X : A -> B) (reified.lambda X_R) when not(reify_var X _) :-
-  (x:A -> refl.isbvar x -> reify_var x (reified.bvar x []) -> ([Body]
-   reify (X x) Body, eq Body (X_R x))).
+reify2 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isbvar Head) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.bvar Head ArgsR))
+  else reify3 X R.
 
-reify X Y when not(refl.isunif X), reify_var X Y.
+reify3 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isnvar Head) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.nvar Head ArgsR))
+  else (if refl.isnvar X then
+    (eq R (reified.nvar X []))
+  else reify4 X R).
 
-reify X (reified.bvar Head ArgsR) when refl.headargs X Head ArgsDyn, refl.isbvar Head :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
+reify4 X R :-
+  if (refl.headargs X Head ArgsDyn, refl.isbaseterm X) then
+    (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
+     eq R (reified.term Head ArgsR))
+  else reify5 X R.
 
-reify X (reified.nvar Head ArgsR) when refl.headargs X Head ArgsDyn, not(refl.isbvar Head), refl.isnvar Head :-
-  dyn.to_args ArgsDyn Args, reify_args Args ArgsR.
+reify5 X R :-
+  if (refl.isconst X) then
+    (eq R (reified.const X))
+  else reify6 X R.
+
+reify6 (X : A -> B) (reified.lambda X_R) :-
+  (x:A -> refl.isbvar x -> reify_var x (reified.bvar x []) ->
+    (reify (X x) (X_R x))).
+
+reify_args X _ when refl.isunif X, locget X Loc, tostring Loc S,
+       print_string `At ${S}, reify_args with uninstantiated variable.\n`, failure.
 
 reify_args [] [].
 reify_args (HD :: TL) (HD_R :: TL_R) :- reify HD HD_R, reify_args TL TL_R.
@@ -77,8 +96,16 @@ reify_args (HD :: TL) (HD_R :: TL_R) :- reify HD HD_R, reify_args TL TL_R.
 reflect : [A]reified A -> A -> prop.
 reflect : [A B]reified_args A B -> args A B -> prop.
 
+reflect X _
+  when refl.isunif X, locget X Loc, tostring Loc S,
+       print_string `At ${S}, reflect with uninstantiated variable.\n`, failure.
+
 reflect (reified.unifvar I SubstR _ X) Z :-
   reflect SubstR Subst, dyn.from_args Subst SubstDyn, refl.recomposeunif X SubstDyn Z.
+
+reflect_apply : [A] A -> args A B -> B -> prop.
+reflect_apply X [] X.
+reflect_apply X (HD :: TL) X' :- reflect_apply (X HD) TL X'.
 
 reflect (reified.term Head ArgsR) Z :-
   reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
@@ -86,10 +113,10 @@ reflect (reified.term Head ArgsR) Z :-
 reflect (reified.const Const) Const.
 
 reflect (reified.nvar Head ArgsR) Z :-
-  reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
+  reflect ArgsR Args, reflect_apply Head Args Z.
 
 reflect (reified.bvar Head ArgsR) Z :-
-  reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
+  reflect ArgsR Args, reflect_apply Head Args Z.
 
 reflect (reified.lambda X_R) X :-
   (x:A -> reflect (reified.bvar x []) x -> reflect (X_R x) (X x)).
@@ -97,9 +124,18 @@ reflect (reified.lambda X_R) X :-
 reflect [] [].
 reflect (HD_R :: TL_R) (HD :: TL) :- reflect HD_R HD, reflect TL_R TL.
 
-eq_nounif : [A]A -> A -> prop.
+
 (* TODO: something (other than the bvar situation) is introducing multiple cases into reify, figure it out. *)
-eq_nounif A B :- once(reify A Areified), once(reify B Breified), eq Areified Breified.
+%extend full_reify.
+reify : [A]A -> reified A -> prop.
+reify X Y :- .reify X Y.
+%end.
+
+reify : [A]A -> reified A -> prop.
+reify X Y :- once(full_reify.reify X Y).
+
+eq_nounif : [A]A -> A -> prop.
+eq_nounif A B :- reify A Areified, reify B Breified, eq Areified Breified.
 
 
 eqv_aux : [A]reified A -> reified A -> (prop -> prop) -> (prop -> prop) -> prop.
@@ -149,7 +185,7 @@ eqv (X: reified A) (Y: reified A) :-
 
 
 unif_alpha_eqv : [A]A -> A -> prop.
-unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
+unif_alpha_eqv X Y :- reify X XR, reify Y YR, eqv XR YR.
 
 
 
@@ -157,7 +193,7 @@ unif_alpha_eqv X Y :- once(reify X XR), once(reify Y YR), eqv XR YR.
 pattern_match : [A]A -> A -> prop.
 pmatch_aux : [A]reified A -> reified A -> prop.
 
-pattern_match A B :- once(reify A AR), once(reify B BR), pmatch_aux AR BR.
+pattern_match A B :- reify A AR, reify B BR, pmatch_aux AR BR.
 
 
 pmatch_aux (reified.unifvar _ _ _ L) R :- reflect R R', eq L R'.
