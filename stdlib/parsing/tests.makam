@@ -135,13 +135,13 @@ rule (rec I)
              (* base *)
              choices [
                bind (token ident) (fun var => action (cvar var)),
-               seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))
+               seq (token (exact "(")) (bind cterm_lambda (fun t => seq (token (exact ")")) (action t)))
              ]
           ],
           cterm_lambda))))).
 
->> parse (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . x" (X, _) ?
+>> parse (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
 >> Yes:
->> X := clam (ident (cons "x" nil)) (clam (ident (cons "y" nil)) (cvar (ident (cons "x" nil)))).
+>> X := clam (ident (cons "x" nil)) (clam (ident (cons "y" nil)) (clam (ident (cons "x" nil)) (cvar (ident (cons "x" nil))))).
 
 %end.
