@@ -1,19 +1,5 @@
 reified : type -> type.
 
-args : type -> type -> type.
-nil : args A A.
-cons : A -> args B C -> args (A -> B) C.
-
-%extend dyn.
-to_args : [A B] list dyn -> args A B -> prop.
-to_args [] [].
-to_args (dyn HD :: TL) (HD :: TL') :- to_args TL TL'.
-
-from_args : [A B] args A B -> list dyn -> prop.
-from_args [] [].
-from_args (HD :: TL) (dyn HD :: TL') :- from_args TL TL'.
-%end.
-
 reified_args : type -> type -> type.
 nil : reified_args A A.
 cons : reified A -> reified_args B C -> reified_args (A -> B) C.
@@ -103,20 +89,16 @@ reflect X _
 reflect (reified.unifvar I SubstR _ X) Z :-
   reflect SubstR Subst, dyn.from_args Subst SubstDyn, refl.recomposeunif X SubstDyn Z.
 
-reflect_apply : [A] A -> args A B -> B -> prop.
-reflect_apply X [] X.
-reflect_apply X (HD :: TL) X' :- reflect_apply (X HD) TL X'.
-
 reflect (reified.term Head ArgsR) Z :-
   reflect ArgsR Args, dyn.from_args Args ArgsDyn, refl.headargs Z Head ArgsDyn.
 
 reflect (reified.const Const) Const.
 
 reflect (reified.nvar Head ArgsR) Z :-
-  reflect ArgsR Args, reflect_apply Head Args Z.
+  reflect ArgsR Args, args.apply Head Args Z.
 
 reflect (reified.bvar Head ArgsR) Z :-
-  reflect ArgsR Args, reflect_apply Head Args Z.
+  reflect ArgsR Args, args.apply Head Args Z.
 
 reflect (reified.lambda X_R) X :-
   (x:A -> reflect (reified.bvar x []) x -> reflect (X_R x) (X x)).

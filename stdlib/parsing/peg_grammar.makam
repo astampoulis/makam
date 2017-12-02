@@ -7,21 +7,11 @@ peg_grammar : testsuite. %testsuite peg_grammar.
 ppegbase : peg (peg A).
 ppeg : peg (peg A -> prop).
 
-once_or_many : peg A -> peg (list A).
-rule (once_or_many P) (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
-
-whitespace : peg unit.
-rule whitespace (seq (once_or_many (charclass " \n\t")) (action unit)).
-
-option : peg A -> peg (option A).
-rule (option P) (bind P (fun res => action (some res))).
-rule (option P) (action none).
-
 token : peg A -> peg A.
-rule (token P) (seq (option whitespace) (bind P (fun p => seq whitespace (action p)))).
+rule (token P) (seq ws_opt (bind P (fun p => seq ws (action p)))).
 
 symbol : peg A -> peg A.
-rule (symbol P) (seq (option whitespace) P).
+rule (symbol P) (seq ws_opt P).
 
 ident : peg string.
 identfirst, identrest : peg string.
@@ -32,10 +22,6 @@ rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZÎ
 concat : list string -> string.
 
 rule ident (bind identfirst (fun hd => bind (many identrest) (fun tl => action (concat (hd :: tl))))).
-
-app : (A -> B) -> peg A -> peg B.
-
-peg.rule (app F Y) (bind Y (fun y => action (F y))).
 
 peg.rule (ppegbase) (seq (symbol (exact ".")) (action anychar)).
 peg.rule (ppegbase) (seq (symbol (exact "\""))
@@ -56,14 +42,14 @@ peg.rule (ppegrule) (seq (symbol (exact "{")) (bind ppegaction (fun a =>
                      seq (symbol (exact "}")) (action a)))).
 
 peg.rule (ppegrule) (bind ppegbase (fun hd =>
-                    (seq whitespace
+                    (seq ws
                     (bind ppegrule (fun tl =>
                     action (pfun x => [Tl] (tl Tl, eq x (seq hd Tl)))))))).
 
 peg.rule (ppegrule) (bind (symbol ident) (fun id =>
                     (seq (symbol (exact ":"))
                     (bind ppegbase (fun hd =>
-                    (seq whitespace
+                    (seq ws
                     (bind ppegrule (fun tl =>
                     (action (pfun x => [Tl]((y:A -> get_res id y -> tl (Tl y)),
                                             eq x (bind hd Tl)))))))))))).

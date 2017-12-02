@@ -106,6 +106,10 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 >> Yes:
 >> X := (fun (x: string) => x).
 
+>> parse_opt (apply capp [captured cterm2, captured (many cterm2)]) "x y z" (X, _) ?
+>> Yes:
+>> X := capp (cvar (ident ["x"])) [cvar (ident ["y"]), cvar (ident ["z"])].
+
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
 
@@ -170,5 +174,10 @@ extern_def external Code
 >> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
 >> Yes:
 >> X := [ clam (ident ["x"]) (cvar (ident ["x"])), clam (ident ["x"]) (cvar (ident ["x"])) ].
+
+>> parse_opt (eval_when anychar "(function (x) { return x.toUpperCase() == x; })") "Foo" (X, Rest) ?
+>> Yes:
+>> X := "F",
+>> Rest := "oo".
 
 %end.

@@ -19,23 +19,12 @@ rule (slow_many P) (action []).
 >> Yes:
 >> Res := ([ "hi", "hi" ], "").
 
-once_or_many : peg A -> peg (list A).
-
-rule (once_or_many P) (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
-
-whitespace : peg unit.
-rule whitespace (seq (once_or_many (charclass " \n\t")) (action unit)).
-
->> parse (seq whitespace (action unit)) "   return " Res ?
+>> parse (seq ws (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
 
-option : peg A -> peg (option A).
-rule (option P) (bind P (fun res => action (some res))).
-rule (option P) (action none).
-
 token : peg A -> peg A.
-rule (token P) (seq (option whitespace) P).
+rule (token P) (seq (option ws) P).
 
 >> parse (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
 >> Yes:
@@ -66,7 +55,7 @@ rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token
 
 rule cterm0 cterm1.
 
-rule cterm1 (bind cterm2 (fun hd => bind (once_or_many (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
+rule cterm1 (bind cterm2 (fun hd => bind (once_or_many (seq ws cterm2)) (fun tl => action (capp hd tl)))).
 
 rule cterm1 cterm2.
 
@@ -103,6 +92,10 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 >> parse (action (fun (x: string) => x)) "" (X, _) ?
 >> Yes:
 >> X := (fun (x: string) => x).
+
+>> parse (apply capp [captured cterm2, captured (many cterm2)]) "x y z" (X, _) ?
+>> Yes:
+>> X := capp (cvar (ident ["x"])) [cvar (ident ["y"]), cvar (ident ["z"])].
 
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.

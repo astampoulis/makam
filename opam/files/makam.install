@@ -16,6 +16,7 @@ share: [
   "stdlib/fluid.makam" {"stdlib/fluid.makam"}
   "stdlib/generic.makam" {"stdlib/generic.makam"}
   "stdlib/guard.makam" {"stdlib/guard.makam"}
+  "stdlib/heterogeneous.makam" {"stdlib/heterogeneous.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
   "stdlib/map.makam" {"stdlib/map.makam"}
@@ -29,6 +30,7 @@ share: [
   "stdlib/parsing/init.makam" {"stdlib/parsing/init.makam"}
   "stdlib/parsing/peg.makam" {"stdlib/parsing/peg.makam"}
   "stdlib/parsing/generate_js.makam" {"stdlib/parsing/generate_js.makam"}
+  "stdlib/parsing/library.makam" {"stdlib/parsing/library.makam"}
   "stdlib/parsing/tests.makam" {"stdlib/parsing/tests.makam"}
   "stdlib/parsing/tests_opt.makam" {"stdlib/parsing/tests_opt.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
