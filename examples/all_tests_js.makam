@@ -10,9 +10,14 @@ all_tests : testsuite.
 %use "stdlib/dyn_expansion".
 %end.
 
+(*
+TODO: this is very slow, investigate why.
+the commit that made it slow was 46ff9463, which touches a number of things
+
 %use "new/testocaml".
 
 %use "new/testcases_ocaml".
+*)
 
 %extend old.
 %use "small/systemf".
