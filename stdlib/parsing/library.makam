@@ -1,0 +1,58 @@
+(* 
+   Base combinators
+*)
+
+option : peg A -> peg (option A).
+rule (option P) (bind P (fun a => action (some a))).
+rule (option P) (action none).
+
+ignore : peg A -> peg unit.
+rule (ignore X) (seq X (action unit)).
+
+once_or_many : peg A -> peg (list A).
+rule (once_or_many P)
+     (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
+
+ws, ws_opt, ws_char : peg unit.
+
+rule ws_char (ignore (charclass " \n\r\t")).
+rule ws (ignore (once_or_many ws_char)).
+rule ws_opt (ignore (many ws_char)).
+
+list_sep : peg A -> peg B -> peg (list A).
+rule (list_sep P Sep)
+  (bind P (fun hd =>
+  (bind (many P) (fun tl =>
+  (action (hd :: tl)))))).
+rule (list_sep P Sep) (action []).
+
+eval_when : peg string -> string -> peg string.
+rule (eval_when P Test)
+     (bind P (fun a => eval `return (${Test}(JSON.parse(${a}))) ? ${a} : null;`)).
+
+(* Pre-applied semantic actions. (as opposed to post-applied)
+
+   example of syntax?
+   { F } I0 [A] I1 [B] [C] ~~>
+   apply F [ I0, captured A, I1, captured B, captured C ] ~~>
+   seq I0 (bind A (fun a => seq I1 (bind B (fun b => bind C (fun c => action (F a b c))
+*)
+
+peg_args : type -> type -> type.
+peg_captured : type -> type.
+captured : peg A -> peg_captured A.
+
+nil : peg_args A A.
+cons : peg A -> peg_args B C -> peg_args B C.
+cons : peg_captured A -> peg_args B C -> peg_args (A -> B) C.
+
+apply : A -> peg_args A B -> peg B.
+
+apply_convert : [A B] A -> peg_args A B -> peg B -> prop.
+apply_convert F [] (action F).
+apply_convert F ((HD: peg A) :: TL) (seq HD Rest) :- apply_convert F TL Rest.
+apply_convert F ((captured (HD: peg A)) :: TL) (bind HD Rest) :-
+  (x:A -> apply_convert (F x) TL (Rest x)).
+
+rule (apply F PS) P' when apply_convert F PS P'.
+

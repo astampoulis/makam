@@ -23,6 +23,7 @@
 %use generic.
 
 %use morerefl.
+%use heterogeneous.
 %use reify.
 
 %use vars.
