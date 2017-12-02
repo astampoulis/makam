@@ -15,9 +15,8 @@ rule (once_or_many P)
 
 ws, ws_opt, ws_char : peg unit.
 
-rule ws_char (ignore (charclass " \n\r\t")).
-rule ws (ignore (once_or_many ws_char)).
-rule ws_opt (ignore (many ws_char)).
+rule ws (ignore (once_or_many (charclass " \n\r\t"))).
+rule ws_opt (ignore (many (charclass " \n\r\t"))).
 
 list_sep : peg A -> peg B -> peg (list A).
 rule (list_sep P Sep)
