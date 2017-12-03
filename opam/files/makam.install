@@ -19,6 +19,7 @@ share: [
   "stdlib/heterogeneous.makam" {"stdlib/heterogeneous.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
+  "stdlib/logging.makam" {"stdlib/logging.makam"}
   "stdlib/map.makam" {"stdlib/map.makam"}
   "stdlib/morerefl.makam" {"stdlib/morerefl.makam"}
   "stdlib/option.makam" {"stdlib/option.makam"}

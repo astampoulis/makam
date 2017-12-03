@@ -12,6 +12,14 @@ demand : prop -> clause -> prop.
 demand CurGoal Clause <-
   applies CurGoal Clause, premise Clause.
 
+get_goal : clause -> prop -> prop.
+get_goal (clause Goal _) Goal.
+get_goal (whenclause Goal _ _) Goal.
+
+get_guard : clause -> prop -> prop.
+get_guard (clause _ _) success.
+get_guard (whenclause _ Guard _) Guard.
+
 demand_or : prop -> list clause -> prop.
 demand_or Goal (HD :: TL) <- (demand Goal HD ; demand_or Goal TL).
 

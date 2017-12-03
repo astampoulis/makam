@@ -27,9 +27,7 @@ handle_result Successes Failures when not(eq Failures []) <-
 
 handle_failure : clause -> prop.
 handle_failure TestCase <-
-  locget TestCase Loc,
-  tostring Loc TestCaseS,
-  print_string `\n-- Test failure for testcase at ${TestCaseS}\n`.
+  log_error TestCase `Test failure for testcase`.
 
 run_test : list testsuite -> list clause -> list clause -> prop -> list clause -> prop.
 run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Failures.
@@ -37,10 +35,8 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
   then (
     if (verbose_run_tests) then (
-      locget TestCase Loc,
-      tostring Loc LocS,
-      print_string `\n-- Testcase at ${LocS}\n`,
-      print TestCase
+      tostring TestCase TestCaseS,
+      (log.level log.info -> log_info TestCase `Testcase:\n${TestCaseS}\n`)
     ) else success,
     if (once(clause.premise TestCase))
     then (run_test Suites (TestCase :: Successes) Failures (testcase X) TL)

@@ -1,0 +1,26 @@
+%extend log.
+level : type.
+
+error : level.
+warn : level.
+info : level.
+
+level : level -> prop.
+%end.
+
+log_error, log_warning, log_info : [A] A -> expansion -> prop.
+
+log_error Where Message :-
+  locget Where Loc, tostring Loc LocS,
+  expansion.str Message MessageS,
+  print_string `\n-- Error at ${LocS}: ${MessageS}\n`.
+
+log_warning Where Message when log.level log.warn :-
+  locget Where Loc, tostring Loc LocS,
+  expansion.str Message MessageS,
+  print_string `\n-- Warning at ${LocS}: ${MessageS}\n`.
+
+log_info Where Message when (log.level log.warn; log.level log.info) :-
+  locget Where Loc, tostring Loc LocS,
+  expansion.str Message MessageS,
+  print_string `\n-- Info at ${LocS}: ${MessageS}\n`.

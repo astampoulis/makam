@@ -8,6 +8,8 @@
 %use list.
 %use string.
 
+%use logging.
+
 %use demand.
 %use testing.
 
