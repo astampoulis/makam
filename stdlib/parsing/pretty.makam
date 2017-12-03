@@ -1,0 +1,129 @@
+%extend pretty.
+
+pretty : type -> type.
+
+const : string -> pretty unit.
+anychar : pretty string.
+charclass : string -> pretty string.
+empty : pretty unit.
+many : pretty A -> pretty (list A).
+choices : list (pretty A) -> pretty A.
+
+pretty_args : type -> type -> type.
+pretty_captured : type -> type.
+captured : pretty A -> pretty_captured A.
+
+nil : pretty_args A A.
+cons : pretty unit -> pretty_args A B -> pretty_args A B.
+cons : pretty_captured A -> pretty_args B C -> pretty_args (A -> B) C.
+
+unapply : A -> pretty_args A B -> pretty B.
+
+pretty : [A] pretty A -> A -> option string -> prop.
+
+builtin : [A] pretty A -> prop.
+rule : [A] pretty A -> pretty A -> prop.
+
+builtin (const _).
+builtin (anychar).
+builtin (charclass _).
+builtin (empty).
+builtin (many _).
+builtin (unapply _ _).
+builtin (choices _).
+
+pretty (const S) unit (some S).
+
+pretty (anychar) X (some X) when string.explode X [ _ ].
+
+pretty (charclass S) X Res :-
+  if string.contains S X then
+    eq Res (some X)
+  else eq Res none.
+
+pretty empty unit (some "").
+
+pretty (many P) [] (some "").
+pretty (many P) (HD :: TL) Res :-
+  if (pretty P HD (some S_HD))
+  then (if pretty (many P) TL (some S_TL)
+  then (string.append S_HD S_TL S, eq Res (some S))
+  else eq Res none)
+  else eq Res none.
+
+pretty_args : [A B] pretty_args A B -> args A B -> option string -> prop.
+pretty_args [] [] (some "").
+pretty_args ((HD : pretty A) :: TL) Args Res :-
+  if (pretty HD unit (some S_HD))
+  then (if (pretty_args TL Args (some S_TL))
+  then (string.append S_HD S_TL S, eq Res (some S))
+  else eq Res none)
+  else eq Res none.
+pretty_args ((captured HD) :: TL) (HD' :: TL') Res :-
+  if (pretty HD HD' (some S_HD))
+  then (if (pretty_args TL TL' (some S_TL))
+  then (string.append S_HD S_TL S, eq Res (some S))
+  else eq Res none)
+  else eq Res none.
+
+fresh_args : [A B] pretty_args A B -> args A B -> prop.
+fresh_args [] [].
+fresh_args ((HD : pretty A) :: TL) Args :- fresh_args TL Args.
+fresh_args ((captured HD) :: TL) (HD' :: TL') :- fresh_args TL TL'.
+
+pretty (unapply F PrettyArgs) Term Res :-
+  fresh_args PrettyArgs Args,
+  if (args.apply F Args Term)
+  then (pretty_args PrettyArgs Args Res)
+  else (eq Res none).
+
+pretty (choices []) _ none.
+
+pretty (choices (HD :: TL)) Term Res :-
+  if (pretty HD Term (some S))
+  then (eq Res (some S))
+  else (pretty (choices TL) Term Res).
+
+get_pretty_definition : pretty A -> pretty A -> prop.
+
+get_pretty_definition P Res when not(builtin P) :-
+  refl.assume_get_applicable (rule P P') Rules0,
+  refl.rules_get_applicable (rule P P') Rules1,
+  append Rules0 Rules1 Rules,
+  map (pfun def res => [Def Loc LocS Guard]
+    if (clause.get_goal def (rule P Def), clause.get_guard def Guard) then
+      (Guard, eq res Def)
+    else
+      (locget def Loc, tostring Loc LocS,
+       print_string `\n-- Error at pretty definition rule at ${LocS}\n`,
+       failure))
+  Rules Defs,
+  eq Res (choices Defs).
+
+pretty P Term Res :-
+  get_pretty_definition P P',
+  pretty P' Term Res.
+
+
+term : type.
+lam : string -> term -> term.
+app : term -> term -> term.
+var : string -> term.
+
+term : int -> pretty term.
+ident : pretty string.
+
+rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
+
+rule (term 0) (unapply lam [ const "λ", captured ident, const ".", captured (term 0) ]).
+rule (term 0) (term 1).
+
+rule (term 1) (unapply app [ captured (term 2), const " ", captured (term 2) ]).
+rule (term 1) (term 2).
+
+rule (term 2) (unapply var [ captured ident ]).
+rule (term 2) (unapply (fun x => x) [ const "(", captured (term 0), const ")" ]).
+
+pretty (term 0) (lam "x" (app (var "x") (app (var "z") (lam "x" (var "x"))))) X ?
+
+%end.
