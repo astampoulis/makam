@@ -27,7 +27,10 @@ rule (list_sep P Sep) (action []).
 
 eval_when : peg string -> string -> peg string.
 rule (eval_when P Test)
-     (bind P (fun a => eval `return (${Test}(JSON.parse(${a}))) ? ${a} : null;`)).
+     (bind P (fun a => eval `return ((${Test})(JSON.parse(${a}))) ? ${a} : null;`)).
+
+transform : (A -> B -> prop) -> string -> peg A -> peg B.
+rule (transform F F_JS P) (bind P (fun a => eval (F a) `return (${F_JS})(${result a});`)).
 
 charmany : peg string -> peg string.
 rule (charmany P) (bind P (fun hd => bind (charmany P) (fun tl =>
@@ -59,4 +62,3 @@ apply_convert F ((captured (HD: peg A)) :: TL) (bind HD Rest) :-
   (x:A -> apply_convert (F x) TL (Rest x)).
 
 rule (apply F PS) P' when apply_convert F PS P'.
-

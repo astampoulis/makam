@@ -321,6 +321,11 @@ gen_dictionary_js Map Result :-
     ${Entries_js}
   }` Result.
 
+(* Since every Makam type is encoded as a string while in JavaScript parsing land,
+   this is a cast to make sure that we can quote the result of a parse inside
+   an expansion, regardless of its type. *)
+result : [A]A -> string.
+
 quote_expansion_js : list (reified string) -> list (reified string) -> prop.
 
 quote_expansion_js [] [].
@@ -329,7 +334,9 @@ quote_expansion_js (HD :: TL) (reified.const (S' : string) :: TL') :-
   if (eq HD (reified.const (S : string))) then
     (eq S' S)
   else
-    (quote_term_js HD HD', expansion.str `\`${HD'}\`` S'),
+    (if (eq HD (reified.term result [X]))
+     then (quote_term_js X HD', expansion.str `\`${HD'}\`` S')
+     else (quote_term_js HD HD', expansion.str `\`${HD'}\`` S')),
   quote_expansion_js TL TL'.
 
 gen_parse_js Eval Dict Dict Result
