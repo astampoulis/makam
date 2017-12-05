@@ -29,6 +29,11 @@ eval_when : peg string -> string -> peg string.
 rule (eval_when P Test)
      (bind P (fun a => eval `return (${Test}(JSON.parse(${a}))) ? ${a} : null;`)).
 
+charmany : peg string -> peg string.
+rule (charmany P) (bind P (fun hd => bind (charmany P) (fun tl =>
+                   eval (string.append hd tl) `return JSON.stringify(JSON.parse(${hd}) + JSON.parse(${tl}));`))).
+rule (charmany P) (action "").
+
 (* Pre-applied semantic actions. (as opposed to post-applied)
 
    example of syntax?

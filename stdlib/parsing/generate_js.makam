@@ -332,7 +332,8 @@ quote_expansion_js (HD :: TL) (reified.const (S' : string) :: TL') :-
     (quote_term_js HD HD', expansion.str `\`${HD'}\`` S'),
   quote_expansion_js TL TL'.
 
-gen_parse_js (eval (expansion X)) Dict Dict Result :-
+gen_parse_js Eval Dict Dict Result
+  when (eq Eval (eval (expansion X)); eq Eval (eval _ (expansion X))) :-
   map reify X X_Reified,
   quote_expansion_js X_Reified X_Reified',
   map reflect X_Reified' X',

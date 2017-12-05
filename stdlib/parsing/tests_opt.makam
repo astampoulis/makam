@@ -41,20 +41,18 @@ rule (token P) (seq (option whitespace) P).
 >> Yes:
 >> Res := ("true", " ").
 
-ident : type.
-ident : list string -> ident.
-
-ident : peg ident.
+ident : peg string.
 identfirst, identrest : peg string.
 
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun hd => bind (many identrest) (fun tl => action (ident (hd :: tl))))).
+rule ident (bind identfirst (fun (hd: string) => bind (charmany identrest) (fun tl =>
+            eval (string.append hd tl) `return JSON.stringify(JSON.parse(${hd}) + JSON.parse(${tl}));`))).
 
 cterm : type.
-clam : ident -> cterm -> cterm.
-cvar : ident -> cterm.
+clam : string -> cterm -> cterm.
+cvar : string -> cterm.
 capp : cterm -> list cterm -> cterm.
 
 cterm, cterm0, cterm1, cterm2 : peg cterm.
@@ -78,19 +76,19 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 
 >> parse_opt cterm "λ x.x" Res ?
 >> Yes:
->> Res := (clam (ident ["x"]) (cvar (ident ["x"])), "").
+>> Res := (clam "x" (cvar "x"), "").
 
 >> parse_opt cterm "λf.λg.λx.f (g x)" Res ?
 >> Yes:
->> Res := ((clam (ident (cons "f" nil)) (clam (ident (cons "g" nil)) (clam (ident (cons "x" nil)) (capp (cvar (ident (cons "f" nil))) (cons (capp (cvar (ident (cons "g" nil))) (cons (cvar (ident (cons "x" nil))) nil)) nil))))), "").
+>> Res := ((clam "f" (clam "g" (clam "x" (capp (cvar "f") [capp (cvar "g") [cvar "x"]])))), "").
 
 >> parse_opt ident "kalimera" Res ?
 >> Yes:
->> Res := (ident ["k", "a", "l", "i", "m", "e", "r", "a"], "").
+>> Res := ("kalimera", "").
 
 >> parse_opt cterm "λ καλημέρα. κόσμε" Res ?
 >> Yes:
->> Res := (clam (ident ["κ", "α", "λ", "η", "μ", "έ", "ρ", "α"]) (cvar (ident ["κ", "ό", "σ", "μ", "ε"])), "").
+>> Res := (clam "καλημέρα" (cvar "κόσμε"), "").
 
 >> (parse_opt (bind anychar (fun a => bind anychar (fun b => action (fun s => {prop| string.explode s [b, a] |})))) "hi" (_DoIt, Rest), _DoIt S) ?
 >> Yes:
@@ -108,14 +106,14 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 
 >> parse_opt (apply capp [captured cterm2, captured (many cterm2)]) "x y z" (X, _) ?
 >> Yes:
->> X := capp (cvar (ident ["x"])) [cvar (ident ["y"]), cvar (ident ["z"])].
+>> X := capp (cvar "x") [cvar "y", cvar "z"].
 
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
 
->> parse_opt (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))))) "" (X, _) ?
+>> parse_opt (action (hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar "y"]]))))) "" (X, _) ?
 >> Yes:
->> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar (ident ["y"])]]))).
+>> X := hoaslam (fun x => hoaslam (fun y => (capp x [capp y [cvar "y"]]))).
 
 >> (eq _OPEN "λ  hello  . λ world . λ  hello  . λ world . ",
     eq _WHITESPACE "                                                                                   ",
@@ -146,9 +144,9 @@ rule (rec I)
           ],
           cterm_lambda))))).
 
->> parse_opt (choices [ seq (neg (rec 0)) (action (cvar (ident ["nope"]))), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
+>> parse_opt (choices [ seq (neg (rec 0)) (action (cvar "nope")), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
 >> Yes:
->> X := clam (ident (cons "x" nil)) (clam (ident (cons "y" nil)) (clam (ident (cons "x" nil)) (cvar (ident (cons "x" nil))))).
+>> X := clam "x" (clam "y" (clam "x" (cvar "x"))).
 
 (* tests specific for parse_opt *)
 
@@ -163,7 +161,7 @@ extern_def external Code
   `
   function (input, offset) {
     if (input.startsWith("identity", offset)) {
-      return { result: 'peg.clam (peg.ident ["x"]) (peg.cvar (peg.ident ["x"]))',
+      return { result: 'peg.clam "x" (peg.cvar "x")',
                newOffset: offset + "identity".length };
     } else {
       return { result: null };
@@ -173,7 +171,7 @@ extern_def external Code
 
 >> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
 >> Yes:
->> X := [ clam (ident ["x"]) (cvar (ident ["x"])), clam (ident ["x"]) (cvar (ident ["x"])) ].
+>> X := [ clam "x" (cvar "x"), clam "x" (cvar "x") ].
 
 >> parse_opt (eval_when anychar "(function (x) { return x.toUpperCase() == x; })") "Foo" (X, Rest) ?
 >> Yes:

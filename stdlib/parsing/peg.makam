@@ -13,6 +13,8 @@ lookahead : peg A -> peg unit.
 empty : peg unit.
 void : peg A.
 many : peg A -> peg (list A).
+eval : (A -> prop) -> expansion -> peg A.
+       (* this is eval with a Makam version and a JS version of the predicate. *)
 
 (* js-only peg expressions: *)
 eval : expansion -> peg A. (* evaluate in host language. needs to return a string of a term of type A *)
@@ -32,6 +34,7 @@ builtin (lookahead _).
 builtin (empty).
 builtin (void).
 builtin (many _).
+builtin (eval _ _).
 
 builtin (eval _). js_builtin (eval _).
 
@@ -97,6 +100,11 @@ parse (many P) S Res :-
     (eq Res (some (HD :: TL, S'')),
      parse (many P) S' (some (TL, S'')))
   else (eq Res (some ([], S))).
+
+parse (eval P _) S Res :-
+  if (P Str)
+  then (eq Res (some (Str, S)))
+  else (eq Res none).
 
 (* js-specific parsers *)
 parse X _ _
