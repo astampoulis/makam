@@ -2,6 +2,70 @@
 
 pretty: testsuite. %testsuite pretty.
 
+(* Unit tests. *)
+
+>> pretty (const "s") unit X ?
+>> Yes:
+>> X := some "s".
+
+>> pretty (anychar) "." X ?
+>> Yes:
+>> X := some ".".
+
+>> pretty (anychar) "" X ?
+>> Yes:
+>> X := none.
+
+>> pretty (anychar) "ab" X ?
+>> Yes:
+>> X := none.
+
+>> pretty (charclass "abc") "a" X ?
+>> Yes:
+>> X := some "a".
+
+>> pretty (charclass "abc") "d" X ?
+>> Yes:
+>> X := none.
+
+>> pretty empty unit X ?
+>> Yes:
+>> X := some "".
+
+>> pretty void _ X ?
+>> Yes:
+>> X := none.
+
+>> pretty (many (charclass "abc")) [ "a", "c", "b", "a" ] X ?
+>> Yes:
+>> X := some "acba".
+
+>> pretty (many (charclass "abc")) [] X ?
+>> Yes:
+>> X := some "".
+
+>> pretty (choices [ charclass "!", charclass "abc" ]) "a" X ?
+>> Yes:
+>> X := some "a".
+
+unapply_test : type.
+constr_a : string -> unapply_test.
+constr_b : string -> unapply_test.
+
+>> pretty (unapply constr_a [ captured anychar ]) (constr_a "a") X ?
+>> Yes:
+>> X := some "a".
+
+>> pretty (unapply constr_a [ captured anychar ]) (constr_b "b") X ?
+>> Yes:
+>> X := none.
+
+>> pretty (unapply constr_a [ const "<", captured anychar, const ">" ]) (constr_a "a") X ?
+>> Yes:
+>> X := some "<a>".
+
+(* Integration test. *)
+
 term : type.
 lam : string -> term -> term.
 app : term -> term -> term.

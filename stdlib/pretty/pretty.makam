@@ -34,7 +34,10 @@ builtin (choices _).
 
 pretty (const S) unit (some S).
 
-pretty (anychar) X (some X) when string.explode X [ _ ].
+pretty (anychar) X Res :-
+  if (string.explode X [ _ ])
+  then eq Res (some X)
+  else eq Res none.
 
 pretty (charclass S) X Res :-
   if string.contains S X then

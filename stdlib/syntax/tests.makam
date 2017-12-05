@@ -1,5 +1,33 @@
 %extend syntax.
 
+(* Unit tests. *)
+
+syntax_test : [A]syntax A -> string -> A -> prop.
+syntax_test Syntax String Term :-
+  parse Syntax String T, unif_alpha_eqv T Term,
+  pretty Syntax Term S, eq S String,
+  parse Syntax String T', pretty Syntax T' String', eq String String',
+  pretty Syntax Term S', parse Syntax S' T'', unif_alpha_eqv T'' Term.
+
+syntax : testsuite. %testsuite syntax.
+
+testcase syntax :- syntax_test (exact "s") "s" unit.
+testcase syntax :- syntax_test (anychar) "s" "s".
+testcase syntax :- not(parse anychar "" _), not(pretty anychar "" _).
+testcase syntax :- syntax_test (charclass "abc") "a" "a".
+testcase syntax :- syntax_test empty "" unit.
+testcase syntax :- syntax_test (many (charclass "abc")) "abba" ["a", "b", "b", "a"].
+testcase syntax :- syntax_test (many (charclass "abc")) "" [].
+testcase syntax :- syntax_test (choices [ charclass "!", charclass "abc" ]) "a" "a".
+
+unapply_test : type.
+constr_a : string -> unapply_test.
+constr_b : string -> unapply_test.
+
+testcase syntax :- syntax_test (apply constr_a [ exact "a:", captured anychar ]) "a:x" (constr_a "x").
+
+(* Full test. *)
+
 term : type.
 lam : string -> term -> term.
 app : term -> list term -> term.
@@ -8,7 +36,6 @@ var : string -> term.
 term : int -> syntax term.
 ident : syntax string.
 
-%extend syntax.
 rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
 
 rule (term 0) (apply lam
@@ -24,15 +51,14 @@ rule (term 1) (term 2).
 
 rule (term 2) (apply var [ captured ident ]).
 rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
-%end.
 
-`( syntax.def_js (term 0) ).
+`( def_js (term 0) ).
 
->> syntax.parse (term 0) "λx.x (y z)" Z ?
+>> parse (term 0) "λx.x (y z)" Z ?
 >> Yes:
 >> Z := lam "x" (app (var "x") (cons (app (var "y") (cons (var "z") nil)) nil)).
 
->> (syntax.pretty (term 0) (lam "x" (app (var "x") [lam "z" (var "z"), app (var "z") [lam "x" (var "x")]])) X, syntax.parse (term 0) X Y) ?
+>> (pretty (term 0) (lam "x" (app (var "x") [lam "z" (var "z"), app (var "z") [lam "x" (var "x")]])) X, parse (term 0) X Y) ?
 >> Yes:
 >> X := "λx.x (λz.z) (z (λx.x))",
 >> Y := lam "x" (app (var "x") (cons (lam "z" (app (var "z") nil)) (cons (app (var "z") (cons (lam "x" (app (var "x") nil)) nil)) nil))).
