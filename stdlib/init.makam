@@ -33,3 +33,9 @@
 %extend peg.
 %use "parsing/init".
 %end.
+
+%extend pretty.
+%use "pretty/init".
+%end.
+
+%use "syntax/init".

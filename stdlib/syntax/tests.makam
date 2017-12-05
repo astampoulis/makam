@@ -1,0 +1,40 @@
+%extend syntax.
+
+term : type.
+lam : string -> term -> term.
+app : term -> list term -> term.
+var : string -> term.
+
+term : int -> syntax term.
+ident : syntax string.
+
+%extend syntax.
+rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
+
+rule (term 0) (apply lam
+                      [ exact "λ", captured ident, exact ".",
+                        captured (term 0) ]).
+rule (term 0) (term 1).
+
+rule (term 1) (apply app
+                      [ captured (term 2),
+                        captured (many (group
+                          [ exact " ", captured (term 2) ])) ]).
+rule (term 1) (term 2).
+
+rule (term 2) (apply var [ captured ident ]).
+rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
+%end.
+
+`( syntax.def_js (term 0) ).
+
+>> syntax.parse (term 0) "λx.x (y z)" Z ?
+>> Yes:
+>> Z := lam "x" (app (var "x") (cons (app (var "y") (cons (var "z") nil)) nil)).
+
+>> (syntax.pretty (term 0) (lam "x" (app (var "x") [lam "z" (var "z"), app (var "z") [lam "x" (var "x")]])) X, syntax.parse (term 0) X Y) ?
+>> Yes:
+>> X := "λx.x (λz.z) (z (λx.x))",
+>> Y := lam "x" (app (var "x") (cons (lam "z" (app (var "z") nil)) (cons (app (var "z") (cons (lam "x" (app (var "x") nil)) nil)) nil))).
+
+%end.

@@ -1,5 +1,3 @@
-%use "pretty".
-
 (* This module is for isomorphic syntax descriptions that
    can be used both for generating a parser and a pretty-printer.
 
@@ -28,6 +26,7 @@ anychar : syntax string.
 charclass : string -> syntax string.
 exact : string -> syntax unit.
 empty : syntax unit.
+void : syntax A.
 many : syntax A -> syntax (list A).
 choices : list (syntax A) -> syntax A.
 
@@ -84,6 +83,7 @@ builtin (anychar).
 builtin (charclass _).
 builtin (exact _).
 builtin empty.
+builtin void.
 builtin (many _).
 builtin (choices _).
 builtin (apply _ _).
@@ -102,6 +102,9 @@ to_pretty (exact S) (pretty.const S).
 
 to_peg empty peg.empty.
 to_pretty empty pretty.empty.
+
+to_peg void peg.empty.
+to_pretty void pretty.void.
 
 to_peg (many P) (peg.many P') :- to_peg P P'.
 to_pretty (many P) (pretty.many P') :- to_pretty P P'.
@@ -190,40 +193,3 @@ group : syntax_args (A -> A) A -> syntax A.
 rule (group PS) (apply (fun x => x) PS).
 
 %end.
-
-
-term : type.
-lam : string -> term -> term.
-app : term -> list term -> term.
-var : string -> term.
-
-term : int -> syntax term.
-ident : syntax string.
-
-%extend syntax.
-rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
-
-rule (term 0) (apply lam
-                      [ exact "λ", captured ident, exact ".",
-                        captured (term 0) ]).
-rule (term 0) (term 1).
-
-rule (term 1) (apply app
-                      [ captured (term 2),
-                        captured (many (group
-                          [ exact " ", captured (term 2) ])) ]).
-rule (term 1) (term 2).
-
-rule (term 2) (apply var [ captured ident ]).
-rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
-%end.
-
-`( syntax.def_js (term 0) ).
-
-syntax.parse (term 0)
-  "λx.x (y z a b c d e f g h i k a b c d e f g (λh.h) (λh.h) (λh.h) (λh.h))" Z ?
-
-(syntax.pretty (term 0)
-  (lam "x" (app (var "x") [lam "z" (var "z"), app (var "z") [lam "x" (var "x")]])) X,
- syntax.parse (term 0) X Y) ?
-

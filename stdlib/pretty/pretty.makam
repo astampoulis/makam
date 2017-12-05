@@ -1,11 +1,10 @@
-%extend pretty.
-
 pretty : type -> type.
 
 const : string -> pretty unit.
 anychar : pretty string.
 charclass : string -> pretty string.
 empty : pretty unit.
+void : pretty A.
 many : pretty A -> pretty (list A).
 choices : list (pretty A) -> pretty A.
 
@@ -28,6 +27,7 @@ builtin (const _).
 builtin (anychar).
 builtin (charclass _).
 builtin (empty).
+builtin (void).
 builtin (many _).
 builtin (unapply _ _).
 builtin (choices _).
@@ -42,6 +42,8 @@ pretty (charclass S) X Res :-
   else eq Res none.
 
 pretty empty unit (some "").
+
+pretty void _ none.
 
 pretty (many P) [] (some "").
 pretty (many P) (HD :: TL) Res :-
@@ -103,27 +105,3 @@ get_pretty_definition P Res when not(builtin P) :-
 pretty P Term Res :-
   get_pretty_definition P P',
   pretty P' Term Res.
-
-
-term : type.
-lam : string -> term -> term.
-app : term -> term -> term.
-var : string -> term.
-
-term : int -> pretty term.
-ident : pretty string.
-
-rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
-
-rule (term 0) (unapply lam [ const "λ", captured ident, const ".", captured (term 0) ]).
-rule (term 0) (term 1).
-
-rule (term 1) (unapply app [ captured (term 2), const " ", captured (term 2) ]).
-rule (term 1) (term 2).
-
-rule (term 2) (unapply var [ captured ident ]).
-rule (term 2) (unapply (fun x => x) [ const "(", captured (term 0), const ")" ]).
-
-pretty (term 0) (lam "x" (app (var "x") (app (var "z") (lam "x" (var "x"))))) X ?
-
-%end.
