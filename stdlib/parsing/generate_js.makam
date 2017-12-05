@@ -426,7 +426,7 @@ assume_many P (HD :: TL) (HD' :: TL') Q :- dyn.poly P P', (P' HD HD' -> assume_m
 %end.
 
 gen_parse_js (letrec DefsBody) Dict Dict' Code :-
-  map.to_list Dict DictList, length DictList I0,
+  map.raw_length Dict I0,
   peg_list.open DefsBody (pfun ps defsBody => [Defs Body]
     eq defsBody (Defs, Body),
     peg_list.mapi (pfun i res => [I0S IS]

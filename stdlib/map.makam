@@ -49,6 +49,11 @@ to_list ((Key, Val) :: M) ((Key, Val) :: L) :-
   remove_if_member M Key M',
   to_list M' L.
 
+raw_length : map A B -> int -> prop.
+raw_length [] 0.
+raw_length (_ :: M) N :-
+  raw_length M N', plus N' 1 N.
+
 from_list : list (A * B) -> map A B -> prop.
 from_list L M :- foldl add_or_update [] L M.
 
