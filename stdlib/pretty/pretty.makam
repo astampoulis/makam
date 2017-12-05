@@ -17,6 +17,7 @@ cons : pretty unit -> pretty_args A B -> pretty_args A B.
 cons : pretty_captured A -> pretty_args B C -> pretty_args (A -> B) C.
 
 unapply : A -> pretty_args A B -> pretty B.
+untransform : (B -> args A B -> prop) -> pretty_args A B -> pretty B.
 
 pretty : [A] pretty A -> A -> option string -> prop.
 
@@ -31,6 +32,7 @@ builtin (void).
 builtin (many _).
 builtin (unapply _ _).
 builtin (choices _).
+builtin (untransform _ _).
 
 pretty (const S) unit (some S).
 
@@ -81,6 +83,11 @@ pretty (unapply F PrettyArgs) Term Res :-
   if (args.apply F Args Term)
   then (pretty_args PrettyArgs Args Res)
   else (eq Res none).
+
+pretty (untransform F PrettyArgs) B Res :-
+  if (F B Args)
+  then (pretty_args PrettyArgs Args Res)
+  else eq Res none.
 
 pretty (choices []) _ none.
 

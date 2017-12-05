@@ -21,6 +21,7 @@ eval : expansion -> peg A. (* evaluate in host language. needs to return a strin
 
 builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins or a peg defined in terms of those *)
 js_builtin : [A] peg A -> prop. (* used to tell if something is one of the builtins supposed to be used only through js generation, with `parse_opt` *)
+inline : [A] peg A -> prop. (* used to inline user-defined PEG predicates *)
 
 builtin (bind _ _).
 builtin (seq _ _).

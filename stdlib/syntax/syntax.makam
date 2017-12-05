@@ -63,6 +63,8 @@ apply : A -> syntax_args A B -> syntax B.
    - `rule` ones, where we define one syntax combinator in terms of others
    - `rule_iso` ones, where we define how a syntax combinator corresponds
      to parsing and pretty printing combinators.
+   - `inline` controls whether definitions are inlined or not; useful
+     for non-recursive user-defined combinators that get used a lot.
 
    Each user-defined combinator should be either completely defined by
    `rule`-type definitions, or by `rule_iso` definitions; the two can't
@@ -73,6 +75,7 @@ apply : A -> syntax_args A B -> syntax B.
    with local assumptions taking precedence over global rules.
 *)
 builtin : [A] syntax A -> prop.
+inline : [A] syntax A -> prop.
 rule : [A] syntax A -> syntax A -> prop.
 rule_iso : [A] syntax A -> peg.peg A -> pretty.pretty A -> prop.
 
@@ -128,6 +131,19 @@ to_pretty_args ((captured HD) :: TL) (pretty.cons (pretty.captured HD') TL') :-
 to_peg (apply F Args) (peg.apply F Args') :- to_peg_args Args Args'.
 to_pretty (apply F Args) (pretty.unapply F Args') :- to_pretty_args Args Args'.
 
+(* Transform: this expects bi-directional predicates to convert to and from a type,
+   as well as a JavaScript version of the forward direction.
+
+   Useful mostly for string manipulation things, like when we need to concatenate
+   multiple strings into a single one.
+ *)
+
+transform : (args A B -> B -> prop) -> string -> (B -> args A B -> prop) -> syntax_args A B -> syntax B.
+to_peg (transform Forward Forward_js Backward SyntaxArgs) (peg.transform Forward Forward_js PegArgs) :-
+  to_peg_args SyntaxArgs PegArgs.
+to_pretty (transform Forward Forward_js Backward SyntaxArgs) (pretty.untransform Backward PrettyArgs) :-
+  to_pretty_args SyntaxArgs PrettyArgs.
+
 (* Done with the builtin ones.
    Now for user defined combinators, we got to gather up rules and convert
    them accordingly. *)
@@ -177,6 +193,8 @@ to_pretty S P when not(builtin S), rule_iso S _ _ :-
 peg.rule (peg.syntax Syn) Peg when to_peg Syn Peg.
 pretty.rule (pretty.syntax Syn) Pretty when to_pretty Syn Pretty.
 
+peg.inline (peg.syntax Syn) when inline Syn.
+
 def_js : syntax A -> cmd -> prop.
 def_js S Cmd :- peg.def_parser_js (peg.syntax S) Cmd.
 
@@ -190,6 +208,11 @@ pretty Syntax Input Result :-
 
 (* useful derived combinators. *)
 group : syntax_args (A -> A) A -> syntax A.
+inline (group _).
 rule (group PS) (apply (fun x => x) PS).
+
+once_or_many : syntax A -> syntax (list A).
+inline (once_or_many _).
+rule (once_or_many P) (apply cons [ captured P, captured (many P) ]).
 
 %end.

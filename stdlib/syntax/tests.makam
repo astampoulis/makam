@@ -19,6 +19,11 @@ testcase syntax :- syntax_test empty "" unit.
 testcase syntax :- syntax_test (many (charclass "abc")) "abba" ["a", "b", "b", "a"].
 testcase syntax :- syntax_test (many (charclass "abc")) "" [].
 testcase syntax :- syntax_test (choices [ charclass "!", charclass "abc" ]) "a" "a".
+testcase syntax :- syntax_test (transform (pfun x_y res => ([X Y] eq x_y [X, Y], string.append Y X res))
+                                          "(x, y) => JSON.stringify(JSON.parse(y) + JSON.parse(x))"
+                                          (pfun s res => ([X Y] string.explode s [X, Y], eq res [Y, X]))
+                                          [captured (charclass "xa"), captured (charclass "xb")])
+                                          "ab" "ba".
 
 unapply_test : type.
 constr_a : string -> unapply_test.

@@ -1,24 +1,33 @@
-(* 
+(*
    Base combinators
 *)
 
 option : peg A -> peg (option A).
+inline (option _).
+
 rule (option P) (bind P (fun a => action (some a))).
 rule (option P) (action none).
 
 ignore : peg A -> peg unit.
+inline (ignore _).
+
 rule (ignore X) (seq X (action unit)).
 
 once_or_many : peg A -> peg (list A).
+inline (once_or_many _).
+
 rule (once_or_many P)
      (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
 
 ws, ws_opt, ws_char : peg unit.
+inline (ws). inline (ws_opt). inline (ws_char).
 
 rule ws (seq (once_or_many (charclass " \n\t\r")) (action unit)).
 rule ws_opt (seq (many (charclass " \n\t\r")) (action unit)).
 
 list_sep : peg A -> peg B -> peg (list A).
+inline (list_sep _ _).
+
 rule (list_sep P Sep)
   (bind P (fun hd =>
   (bind (many P) (fun tl =>
@@ -26,16 +35,10 @@ rule (list_sep P Sep)
 rule (list_sep P Sep) (action []).
 
 eval_when : peg string -> string -> peg string.
+inline (eval_when _ _).
+
 rule (eval_when P Test)
      (bind P (fun a => eval `return ((${Test})(JSON.parse(${a}))) ? ${a} : null;`)).
-
-transform : (A -> B -> prop) -> string -> peg A -> peg B.
-rule (transform F F_JS P) (bind P (fun a => eval (F a) `return (${F_JS})(${result a});`)).
-
-charmany : peg string -> peg string.
-rule (charmany P) (bind P (fun hd => bind (charmany P) (fun tl =>
-                   eval (string.append hd tl) `return JSON.stringify(JSON.parse(${hd}) + JSON.parse(${tl}));`))).
-rule (charmany P) (action "").
 
 (* Pre-applied semantic actions. (as opposed to post-applied)
 
@@ -54,6 +57,7 @@ cons : peg A -> peg_args B C -> peg_args B C.
 cons : peg_captured A -> peg_args B C -> peg_args (A -> B) C.
 
 apply : A -> peg_args A B -> peg B.
+inline (apply _ _).
 
 apply_convert : [A B] A -> peg_args A B -> peg B -> prop.
 apply_convert F [] (action F).
@@ -62,3 +66,28 @@ apply_convert F ((captured (HD: peg A)) :: TL) (bind HD Rest) :-
   (x:A -> apply_convert (F x) TL (Rest x)).
 
 rule (apply F PS) P' when apply_convert F PS P'.
+
+transform : (args A B -> B -> prop) -> string -> peg_args A B -> peg B.
+inline (transform _ _ _).
+
+transform_convert : [A B] (args A B -> B -> prop) -> string -> list string -> peg_args A B -> peg B -> prop.
+transform_convert F F_JS Args_JS [] (eval (F []) (expansion Exp)) :-
+  append ["return (", F_JS, ")("] Args_JS L0,
+  append L0 [");"] Exp.
+transform_convert F F_JS Args_JS ((HD: peg A) :: TL) (seq HD P') :-
+  transform_convert F F_JS Args_JS TL P'.
+transform_convert F F_JS Args_JS ((captured (HD: peg A)) :: TL) (bind HD Rest) :-
+  (hd:A -> ([Args_JS']
+    if (eq Args_JS [])
+    then append Args_JS [result hd] Args_JS'
+    else append Args_JS [", ", result hd] Args_JS',
+    transform_convert (pfun tl_args => F (hd :: tl_args)) F_JS Args_JS' TL (Rest hd))).
+
+rule (transform F F_JS PS) P' when transform_convert F F_JS [] PS P'.
+
+charmany : peg string -> peg string.
+
+rule (charmany P) (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
+                             "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
+                             [ captured P, captured (charmany P) ]).
+rule (charmany P) (action "").

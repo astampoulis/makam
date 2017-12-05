@@ -64,6 +64,14 @@ constr_b : string -> unapply_test.
 >> Yes:
 >> X := some "<a>".
 
+>> pretty (untransform string.explode (many (charclass "al"))) "lala" X ?
+>> Yes:
+>> X := some "lala".
+
+>> pretty (untransform string.explode (many (charclass "al"))) "haha" X ?
+>> Yes:
+>> X := none.
+
 (* Integration test. *)
 
 term : type.

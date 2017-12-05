@@ -265,8 +265,13 @@ gen_parse_js P Dict Dict' Result
 
 key_of : peg A -> string -> prop.
 
+gen_parse_js P Dict Dict' Result
+  when not(builtin P), inline P, not(refl.isunif P), not(extern_def P _) :-
+  get_peg_definition P P',
+  gen_parse_js P' Dict Dict' Result.
+
 gen_parse_js P Dict DictRes Result
-  when not(builtin P), not(refl.isunif P), not(extern_def P _) :-
+  when not(builtin P), not(inline P), not(refl.isunif P), not(extern_def P _) :-
   if (key_of P Key) then success else tostring P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
