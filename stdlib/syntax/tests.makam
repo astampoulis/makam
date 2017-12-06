@@ -4,10 +4,10 @@
 
 syntax_test : [A]syntax A -> string -> A -> prop.
 syntax_test Syntax String Term :-
-  parse Syntax String T, unif_alpha_eqv T Term,
+  parse_opt Syntax String T, unif_alpha_eqv T Term,
   pretty Syntax Term S, eq S String,
-  parse Syntax String T', pretty Syntax T' String', eq String String',
-  pretty Syntax Term S', parse Syntax S' T'', unif_alpha_eqv T'' Term.
+  parse_opt Syntax String T', pretty Syntax T' String', eq String String',
+  pretty Syntax Term S', parse_opt Syntax S' T'', unif_alpha_eqv T'' Term.
 
 syntax : testsuite. %testsuite syntax.
 

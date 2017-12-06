@@ -39,6 +39,7 @@ share: [
   "stdlib/pretty/tests.makam" {"stdlib/pretty/tests.makam"}
   "stdlib/syntax/init.makam" {"stdlib/syntax/init.makam"}
   "stdlib/syntax/syntax.makam" {"stdlib/syntax/syntax.makam"}
+  "stdlib/syntax/library.makam" {"stdlib/syntax/library.makam"}
   "stdlib/syntax/tests.makam" {"stdlib/syntax/tests.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}

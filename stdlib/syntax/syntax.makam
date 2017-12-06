@@ -200,19 +200,14 @@ def_js S Cmd :- peg.def_parser_js (peg.syntax S) Cmd.
 
 parse : [A] syntax A -> string -> A -> prop.
 parse Syntax Input Result :-
+  peg.parse (peg.syntax Syntax) Input (Result, "").
+
+parse_opt : [A] syntax A -> string -> A -> prop.
+parse_opt Syntax Input Result :-
   peg.parse_opt (peg.syntax Syntax) Input (Result, "").
 
 pretty : [A] syntax A -> A -> string -> prop.
 pretty Syntax Input Result :-
   pretty.pretty (pretty.syntax Syntax) Input (some Result).
-
-(* useful derived combinators. *)
-group : syntax_args (A -> A) A -> syntax A.
-inline (group _).
-rule (group PS) (apply (fun x => x) PS).
-
-once_or_many : syntax A -> syntax (list A).
-inline (once_or_many _).
-rule (once_or_many P) (apply cons [ captured P, captured (many P) ]).
 
 %end.

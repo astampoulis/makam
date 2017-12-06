@@ -25,15 +25,6 @@ inline (ws). inline (ws_opt). inline (ws_char).
 rule ws (seq (once_or_many (charclass " \n\t\r")) (action unit)).
 rule ws_opt (seq (many (charclass " \n\t\r")) (action unit)).
 
-list_sep : peg A -> peg B -> peg (list A).
-inline (list_sep _ _).
-
-rule (list_sep P Sep)
-  (bind P (fun hd =>
-  (bind (many P) (fun tl =>
-  (action (hd :: tl)))))).
-rule (list_sep P Sep) (action []).
-
 eval_when : peg string -> string -> peg string.
 inline (eval_when _ _).
 
