@@ -228,6 +228,28 @@ new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tStri
 end
 ;;
 
+new_builtin_predicate "headtail" ( _tString **> _tString **> _tString **> _tProp) begin
+  let open RunCtx.Monad in
+  let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
+  (fun _ -> fun [ i; hd; tl ] -> perform
+    i' <-- chasePattcanon [] i ;
+    hd' <-- chasePattcanon [] hd ;
+    tl' <-- chasePattcanon [] tl ;
+    if (not (isMeta i')) then
+      (perform
+         is <-- _PtoString i';
+         _ <-- if String.is_empty is then mzero else return ();
+         pattcanonUnifyFull hd' (_PofString (String.head is 1) ~loc:i.loc);
+         pattcanonUnifyFull tl' (_PofString (String.tail is 1) ~loc:i.loc))
+    else if (isMeta i' && not(isMeta hd') && not(isMeta tl')) then
+      (perform
+         hds <-- _PtoString hd';
+         tls <-- _PtoString tl';
+         pattcanonUnifyFull i' (_PofString (hds ^ tls) ~loc:hd.loc))
+    else mzero)
+end
+;;
+
 new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **> _tProp) begin
   let open RunCtx.Monad in
   [ (function [ ls ] ->

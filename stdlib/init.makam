@@ -8,6 +8,8 @@
 %use list.
 %use string.
 
+%use logging.
+
 %use demand.
 %use testing.
 
@@ -31,3 +33,9 @@
 %extend peg.
 %use "parsing/init".
 %end.
+
+%extend pretty.
+%use "pretty/init".
+%end.
+
+%use "syntax/init".

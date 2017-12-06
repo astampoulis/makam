@@ -1,0 +1,214 @@
+(* This module is for isomorphic syntax descriptions that
+   can be used both for generating a parser and a pretty-printer.
+
+   Follows the ideas from the paper:
+   "Invertible Syntax Descriptions: Unifying Parsing and Pretty Printing"
+   by Tillmann Rendel and Klaus Ostermann
+   (http://www.informatik.uni-marburg.de/~rendel/unparse/rendel10invertible.pdf)
+*)
+   
+syntax : type -> type.
+
+%extend peg.
+syntax : syntax A -> peg A.
+%end.
+
+%extend pretty.
+syntax : syntax A -> pretty A.
+%end.
+
+%extend syntax.
+
+(* We keep the operators that exist both in PEG parsers and pretty-printers.
+   These can be converted directly to the corresponding constructors. *)
+
+anychar : syntax string.
+charclass : string -> syntax string.
+exact : string -> syntax unit.
+empty : syntax unit.
+void : syntax A.
+many : syntax A -> syntax (list A).
+choices : list (syntax A) -> syntax A.
+
+(* The syntax descriptions have semantic actions that are defined in
+   applicative style. They need to be isomorphisms so that they
+   can both be applied, and unapplied; and also, they need to be curried:
+
+   (F: iso (A1 * A2 * ...) B) <$> (a: syntax A1) <*> (b: syntax A2) ...
+
+   The main idea is that for the parser, once we parse all the As,
+   we apply `F` to get a B; whereas for the printer, given a B,
+   we unapply `F` to (potentially) get the list of arguments As.
+
+   Here we model action like these with `F` applied to a list of
+   arguments; we explicitly denote which arguments are
+   applied/captured and which are ignored (so must be of `unit` type,
+   as any information to reconstruct them while printing is lost). We
+   have defined corresponding PEG and pretty-printer combinators and
+   well-typed lists of arguments.  *)
+
+syntax_args : type -> type -> type.
+syntax_captured : type -> type.
+
+captured : syntax A -> syntax_captured A.
+
+nil : syntax_args A A.
+cons : syntax unit -> syntax_args B C -> syntax_args B C.
+cons : syntax_captured A -> syntax_args B C -> syntax_args (A -> B) C.
+
+apply : A -> syntax_args A B -> syntax B.
+
+(* There's three kind of syntax combinators:
+
+   - builtin ones, defined here
+   - `rule` ones, where we define one syntax combinator in terms of others
+   - `rule_iso` ones, where we define how a syntax combinator corresponds
+     to parsing and pretty printing combinators.
+   - `inline` controls whether definitions are inlined or not; useful
+     for non-recursive user-defined combinators that get used a lot.
+
+   Each user-defined combinator should be either completely defined by
+   `rule`-type definitions, or by `rule_iso` definitions; the two can't
+   be mixed for the same combinator.
+
+   Since deterministic choice is used, the ordering of the rules is
+   important. The rules are tried in the order that they are defined,
+   with local assumptions taking precedence over global rules.
+*)
+builtin : [A] syntax A -> prop.
+inline : [A] syntax A -> prop.
+rule : [A] syntax A -> syntax A -> prop.
+rule_iso : [A] syntax A -> peg.peg A -> pretty.pretty A -> prop.
+
+to_peg : [A] syntax A -> peg.peg A -> prop.
+to_pretty : [A] syntax A -> pretty.pretty A -> prop.
+
+builtin (anychar).
+builtin (charclass _).
+builtin (exact _).
+builtin empty.
+builtin void.
+builtin (many _).
+builtin (choices _).
+builtin (apply _ _).
+
+to_peg_args : [A B] syntax_args A B -> peg.peg_args A B -> prop.
+to_pretty_args : [A B] syntax_args A B -> pretty.pretty_args A B -> prop.
+
+to_peg anychar peg.anychar.
+to_pretty anychar pretty.anychar.
+
+to_peg (charclass S) (peg.charclass S).
+to_pretty (charclass S) (pretty.charclass S).
+
+to_peg (exact S) (peg.seq (peg.exact S) (peg.action unit)).
+to_pretty (exact S) (pretty.const S).
+
+to_peg empty peg.empty.
+to_pretty empty pretty.empty.
+
+to_peg void peg.empty.
+to_pretty void pretty.void.
+
+to_peg (many P) (peg.many P') :- to_peg P P'.
+to_pretty (many P) (pretty.many P') :- to_pretty P P'.
+
+to_peg (choices PS) (peg.choices PS') :- map to_peg PS PS'.
+to_pretty (choices PS) (pretty.choices PS') :- map to_pretty PS PS'.
+
+to_peg_args [] peg.nil.
+to_pretty_args [] pretty.nil.
+
+to_peg_args ((HD: syntax A) :: TL) (peg.cons HD' TL') :-
+  to_peg HD HD', to_peg_args TL TL'.
+to_pretty_args ((HD: syntax A) :: TL) (pretty.cons HD' TL') :-
+  to_pretty HD HD', to_pretty_args TL TL'.
+
+to_peg_args ((captured HD) :: TL) (peg.cons (peg.captured HD') TL') :-
+  to_peg HD HD', to_peg_args TL TL'.
+to_pretty_args ((captured HD) :: TL) (pretty.cons (pretty.captured HD') TL') :-
+  to_pretty HD HD', to_pretty_args TL TL'.
+
+to_peg (apply F Args) (peg.apply F Args') :- to_peg_args Args Args'.
+to_pretty (apply F Args) (pretty.unapply F Args') :- to_pretty_args Args Args'.
+
+(* Transform: this expects bi-directional predicates to convert to and from a type,
+   as well as a JavaScript version of the forward direction.
+
+   Useful mostly for string manipulation things, like when we need to concatenate
+   multiple strings into a single one.
+ *)
+
+transform : (args A B -> B -> prop) -> string -> (B -> args A B -> prop) -> syntax_args A B -> syntax B.
+to_peg (transform Forward Forward_js Backward SyntaxArgs) (peg.transform Forward Forward_js PegArgs) :-
+  to_peg_args SyntaxArgs PegArgs.
+to_pretty (transform Forward Forward_js Backward SyntaxArgs) (pretty.untransform Backward PrettyArgs) :-
+  to_pretty_args SyntaxArgs PrettyArgs.
+
+(* Done with the builtin ones.
+   Now for user defined combinators, we got to gather up rules and convert
+   them accordingly. *)
+
+to_peg S P when not(builtin S), rule S _ :-
+  refl.assume_get_applicable (rule S _) Rules0,
+  refl.rules_get_applicable (rule S _) Rules1,
+  append Rules0 Rules1 Rules,
+  map (pfun rul def => [Def Guard]
+    if (clause.get_goal rul (rule S Def), clause.get_guard rul Guard)
+    then (Guard, eq def Def)
+    else (failure)
+  ) Rules Defs,
+  eq P (peg.syntax (choices Defs)).
+to_pretty S P when not(builtin S), rule S _ :-
+  refl.assume_get_applicable (rule S _) Rules0,
+  refl.rules_get_applicable (rule S _) Rules1,
+  append Rules0 Rules1 Rules,
+  map (pfun rul def => [Def Guard]
+    if (clause.get_goal rul (rule S Def), clause.get_guard rul Guard)
+    then (Guard, eq def Def)
+    else (failure)
+  ) Rules Defs,
+  eq P (pretty.syntax (choices Defs)).
+
+to_peg S P when not(builtin S), rule_iso S _ _ :-
+  refl.assume_get_applicable (rule_iso S _ _) Rules0,
+  refl.rules_get_applicable (rule_iso S _ _) Rules1,
+  append Rules0 Rules1 Rules,
+  map (pfun rul def => [Def Unused Guard]
+    if (clause.get_goal rul (rule_iso S Def Unused), clause.get_guard rul Guard)
+    then (Guard, eq def Def)
+    else (failure)
+  ) Rules Defs,
+  eq P (peg.choices Defs).
+to_pretty S P when not(builtin S), rule_iso S _ _ :-
+  refl.assume_get_applicable (rule_iso S _ _) Rules0,
+  refl.rules_get_applicable (rule_iso S _ _) Rules1,
+  append Rules0 Rules1 Rules,
+  map (pfun rul def => [Def Unused Guard]
+    if (clause.get_goal rul (rule_iso S Unused Def), clause.get_guard rul Guard)
+    then (Guard, eq def Def)
+    else (failure)
+  ) Rules Defs,
+  eq P (pretty.choices Defs).
+
+peg.rule (peg.syntax Syn) Peg when to_peg Syn Peg.
+pretty.rule (pretty.syntax Syn) Pretty when to_pretty Syn Pretty.
+
+peg.inline (peg.syntax Syn) when inline Syn.
+
+def_js : syntax A -> cmd -> prop.
+def_js S Cmd :- peg.def_parser_js (peg.syntax S) Cmd.
+
+parse : [A] syntax A -> string -> A -> prop.
+parse Syntax Input Result :-
+  peg.parse (peg.syntax Syntax) Input (Result, "").
+
+parse_opt : [A] syntax A -> string -> A -> prop.
+parse_opt Syntax Input Result :-
+  peg.parse_opt (peg.syntax Syntax) Input (Result, "").
+
+pretty : [A] syntax A -> A -> string -> prop.
+pretty Syntax Input Result :-
+  pretty.pretty (pretty.syntax Syntax) Input (some Result).
+
+%end.
