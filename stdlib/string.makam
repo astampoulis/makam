@@ -24,6 +24,10 @@ concat Strings Result <-
     concat_backwards ResultL Strings []
   ).
 
+starts_with : string -> string -> string -> prop.
+starts_with Input What Rest :-
+  string.append What Rest Input.
+
 %end.
 
 %extend builtin.

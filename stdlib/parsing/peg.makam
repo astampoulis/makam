@@ -39,7 +39,7 @@ builtin (eval _ _).
 
 builtin (eval _). js_builtin (eval _).
 
-parse : [A]peg A -> list string -> option (A * list string) -> prop.
+parse : [A]peg A -> string -> option (A * string) -> prop.
 
 parse (bind PegA PegB) S Res :-
   if (parse PegA S (some (A, S'))) then
@@ -63,19 +63,20 @@ parse (choices (HD :: TL)) S Res :-
   else
     parse (choices TL) S Res.
 
-parse (anychar) [] none.
+parse (anychar) "" none.
 
-parse (anychar) (HD :: TL) (some (HD, TL)).
+parse (anychar) S (some (HD, TL)) when string.headtail S HD TL.
 
-parse (charclass S) (HD :: TL) Res :-
+parse (charclass S) "" none.
+
+parse (charclass S) Input Res when string.headtail Input HD TL :-
   if (string.contains S HD) then
     eq Res (some (HD, TL))
   else
     eq Res none.
 
 parse (exact S) Input Res :-
-  string.explode S List,
-  if (append List Rest Input) then
+  if (string.starts_with Input S Rest) then
     eq Res (some (S, Rest))
   else
     eq Res none.
@@ -160,7 +161,7 @@ parse P S Res when not(builtin P) :-
 
 parse : [A] peg A -> string -> (A * string) -> prop.
 
-parse PegA S (A, S') :- string.explode S CharList, parse PegA CharList (some (A, Rest)), string.explode S' Rest.
+parse PegA S (A, S') :- parse PegA S (some (A, S')).
 
 
 
@@ -188,6 +189,6 @@ assume_many P (A :: AS) (B :: BS) K :- dyn.poly P P', (P' A B -> assume_many P A
 letrec : (peg_list_open AS (peg_list AS * peg A)) -> peg A.
 builtin (letrec _).
 
-parse (letrec DefsBody : peg A) Input (Result: option (A * list string))  :-
+parse (letrec DefsBody : peg A) Input (Result: option (A * string))  :-
   peg_list.open DefsBody (pfun ps defsBody => [Defs Body]
     (eq defsBody (Defs, Body), peg_list.assume_many rule ps Defs (parse Body Input Result))).
