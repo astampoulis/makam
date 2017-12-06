@@ -37,7 +37,7 @@ builtin (untransform _ _).
 pretty (const S) unit (some S).
 
 pretty (anychar) X Res :-
-  if (string.explode X [ _ ])
+  if (string.headtail X HD "")
   then eq Res (some X)
   else eq Res none.
 

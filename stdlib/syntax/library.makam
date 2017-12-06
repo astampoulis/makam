@@ -24,8 +24,8 @@ rule (list_sep Sep P) (apply nil []).
 charmany : syntax string -> syntax string.
 rule (charmany P) (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
                              "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                             (pfun str res => [HD TL TL'] string.explode str (HD :: TL),
-                                                          string.concat TL TL', eq res [HD, TL'])
+                             (pfun str res => [HD TL] string.headtail str HD TL,
+                                                      eq res [HD, TL])
                              [ captured P, captured (charmany P) ]).
 rule (charmany P) (apply "" []).
 
@@ -34,8 +34,8 @@ inline (char_once_or_many _).
 rule (char_once_or_many P)
      (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
                 "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                (pfun str res => [HD TL TL'] string.explode str (HD :: TL),
-                                 string.concat TL TL', eq res [HD, TL'])
+                (pfun str res => [HD TL] string.headtail str HD TL,
+                                 eq res [HD, TL])
                 [ captured P, captured (charmany P) ]).
 
 (* whitespace is not completely isomorphic between parsing and pretty-printing.
