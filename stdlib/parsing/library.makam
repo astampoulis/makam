@@ -10,7 +10,6 @@ rule (option P) (action none).
 
 ignore : peg A -> peg unit.
 inline (ignore _).
-
 rule (ignore X) (seq X (action unit)).
 
 once_or_many : peg A -> peg (list A).

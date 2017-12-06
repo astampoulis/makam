@@ -41,10 +41,11 @@ choices : list (syntax A) -> syntax A.
    we unapply `F` to (potentially) get the list of arguments As.
 
    Here we model action like these with `F` applied to a list of
-   arguments; we explicitly denote which arguments are applied/captured
-   and which are ignored. We have defined corresponding PEG and pretty-printer
-   combinators and well-typed lists of arguments.
-*)
+   arguments; we explicitly denote which arguments are
+   applied/captured and which are ignored (so must be of `unit` type,
+   as any information to reconstruct them while printing is lost). We
+   have defined corresponding PEG and pretty-printer combinators and
+   well-typed lists of arguments.  *)
 
 syntax_args : type -> type -> type.
 syntax_captured : type -> type.
@@ -52,7 +53,7 @@ syntax_captured : type -> type.
 captured : syntax A -> syntax_captured A.
 
 nil : syntax_args A A.
-cons : syntax A -> syntax_args B C -> syntax_args B C.
+cons : syntax unit -> syntax_args B C -> syntax_args B C.
 cons : syntax_captured A -> syntax_args B C -> syntax_args (A -> B) C.
 
 apply : A -> syntax_args A B -> syntax B.

@@ -12,8 +12,9 @@ log_error, log_warning, log_info : [A] A -> expansion -> prop.
 
 log_error Where Message :-
   locget Where Loc, tostring Loc LocS,
+  locget Message Loc', tostring Loc' LocS',
   expansion.str Message MessageS,
-  print_string `\n-- Error at ${LocS}: ${MessageS}\n`.
+  print_string `\n-- Error at ${LocS}, because of assertion at ${LocS'}: ${MessageS}\n`.
 
 log_warning Where Message when log.level log.warn :-
   locget Where Loc, tostring Loc LocS,

@@ -5,15 +5,21 @@
 syntax_test : [A]syntax A -> string -> A -> prop.
 syntax_test Syntax String Term :-
   parse_opt Syntax String T, unif_alpha_eqv T Term,
+  parse Syntax String T_unopt, unif_alpha_eqv T_unopt Term,
   pretty Syntax Term S, eq S String,
+  (* this is kind of a paranoid test, but just make sure that roundtrip works ok *)
   parse_opt Syntax String T', pretty Syntax T' String', eq String String',
   pretty Syntax Term S', parse_opt Syntax S' T'', unif_alpha_eqv T'' Term.
+
+syntax_test_not : [A]syntax A -> string -> A -> prop.
+syntax_test_not Syntax String Term :-
+  not(parse_opt Syntax String T), not(parse_opt Syntax String T_unopt), not(pretty Syntax Term S).
 
 syntax : testsuite. %testsuite syntax.
 
 testcase syntax :- syntax_test (exact "s") "s" unit.
 testcase syntax :- syntax_test (anychar) "s" "s".
-testcase syntax :- not(parse anychar "" _), not(pretty anychar "" _).
+testcase syntax :- syntax_test_not anychar "" "".
 testcase syntax :- syntax_test (charclass "abc") "a" "a".
 testcase syntax :- syntax_test empty "" unit.
 testcase syntax :- syntax_test (many (charclass "abc")) "abba" ["a", "b", "b", "a"].
@@ -24,6 +30,30 @@ testcase syntax :- syntax_test (transform (pfun x_y res => ([X Y] eq x_y [X, Y],
                                           (pfun s res => ([X Y] string.explode s [X, Y], eq res [Y, X]))
                                           [captured (charclass "xa"), captured (charclass "xb")])
                                           "ab" "ba".
+(* library testcases *)
+
+testcase syntax :- syntax_test (group [exact "'", captured (charclass "abcdef"), exact "'"]) "'a'" "a".
+
+`( def_js (once_or_many (charclass "abcdef")) ).
+testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "dada" ["d","a","d","a"].
+testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "d" ["d"].
+testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "lala" ["l","a","l","a"].
+testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "" [].
+
+`( def_js (charmany (charclass "abcdef"))).
+testcase syntax :- syntax_test (charmany (charclass "abcdef")) "dada" "dada".
+testcase syntax :- syntax_test (charmany (charclass "abcdef")) "" "".
+testcase syntax :- syntax_test_not (charmany (charclass "abcdef")) "lala" "lala".
+
+`( def_js (char_once_or_many (charclass "abcdef"))).
+testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "dada" "dada".
+testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "d" "d".
+testcase syntax :- syntax_test_not (char_once_or_many (charclass "abcdef")) "lala" "lala".
+testcase syntax :- syntax_test_not (char_once_or_many (charclass "abcdef")) "" "".
+
+testcase syntax :- parse_opt ws_empty "   \n " unit, pretty ws_empty unit "".
+testcase syntax :- parse_opt ws_space "   \n " unit, pretty ws_space unit " ".
+testcase syntax :- parse_opt ws_newline "   \n " unit, pretty ws_newline unit "\n".
 
 unapply_test : type.
 constr_a : string -> unapply_test.
@@ -60,6 +90,10 @@ rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
 `( def_js (term 0) ).
 
 >> parse (term 0) "λx.x (y z)" Z ?
+>> Yes:
+>> Z := lam "x" (app (var "x") (cons (app (var "y") (cons (var "z") nil)) nil)).
+
+>> parse_opt (term 0) "λx.x (y z)" Z ?
 >> Yes:
 >> Z := lam "x" (app (var "x") (cons (app (var "y") (cons (var "z") nil)) nil)).
 

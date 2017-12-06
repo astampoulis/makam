@@ -4,10 +4,6 @@ group : syntax_args (A -> A) A -> syntax A.
 inline (group _).
 rule (group PS) (apply (fun x => x) PS).
 
-ignore : syntax A -> syntax unit.
-inline (ignore _).
-rule (ignore P) (apply unit [P]).
-
 once_or_many : syntax A -> syntax (list A).
 inline (once_or_many _).
 rule (once_or_many P) (apply cons [ captured P, captured (many P) ]).
@@ -34,6 +30,7 @@ rule (charmany P) (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], strin
 rule (charmany P) (apply "" []).
 
 char_once_or_many : syntax string -> syntax string.
+inline (char_once_or_many _).
 rule (char_once_or_many P)
      (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
                 "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
