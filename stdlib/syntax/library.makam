@@ -63,30 +63,32 @@ ident : syntax string.
 
 rule ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
 
-synt : syntax (syntax A).
-syn : syntax string.
-syn_args : syntax string.
+untyped : A -> B.
+deferred : (A -> prop) -> A.
+
+syn : syntax (syntax A).
+syn_args : syntax (syntax_args A B).
+makam_ident : syntax A.
 
 token : string -> syntax unit.
 rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
-rule syn (transform (pfun id_args res => [ID ARGS] eq id_args [ID, ARGS], expansion.str `.syntax.apply ${ID} ${ARGS}` res) ""
-                    (pfun a c => success)
-         [ captured ident, token "{", captured syn_args, token "}" ]).
+rule syn (apply .syntax.apply
+          [ captured ident, token "{", captured syn_args, token "}" ]).
 rule syn_args
-     (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], expansion.str `(.syntax.cons (.syntax.captured ${HD}) ${TL})` res) ""
-                (pfun a c => success)
+     (apply (fun hd tl => untyped (.syntax.cons (.syntax.captured hd) tl))
             [ token "[",
-              captured ident,
+              captured makam_ident,
               token "]",
               captured syn_args ]).
 rule syn_args
-     (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], expansion.str `(.syntax.cons ${HD} ${TL})` res) ""
-                (pfun a c => success)
-            [ captured ident,
+     (apply .syntax.cons
+            [ captured makam_ident,
               captured syn_args ]).
 rule syn_args
-     (transform (pfun non res => eq res "(.syntax.nil)") "" (pfun a c => success) []).
+     (transform (pfun non res => eq res .syntax.nil) "" (pfun a c => success) []).
+
+rule makam_ident (apply (fun s => deferred (fromstring s)) [ captured ident ]).
 
 %end.
 
@@ -95,7 +97,5 @@ lam : string -> string -> tata.
 
 (eq syntax.syn Expr,
  eq "lam { [ident] [ident] }" Input,
- once(syntax.parse Expr Input ParseResult),
- fromstring ParseResult TataSyntax,
- syntax.parse TataSyntax "lala baba" Q
+ once(syntax.parse Expr Input ParseResult)
  ) ?
