@@ -229,8 +229,7 @@ quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
 *)
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), tostring P Key, not(map.find Dict Key _),
-       extern_def P _ :-
+  when not(builtin P), not(refl.isunif P), extern_def P _, tostring P Key, not(map.find Dict Key _) :-
   quote_string_js Key Key_js,
   get_external_peg_definition P Code,
   eq Dict' ((Key, Expr) :: Dict),
