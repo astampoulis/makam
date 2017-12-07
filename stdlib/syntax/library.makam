@@ -92,6 +92,7 @@ rule makam_ident (apply (fun s => deferred (fromstring s)) [ captured ident ]).
 
 %end.
 
+(*
 tata : type.
 lam : string -> string -> tata.
 
@@ -99,3 +100,4 @@ lam : string -> string -> tata.
  eq "lam { [ident] [ident] }" Input,
  once(syntax.parse Expr Input ParseResult)
  ) ?
+*)

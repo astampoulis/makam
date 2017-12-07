@@ -193,8 +193,18 @@ to_pretty S P when not(builtin S), rule_iso S _ _ :-
   ) Rules Defs,
   eq P (pretty.choices Defs).
 
-peg.rule (peg.syntax Syn) Peg when to_peg Syn Peg.
-pretty.rule (pretty.syntax Syn) Pretty when to_pretty Syn Pretty.
+peg.builtin (peg.syntax _).
+peg.parse (peg.syntax Syn) Input (Result: option (A * string)) :-
+  to_peg Syn Peg,
+  peg.parse Peg Input Result.
+peg.gen_parse_js (peg.syntax Syn) Dict Dict' Result :-
+  to_peg Syn Peg,
+  peg.gen_parse_js Peg Dict Dict' Result.
+
+pretty.builtin (pretty.syntax _).
+pretty.pretty (pretty.syntax Syn) Input Output :-
+  to_pretty Syn Pretty,
+  pretty.pretty Pretty Input Output.
 
 peg.inline (peg.syntax Syn) when inline Syn.
 
