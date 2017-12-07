@@ -73,31 +73,40 @@ makam_ident : syntax A.
 token : string -> syntax unit.
 rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
-rule syn (apply .syntax.apply
-          [ captured ident, token "{", captured syn_args, token "}" ]).
-rule syn_args
-     (apply (fun hd tl => untyped (.syntax.cons (.syntax.captured hd) tl))
+rule_iso syn (peg.syntax (apply .syntax.apply
+          [ captured ident, token "{", captured syn_args, token "}" ]))
+          (pretty.syntax (apply .syntax.apply
+          [ captured ident, token "{", captured syn_args, token "}" ])).
+rule_iso syn_args
+     (peg.syntax (apply (fun hd tl => untyped (.syntax.cons (.syntax.captured hd) tl))
             [ token "[",
               captured makam_ident,
               token "]",
-              captured syn_args ]).
-rule syn_args
-     (apply .syntax.cons
+              captured syn_args ]))
+    (pretty.syntax (apply (fun hd tl => untyped (.syntax.cons (.syntax.captured hd) tl))
+            [ token "[",
+              captured makam_ident,
+              token "]",
+              captured syn_args ])).
+rule_iso syn_args
+     (peg.syntax (apply .syntax.cons
             [ captured makam_ident,
-              captured syn_args ]).
-rule syn_args
-     (transform (pfun non res => eq res .syntax.nil) "" (pfun a c => success) []).
+              captured syn_args ]))
+     (pretty.syntax (apply .syntax.cons
+            [ captured makam_ident,
+              captured syn_args ])).
+rule_iso syn_args
+     (peg.syntax (transform (pfun non res => eq res .syntax.nil) "" (pfun a c => success) []))
+     (pretty.syntax (transform (pfun non res => eq res .syntax.nil) "" (pfun a c => success) [])).
 
 rule makam_ident (apply (fun s => deferred (fromstring s)) [ captured ident ]).
 
 %end.
 
-(*
 tata : type.
 lam : string -> string -> tata.
 
 (eq syntax.syn Expr,
  eq "lam { [ident] [ident] }" Input,
- once(syntax.parse Expr Input ParseResult)
+ syntax.parse Expr Input ParseResult
  ) ?
-*)
