@@ -14,7 +14,6 @@ rule (ignore X) (seq X (action unit)).
 
 once_or_many : peg A -> peg (list A).
 inline (once_or_many _).
-
 rule (once_or_many P)
      (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
 

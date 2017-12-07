@@ -158,7 +158,8 @@ to_peg S P when not(builtin S), rule S _ :-
     then (Guard, eq def Def)
     else (failure)
   ) Rules Defs,
-  eq P (peg.syntax (choices Defs)).
+  if (inline S) then (to_peg (choices Defs) P)
+  else (eq P (peg.syntax (choices Defs))).
 to_pretty S P when not(builtin S), rule S _ :-
   refl.assume_get_applicable (rule S _) Rules0,
   refl.rules_get_applicable (rule S _) Rules1,
@@ -168,7 +169,8 @@ to_pretty S P when not(builtin S), rule S _ :-
     then (Guard, eq def Def)
     else (failure)
   ) Rules Defs,
-  eq P (pretty.syntax (choices Defs)).
+  if (inline S) then (to_pretty (choices Defs) P)
+  else (eq P (pretty.syntax (choices Defs))).
 
 to_peg S P when not(builtin S), rule_iso S _ _ :-
   refl.assume_get_applicable (rule_iso S _ _) Rules0,

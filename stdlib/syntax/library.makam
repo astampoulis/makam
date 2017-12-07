@@ -13,6 +13,10 @@ inline (option _).
 rule (option P) (apply some [captured P]).
 rule (option P) (apply none []).
 
+optunit : syntax unit -> syntax unit.
+inline (optunit _).
+rule (optunit P) (apply unit [choices [P, empty]]).
+
 list_sep : syntax unit -> syntax A -> syntax (list A).
 list_sep_plus : syntax unit -> syntax A -> syntax (list A).
 
@@ -51,5 +55,47 @@ ws_newline : syntax unit. inline (ws_newline).
 rule_iso ws_empty peg.ws pretty.empty.
 rule_iso ws_space peg.ws (pretty.const " ").
 rule_iso ws_newline peg.ws (pretty.const "\n").
+%end.
+
+ident : syntax string.
+
+%extend syntax.
+
+rule ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
+
+synt : syntax (syntax A).
+syn : syntax string.
+syn_args : syntax string.
+
+token : string -> syntax unit.
+rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
+
+rule syn (transform (pfun id_args res => [ID ARGS] eq id_args [ID, ARGS], expansion.str `.syntax.apply ${ID} ${ARGS}` res) ""
+                    (pfun a c => success)
+         [ captured ident, token "{", captured syn_args, token "}" ]).
+rule syn_args
+     (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], expansion.str `(.syntax.cons (.syntax.captured ${HD}) ${TL})` res) ""
+                (pfun a c => success)
+            [ token "[",
+              captured ident,
+              token "]",
+              captured syn_args ]).
+rule syn_args
+     (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], expansion.str `(.syntax.cons ${HD} ${TL})` res) ""
+                (pfun a c => success)
+            [ captured ident,
+              captured syn_args ]).
+rule syn_args
+     (transform (pfun non res => eq res "(.syntax.nil)") "" (pfun a c => success) []).
 
 %end.
+
+tata : type.
+lam : string -> string -> tata.
+
+(eq syntax.syn Expr,
+ eq "lam { [ident] [ident] }" Input,
+ once(syntax.parse Expr Input ParseResult),
+ fromstring ParseResult TataSyntax,
+ syntax.parse TataSyntax "lala baba" Q
+ ) ?
