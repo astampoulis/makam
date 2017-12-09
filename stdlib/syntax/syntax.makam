@@ -193,20 +193,21 @@ to_pretty S P when not(builtin S), rule_iso S _ _ :-
   ) Rules Defs,
   eq P (pretty.choices Defs).
 
-peg.builtin (peg.syntax _).
-peg.parse (peg.syntax Syn) Input (Result: option (A * string)) :-
+peg.builtin (peg.syntax Syn) when inline Syn.
+peg.parse (peg.syntax Syn) Input (Result: option (A * string)) when inline Syn :-
   to_peg Syn Peg,
   peg.parse Peg Input Result.
-peg.gen_parse_js (peg.syntax Syn) Dict Dict' Result :-
+peg.gen_parse_js (peg.syntax Syn) Dict Dict' Result when inline Syn :-
   to_peg Syn Peg,
   peg.gen_parse_js Peg Dict Dict' Result.
 
-pretty.builtin (pretty.syntax _).
-pretty.pretty (pretty.syntax Syn) Input Output :-
+peg.rule (peg.syntax Syn) Peg when not(inline Syn), to_peg Syn Peg.
+
+pretty.builtin (pretty.syntax Syn) when inline Syn.
+pretty.pretty (pretty.syntax Syn) Input Output when inline Syn :-
   to_pretty Syn Pretty,
   pretty.pretty Pretty Input Output.
-
-peg.inline (peg.syntax Syn) when inline Syn.
+pretty.rule (pretty.syntax Syn) Pretty when not(inline Syn), to_pretty Syn Pretty.
 
 def_js : syntax A -> cmd -> prop.
 def_js S Cmd :- peg.def_parser_js (peg.syntax S) Cmd.
