@@ -2689,7 +2689,6 @@ let exprToProp ((e, nameunifs) : expr * nameunifs) : prop =
 
 ;;
 
-
 let checkClauseNotBuiltin p idx =
 
   let name = nameOfFVar idx in
@@ -2742,7 +2741,7 @@ let shiftMetasTyp addtmetas t =
 ;;
 
 
-let shiftMetas addmetas addtmetas pr : pattneut =
+let shiftMetasNeutCanon addmetas addtmetas =
   let rec auxneut p =
     let p = { p with classifier = taux p.classifier ; extra = PattExtras.empty () } in
     match p.term with
@@ -2775,8 +2774,11 @@ let shiftMetas addmetas addtmetas pr : pattneut =
   and taux t = shiftMetasTyp addtmetas t
   and tinfoaux t = { t with classifier = taux t.classifier }
   in
-  auxneut pr
+  ((fun pr -> auxneut pr), (fun pr -> auxcanon pr))
 ;;
+
+let shiftMetas addmetas addtmetas = shiftMetasNeutCanon addmetas addtmetas |> fst ;;
+let shiftMetasCanon addmetas addtmetas = shiftMetasNeutCanon addmetas addtmetas |> snd ;;
 
 let shiftMetasNameunifs addmetas nu : nameunifs =
   let naux = shiftMetasName addmetas in
@@ -2796,6 +2798,24 @@ let allocateMetas_mutable (pr : prop) : (pattneut * nameunifs) =
     let nu = shiftMetasNameunifs state.rsmetas pr.propnameunifs in
     p, nu
   end else (pr.patt, pr.propnameunifs))
+;;
+
+let convertAndAllocateExpr_mutable (e: expr): pattcanon =
+  let e' = chaseTypesInExpr ~replaceUninst:true e in
+  let p  = exprToPattcanon e' in
+  let state = !termstate in
+  let metas  = state.metas in
+  let tmetas = state.polytmetas in
+  clearMetasInState ();
+  intermlang (fun _ ->
+  if metas > 0 || tmetas > 0 then begin
+    let state = !tempstate in
+    List.iter (fun _ -> ignore(addRunMeta_mutable None)) (increasing metas) ;
+    List.iter (fun _ -> ignore(newTMeta p.loc)) (increasing tmetas) ;
+    let p = shiftMetasCanon state.rsmetas state.rstermstate.tmetas p in
+    pattcanonUpdateMetaBoundNames_mutable p ;
+    p
+  end else p)
 ;;
 
 
