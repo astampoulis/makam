@@ -68,25 +68,24 @@ untyped : A -> B.
 syn : syntax (syntax A).
 syn_args : syntax (syntax_args A B).
 makam_ident : syntax A.
-captured_makam_ident : pretty.pretty (syntax.syntax_captured A).
-ignored_makam_ident : pretty.pretty (syntax A).
 
 token : string -> syntax unit.
+inline (token _).
 rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
 rule_iso syn (peg.syntax (apply .syntax.apply
           [ captured makam_ident, token "{", captured syn_args, token "}" ]))
           (pretty.syntax (apply .syntax.apply
-          [ captured ident, token "{", captured syn_args, token "}" ])).
+          [ captured makam_ident, token "{", captured syn_args, token "}" ])).
 rule_iso syn_args
      (peg.syntax (apply (fun hd tl => untyped (.syntax.cons (.syntax.captured hd) tl))
             [ token "[",
               captured makam_ident,
               token "]",
               captured syn_args ]))
-    (pretty.unapply syntax.cons
+    (pretty.unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
             (pretty.cons (pretty.syntax (token "["))
-            (pretty.cons (pretty.captured captured_makam_ident)
+            (pretty.cons (pretty.captured (pretty.syntax makam_ident))
             (pretty.cons (pretty.syntax (token "]"))
             (pretty.cons (pretty.captured (pretty.syntax syn_args)) pretty.nil))))).
 rule_iso syn_args
@@ -94,11 +93,11 @@ rule_iso syn_args
             [ captured makam_ident,
               captured syn_args ]))
      (pretty.unapply (.syntax.cons: syntax A -> syntax_args B C -> syntax_args B C)
-            (pretty.cons (pretty.captured ignored_makam_ident)
+            (pretty.cons (pretty.captured (pretty.syntax makam_ident))
             (pretty.cons (pretty.captured (pretty.syntax syn_args))
             (pretty.nil)))).
-rule_iso syn_args
-     (peg.syntax (apply .syntax.nil []))
+rule_iso (syn_args: syntax (syntax_args A A))
+     (peg.syntax (apply (.syntax.nil: (syntax_args A A)) []))
      (pretty.syntax (apply .syntax.nil [])).
 
 rule makam_ident
@@ -107,35 +106,31 @@ rule makam_ident
                 (pfun str res => [HD] eq res [HD], refl.headname str HD)
       [ captured ident ]).
 
-pretty.builtin captured_makam_ident.
-pretty.pretty captured_makam_ident (captured X) (some Res) :-
-  refl.headname X Str,
-  expansion.str `(syntax.captured ${Str})` Res.
+remove_untyped : [B]B -> C -> prop.
+remove_untyped_aux : [B C]B -> C -> prop.
 
-pretty.builtin ignored_makam_ident.
-pretty.pretty ignored_makam_ident X (some Res) :-
-  refl.headname X Res.
+remove_untyped X Y :- demand.case_otherwise (remove_untyped_aux X Y)
+                                    (structural_dyntyped remove_untyped X Y).
 
-expand : [B]B -> C -> prop.
-expand_aux : [B]B -> C -> prop.
-
-expand X Y :- demand.case_otherwise (expand_aux X Y)
-                                    (structural expand X Y).
-expand_aux (untyped X) Z when debugfull(print X), debugfull(print Z) :-
-  expand X X', print X,
-  if (debugfull(dyn.eq X' Z)) then print "yes" else print "no".
+remove_untyped_aux (untyped X) X' :-
+  remove_untyped X X'.
 
 topsyn : syntax (syntax A).
-rule topsyn (transform (pfun hd res => [HD] eq hd [ HD ], expand HD res) "" (pfun x y => success) [ captured syn ]).
+rule topsyn (transform (pfun hd res => [HD] eq hd [ HD ], remove_untyped HD res)
+                       "" (pfun x y => success) [ captured syn ]).
 
 %end.
 
 tata : type.
-lam : string -> string -> tata.
+lam : string -> tata.
 
 (eq syntax.syn Expr,
- eq "lam { [ident] [ident] }" Input,
+ eq "lam { [ident] }" Input,
  once(syntax.parse Expr Input ParseResult),
- debugfull(print ParseResult),
- syntax.expand ParseResult TataResult
+ print ParseResult,
+ once(syntax.def_js Expr (cmd_newclause (clause (peg.cached_toplevel_parser_js _ _ _Def) _))),
+ (* print_string `\n\n\n\n---------\n\n\n${_Def}\n\n\n\n`, *)
+ once(syntax.parse_opt Expr Input ParseResult2),
+ once(syntax.pretty syntax.syn (syntax.apply lam (syntax.cons (syntax.captured ident) syntax.nil)) X), print_string `Pretty: {{${X}}}\n`,
+ syntax.remove_untyped ParseResult TataResult
  ) ?
