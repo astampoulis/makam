@@ -727,7 +727,7 @@ let freshenPatt (newnvar : int) (e : pattneut) : pattneut =
 
 ;;
 
-let exprToPatt (e : expr) : pattneut =
+let exprToPattNeutCanon : (expr -> pattneut) * (expr -> pattcanon) =
 
   let rec gatherLam bound lams (e : expr) =
     match e with
@@ -775,9 +775,13 @@ let exprToPatt (e : expr) : pattneut =
       | _ -> failwith "expect fully annotated term"
 
   in
-  Benchmark.cumulative "exprToPatt" (lazy(aux_neut [] e))
+  ((fun e -> Benchmark.cumulative "exprToPatt" (lazy(aux_neut [] e))),
+   (fun e -> Benchmark.cumulative "exprToPattcanon" (lazy(aux_canon [] e))))
 
 ;;
+
+let exprToPatt = fst exprToPattNeutCanon ;;
+let exprToPattcanon = snd exprToPattNeutCanon ;;
 
 (* TODO. indentation/clean up and so on up to here so far. *)
 exception NewVarUsed ;;
