@@ -154,9 +154,10 @@ to_peg S P when not(builtin S), rule S _ :-
   refl.rules_get_applicable (rule S _) Rules1,
   append Rules0 Rules1 Rules,
   map (pfun rul def => [Def Guard]
-    if (clause.get_goal rul (rule S Def), clause.get_guard rul Guard)
-    then (Guard, eq def Def)
-    else (failure)
+    (clause.get_goal rul (rule S Def),
+     clause.get_guard rul Guard,
+     Guard, clause.premise rul,
+     eq def Def)
   ) Rules Defs,
   if (inline S) then (to_peg (choices Defs) P)
   else (eq P (peg.syntax (choices Defs))).
@@ -165,9 +166,10 @@ to_pretty S P when not(builtin S), rule S _ :-
   refl.rules_get_applicable (rule S _) Rules1,
   append Rules0 Rules1 Rules,
   map (pfun rul def => [Def Guard]
-    if (clause.get_goal rul (rule S Def), clause.get_guard rul Guard)
-    then (Guard, eq def Def)
-    else (failure)
+    (clause.get_goal rul (rule S Def),
+     clause.get_guard rul Guard,
+     Guard, clause.premise rul,
+     eq def Def)
   ) Rules Defs,
   if (inline S) then (to_pretty (choices Defs) P)
   else (eq P (pretty.syntax (choices Defs))).
@@ -177,9 +179,10 @@ to_peg S P when not(builtin S), rule_iso S _ _ :-
   refl.rules_get_applicable (rule_iso S _ _) Rules1,
   append Rules0 Rules1 Rules,
   map (pfun rul def => [Def Unused Guard]
-    if (clause.get_goal rul (rule_iso S Def Unused), clause.get_guard rul Guard)
-    then (Guard, eq def Def)
-    else (failure)
+    (clause.get_goal rul (rule_iso S Def Unused),
+    clause.get_guard rul Guard,
+    Guard, clause.premise rul,
+    eq def Def)
   ) Rules Defs,
   eq P (peg.choices Defs).
 to_pretty S P when not(builtin S), rule_iso S _ _ :-
@@ -187,27 +190,17 @@ to_pretty S P when not(builtin S), rule_iso S _ _ :-
   refl.rules_get_applicable (rule_iso S _ _) Rules1,
   append Rules0 Rules1 Rules,
   map (pfun rul def => [Def Unused Guard]
-    if (clause.get_goal rul (rule_iso S Unused Def), clause.get_guard rul Guard)
-    then (Guard, eq def Def)
-    else (failure)
+    (clause.get_goal rul (rule_iso S Unused Def),
+     clause.get_guard rul Guard,
+     Guard, clause.premise rul,
+     eq def Def)
   ) Rules Defs,
   eq P (pretty.choices Defs).
 
-peg.builtin (peg.syntax Syn) when inline Syn.
-peg.parse (peg.syntax Syn) Input (Result: option (A * string)) when inline Syn :-
-  to_peg Syn Peg,
-  peg.parse Peg Input Result.
-peg.gen_parse_js (peg.syntax Syn) Dict Dict' Result when inline Syn :-
-  to_peg Syn Peg,
-  peg.gen_parse_js Peg Dict Dict' Result.
+peg.rule (peg.syntax Syn) Peg :- to_peg Syn Peg.
+pretty.rule (pretty.syntax Syn) Pretty :- to_pretty Syn Pretty.
 
-peg.rule (peg.syntax Syn) Peg when not(inline Syn), to_peg Syn Peg.
-
-pretty.builtin (pretty.syntax Syn) when inline Syn.
-pretty.pretty (pretty.syntax Syn) Input Output when inline Syn :-
-  to_pretty Syn Pretty,
-  pretty.pretty Pretty Input Output.
-pretty.rule (pretty.syntax Syn) Pretty when not(inline Syn), to_pretty Syn Pretty.
+peg.inline (peg.syntax Syn) when inline Syn.
 
 def_js : syntax A -> cmd -> prop.
 def_js S Cmd :- peg.def_parser_js (peg.syntax S) Cmd.

@@ -103,12 +103,10 @@ get_pretty_definition P Res when not(builtin P) :-
   refl.rules_get_applicable (rule P P') Rules1,
   append Rules0 Rules1 Rules,
   map (pfun def res => [Def Loc LocS Guard]
-    if (clause.get_goal def (rule P Def), clause.get_guard def Guard) then
-      (Guard, eq res Def)
-    else
-      (locget def Loc, tostring Loc LocS,
-       print_string `\n-- Error at pretty definition rule at ${LocS}\n`,
-       failure))
+    (clause.get_goal def (rule P Def),
+     clause.get_guard def Guard,
+     Guard, clause.premise def,
+     eq res Def))
   Rules Defs,
   eq Res (choices Defs).
 
