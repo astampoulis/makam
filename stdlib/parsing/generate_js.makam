@@ -220,10 +220,6 @@ gen_parse_js (action X) Dict Dict Result :-
   quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
 
-quote_peg_js : [A]peg A -> string -> prop.
-(* TODO: make sure this isn't overly permissive *)
-quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
-
 (* external parsers are defined using `extern_def` rules.
    the parser should be of the form `(input: string, offset: int) => { result: ?string, newOffset: int }`
 *)
