@@ -117,7 +117,15 @@ remove_untyped_aux (untyped X) X' :-
 
 topsyn : syntax (syntax A).
 rule topsyn (transform (pfun hd res => [HD] eq hd [ HD ], remove_untyped HD res)
-                       "" (pfun x y => success) [ captured syn ]).
+                       "function (x) { console.error(x); return x; }"
+                       (pfun x y => eq y [x])
+                       [ captured syn ]).
+
+dynsyn : syntax dyn.
+rule dynsyn (transform (pfun hd res => [HD Res] eq hd [ HD ], remove_untyped HD Res, eq res (dyn Res))
+                       "function (x) { console.error(x); return x; }"
+                       (pfun x y => [R] eq x (dyn R), eq y [R])
+                       [ captured syn ]).
 
 %end.
 
@@ -128,9 +136,9 @@ lam : string -> tata.
  eq "lam { [ident] }" Input,
  once(syntax.parse Expr Input ParseResult),
  print ParseResult,
- once(syntax.def_js Expr (cmd_newclause (clause (peg.cached_toplevel_parser_js _ _ _Def) _))),
- (* print_string `\n\n\n\n---------\n\n\n${_Def}\n\n\n\n`, *)
  once(syntax.parse_opt Expr Input ParseResult2),
+ print ParseResult2,
  once(syntax.pretty syntax.syn (syntax.apply lam (syntax.cons (syntax.captured ident) syntax.nil)) X), print_string `Pretty: {{${X}}}\n`,
- syntax.remove_untyped ParseResult TataResult
+ syntax.remove_untyped ParseResult TataResult,
+ syntax.parse TataResult "hello" FinalResult
  ) ?
