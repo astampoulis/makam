@@ -63,8 +63,6 @@ ident : syntax string.
 
 rule ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
 
-untyped : A -> B.
-
 syn : syntax (syntax A).
 syn_args : syntax (syntax_args A B).
 makam_ident : syntax A.
@@ -73,7 +71,9 @@ token : string -> syntax unit.
 inline (token _).
 rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
-rule_iso syn (peg.syntax (apply .syntax.apply
+untyped : A -> B.
+
+rule_iso syn (peg.syntax (apply syntax.apply
           [ captured makam_ident, token "{", captured syn_args, token "}" ]))
           (pretty.syntax (apply .syntax.apply
           [ captured makam_ident, token "{", captured syn_args, token "}" ])).
@@ -142,3 +142,41 @@ lam : string -> tata.
  syntax.remove_untyped ParseResult TataResult,
  syntax.parse TataResult "hello" FinalResult
  ) ?
+
+
+%extend peg.
+str_expand : (string -> string -> expansion) -> peg_args (string -> string -> string) string -> peg string.
+inline (str_expand _ _).
+rule (str_expand S_E PS)
+     (transform (pfun a_b res => [A B S] eq a_b [A, B], expansion.str (S_E A B) res)
+                Code
+                PS) :-
+  expansion.str (S_E "${res_a}" "${res_b}") E_Code,
+  expansion.str `function (a, b) { const res_a = JSON.parse(a); const res_b = JSON.parse(b); return JSON.stringify(\`${E_Code}\`); }` Code.
+
+ssyn : peg string.
+ssyn_args : peg string.
+
+rule ssyn (str_expand (fun id args => `(syntax.apply ${id} ${args})`)
+          [ captured (peg.syntax ident), (peg.syntax (syntax.token "{")), captured ssyn_args, (peg.syntax (syntax.token "}")) ]).
+rule ssyn_args
+     (str_expand (fun hd tl => `(syntax.cons (syntax.captured ${hd}) ${tl})`)
+            [ peg.syntax (syntax.token "["),
+              captured (peg.syntax ident),
+              peg.syntax (syntax.token "]"),
+              captured ssyn_args ]).
+rule ssyn_args
+     (str_expand (fun hd tl => `(syntax.cons ${hd} ${tl})`)
+            [ captured (peg.syntax ident),
+              captured ssyn_args ]).
+rule ssyn_args
+     (apply "syntax.nil" []).
+
+%end.
+
+(eq peg.ssyn Expr,
+ eq "lam { [ident] }" Input,
+ peg.parse_opt Expr Input (ParseResult, ""),
+ peg.parse Expr Input (ParseResult2, ""),
+ fromstring ParseResult TataResult) ?
+
