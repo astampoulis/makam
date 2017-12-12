@@ -64,11 +64,11 @@ constr_b : string -> unapply_test.
 >> Yes:
 >> X := some "<a>".
 
->> pretty (untransform (pfun str res => [Res] eq res [Res], string.explode str Res) [captured (many (charclass "al"))]) "lala" X ?
+>> pretty (untransform (pfun res str => string.explode str res) [captured (many (charclass "al"))]) "lala" X ?
 >> Yes:
 >> X := some "lala".
 
->> pretty (untransform (pfun str res => [Res] eq res [Res], string.explode str Res) [captured (many (charclass "al"))]) "haha" X ?
+>> pretty (untransform (pfun res str => string.explode str res) [captured (many (charclass "al"))]) "haha" X ?
 >> Yes:
 >> X := none.
 

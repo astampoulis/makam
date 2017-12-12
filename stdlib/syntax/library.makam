@@ -26,20 +26,18 @@ rule (list_sep Sep P) (list_sep_plus Sep P).
 rule (list_sep Sep P) (apply nil []).
 
 charmany : syntax string -> syntax string.
-rule (charmany P) (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
+rule (charmany P) (transform string.append
                              "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                             (pfun str res => [HD TL] string.headtail str HD TL,
-                                                      eq res [HD, TL])
+                             (pfun hd tl str => string.headtail str hd tl)
                              [ captured P, captured (charmany P) ]).
 rule (charmany P) (apply "" []).
 
 char_once_or_many : syntax string -> syntax string.
 inline (char_once_or_many _).
 rule (char_once_or_many P)
-     (transform (pfun hd_tl res => [HD TL] eq hd_tl [HD, TL], string.append HD TL res)
+     (transform string.append
                 "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                (pfun str res => [HD TL] string.headtail str HD TL,
-                                 eq res [HD, TL])
+                (pfun hd tl str => string.headtail str hd tl)
                 [ captured P, captured (charmany P) ]).
 
 (* whitespace is not completely isomorphic between parsing and pretty-printing.
@@ -101,9 +99,9 @@ rule_iso (syn_args: syntax (syntax_args A A))
      (pretty.syntax (apply .syntax.nil [])).
 
 rule makam_ident
-     (transform (pfun hd res => [HD] eq hd [HD], fromstring HD res)
+     (transform fromstring
                 "function (x) { return JSON.parse(x); }"
-                (pfun str res => [HD] eq res [HD], refl.headname str HD)
+                (pfun hd str => refl.headname str hd)
       [ captured ident ]).
 
 remove_untyped : [B]B -> C -> prop.
@@ -116,15 +114,9 @@ remove_untyped_aux (untyped X) X' :-
   remove_untyped X X'.
 
 topsyn : syntax (syntax A).
-rule topsyn (transform (pfun hd res => [HD] eq hd [ HD ], remove_untyped HD res)
+rule topsyn (transform remove_untyped
                        "function (x) { console.error(x); return x; }"
-                       (pfun x y => eq y [x])
-                       [ captured syn ]).
-
-dynsyn : syntax dyn.
-rule dynsyn (transform (pfun hd res => [HD Res] eq hd [ HD ], remove_untyped HD Res, eq res (dyn Res))
-                       "function (x) { console.error(x); return x; }"
-                       (pfun x y => [R] eq x (dyn R), eq y [R])
+                       (pfun x y => eq y x)
                        [ captured syn ]).
 
 %end.
@@ -145,10 +137,11 @@ lam : string -> tata.
 
 
 %extend peg.
-str_expand : (string -> string -> expansion) -> peg_args (string -> string -> string) string -> peg string.
+str_expand : (string -> string -> expansion) ->
+             peg_args (string -> string -> string -> prop) (string -> prop) -> peg string.
 inline (str_expand _ _).
 rule (str_expand S_E PS)
-     (transform (pfun a_b res => [A B S] eq a_b [A, B], expansion.str (S_E A B) res)
+     (transform (pfun a b res => expansion.str (S_E a b) res)
                 Code
                 PS) :-
   expansion.str (S_E "${res_a}" "${res_b}") E_Code,
