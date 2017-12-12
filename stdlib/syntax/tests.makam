@@ -70,6 +70,7 @@ var : string -> term.
 
 term : int -> syntax term.
 ident : syntax string.
+app_arg : syntax term.
 
 rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
 
@@ -80,8 +81,10 @@ rule (term 0) (term 1).
 
 rule (term 1) (apply app
                       [ captured (term 2),
-                        captured (many (group
-                          [ exact " ", captured (term 2) ])) ]).
+                        captured (many app_arg) ]).
+
+rule app_arg (group [ exact " ", captured (term 2) ]).
+
 rule (term 1) (term 2).
 
 rule (term 2) (apply var [ captured ident ]).
