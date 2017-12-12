@@ -124,6 +124,7 @@ rule topsyn (transform remove_untyped
 tata : type.
 lam : string -> tata.
 
+(*
 (eq syntax.syn Expr,
  eq "lam { [ident] }" Input,
  once(syntax.parse Expr Input ParseResult),
@@ -134,36 +135,27 @@ lam : string -> tata.
  syntax.remove_untyped ParseResult TataResult,
  syntax.parse TataResult "hello" FinalResult
  ) ?
-
+*)
 
 %extend peg.
-str_expand : (string -> string -> expansion) ->
-             peg_args (string -> string -> string -> prop) (string -> prop) -> peg string.
-inline (str_expand _ _).
-rule (str_expand S_E PS)
-     (transform (pfun a b res => expansion.str (S_E a b) res)
-                Code
-                PS) :-
-  expansion.str (S_E "${res_a}" "${res_b}") E_Code,
-  expansion.str `function (a, b) { const res_a = JSON.parse(a); const res_b = JSON.parse(b); return JSON.stringify(\`${E_Code}\`); }` Code.
 
 ssyn : peg string.
 ssyn_args : peg string.
 
-rule ssyn (str_expand (fun id args => `(syntax.apply ${id} ${args})`)
+rule ssyn (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
           [ captured (peg.syntax ident), (peg.syntax (syntax.token "{")), captured ssyn_args, (peg.syntax (syntax.token "}")) ]).
 rule ssyn_args
-     (str_expand (fun hd tl => `(syntax.cons (syntax.captured ${hd}) ${tl})`)
+     (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ peg.syntax (syntax.token "["),
               captured (peg.syntax ident),
               peg.syntax (syntax.token "]"),
               captured ssyn_args ]).
 rule ssyn_args
-     (str_expand (fun hd tl => `(syntax.cons ${hd} ${tl})`)
+     (string_transform (fun hd tl => expansion.str `(syntax.cons ${hd} ${tl})`)
             [ captured (peg.syntax ident),
               captured ssyn_args ]).
 rule ssyn_args
-     (apply "syntax.nil" []).
+     (string_transform (eq "syntax.nil") []).
 
 %end.
 

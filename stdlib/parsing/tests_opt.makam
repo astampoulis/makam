@@ -112,6 +112,10 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 >> Yes:
 >> X := ("ba", "").
 
+>> parse_opt (string_transform (fun a b => expansion.str `${a} : ${b}`) [ captured anychar, captured anychar ]) "xy" (X, _) ?
+>> Yes:
+>> X := "x : y".
+
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
 
