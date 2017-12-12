@@ -1,0 +1,83 @@
+ident : syntax string.
+
+%extend syntax.
+
+rule ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
+
+token : string -> syntax unit.
+inline (token _).
+rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
+
+%end.
+
+%extend peg.
+
+ssyntax_str : peg string.
+ssyntax_args_str : peg string.
+
+rule ssyntax_str
+          (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
+          [ captured (syntax ident), (syntax (syntax.token "{")), captured ssyntax_args_str, (syntax (syntax.token "}")) ]).
+rule ssyntax_args_str
+     (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
+            [ syntax (syntax.token "["),
+              captured (syntax ident),
+              syntax (syntax.token "]"),
+              captured ssyntax_args_str ]).
+rule ssyntax_args_str
+     (string_transform (fun hd tl => expansion.str `(syntax.cons ${hd} ${tl})`)
+            [ captured (syntax ident),
+              captured ssyntax_args_str ]).
+rule ssyntax_args_str
+     (string_transform (eq "syntax.nil") []).
+
+%end.
+
+%extend pretty.
+
+ssyntax : pretty (syntax A).
+ssyntax_args : pretty (syntax.syntax_args A B).
+makam_ident : pretty A.
+
+rule ssyntax
+     (unapply syntax.apply
+      [ captured makam_ident, syntax (syntax.token "{"), captured ssyntax_args, syntax (syntax.token "}") ]).
+rule ssyntax_args
+     (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
+       [ syntax (syntax.token "["),
+         captured makam_ident,
+         syntax (syntax.token "]"),
+         captured ssyntax_args ]).
+rule ssyntax_args
+     (unapply (syntax.cons : syntax A -> syntax.syntax_args B C -> syntax.syntax_args B C)
+       [ captured makam_ident,
+         captured ssyntax_args ]).
+rule ssyntax_args
+     (unapply syntax.nil []).
+
+rule makam_ident
+     (untransform (pfun res str => refl.headname str res)
+       [ captured (syntax ident) ]).
+
+%end.
+
+ssyntax : syntax (syntax A).
+
+%extend syntax.
+
+rule_iso ssyntax
+         (peg.transform fromstring "function(x) { return JSON.parse(x); }" (peg.cons (peg.captured peg.ssyntax_str) peg.nil))
+         (pretty.ssyntax).
+
+%end.
+
+tata : type.
+lam : string -> string -> tata.
+
+(eq ssyntax Expr,
+ eq "lam { [ident] [ident] }" Input,
+ syntax.parse Expr Input ParseResult,
+ syntax.parse_opt Expr Input ParseResult2,
+ syntax.pretty Expr ParseResult2 Output) ?
+
+
