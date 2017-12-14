@@ -312,19 +312,21 @@ module ExprU =
           { term = `Lam(s,t,e') } -> gatherLam e' ~lams:((s,t) :: lams)
         | _ -> e, List.rev lams ;;
 
-    let user_string_of_name (n : name) : string =
+    let user_string_of_name (qualified_names: bool) (n : name) : string =
       match n with
-        `Concrete(s) -> dequalifyName (stripNameMeta s)
+        `Concrete(s) ->
+          let s' = stripNameMeta s in
+          if qualified_names then s' else dequalifyName s'
       | `Abstract(s, _) -> s
       | `Anon -> "x"
     ;;
 
     let highlight : Obj.t = Obj.repr (ref ()) ;;
 
-    let print ?(debug=false) oc (expr : exprU) =
+    let print_full ?(qualified_names=false) ?(debug=false) oc (expr : exprU) =
       let debug = debug || !_DEBUG in
       let binding oc (s, t) =
-        let s = user_string_of_name s in
+        let s = user_string_of_name qualified_names s in
         if debug then
           Printf.fprintf oc "(%s : %a)" s Typ.print t
         else
@@ -346,7 +348,7 @@ module ExprU =
               let body, lams = gatherLam expr in
               Printf.fprintf oc "%s%s %a => %a%s" openparen "fun" (List.print ~first:"" ~last:"" ~sep:" " binding) lams (aux 0) body closeparen
           | { term = `Var(n,iv) } ->
-              let s = user_string_of_name n in
+              let s = user_string_of_name qualified_names n in
               if debug then
                 (let realvar =
                    match iv with
@@ -372,6 +374,11 @@ module ExprU =
           base oc expr
       in
       aux 0 oc expr
+    ;;
+
+    let print ?(debug=false) oc expr =
+      print_full ~qualified_names:false ~debug:debug oc expr
+    ;;
   end
 
 module Ctx =

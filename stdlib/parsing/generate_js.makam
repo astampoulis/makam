@@ -157,7 +157,7 @@ quote_term_js : [A]reified A -> string -> prop.
 quote_terms_js : [A B]reified_args A B -> string -> prop.
 
 quote_terms_js X Result
-  when refl.isunif X, locget X X_Loc, tostring X_Loc LocS, print_string `At ${LocS}, uninstantiated reified arguments.\n`.
+  when refl.isunif X, log_error X `Uninstantiated reified arguments`.
 
 quote_terms_js [] "".
 quote_terms_js (Head :: Tail) Result :-
@@ -173,7 +173,7 @@ quote_paren_term_js HeadS ArgsS Result :-
   else expansion.str `(${HeadS}${ArgsS})` Result.
 
 quote_term_js (reified.term Head Args) Result :-
-  refl.headname Head HeadS,
+  tostring_qualified Head HeadS,
   quote_terms_js Args ArgsS,
   quote_paren_term_js HeadS ArgsS Result.
 
@@ -390,7 +390,7 @@ eval_parser_js P Function_js Input Result :-
   quote_string_js Input Input_js,
   expansion.str `${Function_js}(${Input_js}, 0);` FinalCode,
   js.eval FinalCode ResultS,
-  fromstring ResultS (some Result).
+  refl.fromstring ResultS (some Result).
 
 cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 

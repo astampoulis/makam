@@ -354,6 +354,16 @@ new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
      pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
 ;;
 
+new_builtin_predicate "tostring_qualified" ( ~* "A" **> _tString **> _tProp )
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedQualifiedPrint p in
+     pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
+;;
+
 new_builtin_predicate "print_string" ( _tString **> _tProp )
   (fun _ -> fun [ e ] ->
     (let open RunCtx.Monad in

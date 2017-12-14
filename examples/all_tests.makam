@@ -8,6 +8,7 @@ all_tests : testsuite.
 %use "stdlib/parsing/peg_grammar".
 %use "stdlib/pretty/tests".
 %use "stdlib/syntax/tests".
+%use "stdlib/syntax/syntax_syntax".
 
 %extend dyn_expansion.
 %use "stdlib/dyn_expansion".

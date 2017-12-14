@@ -33,6 +33,8 @@ This could be in termlangext, but separating it out so that
 we avoid a circular dependency between the grammar and termlangext.
 
 *)
+
+builtin_enter_module "refl";;
   
 new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
   (fun _ -> fun [ str; e ] ->
@@ -62,3 +64,4 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
          match p with Some p -> pattcanonUnifyFull e p | None -> mzero))
 ;;
 
+builtin_leave_module ();;

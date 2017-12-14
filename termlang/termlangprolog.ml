@@ -909,6 +909,13 @@ struct
     ExprU.print ~debug:false oc e
   ;;
 
+  let alphaSanitizedQualifiedPrint oc p =
+    let e = P.pattToExpr (!globalstate).fvars p in
+    let e = alphaSanitize e in
+    let e = exprAsExprU e in
+    ExprU.print_full ~qualified_names:true ~debug:false oc e
+  ;;
+
   let alphaSanitizedPrintMany ps =
     let es = List.map (P.pattToExpr (!globalstate).fvars) ps in
     let es = alphaSanitizeMany es in
