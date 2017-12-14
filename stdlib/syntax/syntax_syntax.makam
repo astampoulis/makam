@@ -1,8 +1,32 @@
+(* This implements a syntax for syntax combinators --
+   basically a `syntax (syntax A)` syntax procedure,
+   which we can use to define syntax for other types.
+
+   Due to the typed nature of `syntax`, typeful parsing
+   does not really work; so we parse syntax combinators
+   into a string representing a makam term; when this
+   string is parsed with `fromstring` we'll get something
+   of `syntax A` type. The pretty-printer does work normally,
+   so the syntax of syntax is defined through `rule_iso`,
+   handling parsing and pretty-printing differently.
+*)
+
 ident : syntax string.
+makam_ident : syntax string.
+string_literal : syntax string.
 
 %extend syntax.
 
+(* TODO: `ident` should be more precise than that *)
 rule ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
+
+(* TODO: we should allow makam terms other than `ident` below *)
+rule makam_ident (group [optunit ws_space, captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")), optunit ws_empty ]).
+
+(* TODO: string literals should be more general than this too *)
+rule string_literal (group [optunit ws_space, exact "'",
+                            captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
+                            exact "'", optunit ws_empty]).
 
 token : string -> syntax unit.
 inline (token _).
@@ -17,16 +41,20 @@ ssyntax_args_str : peg string.
 
 rule ssyntax_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
-          [ captured (syntax ident), (syntax (syntax.token "{")), captured ssyntax_args_str, (syntax (syntax.token "}")) ]).
+          [ captured (syntax makam_ident), (syntax (syntax.token "{")), captured ssyntax_args_str, (syntax (syntax.token "}")) ]).
 rule ssyntax_args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (syntax.token "["),
-              captured (syntax ident),
+              captured (syntax makam_ident),
               syntax (syntax.token "]"),
               captured ssyntax_args_str ]).
 rule ssyntax_args_str
+     (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.token "${hd}") ${tl})`)
+            [ captured (syntax string_literal),
+              captured ssyntax_args_str ]).
+rule ssyntax_args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons ${hd} ${tl})`)
-            [ captured (syntax ident),
+            [ captured (syntax makam_ident),
               captured ssyntax_args_str ]).
 rule ssyntax_args_str
      (string_transform (eq "syntax.nil") []).
@@ -37,31 +65,43 @@ rule ssyntax_args_str
 
 ssyntax : pretty (syntax A).
 ssyntax_args : pretty (syntax.syntax_args A B).
-makam_ident : pretty A.
+makam_term : pretty A.
 
 rule ssyntax
      (unapply syntax.apply
-      [ captured makam_ident, syntax (syntax.token "{"), captured ssyntax_args, syntax (syntax.token "}") ]).
+      [ captured makam_term, syntax (syntax.token "{"), captured ssyntax_args, syntax (syntax.token "}") ]).
 rule ssyntax_args
      (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
        [ syntax (syntax.token "["),
-         captured makam_ident,
+         captured makam_term,
          syntax (syntax.token "]"),
          captured ssyntax_args ]).
 rule ssyntax_args
-     (unapply (syntax.cons : syntax A -> syntax.syntax_args B C -> syntax.syntax_args B C)
-       [ captured makam_ident,
+     (unapply (fun hd tl => syntax.cons (syntax.token hd) tl)
+       [ captured (syntax string_literal),
+         captured ssyntax_args ]).
+rule ssyntax_args
+     (unapply (syntax.cons : syntax unit -> syntax.syntax_args B C -> syntax.syntax_args B C)
+       [ captured makam_term,
          captured ssyntax_args ]).
 rule ssyntax_args
      (unapply syntax.nil []).
 
-rule makam_ident
+rule makam_term
      (untransform (pfun res str => refl.headname str res)
-       [ captured (syntax ident) ]).
+       [ captured (syntax makam_ident) ]).
 
 %end.
 
 ssyntax : syntax (syntax A).
+ssyntax_args : syntax (syntax.syntax_args A B).
+
+(* since the syntactic rules are the same across all types,
+   we "hide" the type information so that we can generate a single
+   JS parser for syntax, and use it for all types.
+*)
+ssyntax_dyn : syntax dyn.
+ssyntax_args_dyn : syntax dyn.
 
 %extend syntax.
 
@@ -69,15 +109,71 @@ rule_iso ssyntax
          (peg.transform fromstring "function(x) { return JSON.parse(x); }" (peg.cons (peg.captured peg.ssyntax_str) peg.nil))
          (pretty.ssyntax).
 
+rule_iso ssyntax_args
+         (peg.transform fromstring "function(x) { return JSON.parse(x); }" (peg.cons (peg.captured peg.ssyntax_args_str) peg.nil))
+         (pretty.ssyntax_args).
+
+rule ssyntax_dyn (apply dyn [ captured ssyntax ]).
+rule ssyntax_args_dyn (apply dyn [ captured ssyntax_args ]).
 %end.
 
-tata : type.
-lam : string -> string -> tata.
+`( syntax.def_js ssyntax_args_dyn ).
 
-(eq ssyntax Expr,
- eq "lam { [ident] [ident] }" Input,
- syntax.parse Expr Input ParseResult,
- syntax.parse_opt Expr Input ParseResult2,
- syntax.pretty Expr ParseResult2 Output) ?
+%extend syntax.
 
+new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
+new_rule Syntax Constructor Args_S
+         (cmd_newclause (clause
+           (syntax.rule Syntax (syntax.apply Constructor Args))
+           success)) :-
+  if (parse_opt ssyntax_args_dyn Args_S (dyn Args_Untyped))
+  then
+    (if (dyn.eq Args_Untyped Args)
+     then success
+     else (if (refl.typstring Args_Untyped TypArgsS')
+           then expansion.str `(${TypArgsS'}) ` TypArgsS
+           else eq TypArgsS "",
+           if (refl.typstring Args TypConstrS')
+           then expansion.str `(${TypConstrS'}) ` TypConstrS
+           else eq TypConstrS "",
+           log_error Args_S `type of syntax arguments ${TypArgsS}does not match type of constructor${TypConstrS}`, failure))
+  else (log_error Args_S `parsing the syntax rule failed`, failure).
 
+%end.
+
+%extend syntax_syntax.
+
+term : type.
+term : syntax term.
+
+lam : string -> term -> term.
+app : term -> term -> term.
+var : string -> term.
+
+tests : testsuite. %testsuite tests.
+
+(* TODO: make tostring/fromstring more robust for cases like below. *)
+
+>> syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [ident] '.' [syntax_syntax.term] }" (dyn X) ?
+>> Yes:
+>> X := (syntax.apply lam (syntax.cons (syntax.token "λ") (syntax.cons (syntax.captured ident) (syntax.cons (syntax.token ".") (syntax.cons (syntax.captured term) syntax.nil))))).
+
+>> syntax.pretty ssyntax (syntax.apply lam (syntax.cons (syntax.token "λ") (syntax.cons (syntax.captured ident) (syntax.cons (syntax.token ".") (syntax.cons (syntax.captured term) syntax.nil))))) X ?
+>> Yes:
+>> X := " syntax_syntax.lam { 'λ' [ ident ] '.' [ syntax_syntax.term ] }".
+
+`( syntax.new_rule term lam "'λ' [ident] '.' [term]" ).
+`( syntax.new_rule term var "[ident]" ).
+`( syntax.new_rule term app "'(' [term] [term] ')'" ).
+
+`( syntax.def_js term ).
+
+>> syntax.parse_opt term "λx.λy.((y x) x)" X ?
+>> Yes:
+>> X := lam "x" (lam "y" (app (app (var "y") (var "x")) (var "x"))).
+
+>> syntax.pretty term (lam "x" (lam "y" (app (app (var "y") (var "x")) (var "x")))) X ?
+>> Yes:
+>> X := " λ x . λ y . ( ( y x ) x )".
+
+%end.
