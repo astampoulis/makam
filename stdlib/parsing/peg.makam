@@ -41,17 +41,6 @@ builtin (eval _). js_builtin (eval _).
 
 parse : [A]peg A -> string -> option (A * string) -> prop.
 
-(*
-dontdoit_phaedon: prop.
-
-parse X Y R when not(dontdoit_phaedon) :-
-  tostring X XS,
-  print_string `parse for <${XS}> at <${Y}>\n`,
-  (dontdoit_phaedon -> parse X Y R),
-  tostring R RS,
-  print_string `return parse for <${XS}> at <${Y}>: <<${RS}>>\n`.
-*)
-
 parse (bind PegA PegB) S Res :-
   if (parse PegA S (some (A, S'))) then
      parse (PegB A) S' Res

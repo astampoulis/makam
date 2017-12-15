@@ -52,33 +52,6 @@ structural Rec X Y when refl.isunif X, refl.isbaseterm Y <-
   dyn.map Rec Args Args',
   refl.headargs X Hd Args.
 
-(* A version of structural that allows types to change.
-   This is mostly used for hacks, rather than legitimate purposes :-)
-*)
-
-structural_dyntyped : [C D] (A -> B -> prop) -> C -> D -> prop.
-
-structural_dyntyped Rec (X : A) Y when refl.isunif X, refl.isunif Y <-
-  guardmany (X, Y) (dyn.call Rec X Y).
-
-structural_dyntyped Rec X X when refl.isconst X.
-
-structural_dyntyped Rec (X : A -> B) (Y : C -> D) <-
-  (x:A -> y:C -> structural_dyntyped Rec x y -> dyn.call Rec (X x) (Y y)).
-
-structural_dyntyped Rec X Y when refl.isbaseterm X <-
-  refl.headargs X Hd Args,
-  dyn.map Rec Args Args',
-  dyn.poly Hd Hd',
-  refl.headargs Y Hd' Args'.
-
-structural_dyntyped Rec X Y when refl.isunif X, refl.isbaseterm Y <-
-  refl.headargs Y Hd Args',
-  dyn.map Rec Args Args',
-  dyn.poly Hd Hd',
-  refl.headargs X Hd' Args.
-
-
 %extend generic.
 fold : [A A'] (B -> A -> B -> prop) -> B -> A' -> B -> prop.
 
