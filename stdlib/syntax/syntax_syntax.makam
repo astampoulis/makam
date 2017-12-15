@@ -168,7 +168,7 @@ syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.'
 >> X := " syntax_syntax.lam { 'λ' [ syntax_syntax.ident ] '.' [ syntax_syntax.term ] }".
 
 `( syntax.new_rule term lam "'λ' [ident] '.' [term]" ).
-`( syntax.new_rule term var "[ident" ).
+`( syntax.new_rule term var "[ident]" ).
 `( syntax.new_rule term app "'(' [term] [term] ')'" ).
 
 `( syntax.def_js term ).
