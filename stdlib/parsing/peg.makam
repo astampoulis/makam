@@ -131,7 +131,7 @@ get_peg_definition P Res when not(builtin P) :-
      sure that we're not left with any uninstantiated metavariables I think. *)
   map (pfun def res => [Guard Goal Def]
     (clause.get_goal def (rule P Def), clause.get_guard def Guard,
-     Guard, clause.premise def,
+     once(Guard), once(clause.premise def),
      eq res Def)
   ) Rules Defs,
   eq Res (choices Defs).
@@ -147,8 +147,7 @@ get_external_peg_definition P Res when not(builtin P) :-
      failure),
   clause.get_goal Rule (extern_def P Def),
   clause.get_guard Rule Guard,
-  Guard,
-  clause.premise Rule,
+  once(Guard), once(clause.premise Rule),
   eq Res Def.
 
 parse P S Res when not(builtin P) :-

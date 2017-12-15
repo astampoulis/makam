@@ -112,7 +112,7 @@ get_pretty_definition P Res when not(builtin P) :-
   map (pfun def res => [Def Loc LocS Guard]
     (clause.get_goal def (rule P Def),
      clause.get_guard def Guard,
-     Guard, clause.premise def,
+     once(Guard), once(clause.premise def),
      eq res Def))
   Rules Defs,
   eq Res (choices Defs).
