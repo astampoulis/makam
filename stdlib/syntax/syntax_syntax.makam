@@ -21,12 +21,17 @@ ident : syntax string.
 makam_ident : syntax string.
 string_literal : syntax string.
 
-ssyntax_str : peg string.
-ssyntax_args_str : peg string.
-
-ssyntax : pretty (syntax A).
-ssyntax_args : pretty (syntax_args A B).
 makam_term : pretty A.
+
+top_str : peg string.
+args_str : peg string.
+
+top : pretty (syntax A).
+args : pretty (syntax_args A B).
+
+top : syntax (syntax A).
+args : syntax (syntax_args A B).
+
 
 (* TODO: `ident` should be more precise than that *)
 rule ident (group [optunit ws_space, syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")), optunit ws_empty ]).
@@ -36,90 +41,81 @@ rule makam_ident (group [optunit ws_space, syntax.captured (char_once_or_many (c
 
 (* TODO: string literals should be more general than this too *)
 rule string_literal
-                           (group [optunit ws_space, exact "'",
-                            syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
-                            exact "'", optunit ws_empty]).
+     (group [optunit ws_space,
+      exact "'",
+      syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
+      exact "'", optunit ws_empty]).
 
 token : string -> syntax unit.
 inline (token _).
 rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
-rule syntax_syntax.ssyntax_str
+peg.rule top_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
-          [ peg.captured (syntax syntax_syntax.makam_ident), (syntax (token "{")), peg.captured syntax_syntax.ssyntax_args_str, (syntax (token "}")) ]).
-rule syntax_syntax.ssyntax_args_str
+          [ peg.captured (syntax makam_ident), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
+peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (token "["),
-              peg.captured (syntax syntax_syntax.makam_ident),
+              peg.captured (syntax makam_ident),
               syntax (token "]"),
-              peg.captured syntax_syntax.ssyntax_args_str ]).
-rule syntax_syntax.ssyntax_args_str
+              peg.captured args_str ]).
+peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax_syntax.token "${hd}") ${tl})`)
-            [ peg.captured (syntax syntax_syntax.string_literal),
-              peg.captured syntax_syntax.ssyntax_args_str ]).
-rule syntax_syntax.ssyntax_args_str
+            [ peg.captured (syntax string_literal),
+              peg.captured args_str ]).
+peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons ${hd} ${tl})`)
-            [ peg.captured (syntax syntax_syntax.makam_ident),
-              peg.captured syntax_syntax.ssyntax_args_str ]).
-rule syntax_syntax.ssyntax_args_str
+            [ peg.captured (syntax makam_ident),
+              peg.captured args_str ]).
+peg.rule args_str
      (string_transform (eq "syntax.nil") []).
 
-rule syntax_syntax.ssyntax
+pretty.rule top
      (unapply syntax.apply
-      [ pretty.captured syntax_syntax.makam_term, syntax (token "{"), pretty.captured syntax_syntax.ssyntax_args, syntax (token "}") ]).
-rule syntax_syntax.ssyntax_args
+      [ pretty.captured makam_term, syntax (token "{"), pretty.captured args, syntax (token "}") ]).
+pretty.rule args
      (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
        [ syntax (token "["),
-         pretty.captured syntax_syntax.makam_term,
+         pretty.captured makam_term,
          syntax (token "]"),
-         pretty.captured syntax_syntax.ssyntax_args ]).
-rule syntax_syntax.ssyntax_args
+         pretty.captured args ]).
+pretty.rule args
      (unapply (fun hd tl => syntax.cons (token hd) tl)
-       [ pretty.captured (syntax syntax_syntax.string_literal),
-         pretty.captured syntax_syntax.ssyntax_args ]).
-rule syntax_syntax.ssyntax_args
+       [ pretty.captured (syntax string_literal),
+         pretty.captured args ]).
+pretty.rule args
      (unapply (syntax.cons : syntax unit -> syntax.syntax_args B C -> syntax.syntax_args B C)
-       [ pretty.captured syntax_syntax.makam_term,
-         pretty.captured syntax_syntax.ssyntax_args ]).
-rule syntax_syntax.ssyntax_args
+       [ pretty.captured makam_term,
+         pretty.captured args ]).
+pretty.rule args
      (unapply syntax.nil []).
 
-rule syntax_syntax.makam_term
+pretty.rule makam_term
      (untransform (pfun res str => refl.headname str res)
-       [ pretty.captured (syntax syntax_syntax.makam_ident) ]).
-%end.
+       [ pretty.captured (syntax makam_ident) ]).
 
-ssyntax : syntax (syntax A).
-ssyntax_args : syntax (syntax_args A B).
+syntax.rule_iso top
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
+         (top).
 
-(* since the syntactic rules are the same across all types,
-   we "hide" the type information so that we can generate a single
-   JS parser for syntax, and use it for all types.
-*)
-ssyntax_dyn : syntax dyn.
-ssyntax_args_dyn : syntax dyn.
+syntax.rule_iso args
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str ])
+         (args).
 
-%extend syntax_syntax.
+top_dyn : syntax dyn.
+args_dyn : syntax dyn.
 
-rule_iso ssyntax
-         (peg.transform refl.fromstring "function(x) { return JSON.parse(x); }" (peg.cons (peg.captured syntax_syntax.ssyntax_str) peg.nil))
-         (syntax_syntax.ssyntax).
+rule top_dyn (apply dyn [ syntax.captured top ]).
+rule args_dyn (apply dyn [ syntax.captured args ]).
 
-rule_iso ssyntax_args
-         (peg.transform refl.fromstring "function(x) { return JSON.parse(x); }" (peg.cons (peg.captured syntax_syntax.ssyntax_args_str) peg.nil))
-         (syntax_syntax.ssyntax_args).
-
-rule ssyntax_dyn (apply dyn [ syntax.captured ssyntax ]).
-rule ssyntax_args_dyn (apply dyn [ syntax.captured ssyntax_args ]).
-
-`( syntax.def_js ssyntax_args_dyn ).
+`( syntax.def_js args_dyn ).
 
 new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
 new_rule Syntax Constructor Args_S
          (cmd_newclause (clause
            (syntax.rule Syntax (syntax.apply Constructor Args))
            success)) :-
-  if (parse_opt ssyntax_args_dyn Args_S (dyn Args_Untyped))
+  if (parse_opt args_dyn Args_S (dyn Args_Untyped))
   then
     (if (dyn.eq Args_Untyped Args)
      then success
@@ -132,6 +128,12 @@ new_rule Syntax Constructor Args_S
            log_error Args_S `type of syntax arguments ${TypArgsS}does not match type of constructor${TypConstrS}`, failure))
   else (log_error Args_S `parsing the syntax rule failed`, failure).
 
+%end.
+
+%open syntax_syntax.
+
+%extend syntax_syntax_tests.
+
 term : type.
 term : syntax term.
 
@@ -139,17 +141,17 @@ lam : string -> term -> term.
 app : term -> term -> term.
 var : string -> term.
 
-tests : testsuite. %testsuite tests.
+all : testsuite. %testsuite all.
 
 (* TODO: make tostring/fromstring more robust for cases like below. *)
 
->> syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax.term] }" (dyn X) ?
+>> syntax.parse_opt top_dyn "syntax_syntax_tests.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax_tests.term] }" (dyn X) ?
 >> Yes:
->> X := (syntax.apply lam (syntax.cons (token "λ") (syntax.cons (syntax.captured ident) (syntax.cons (token ".") (syntax.cons (syntax.captured term) syntax.nil))))).
+>> X := (syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]).
 
->> syntax.pretty ssyntax (syntax.apply lam (syntax.cons (token "λ") (syntax.cons (syntax.captured ident) (syntax.cons (token ".") (syntax.cons (syntax.captured term) syntax.nil))))) X ?
+>> syntax.pretty top (syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]) X ?
 >> Yes:
->> X := " syntax_syntax.lam { 'λ' [ syntax_syntax.ident ] '.' [ syntax_syntax.term ] }".
+>> X := " syntax_syntax_tests.lam { 'λ' [ syntax_syntax.ident ] '.' [ syntax_syntax_tests.term ] }".
 
 `( new_rule term lam "'λ' [ident] '.' [term]" ).
 `( new_rule term var "[ident]" ).
