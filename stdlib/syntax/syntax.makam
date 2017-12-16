@@ -92,11 +92,6 @@ builtin (many _).
 builtin (choices _).
 builtin (apply _ _).
 
-cast_args : [A A' B B'] syntax_args A B -> syntax_args A' B' -> prop.
-cast_args syntax.nil syntax.nil.
-cast_args (syntax.cons (HD: syntax A) TL) (syntax.cons HD TL') :- cast_args TL TL'.
-cast_args (syntax.cons (syntax.captured HD) TL) (syntax.cons (syntax.captured HD) TL') :- cast_args TL TL'.
-
 to_peg_args : [A B] syntax_args A B -> peg.peg_args A B -> prop.
 to_pretty_args : [A B] syntax_args A B -> pretty.pretty_args A B -> prop.
 

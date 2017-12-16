@@ -98,46 +98,6 @@ rule syntax_syntax.makam_term
 
 %end.
 
-%extend syntax.
-
-topssyntax: syntax dyn.
-isossyntax: syntax string.
-isossyntax_args: syntax string.
-stringtransform : (string -> string -> expansion) -> syntax_args (string -> string -> expansion) expansion -> syntax string.
-
-rule_iso (stringtransform E Args)
-         (peg.string_transform (pfun a b => expansion.str (E a b)) PegArgs)
-         (pretty.untransform (pfun a b (res: string) => eqv (E a b) `${res}`) PrettyArgs) :-
-  cast_args Args Args',
-  to_peg_args Args' PegArgs,
-  to_pretty_args Args' PrettyArgs.
-
-rule isossyntax
-          (stringtransform (fun id args => `syntax.apply ${id} ${args}`)
-          [ captured syntax_syntax.makam_ident, token "{", captured isossyntax_args, token "}" ]).
-rule isossyntax_args
-     (stringtransform (fun hd tl => `(syntax.cons (syntax.captured ${hd}) ${tl})`)
-            [ token "[",
-              captured syntax_syntax.makam_ident,
-              token "]",
-              captured isossyntax_args ]).
-rule isossyntax_args
-     (stringtransform (fun hd tl => `(syntax.cons (syntax.token "${hd}") ${tl})`)
-            [ captured syntax_syntax.string_literal,
-              captured isossyntax_args ]).
-rule isossyntax_args
-     (stringtransform (fun hd tl => `(syntax.cons ${hd} ${tl})`)
-            [ captured syntax_syntax.makam_ident,
-              captured isossyntax_args ]).
-rule isossyntax_args
-     (apply "syntax.nil" []).
-
-inline topssyntax.
-rule topssyntax (transform (pfun a res => [X] refl.fromstring a X, eq res (dyn X))
-                "function (x) { return `dyn (${JSON.parse(x)})`; }"
-                (pfun res x => [Y] eq x (dyn Y), tostring_qualified Y res) [ captured isossyntax ]).
-%end.
-
 ssyntax : syntax (syntax A).
 ssyntax_args : syntax (syntax.syntax_args A B).
 
@@ -198,9 +158,6 @@ var : string -> term.
 tests : testsuite. %testsuite tests.
 
 (* TODO: make tostring/fromstring more robust for cases like below. *)
-
-(syntax.parse_opt syntax.topssyntax "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax.term] }" X,
- syntax.pretty syntax.topssyntax X Y ) ?
 
 >> syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax.term] }" (dyn X) ?
 >> Yes:

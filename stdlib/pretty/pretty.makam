@@ -83,11 +83,6 @@ fresh_args [] [].
 fresh_args ((HD : pretty A) :: TL) Args :- fresh_args TL Args.
 fresh_args ((captured HD) :: TL) (HD' :: TL') :- fresh_args TL TL'.
 
-cast_args : [A A' B B'] pretty_args A B -> pretty_args A' B' -> prop.
-cast_args pretty.nil pretty.nil.
-cast_args (pretty.cons (HD: pretty A) TL) (pretty.cons HD TL') :- cast_args TL TL'.
-cast_args (pretty.cons (pretty.captured HD) TL) (pretty.cons (pretty.captured HD) TL') :- cast_args TL TL'.
-
 pretty (unapply F PrettyArgs) Term Res :-
   fresh_args PrettyArgs Args,
   if (args.apply F Args Term)
