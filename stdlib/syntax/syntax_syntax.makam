@@ -34,12 +34,12 @@ args : syntax (syntax_args A B).
 
 
 (* TODO: `ident` should be more precise than that *)
-rule ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")).
+syntax.rule ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")).
 syntax.inline ident.
 
 (* TODO: we should allow makam terms other than `ident` below *)
-rule makam_ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")).
-syntax.inline makam_ident.
+syntax.rule makam_ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")).
+syntax.inline ident.
 
 rule (makam_quote P)
      (transform refl.fromstring "JSON.parse" (pfun str x => tostring_qualified x str)
@@ -55,7 +55,7 @@ rule string_literal
 syntax.inline string_literal.
 
 token : string -> syntax unit.
-parsed_token : string -> peg string.
+parsed_token, parsed_token_cached : string -> peg string.
 syntax.inline (token _).
 peg.inline (parsed_token _).
 
@@ -64,7 +64,7 @@ peg.inline (parsed_token _).
    token "foo" and an identifier "bar".
    if we can't parse as an identifier, it's a symbol, so we just use `exact`. *)
 
-syntax.rule_iso (token S) (bind (parsed_token S) (fun _ => action unit))
+syntax.rule_iso (token S) (bind (parsed_token_cached S) (fun _ => action unit))
                           (unapply unit [ syntax (optunit ws_empty), const S, syntax (optunit ws_space) ]).
 syntax.inline (token S).
 
@@ -75,6 +75,14 @@ peg.rule (parsed_token S) (transform (pfun ident res => eq ident S, eq res ident
   expansion.str `function(ident) { if (JSON.parse(ident) === ${S_Quoted}) return ident; else return null; }` JS_Code.
 peg.rule (parsed_token S) (apply (fun x => x) [ syntax (optunit ws_empty), neg (syntax makam_ident), peg.captured (exact S), syntax (optunit ws_space) ]).
 peg.inline (parsed_token S).
+
+`( pfun cmd =>
+   gen_toplevel_parser_js (parsed_token "~~argument~~") JS_Code0, quote_string_js JS_Code0 QuotedCode,
+   expansion.str `${QuotedCode}.replace(/"~~argument~~"/g, 'inputString');` FunctionCodeString,
+   js.eval FunctionCodeString FunctionCode,
+   eq cmd (cmd_stage (pfun cmd' =>
+     eq cmd' (cmd_newclause (clause (peg.extern_def (parsed_token_cached S) JS_Code) {prop| quote_string_js S Quoted,
+              expansion.str `(function() { const inputString = ${Quoted}; return ${FunctionCode}; })()` JS_Code |}))))).
 
 token : syntax P -> syntax P.
 syntax.rule (token P) (group [ optunit ws_empty, syntax.captured P, optunit ws_space ]).
