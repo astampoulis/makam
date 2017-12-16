@@ -354,6 +354,16 @@ new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
      pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
 ;;
 
+new_builtin_predicate "tostring_qualified" ( ~* "A" **> _tString **> _tProp )
+  (fun _ -> fun [ e ; s ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedQualifiedPrint p in
+     pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
+;;
+
 new_builtin_predicate "print_string" ( _tString **> _tProp )
   (fun _ -> fun [ e ] ->
     (let open RunCtx.Monad in
@@ -420,6 +430,23 @@ new_builtin_predicate "debugfull" ( _tProp  **> _tProp )
             (lazy(perform
                _ <-- return () ;
                let _ = _DEBUG := prev in
+               mzero)) ;
+      return ())
+;;
+
+new_builtin_predicate "debugtypes" ( _tProp  **> _tProp )
+  (fun _ -> fun [ p ] ->
+    let open RunCtx.Monad in
+    perform
+      _ <-- return () ;
+      let prev = !_DEBUG_TYPES in
+      let _ = _DEBUG_TYPES := true in
+      let p = match p.term with `LamMany([], p) -> p | _ -> assert false in
+      _ <-- ifte (try demand p with e -> (_DEBUG_TYPES := prev; raise e))
+            (fun _ -> _DEBUG_TYPES := prev; return ())
+            (lazy(perform
+               _ <-- return () ;
+               let _ = _DEBUG_TYPES := prev in
                mzero)) ;
       return ())
 ;;

@@ -17,7 +17,12 @@ cons : pretty unit -> pretty_args A B -> pretty_args A B.
 cons : pretty_captured A -> pretty_args B C -> pretty_args (A -> B) C.
 
 unapply : A -> pretty_args A B -> pretty B.
-untransform : (B -> args A B -> prop) -> pretty_args A B -> pretty B.
+
+(* untransform is a little weird:
+   A is a type of the form Arg1 -> Arg2 -> ... -> B -> prop.
+   (as evidenced by the range of `pretty_args`)
+   however, `B` is the input parameter, and the `Arg`s are the output parameters. *)
+untransform : A -> pretty_args A (B -> prop) -> pretty B.
 
 pretty : [A] pretty A -> A -> option string -> prop.
 
@@ -85,7 +90,9 @@ pretty (unapply F PrettyArgs) Term Res :-
   else (eq Res none).
 
 pretty (untransform F PrettyArgs) B Res :-
-  if (F B Args)
+  fresh_args PrettyArgs Args,
+  args.apply F Args F_Args,
+  if (F_Args B)
   then (pretty_args PrettyArgs Args Res)
   else eq Res none.
 
@@ -103,12 +110,10 @@ get_pretty_definition P Res when not(builtin P) :-
   refl.rules_get_applicable (rule P P') Rules1,
   append Rules0 Rules1 Rules,
   map (pfun def res => [Def Loc LocS Guard]
-    if (clause.get_goal def (rule P Def), clause.get_guard def Guard) then
-      (Guard, eq res Def)
-    else
-      (locget def Loc, tostring Loc LocS,
-       print_string `\n-- Error at pretty definition rule at ${LocS}\n`,
-       failure))
+    (clause.get_goal def (rule P Def),
+     clause.get_guard def Guard,
+     once(Guard), once(clause.premise def),
+     eq res Def))
   Rules Defs,
   eq Res (choices Defs).
 

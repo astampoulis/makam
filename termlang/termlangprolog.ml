@@ -727,7 +727,7 @@ let freshenPatt (newnvar : int) (e : pattneut) : pattneut =
 
 ;;
 
-let exprToPatt (e : expr) : pattneut =
+let exprToPattNeutCanon : (expr -> pattneut) * (expr -> pattcanon) =
 
   let rec gatherLam bound lams (e : expr) =
     match e with
@@ -775,9 +775,13 @@ let exprToPatt (e : expr) : pattneut =
       | _ -> failwith "expect fully annotated term"
 
   in
-  Benchmark.cumulative "exprToPatt" (lazy(aux_neut [] e))
+  ((fun e -> Benchmark.cumulative "exprToPatt" (lazy(aux_neut [] e))),
+   (fun e -> Benchmark.cumulative "exprToPattcanon" (lazy(aux_canon [] e))))
 
 ;;
+
+let exprToPatt = fst exprToPattNeutCanon ;;
+let exprToPattcanon = snd exprToPattNeutCanon ;;
 
 (* TODO. indentation/clean up and so on up to here so far. *)
 exception NewVarUsed ;;
@@ -903,6 +907,13 @@ struct
     let e = alphaSanitize e in
     let e = exprAsExprU e in
     ExprU.print ~debug:false oc e
+  ;;
+
+  let alphaSanitizedQualifiedPrint oc p =
+    let e = P.pattToExpr (!globalstate).fvars p in
+    let e = alphaSanitize e in
+    let e = exprAsExprU e in
+    ExprU.print_full ~qualified_names:true ~debug:false oc e
   ;;
 
   let alphaSanitizedPrintMany ps =
@@ -2685,7 +2696,6 @@ let exprToProp ((e, nameunifs) : expr * nameunifs) : prop =
 
 ;;
 
-
 let checkClauseNotBuiltin p idx =
 
   let name = nameOfFVar idx in
@@ -2738,7 +2748,7 @@ let shiftMetasTyp addtmetas t =
 ;;
 
 
-let shiftMetas addmetas addtmetas pr : pattneut =
+let shiftMetasNeutCanon addmetas addtmetas =
   let rec auxneut p =
     let p = { p with classifier = taux p.classifier ; extra = PattExtras.empty () } in
     match p.term with
@@ -2771,8 +2781,11 @@ let shiftMetas addmetas addtmetas pr : pattneut =
   and taux t = shiftMetasTyp addtmetas t
   and tinfoaux t = { t with classifier = taux t.classifier }
   in
-  auxneut pr
+  ((fun pr -> auxneut pr), (fun pr -> auxcanon pr))
 ;;
+
+let shiftMetas addmetas addtmetas = shiftMetasNeutCanon addmetas addtmetas |> fst ;;
+let shiftMetasCanon addmetas addtmetas = shiftMetasNeutCanon addmetas addtmetas |> snd ;;
 
 let shiftMetasNameunifs addmetas nu : nameunifs =
   let naux = shiftMetasName addmetas in
@@ -2792,6 +2805,24 @@ let allocateMetas_mutable (pr : prop) : (pattneut * nameunifs) =
     let nu = shiftMetasNameunifs state.rsmetas pr.propnameunifs in
     p, nu
   end else (pr.patt, pr.propnameunifs))
+;;
+
+let convertAndAllocateExpr_mutable (e: expr): pattcanon =
+  let e' = chaseTypesInExpr ~replaceUninst:true e in
+  let p  = exprToPattcanon e' in
+  let state = !termstate in
+  let metas  = state.metas in
+  let tmetas = state.polytmetas in
+  clearMetasInState ();
+  intermlang (fun _ ->
+  if metas > 0 || tmetas > 0 then begin
+    let state = !tempstate in
+    List.iter (fun _ -> ignore(addRunMeta_mutable None)) (increasing metas) ;
+    List.iter (fun _ -> ignore(newTMeta p.loc)) (increasing tmetas) ;
+    let p = shiftMetasCanon state.rsmetas state.rstermstate.tmetas p in
+    pattcanonUpdateMetaBoundNames_mutable p ;
+    p
+  end else p)
 ;;
 
 

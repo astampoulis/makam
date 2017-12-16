@@ -25,27 +25,27 @@ testcase syntax :- syntax_test empty "" unit.
 testcase syntax :- syntax_test (many (charclass "abc")) "abba" ["a", "b", "b", "a"].
 testcase syntax :- syntax_test (many (charclass "abc")) "" [].
 testcase syntax :- syntax_test (choices [ charclass "!", charclass "abc" ]) "a" "a".
-testcase syntax :- syntax_test (transform (pfun x_y res => ([X Y] eq x_y [X, Y], string.append Y X res))
+testcase syntax :- syntax_test (transform (pfun x y res => string.append y x res)
                                           "(x, y) => JSON.stringify(JSON.parse(y) + JSON.parse(x))"
-                                          (pfun s res => ([X Y] string.headtail s X Y, eq res [Y, X]))
+                                          (pfun x y s => string.headtail s y x)
                                           [captured (charclass "xa"), captured (charclass "xb")])
                                           "ab" "ba".
 (* library testcases *)
 
 testcase syntax :- syntax_test (group [exact "'", captured (charclass "abcdef"), exact "'"]) "'a'" "a".
 
-`( def_js (once_or_many (charclass "abcdef")) ).
+`( def_toplevel_js (once_or_many (charclass "abcdef")) ).
 testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "dada" ["d","a","d","a"].
 testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "d" ["d"].
 testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "lala" ["l","a","l","a"].
 testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "" [].
 
-`( def_js (charmany (charclass "abcdef"))).
+`( def_toplevel_js (charmany (charclass "abcdef"))).
 testcase syntax :- syntax_test (charmany (charclass "abcdef")) "dada" "dada".
 testcase syntax :- syntax_test (charmany (charclass "abcdef")) "" "".
 testcase syntax :- syntax_test_not (charmany (charclass "abcdef")) "lala" "lala".
 
-`( def_js (char_once_or_many (charclass "abcdef"))).
+`( def_toplevel_js (char_once_or_many (charclass "abcdef"))).
 testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "dada" "dada".
 testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "d" "d".
 testcase syntax :- syntax_test_not (char_once_or_many (charclass "abcdef")) "lala" "lala".
@@ -70,6 +70,7 @@ var : string -> term.
 
 term : int -> syntax term.
 ident : syntax string.
+app_arg : syntax term.
 
 rule ident (charclass "abcdefghijklmnopqrstuvwxyz").
 
@@ -80,14 +81,16 @@ rule (term 0) (term 1).
 
 rule (term 1) (apply app
                       [ captured (term 2),
-                        captured (many (group
-                          [ exact " ", captured (term 2) ])) ]).
+                        captured (many app_arg) ]).
+
+rule app_arg (group [ exact " ", captured (term 2) ]).
+
 rule (term 1) (term 2).
 
 rule (term 2) (apply var [ captured ident ]).
 rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
 
-`( def_js (term 0) ).
+`( def_toplevel_js (term 0) ).
 
 >> parse (term 0) "λx.x (y z)" Z ?
 >> Yes:

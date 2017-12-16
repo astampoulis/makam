@@ -157,7 +157,7 @@ quote_term_js : [A]reified A -> string -> prop.
 quote_terms_js : [A B]reified_args A B -> string -> prop.
 
 quote_terms_js X Result
-  when refl.isunif X, locget X X_Loc, tostring X_Loc LocS, print_string `At ${LocS}, uninstantiated reified arguments.\n`.
+  when refl.isunif X, log_error X `Uninstantiated reified arguments`.
 
 quote_terms_js [] "".
 quote_terms_js (Head :: Tail) Result :-
@@ -173,7 +173,7 @@ quote_paren_term_js HeadS ArgsS Result :-
   else expansion.str `(${HeadS}${ArgsS})` Result.
 
 quote_term_js (reified.term Head Args) Result :-
-  refl.headname Head HeadS,
+  tostring_qualified Head HeadS,
   quote_terms_js Args ArgsS,
   quote_paren_term_js HeadS ArgsS Result.
 
@@ -220,18 +220,16 @@ gen_parse_js (action X) Dict Dict Result :-
   quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
 
-quote_peg_js : [A]peg A -> string -> prop.
-(* TODO: make sure this isn't overly permissive *)
-quote_peg_js P S :- reify P P_Reified, quote_term_js P_Reified S.
-
 (* external parsers are defined using `extern_def` rules.
    the parser should be of the form `(input: string, offset: int) => { result: ?string, newOffset: int }`
 *)
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), tostring P Key, not(map.find Dict Key _),
-       extern_def P _ :-
+  when not(builtin P), not(refl.isunif P), extern_def P _, tostring P Key :-
   quote_string_js Key Key_js,
+  if (map.find Dict Key _)
+  then (eq Dict' Dict)
+  else (
   get_external_peg_definition P Code,
   eq Dict' ((Key, Expr) :: Dict),
   expansion.str
@@ -258,7 +256,7 @@ gen_parse_js P Dict Dict' Result
         return data.result;
       }
      })`
-     Expr,
+     Expr),
   expansion.str
   `yield ${Key_js}`
   Result.
@@ -266,12 +264,12 @@ gen_parse_js P Dict Dict' Result
 key_of : peg A -> string -> prop.
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), inline P, not(refl.isunif P), not(extern_def P _) :-
+  when not(builtin P), not(refl.isunif P), inline P, not(extern_def P _) :-
   get_peg_definition P P',
   gen_parse_js P' Dict Dict' Result.
 
 gen_parse_js P Dict DictRes Result
-  when not(builtin P), not(inline P), not(refl.isunif P), not(extern_def P _) :-
+  when not(builtin P), not(refl.isunif P), not(inline P), not(extern_def P _) :-
   if (key_of P Key) then success else tostring P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
@@ -382,9 +380,9 @@ gen_toplevel_parser_js P Function_js :-
         }
       }
       if (lastRes === null) {
-        return "none";
+        return { result: null, newOffset: startOffset };
       } else {
-        return \`some ( \${lastRes}, \${JSON.stringify(input.substr(offset))} )\`;
+        return { result: lastRes, newOffset: offset };
       }
    })`
    Function_js.
@@ -393,19 +391,31 @@ eval_parser_js : [A] peg A -> string -> string -> (A * string) -> prop.
 
 eval_parser_js P Function_js Input Result :-
   quote_string_js Input Input_js,
-  expansion.str `${Function_js}(${Input_js}, 0);` FinalCode,
+  expansion.str
+  `(function(){
+      const input = ${Input_js};
+      const { result, newOffset } = ${Function_js}(input, 0);
+      if (result === null) return "none";
+      else return \`some( \${result}, \${JSON.stringify(input.substr(newOffset))} )\`;
+  })();`
+  FinalCode,
   js.eval FinalCode ResultS,
-  fromstring ResultS (some Result).
+  refl.fromstring ResultS (some Result).
 
 cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 
-def_parser_js : [A]peg A -> cmd -> prop.
-def_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
+def_toplevel_parser_js : [A]peg A -> cmd -> prop.
+def_toplevel_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
   (* this does not play well with polymorphism, so we require a monomorphic type.
      we can have different instantiations of the same polymorphic constant though,
      hence we store a representation of the type as part of the cached predicate. *)
   refl.typstring P Typ,
   gen_toplevel_parser_js P Code.
+
+def_parser_js : [A]peg A -> peg A -> cmd -> prop.
+def_parser_js P P' (cmd_newclause (clause (extern_def P Code) success)) :-
+  refl.typstring P Typ, (* require the type to be monomorphic *)
+  gen_toplevel_parser_js P' Code.
 
 parse_opt : [A] peg A -> string -> (A * string) -> prop.
 

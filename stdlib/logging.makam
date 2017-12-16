@@ -8,9 +8,14 @@ info : level.
 level : level -> prop.
 %end.
 
-log_error, log_warning, log_info : [A] A -> expansion -> prop.
+log_error, log_error_with_both_locs, log_warning, log_info : [A] A -> expansion -> prop.
 
 log_error Where Message :-
+  locget Where Loc, tostring Loc LocS,
+  expansion.str Message MessageS,
+  print_string `\n-- Error at ${LocS}: ${MessageS}\n`.
+
+log_error_with_both_locs Where Message :-
   locget Where Loc, tostring Loc LocS,
   locget Message Loc', tostring Loc' LocS',
   expansion.str Message MessageS,

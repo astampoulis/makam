@@ -72,7 +72,7 @@ rule cterm2 (bind (token ident) (fun var => action (cvar var))).
 
 rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
 
-`( def_parser_js cterm ).
+`( def_toplevel_parser_js cterm ).
 
 >> parse_opt cterm "λ x.x" Res ?
 >> Yes:
@@ -108,9 +108,13 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 >> Yes:
 >> X := capp (cvar "x") [cvar "y", cvar "z"].
 
->> parse_opt (transform (pfun x_y res => [X Y] eq x_y [X, Y], string.append Y X res) "(function(a, b) { return JSON.stringify(JSON.parse(b) + JSON.parse(a)); })" [ captured (charclass "a"), captured (charclass "b") ]) "ab" X ?
+>> parse_opt (transform (pfun x y res => string.append y x res) "(function(a, b) { return JSON.stringify(JSON.parse(b) + JSON.parse(a)); })" [ captured (charclass "a"), captured (charclass "b") ]) "ab" X ?
 >> Yes:
 >> X := ("ba", "").
+
+>> parse_opt (string_transform (fun a b => expansion.str `${a} : ${b}`) [ captured anychar, captured anychar ]) "xy" (X, _) ?
+>> Yes:
+>> X := "x : y".
 
 testlam : peg cterm.
 hoaslam : (cterm -> cterm) -> cterm.
