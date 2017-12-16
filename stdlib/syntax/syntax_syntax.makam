@@ -35,13 +35,16 @@ args : syntax (syntax_args A B).
 
 (* TODO: `ident` should be more precise than that *)
 rule ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")).
+syntax.inline ident.
 
 (* TODO: we should allow makam terms other than `ident` below *)
 rule makam_ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")).
+syntax.inline makam_ident.
 
 rule (makam_quote P)
      (transform refl.fromstring "JSON.parse" (pfun str x => tostring_qualified x str)
        [ syntax.captured P ]).
+syntax.inline (makam_quote P).
 
 (* TODO: string literals should be more general than this too *)
 rule string_literal
@@ -49,10 +52,11 @@ rule string_literal
       exact "'",
       syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
       exact "'"]).
+syntax.inline string_literal.
 
 token : string -> syntax unit.
 parsed_token : string -> peg string.
-inline (token _).
+syntax.inline (token _).
 peg.inline (parsed_token _).
 
 (* we try to parse a token as an identifier; if that works, then we make sure that the identifier is the token exactly.
@@ -62,18 +66,23 @@ peg.inline (parsed_token _).
 
 syntax.rule_iso (token S) (bind (parsed_token S) (fun _ => action unit))
                           (unapply unit [ syntax (optunit ws_empty), const S, syntax (optunit ws_space) ]).
+syntax.inline (token S).
+
 peg.rule (parsed_token S) (transform (pfun ident res => eq ident S, eq res ident)
                               JS_Code
                               [ syntax (optunit ws_empty), peg.captured (syntax makam_ident), syntax (optunit ws_space) ]) :-
   quote_string_js S S_Quoted,
   expansion.str `function(ident) { if (JSON.parse(ident) === ${S_Quoted}) return ident; else return null; }` JS_Code.
 peg.rule (parsed_token S) (apply (fun x => x) [ syntax (optunit ws_empty), neg (syntax makam_ident), peg.captured (exact S), syntax (optunit ws_space) ]).
+peg.inline (parsed_token S).
 
 token : syntax P -> syntax P.
 syntax.rule (token P) (group [ optunit ws_empty, syntax.captured P, optunit ws_space ]).
+syntax.inline (token P).
 
 simple_token : string -> syntax unit.
 syntax.rule (simple_token S) (group [ optunit ws_empty, syntax.captured (exact S), optunit ws_space ]).
+syntax.inline (simple_token S).
 
 peg.rule base_str
          (syntax (token makam_ident)).
@@ -117,7 +126,6 @@ pretty.rule args
 args_str_cached : peg string.
 `( peg.def_parser_js args_str_cached args_str ).
 
-
 peg.rule top_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
           [ peg.captured (syntax (token makam_ident)), syntax (token "{"), peg.captured args_str_cached, syntax (token "}") ]).
@@ -125,12 +133,8 @@ pretty.rule top
      (unapply syntax.apply
       [ pretty.captured (syntax (token (makam_quote makam_ident))), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
-top_str_cached : peg string.
-`( peg.def_parser_js top_str_cached top_str ).
-
-
 syntax.rule_iso top
-         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str_cached ])
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
          (top).
 
 syntax.rule_iso args
