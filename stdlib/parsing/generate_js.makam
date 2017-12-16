@@ -225,8 +225,11 @@ gen_parse_js (action X) Dict Dict Result :-
 *)
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), extern_def P _, tostring P Key, not(map.find Dict Key _) :-
+  when not(builtin P), not(refl.isunif P), extern_def P _, tostring P Key :-
   quote_string_js Key Key_js,
+  if (map.find Dict Key _)
+  then (eq Dict' Dict)
+  else (
   get_external_peg_definition P Code,
   eq Dict' ((Key, Expr) :: Dict),
   expansion.str
@@ -253,7 +256,7 @@ gen_parse_js P Dict Dict' Result
         return data.result;
       }
      })`
-     Expr,
+     Expr),
   expansion.str
   `yield ${Key_js}`
   Result.
