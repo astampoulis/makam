@@ -53,6 +53,7 @@ syntax.rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty 
 peg.rule top_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
           [ peg.captured (syntax makam_ident), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
+
 peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (token "["),
@@ -94,28 +95,24 @@ pretty.rule makam_term
      (untransform (pfun res str => refl.headname str res)
        [ pretty.captured (syntax makam_ident) ]).
 
+top_str_cached, args_str_cached : peg string.
+`( peg.def_parser_js top_str_cached top_str ).
+`( peg.def_parser_js args_str_cached args_str ).
+
 syntax.rule_iso top
-         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str_cached ])
          (top).
 
 syntax.rule_iso args
-         (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str ])
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str_cached ])
          (args).
-
-top_dyn : syntax dyn.
-args_dyn : syntax dyn.
-
-rule top_dyn (apply dyn [ syntax.captured top ]).
-rule args_dyn (apply dyn [ syntax.captured args ]).
-
-`( syntax.def_js args_dyn ).
 
 new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
 new_rule Syntax Constructor Args_S
          (cmd_newclause (clause
            (syntax.rule Syntax (syntax.apply Constructor Args))
            success)) :-
-  if (parse_opt args_dyn Args_S (dyn Args_Untyped))
+  if (syntax.parse_opt args Args_S Args_Untyped)
   then
     (if (dyn.eq Args_Untyped Args)
      then success
@@ -145,7 +142,7 @@ all : testsuite. %testsuite all.
 
 (* TODO: make tostring/fromstring more robust for cases like below. *)
 
->> syntax.parse_opt top_dyn "syntax_syntax_tests.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax_tests.term] }" (dyn X) ?
+>> syntax.parse_opt top "syntax_syntax_tests.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax_tests.term] }" X ?
 >> Yes:
 >> X := (syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]).
 
@@ -157,7 +154,7 @@ all : testsuite. %testsuite all.
 `( new_rule term var "[ident]" ).
 `( new_rule term app "'(' [term] [term] ')'" ).
 
-`( def_js term ).
+`( def_toplevel_js term ).
 
 >> syntax.parse_opt term "λx.λy.((y x) x)" X ?
 >> Yes:

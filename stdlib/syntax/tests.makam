@@ -34,18 +34,18 @@ testcase syntax :- syntax_test (transform (pfun x y res => string.append y x res
 
 testcase syntax :- syntax_test (group [exact "'", captured (charclass "abcdef"), exact "'"]) "'a'" "a".
 
-`( def_js (once_or_many (charclass "abcdef")) ).
+`( def_toplevel_js (once_or_many (charclass "abcdef")) ).
 testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "dada" ["d","a","d","a"].
 testcase syntax :- syntax_test (once_or_many (charclass "abcdef")) "d" ["d"].
 testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "lala" ["l","a","l","a"].
 testcase syntax :- syntax_test_not (once_or_many (charclass "abcdef")) "" [].
 
-`( def_js (charmany (charclass "abcdef"))).
+`( def_toplevel_js (charmany (charclass "abcdef"))).
 testcase syntax :- syntax_test (charmany (charclass "abcdef")) "dada" "dada".
 testcase syntax :- syntax_test (charmany (charclass "abcdef")) "" "".
 testcase syntax :- syntax_test_not (charmany (charclass "abcdef")) "lala" "lala".
 
-`( def_js (char_once_or_many (charclass "abcdef"))).
+`( def_toplevel_js (char_once_or_many (charclass "abcdef"))).
 testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "dada" "dada".
 testcase syntax :- syntax_test (char_once_or_many (charclass "abcdef")) "d" "d".
 testcase syntax :- syntax_test_not (char_once_or_many (charclass "abcdef")) "lala" "lala".
@@ -90,7 +90,7 @@ rule (term 1) (term 2).
 rule (term 2) (apply var [ captured ident ]).
 rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
 
-`( def_js (term 0) ).
+`( def_toplevel_js (term 0) ).
 
 >> parse (term 0) "λx.x (y z)" Z ?
 >> Yes:

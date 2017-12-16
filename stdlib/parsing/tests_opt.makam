@@ -72,7 +72,7 @@ rule cterm2 (bind (token ident) (fun var => action (cvar var))).
 
 rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")")) (action t)))).
 
-`( def_parser_js cterm ).
+`( def_toplevel_parser_js cterm ).
 
 >> parse_opt cterm "λ x.x" Res ?
 >> Yes:
