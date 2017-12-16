@@ -126,6 +126,7 @@ type ctxState = { name_to_fvar : (int list) Dict.t ;
                   globally_loaded_modules : StringSet.t ;
                   modules_loaded_in_modules : StringSet.t Dict.t ;
                   module_extension_stack : string option list ;
+                  open_modules : string list ;
                   included_directories : string list ;
                   current_directory : string ;
                   last_query : (unit -> exprU) located option
@@ -150,7 +151,7 @@ let empty_state () =
     current_module = None ; current_testsuite = None;
     qualified_fvar_exists = StringSet.empty ; qualified_tfvar_exists = StringSet.empty ;
     globally_loaded_modules = StringSet.empty ; modules_loaded_in_modules = Dict.empty ;
-    module_extension_stack = [] ; included_directories = [] ; current_directory = ".";
+    module_extension_stack = [] ; open_modules = [] ; included_directories = [] ; current_directory = ".";
     last_query = None
   }
 ;;
@@ -598,10 +599,10 @@ let qualifyName qualset basedict n =
   let state = !termstate in
   if String.starts_with n "." then
     [String.tail n 1]
-  else if state.current_module = None then
+  else if state.current_module = None && state.open_modules = [] then
     [n]
   else begin
-    let modules = state.current_module :: state.module_extension_stack in
+    let modules = state.current_module :: state.module_extension_stack ++ List.map Option.some state.open_modules in
     let fqnames = List.filter_map (function Some m -> Some (m ^ "." ^ n) | None -> None) modules in
     let basename = if Dict.mem n basedict then [n] else [] in
     let allnames =
@@ -1667,6 +1668,15 @@ let global_enter_module m =
   globalterm_do (enter_module m)
 ;;
 
+let open_module m () =
+  let state = !termstate in
+  termstate := { state with open_modules = m :: state.open_modules }
+;;
+
+let global_open_module m =
+  globalterm_do (open_module m)
+;;
+
 exception NotInModule;;
 
 let leave_module () =
@@ -1693,6 +1703,7 @@ let global_restore_post_file_import state' =
   let state = !globalstate in
   globalstate := { state with current_module = state'.current_module ;
                               module_extension_stack = state'.module_extension_stack ;
+                              open_modules = state'.open_modules ;
                               current_directory = state'.current_directory ;
                               current_testsuite = state'.current_testsuite ;
                               last_query = None
