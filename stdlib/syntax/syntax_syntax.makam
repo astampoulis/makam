@@ -48,7 +48,7 @@ rule string_literal
 
 token : string -> syntax unit.
 inline (token _).
-rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
+syntax.rule (token S) (apply unit [ optunit ws_space, exact S, optunit ws_empty ]).
 
 peg.rule top_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
@@ -80,7 +80,7 @@ pretty.rule args
          syntax (token "]"),
          pretty.captured args ]).
 pretty.rule args
-     (unapply (fun hd tl => syntax.cons (token hd) tl)
+     (unapply (fun hd tl => syntax.cons (token hd: syntax unit) tl)
        [ pretty.captured (syntax string_literal),
          pretty.captured args ]).
 pretty.rule args
