@@ -33,10 +33,13 @@ This could be in termlangext, but separating it out so that
 we avoid a circular dependency between the grammar and termlangext.
 
 *)
+
+builtin_enter_module "refl";;
   
 new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
   (fun _ -> fun [ str; e ] ->
-    (let open RunCtx.Monad in
+    (let mut_intermlang = intermlang in
+     let open RunCtx.Monad in
      perform
      str <-- pattcanonRenormalize str ;
      pstr <-- chasePattcanon ~deep:true [] str ;
@@ -51,13 +54,14 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
        None -> mzero
      | Some getExpr -> perform
          expr <-- intermlang getExpr.content ;
-         p <-- intermlang (fun _ ->
+         p <-- inmonad ~statewrite:true (fun _ ->
            try
-             (* TODO: handling of unification variables is unclear here *)
-             Some(withConcreteBoundMode true (fun _ -> typecheck_and_normalize expr) |> fst |> chaseTypesInExpr ~metasAreFine:true ~replaceUninst:false |> exprToPatt |> pattneutToCanon)
+             let e = mut_intermlang (fun _ -> typecheck_and_normalize expr |> fst) in
+             Some(e |> convertAndAllocateExpr_mutable)
            with _ -> None
          );
          let _ = if (!_DEBUG) then Printf.printf "fromstring:: %s >> %a\n" s (Option.print Pattcanon.print) p in
          match p with Some p -> pattcanonUnifyFull e p | None -> mzero))
 ;;
 
+builtin_leave_module ();;

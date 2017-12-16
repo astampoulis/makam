@@ -333,6 +333,8 @@ directive -> "use" repplus(white) s:token(ident_or_str)
            << fun () -> Termlangcanon.global_enter_module s >>
            / "end"
            << fun () -> Termlangcanon.global_leave_module () >>
+           / "open" s:token(ident)
+           << fun () -> Termlangcanon.global_open_module s >>
            / "directory" repplus(white) s:token(str)
            << fun () -> Termlangcanon.global_add_directory s >>
            / "typenorm" repplus(white) e:baseexpr

@@ -1,0 +1,186 @@
+(* This implements a syntax for syntax combinators --
+   basically a `syntax (syntax A)` syntax procedure,
+   which we can use to define syntax for other types.
+
+   Due to the typed nature of `syntax`, typeful parsing
+   does not really work; so we parse syntax combinators
+   into a string representing a makam term; when this
+   string is parsed with `refl.fromstring` we'll get something
+   of `syntax A` type. The pretty-printer does work normally,
+   so the syntax of syntax is defined through `rule_iso`,
+   handling parsing and pretty-printing differently.
+*)
+
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend syntax_syntax.
+
+makam_ident : syntax string.
+string_literal : syntax string.
+
+makam_term : int -> pretty A.
+makam_term_str : int -> peg string.
+
+top_str, base_str : peg string.
+args_str : peg string.
+
+top, base : pretty (syntax A).
+args : pretty (syntax_args A B).
+
+top : syntax (syntax A).
+args : syntax (syntax_args A B).
+
+(* TODO: make this more precise *)
+syntax.rule makam_ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")).
+syntax.inline makam_ident.
+
+(* TODO: string literals should be more general than this too *)
+rule string_literal
+     (group [
+      exact "'",
+      syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
+      exact "'"]).
+syntax.inline string_literal.
+
+token : string -> syntax unit.
+syntax.rule (token S) (group [ optunit ws_empty, syntax.captured (exact S), optunit ws_space ]).
+syntax.inline (token S).
+
+token : syntax P -> syntax P.
+syntax.rule (token P) (group [ optunit ws_empty, syntax.captured P, optunit ws_space ]).
+syntax.inline (token P).
+
+(* if the string used with the token is an identifier, we should try to parse an identifier from the input string;
+   if that works, then we make sure that the identifier is the token exactly.
+   that way, if we have a token "foo" and an identifier "foobar", we won't parse the prefix of "foobar" into an independent
+   token "foo" and an identifier "bar".
+   if we can't parse the token as an identifier, it's a symbol, so we just use `exact`. *)
+
+token_id : string -> syntax unit.
+token_id, token_id_cached : string -> peg string.
+syntax.inline (token _).
+
+syntax.rule_iso (token_id S) (bind (token_id S) (fun _ => action unit))
+                             (unapply unit [ syntax (optunit ws_empty), const S, syntax (optunit ws_space) ]).
+
+peg.rule (token_id S) (transform (pfun ident res => eq ident S, eq res ident)
+                              JS_Code
+                              [ syntax (optunit ws_empty), peg.captured (syntax makam_ident), syntax (optunit ws_space) ]) :-
+  quote_string_js S S_Quoted,
+  expansion.str `function(ident) { if (JSON.parse(ident) === ${S_Quoted}) return ident; else return null; }` JS_Code.
+
+(* Cache the JS parser for `token_id`, because that gets used a lot. Since it takes an argument, we have to
+   go about caching it in a rather roundabout way. *)
+
+(*
+`( pfun cmd' =>
+   gen_toplevel_parser_js (token_id "~~argument~~") JS_Code_Template, quote_string_js JS_Code_Template QuotedCode,
+   expansion.str `${QuotedCode}.replace(/"~~argument~~"/g, 'inputString');` FunctionCodeString,
+   js.eval FunctionCodeString FunctionCode,
+   eq cmd' (cmd_newclause (clause (peg.extern_def (token_id_cached S) JS_Code) {prop| quote_string_js S Quoted,
+            expansion.str `(function() { const inputString = ${Quoted}; return ${FunctionCode}; })()` JS_Code |} ))).
+*)
+
+makam_term_args_str : peg string.
+
+peg.rule (makam_term_str 0) (string_transform
+            (pfun hd args => expansion.str `(${hd} ${args})`)
+            [ peg.captured (makam_term_str 1), peg.captured makam_term_args_str ]).
+peg.rule (makam_term_str 0) (makam_term_str 1).
+peg.rule (makam_term_str 1) (syntax (token makam_ident)).
+peg.rule (makam_term_str 1) (apply (fun x => x) [ syntax (token "("), peg.captured (makam_term_str 0), syntax (token ")") ]).
+
+peg.rule makam_term_args_str (string_transform
+            (pfun hd tl => expansion.str `${hd} ${tl}`)
+            [ peg.captured (makam_term_str 1), peg.captured makam_term_args_str ]).
+peg.rule makam_term_args_str (apply "" []).
+
+pretty.rule (makam_term 0)
+     (untransform
+            (pfun hd args input => refl.headargs input hd args)
+            [ pretty.captured (makam_term 1), pretty.captured (many (unapply dyn [ pretty.captured (makam_term 1) ])) ]).
+pretty.rule (makam_term 0) (makam_term 1).
+pretty.rule (makam_term 1)
+     (untransform (pfun str x => tostring_qualified x str)
+       [ pretty.captured (syntax (token makam_ident)) ]).
+pretty.rule (makam_term 1)
+            (unapply (fun x => x) [ syntax (token "("), pretty.captured (makam_term 0), syntax (token ")") ]).
+
+peg.rule base_str
+         (string_transform (fun s => expansion.str `(syntax_syntax.token "${s}")`)
+                [ peg.captured (syntax (token string_literal)) ]).
+pretty.rule base
+         (unapply (fun (s: string) => (token s: syntax unit))
+                [ pretty.captured (syntax (token string_literal)) ]).
+
+peg.rule base_str
+         (makam_term_str 0).
+pretty.rule base
+         (makam_term 0).
+
+peg.rule args_str
+     (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
+            [ syntax (token "<"),
+              peg.captured base_str,
+              syntax (token ">"),
+              peg.captured args_str ]).
+pretty.rule args
+     (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
+       [ syntax (token "<"),
+         pretty.captured base,
+         syntax (token ">"),
+         pretty.captured args ]).
+
+peg.rule args_str
+     (string_transform (fun hd tl => expansion.str `(syntax.cons (${hd}: syntax unit) ${tl})`)
+            [ peg.captured base_str,
+              peg.captured args_str ]).
+pretty.rule args
+     (unapply (syntax.cons : syntax unit -> syntax.syntax_args B C -> syntax.syntax_args B C)
+       [ pretty.captured base,
+         pretty.captured args ]).
+
+peg.rule args_str
+     (apply "syntax.nil" []).
+pretty.rule args
+     (unapply syntax.nil []).
+
+args_str_cached : peg string.
+`( peg.def_parser_js args_str_cached args_str ).
+
+peg.rule top_str
+          (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
+          [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str_cached, syntax (token "}") ]).
+pretty.rule top
+     (unapply syntax.apply
+      [ pretty.captured (makam_term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
+
+syntax.rule_iso top
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
+         (top).
+
+syntax.rule_iso args
+         (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str_cached ])
+         (args).
+
+new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
+new_rule Syntax Constructor Args_S
+         (cmd_newclause (clause
+           (syntax.rule Syntax (syntax.apply Constructor Args))
+           success)) :-
+  if (syntax.parse_opt args Args_S Args_Untyped)
+  then
+    (if (dyn.eq Args_Untyped Args)
+     then success
+     else (if (refl.typstring Args_Untyped TypArgsS')
+           then expansion.str `(${TypArgsS'}) ` TypArgsS
+           else eq TypArgsS "",
+           if (refl.typstring Args TypConstrS')
+           then expansion.str `(${TypConstrS'}) ` TypConstrS
+           else eq TypConstrS "",
+           log_error Args_S `type of syntax arguments ${TypArgsS}does not match type of constructor${TypConstrS}`, failure))
+  else (log_error Args_S `parsing the syntax rule failed`, failure).
+
+%end.

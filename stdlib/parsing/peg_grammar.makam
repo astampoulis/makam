@@ -63,7 +63,7 @@ peg.rule (ppeg) (bind (many (seq (symbol (exact ("/"))) ppegrule)) (fun l =>
                           map (pfun e res => e res) l L',
                           convert (choices L') x))))).
 
-`( def_parser_js (ppeg: peg.peg (peg.peg string -> prop)) ).
+`( def_toplevel_parser_js (ppeg: peg.peg (peg.peg string -> prop)) ).
 
 >> (peg.parse_opt ppeg "/ x : \"lala\" {  x  } " (_Res, _), _Res (Y : peg.peg string)) ?
 >> Yes:
