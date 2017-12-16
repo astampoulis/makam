@@ -38,9 +38,8 @@ jobs:
 
       - run: &tests-js
           name: Run Tests for Makam.js
-          command: [[ $GIT_COMMIT_DESC == *"[ci-test-js]"* ]] && make makam-js-tests
-          environment:
-            GIT_COMMIT_DESC: $(git log --format=oneline -n 1 $CIRCLE_SHA1)
+          command: |
+            [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) == *"[ci-test-js]"* ]] && make makam-js-tests
 
 workflows:
   version: 2
