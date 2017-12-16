@@ -159,7 +159,7 @@ tests : testsuite. %testsuite tests.
 
 (* TODO: make tostring/fromstring more robust for cases like below. *)
 
-syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax.term] }" (dyn X) ?
+>> syntax.parse_opt ssyntax_dyn "syntax_syntax.lam { 'λ' [syntax_syntax.ident] '.' [syntax_syntax.term] }" (dyn X) ?
 >> Yes:
 >> X := (syntax.apply lam (syntax.cons (syntax.token "λ") (syntax.cons (syntax.captured ident) (syntax.cons (syntax.token ".") (syntax.cons (syntax.captured term) syntax.nil))))).
 
