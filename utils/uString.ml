@@ -94,6 +94,9 @@ let rec contains_aux ((s, _, bend, _) as x) off u =
   else contains_aux x (BatUTF8.ByteIndex.next s off) u
 ;;
 
+(* TODO: optimize this *)
+let concat xs = xs |> List.map to_string |> String.concat "" |> of_string ;;
+
 let contains ((s, off, _, _) as x) u = contains_aux x off u ;;
 
 let implode l =  
