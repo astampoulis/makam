@@ -225,7 +225,7 @@ gen_parse_js (action X) Dict Dict Result :-
 *)
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), extern_def P _, tostring P Key :-
+  when not(builtin P), not(refl.isunif P), external P, tostring P Key :-
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
   then (eq Dict' Dict)
@@ -265,12 +265,12 @@ gen_parse_js P Dict Dict' Result
 key_of : peg A -> string -> prop.
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), inline P, not(extern_def P _) :-
+  when not(builtin P), not(refl.isunif P), inline P, not(external P) :-
   get_peg_definition P P',
   gen_parse_js P' Dict Dict' Result.
 
 gen_parse_js P Dict DictRes Result
-  when not(builtin P), not(refl.isunif P), not(inline P), not(extern_def P _) :-
+  when not(builtin P), not(refl.isunif P), not(inline P), not(external P) :-
   if (key_of P Key) then success else tostring P Key,
   quote_string_js Key Key_js,
   if (map.find Dict Key _)
@@ -413,7 +413,8 @@ def_toplevel_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P
   gen_toplevel_parser_js P Code.
 
 def_parser_js : [A]peg A -> peg A -> cmd -> prop.
-def_parser_js P P' (cmd_newclause (clause (extern_def P Code) success)) :-
+def_parser_js P P' (cmd_many [ cmd_newclause (clause (external P) success),
+                               cmd_newclause (clause (extern_def P Code) success) ]) :-
   refl.typstring P Typ, (* require the type to be monomorphic *)
   gen_toplevel_parser_js P' Code.
 

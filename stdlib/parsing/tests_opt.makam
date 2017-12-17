@@ -167,9 +167,10 @@ rule (rec I)
 >> Yes:
 >> X := (["t", "r"], "alalala").
 
-external : peg cterm.
+ext_peg : peg cterm.
 
-extern_def external Code
+external ext_peg.
+extern_def ext_peg Code
   when expansion.str
   `
   function (input, offset) {
@@ -182,7 +183,7 @@ extern_def external Code
   }
   ` Code.
 
->> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
+>> parse_opt (many (choices [ ext_peg, cterm ] )) "identity λx.x" (X, _) ?
 >> Yes:
 >> X := [ clam "x" (cvar "x"), clam "x" (cvar "x") ].
 
