@@ -28,13 +28,13 @@ all : testsuite. %testsuite all.
 >> Yes:
 >> X := "syntax_syntax_tests.lam { 'λ' < syntax_syntax_tests.ident > '.' < syntax_syntax_tests.term > } ".
 
-`( new_rule term lam { 'λ' <ident> '.' <term> } ).
-`( new_rule term var { <ident> } ).
-`( new_rule term app { '(' <term> <many term> ')' } ).
+`( new_rule term lam "'λ' <ident> '.' <term>" ).
+`( new_rule term var "<ident>" ).
+`( new_rule term app "'(' <term> <many term> ')'" ).
 
 `( def_toplevel_js term ).
 
->> syntax.parse_opt term { λx.λy.(y x x) } X ?
+>> syntax.parse_opt term "λx.λy.(y x x)" X ?
 >> Yes:
 >> X := lam "x" (lam "y" (app (var "y") [var "x", var "x"])).
 
@@ -42,7 +42,7 @@ all : testsuite. %testsuite all.
 >> Yes:
 >> X := "λ x . λ y . ( y x x ) ".
 
->> (syntax.parse_opt term { λx.λy.((y x) x) } _Parsed, syntax.pretty term _Parsed Printed) ?
+>> (syntax.parse_opt term "λx.λy.((y x) x)" _Parsed, syntax.pretty term _Parsed Printed) ?
 >> Yes:
 >> Printed := "λ x . λ y . ( ( y x ) x ) ".
 
