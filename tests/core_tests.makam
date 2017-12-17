@@ -16,7 +16,11 @@ testcase makam_core :- eq {(<[ hello ]>)} " hello ".
 testcase makam_core :- eq {(<[hello]>)} "hello".
 testcase makam_core :- eq 〚 hello 〛 " hello ".
 testcase makam_core :- eq 〚hello〛 "hello".
-testcase makam_core :- eq {lala| hello |} " hello ".
-testcase makam_core :- eq {lala|hello|} "hello".
-testcase makam_core :- eq <javascript|return 5;|> "return 5;".
+testcase makam_core :- eq {js| hello |} " hello ".
+testcase makam_core :- eq {js|hello|} "hello".
+testcase makam_core :- eq <js|return 5;|> "return 5;".
+testcase makam_core :- eq { test other markers > } " test other markers > ".
+testcase makam_core :- eq { test other markers { } " test other markers { ".
+testcase makam_core :- eq {{ test other markers } }} " test other markers } ".
+
 

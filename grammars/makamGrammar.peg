@@ -169,38 +169,12 @@ baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
 
           (* free-form quotes *)
           / token(start_enclosed)
-            str:loced(enclosed)
+            str:loced(rep(enclosed))
             end_enclosed
-            << autospan_un mkString { str with content = UString.to_string str.content } >>
+            << autospan_un mkString { str with content = UString.to_string (UString.concat str.content) } >>
 
           / e:lparenthesized(annotexpr)         << e >>
           / e:lparenthesized(lexpr^)             << e >>
-
-enclosed_starter -> hd:enclosed_starter_first tl:enclosed_starter_rest << [UString.implode [hd]; tl] |> UString.concat >>
-enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_head << () >>) ) << () >>
-enclosed_ender -> hd:rep( (enclosed_ender_not_last x:enclosed_ender_head << x >>) )
-                  tl:enclosed_ender_last << (List.append hd [tl]) |> UString.implode >>
-
-enclosed_starter_first -> x:[{〚] << x >> / x:[<] !"-" << x >>
-enclosed_starter_rest -> xs:rep(enclosed_starter_rest_char) id:identaux ys:repplus(enclosed_starter_rest_char)
-                         << [ xs |> UString.implode; id |> UString.of_string; ys |> UString.implode ] |> UString.concat >>
-                       / xs:rep(enclosed_starter_rest_char) << xs |> UString.implode >>
-enclosed_starter_rest_char -> x:enclosed_starter_first << x >>
-                       / x:[(<`:|[] << x >>
-
-enclosed_ender_head -> x:enclosed_ender_last << x >>
-                     / x:[)>`:|]] << x >>
-enclosed_ender_last -> x:[}〛>] << x >>
-
-start_enclosed -> &&( enclosed_starter << fun s -> end_enclosed_marker := enclosed_flip s; true >> )
-                  e:enclosed_starter << e >>
-
-end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
-                e:enclosed_ender << e >>
-
-enclosed -> str:repplus((!enclosed_ender c:. << c >>)) << str |> UString.implode >>
-          / &&( enclosed_ender << fun s -> not (s = !end_enclosed_marker) >> )
-            str:enclosed_ender << str >>
 
 identnamed -> x:ident^ namepref nmeta:identany << toVarWithNamedMeta x nmeta >>
             / x:identany << x >>
@@ -457,6 +431,34 @@ querytest -> start:loced(quoteline("Yes.")) stop:loced(epsilon) to_EOL
 
 var_assignment -> x:ltoken(ident) token(":=") e:lexpr token(("," / ".")) to_EOL
                   << (autospan_un mkVar x, e) >>
+
+(* Free-form quotes *)
+start_enclosed -> &&( enclosed_starter << fun s -> end_enclosed_marker := enclosed_flip (fst s); true >> )
+                  e:enclosed_starter << e >>
+
+end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
+                e:enclosed_ender << e >>
+
+enclosed -> str:repplus((!enclosed_ender c:. << c >>)) << str |> UString.implode >>
+          / &&(enclosed_ender << fun s -> not (s = !end_enclosed_marker) >>)
+            str:enclosed_ender << str >>
+
+enclosed_starter -> hd:enclosed_starter_first tl:enclosed_starter_rest << ([UString.implode [hd]; fst tl] |> UString.concat, snd tl) >>
+enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_head << () >>) ) << () >>
+enclosed_ender -> hd:rep( (enclosed_ender_not_last x:enclosed_ender_head << x >>) )
+                  tl:enclosed_ender_last << (List.append hd [tl]) |> UString.implode >>
+
+enclosed_starter_first -> x:[{〚] << x >> / x:[<] !"-" << x >>
+enclosed_starter_rest -> xs:rep(enclosed_starter_rest_char) id:identaux ys:repplus(enclosed_starter_rest_char)
+                         << ([ xs |> UString.implode; id |> UString.of_string; ys |> UString.implode ] |> UString.concat, id) >>
+                       / xs:rep(enclosed_starter_rest_char) << (xs |> UString.implode, "") >>
+enclosed_starter_rest_char -> x:enclosed_starter_first << x >>
+                       / x:[(<`:|[] << x >>
+
+enclosed_ender_head -> x:enclosed_ender_last << x >>
+                     / x:[)>`:|]] << x >>
+enclosed_ender_last -> x:[}〛>] << x >>
+
 
 (* -------------------------------------- *)
 (* Dynamic binding trees parsing          *)
