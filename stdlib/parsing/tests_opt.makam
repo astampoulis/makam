@@ -161,6 +161,11 @@ rule (rec I)
 >> Yes:
 >> X := clam "x" (clam "y" (clam "x" (cvar "x"))).
 
+(* Actual bind, with user-defined PEGs *)
+>> parse_opt (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
+
 (* tests specific for parse_opt *)
 
 >> parse_opt (many (bind anychar (fun a => eval `return ${a} == '"a"' ? null : ${a};`))) "tralalala" X ?
@@ -191,5 +196,9 @@ extern_def ext_peg Code
 >> Yes:
 >> X := "F",
 >> Rest := "oo".
+
+>> parse_opt (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
 
 %end.

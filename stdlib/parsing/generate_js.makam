@@ -220,27 +220,57 @@ gen_parse_js (action X) Dict Dict Result :-
   quote_term_js X_Reified X_js,
   expansion.str `\`${X_js}\`` Result.
 
+key_of_var : [A] peg A -> string -> prop.
+key_of : [A] peg A -> string -> prop.
+
+key_of P Key :-
+  if (key_of_var P Key) then success
+  else (reify P P_R, quote_term_js P_R Key).
+
+gather_used_results, gather_used_results_aux : [A] set string -> A -> set string -> prop.
+
+gather_used_results S R S' :-
+  demand.case_otherwise (gather_used_results_aux S R S')
+                        (generic.fold gather_used_results S R S').
+
+gather_used_results_aux S X S' when refl.isnvar X, quote_parse_res_js X PRes :-
+  set.ccons PRes S S'.
+
+quote_used_results_js : [A] peg A -> string -> prop.
+quote_used_results_js P DictKeys :-
+  gather_used_results [] P UsedResultsSet,
+  if (eq UsedResultsSet []) then eq DictKeys ""
+  else (
+    set.to_list UsedResultsSet UsedResults,
+    map (pfun x => eq [",", x]) UsedResults UsedResults',
+    concat UsedResults' (_ :: UsedResults''),
+    string.concat UsedResults'' DictKeys
+  ).
+
 (* external parsers are defined using `extern_def` rules.
    the parser should be of the form `(input: string, offset: int) => { result: ?string, newOffset: int }`
 *)
 
 gen_parse_js P Dict Dict' Result
-  when not(builtin P), not(refl.isunif P), external P, tostring P Key :-
-  quote_string_js Key Key_js,
+  when not(builtin P), not(refl.isunif P), external P, key_of P Key :-
+  quote_used_results_js P Args_js,
+  quote_string_js Key Parser_key,
   if (map.find Dict Key _)
   then (eq Dict' Dict)
   else (
   get_external_peg_definition P Code,
   eq Dict' ((Key, Expr) :: Dict),
   expansion.str
-    `(function*() {
+    `(function*(args) {
+      const { ${Args_js} } = args;
+      const memoEntry = \`${Key}\`;
       const historyEntry = \`${Key}:\${offset}\`;
       const keepOffset = offset;
       if (history.includes(historyEntry)) {
         throw new Error(\`left recursion found: adding \${historyEntry} to \${history}\`);
       }
-      if (${Key_js} in memoize && memoize[${Key_js}][keepOffset] !== undefined) {
-        const { result, newOffset } = memoize[${Key_js}][keepOffset];
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
         offset = newOffset;
         return result;
       } else {
@@ -248,8 +278,8 @@ gen_parse_js P Dict Dict' Result
         history.push(historyEntry);
         const data = (function (input, offset) { return (${Code})(input, offset); })(input, offset);
         if (data.result !== null) offset = data.newOffset;
-        if (!(${Key_js} in memoize)) memoize[${Key_js}] = {};
-        memoize[${Key_js}][keepOffset] = {
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = {
           result: data.result,
           newOffset: data.result === null ? keepOffset : data.newOffset
          };
@@ -259,10 +289,8 @@ gen_parse_js P Dict Dict' Result
      })`
      Expr),
   expansion.str
-  `yield ${Key_js}`
+  `yield { parser: ${Parser_key}, args: { ${Args_js} } }`
   Result.
-
-key_of : peg A -> string -> prop.
 
 gen_parse_js P Dict Dict' Result
   when not(builtin P), not(refl.isunif P), inline P, not(external P) :-
@@ -271,8 +299,9 @@ gen_parse_js P Dict Dict' Result
 
 gen_parse_js P Dict DictRes Result
   when not(builtin P), not(refl.isunif P), not(inline P), not(external P) :-
-  if (key_of P Key) then success else tostring P Key,
-  quote_string_js Key Key_js,
+  key_of P Key,
+  quote_used_results_js P Args_js,
+  quote_string_js Key Parser_key,
   if (map.find Dict Key _)
   then (eq DictRes Dict)
   else (
@@ -280,14 +309,16 @@ gen_parse_js P Dict DictRes Result
     eq Dict' ((Key, Expr) :: Dict),
     gen_parse_js P' Dict' DictRes Code,
     expansion.str
-    `(function*() {
+    `(function*(args) {
+      const { ${Args_js} } = args;
+      const memoEntry = \`${Key}\`;
       const historyEntry = \`${Key}:\${offset}\`;
       const keepOffset = offset;
       if (history.includes(historyEntry)) {
         throw new Error(\`left recursion found: adding \${historyEntry} to \${history}\`);
       }
-      if (${Key_js} in memoize && memoize[${Key_js}][keepOffset] !== undefined) {
-        const { result, newOffset } = memoize[${Key_js}][keepOffset];
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
         offset = newOffset;
         return result;
       } else {
@@ -295,8 +326,8 @@ gen_parse_js P Dict DictRes Result
         history.push(historyEntry);
         const result = ${Code};
         if (result === null) offset = keepOffset;
-        if (!(${Key_js} in memoize)) memoize[${Key_js}] = {};
-        memoize[${Key_js}][keepOffset] = { result, newOffset: offset };
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
         history = historyCopy;
         return result;
       }
@@ -304,7 +335,7 @@ gen_parse_js P Dict DictRes Result
      Expr
   ),
   expansion.str
-  `yield ${Key_js}`
+  `yield { parser: ${Parser_key}, args: { ${Args_js} } }`
   Result.
 
 gen_dictionary_js_aux : map string string -> string -> prop.
@@ -375,7 +406,7 @@ gen_toplevel_parser_js P Function_js :-
             recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
           }
         } else {
-          const nextGen = parsers[valTop.value]();
+          const nextGen = parsers[valTop.value.parser](valTop.value.args);
           recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
         }
       }
@@ -456,5 +487,5 @@ gen_parse_js (letrec DefsBody) Dict Dict' Code :-
       (tostring I0 I0S, tostring i IS,
        expansion.str `~rec_${I0S}_${IS}` res)) Defs Keys,
     peg_list.assume_many rule ps Defs (
-      peg_list.assume_many key_of ps Keys (
+      peg_list.assume_many key_of_var ps Keys (
         gen_parse_js Body Dict Dict' Code))).

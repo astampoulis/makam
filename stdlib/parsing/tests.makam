@@ -148,4 +148,9 @@ rule (rec I)
 >> Yes:
 >> X := clam "x" (clam "y" (clam "x" (cvar "x"))).
 
+(* Actual bind, with user-defined PEGs *)
+>> parse (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
+
 %end.
