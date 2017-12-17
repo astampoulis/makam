@@ -17,6 +17,7 @@ val is_empty   : t -> bool ;;
 val gethd      : t -> UChar.t ;;
 
 val contains   : t -> UChar.t -> bool ;;
+val concat     : t list -> t ;;
 val compare    : t -> t -> int ;;
 val iter       : (UChar.t -> unit) -> t -> unit ;;
 val enum       : t -> UChar.t Enum.t ;;
