@@ -11,6 +11,7 @@ gen_parse_js : [A]peg A -> map string string (* input parser dictionary *) ->
                            string (* result expression *) -> prop.
 
 quote_string_js : string -> string -> prop.
+quote_term_js : [A]reified A -> string -> prop.
 
 quote_string_js S Res :- tostring S Res.
 
@@ -30,7 +31,8 @@ gen_parse_js (charclass S) Dict Dict Result :-
   Result.
 
 gen_parse_js (exact S) Dict Dict Result :-
-  quote_string_js S S_js,
+  if (refl.isconst S) then quote_string_js S S_js
+  else (reify S S_R, quote_term_js S_R S_js', expansion.str `JSON.parse(\`${S_js'}\`)` S_js),
   expansion.str
   `(input.startsWith(${S_js}, offset)
     ? (offset += ${S_js}.length, JSON.stringify(${S_js}))
@@ -152,8 +154,6 @@ gen_parse_js (many P) Dict Dict' Result :-
    })())`
   Result.
 
-quote_term_js : [A]reified A -> string -> prop.
-
 quote_terms_js : [A B]reified_args A B -> string -> prop.
 
 quote_terms_js X Result
@@ -239,7 +239,7 @@ gen_parse_js P Dict Dict' Result
       if (history.includes(historyEntry)) {
         throw new Error(\`left recursion found: adding \${historyEntry} to \${history}\`);
       }
-      if (memoize[${Key_js}][keepOffset] !== undefined) {
+      if (${Key_js} in memoize && memoize[${Key_js}][keepOffset] !== undefined) {
         const { result, newOffset } = memoize[${Key_js}][keepOffset];
         offset = newOffset;
         return result;
@@ -248,6 +248,7 @@ gen_parse_js P Dict Dict' Result
         history.push(historyEntry);
         const data = (function (input, offset) { return (${Code})(input, offset); })(input, offset);
         if (data.result !== null) offset = data.newOffset;
+        if (!(${Key_js} in memoize)) memoize[${Key_js}] = {};
         memoize[${Key_js}][keepOffset] = {
           result: data.result,
           newOffset: data.result === null ? keepOffset : data.offset
@@ -285,7 +286,7 @@ gen_parse_js P Dict DictRes Result
       if (history.includes(historyEntry)) {
         throw new Error(\`left recursion found: adding \${historyEntry} to \${history}\`);
       }
-      if (memoize[${Key_js}][keepOffset] !== undefined) {
+      if (${Key_js} in memoize && memoize[${Key_js}][keepOffset] !== undefined) {
         const { result, newOffset } = memoize[${Key_js}][keepOffset];
         offset = newOffset;
         return result;
@@ -294,6 +295,7 @@ gen_parse_js P Dict DictRes Result
         history.push(historyEntry);
         const result = ${Code};
         if (result === null) offset = keepOffset;
+        if (!(${Key_js} in memoize)) memoize[${Key_js}] = {};
         memoize[${Key_js}][keepOffset] = { result, newOffset: offset };
         history = historyCopy;
         return result;
@@ -354,13 +356,11 @@ gen_toplevel_parser_js : [A] peg A -> string -> prop.
 gen_toplevel_parser_js P Function_js :-
   gen_parse_js P [] Dict Code,
   gen_dictionary_js Dict Dict_js,
-  map.mapvalues (pfun _ => eq "{}") Dict MemoizeDict,
-  gen_dictionary_js MemoizeDict MemoizeDict_js,
   expansion.str
   `(function (input, startOffset) {
       let offset = startOffset;
       const parsers = ${Dict_js};
-      const memoize = ${MemoizeDict_js};
+      const memoize = {};
       let history = [];
       const firstGen = (function*() { return ${Code}; })();
       const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];

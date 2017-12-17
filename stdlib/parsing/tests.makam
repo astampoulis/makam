@@ -10,6 +10,11 @@ parsing : testsuite. %testsuite parsing.
 >> Yes:
 >> Res := ("a", "!").
 
+(* Actual bind *)
+>> parse (bind anychar (fun a => exact a)) "aa" Res ?
+>> Yes:
+>> Res := ("a", "").
+
 slow_many : peg A -> peg (list A).
 
 rule (slow_many P) (bind P (fun hd => bind (slow_many P) (fun tl => action (hd :: tl)))).
