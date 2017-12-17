@@ -1,0 +1,26 @@
+(* The core of Makam is not tested at this point.
+   This should eventually be the entrypoint for testing the
+   internals of Makam, as opposed to builtins and the standard library. *)
+
+makam_core : testsuite.
+
+(* For the time being, we are only testing that the free-form quotes with
+   matching enclosing brackets work as expected. These are very lenient
+   for now, but once we find a convention that works well I will make them less so. *)
+
+testcase makam_core :- eq { hello } " hello ".
+testcase makam_core :- eq {hello} "hello".
+testcase makam_core :- eq {{ hello }} " hello ".
+testcase makam_core :- eq {{hello}} "hello".
+testcase makam_core :- eq {(<[ hello ]>)} " hello ".
+testcase makam_core :- eq {(<[hello]>)} "hello".
+testcase makam_core :- eq 〚 hello 〛 " hello ".
+testcase makam_core :- eq 〚hello〛 "hello".
+testcase makam_core :- eq {js| hello |} " hello ".
+testcase makam_core :- eq {js|hello|} "hello".
+testcase makam_core :- eq <js|return 5;|> "return 5;".
+testcase makam_core :- eq { test other markers > } " test other markers > ".
+testcase makam_core :- eq { test other markers { } " test other markers { ".
+testcase makam_core :- eq {{ test other markers } }} " test other markers } ".
+
+
