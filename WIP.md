@@ -1,2 +1,4 @@
-- [ ] add offset tracking state
+- [ ] fix parametric parsers in js gen + other js gen fixes
+- [ ] add layout peg combinators
+- [ ] make result return a JSON.parsed thing
 - [ ] Haskell-like example
