@@ -1,0 +1,163 @@
+%extend peg.
+
+layout_grammar : testsuite. %testsuite layout_grammar.
+
+%extend layout.
+
+available : prop.
+
+enter : peg A -> peg A.
+
+current_line_offset : peg int.
+current_layout_offset : peg int.
+
+whitespace : peg unit.
+begin : peg int.
+next : int -> peg unit.
+end : int -> peg unit.
+
+%end.
+
+external (layout.enter P).
+extern_def (layout.enter P) Code :-
+  (layout.available -> trace layout.available (gen_toplevel_parser_js P InnerCode)),
+  expansion.str
+  `function (input, startOffset) {
+     const layoutOffsets = [ { stringOffset: 0, layoutOffset: 0 } ];
+     const previousLayoutOffset = (offset) => {
+       const previous = layoutOffsets.reverse().find(({stringOffset}) => stringOffset <= offset);
+       return JSON.stringify(previous.layoutOffset);
+     };
+     const addLayoutOffset = (stringOffset, layoutOffset) => {
+       if (layoutOffsets.find(x => x.stringOffset === stringOffset)) return;
+       layoutOffsets.push({stringOffset, layoutOffset: layoutOffset});
+       layoutOffsets.sort((a, b) => a.stringOffset - b.stringOffset);
+     };
+     return ${InnerCode}(input, startOffset);
+  }`
+  Code.
+
+external (layout.current_line_offset).
+extern_def (layout.current_line_offset) Code :-
+  expansion.str
+  `function (input, startOffset) {
+     const lastNewlineOffset = input.lastIndexOf("\\n", startOffset);
+     const lastCarret = input.lastIndexOf("\\r", startOffset);
+     const lastLineOffset = Math.max(lastNewlineOffset, lastCarret);
+     if (lastLineOffset == -1) return { result: null };
+     else return { result: JSON.stringify(startOffset - lastLineOffset - 1), newOffset: startOffset };
+  }`
+  Code.
+
+external (layout.current_layout_offset).
+extern_def P Code when eq P layout.current_layout_offset :-
+  unless layout.available
+         (log_error P `layout not available in context, enclose top-level peg expression with \`layout.enter\``),
+  expansion.str
+  `function (input, startOffset) {
+     const result = previousLayoutOffset(startOffset);
+     return { result, newOffset: startOffset };
+  }`
+  Code.
+
+rule P P' when eq P layout.begin :-
+  unless layout.available
+         (log_error P `layout not available in context, enclose top-level peg expression with \`layout.enter\``),
+  eq P'
+  (bind layout.current_layout_offset (fun current_layout_offset =>
+  (seq ws (bind layout.current_line_offset (fun new_layout_offset =>
+    eval `
+      if (JSON.parse(${result new_layout_offset}) > JSON.parse(${result current_layout_offset})) {
+        addLayoutOffset(offset, JSON.parse(${result new_layout_offset}));
+        return ${result new_layout_offset};
+      } else return null;
+    `))))).
+
+rule P P' when eq P (layout.next I) :-
+  unless layout.available
+         (log_error P `layout not available in context, enclose top-level peg expression with \`layout.enter\``),
+  eq P'
+  (bind (action I) (fun current_layout_offset =>
+  (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
+    eval `
+      if (JSON.parse(${result current_layout_offset}) == JSON.parse(${result current_line_offset})) {
+        addLayoutOffset(offset, JSON.parse(${result current_layout_offset}));
+        return "unit";
+      } else {
+        return null;
+      }
+    `))))).
+
+rule P P' when eq P (layout.end I) :-
+  unless layout.available
+         (log_error P `layout not available in context, enclose top-level peg expression with \`layout.enter\``),
+  eq P'
+  (bind (action I) (fun current_layout_offset =>
+  (seq ws_opt (bind layout.current_line_offset (fun new_layout_offset =>
+    eval `
+      if (JSON.parse(${result new_layout_offset}) < JSON.parse(${result current_layout_offset})) {
+        addLayoutOffset(offset, JSON.parse(${result new_layout_offset}));
+        return "unit";
+      } else {
+        return null;
+      }
+    `))))).
+
+rule P P' when eq P layout.whitespace :-
+  unless layout.available
+         (log_error P `layout not available in context, enclose top-level peg expression with \`layout.enter\``),
+  eq P'
+  (ignore (bind layout.current_layout_offset (fun current_layout_offset =>
+    once_or_many (choices [
+      (* whitespace without line breaks *)
+      ignore (once_or_many (charclass " \t")),
+      (* consume whitespace lines *)
+      seq (once_or_many (charclass "\r\n")) (seq (many (charclass " \t")) (lookahead (once_or_many (charclass "\r\n")))),
+      (* line break followed by the same or more whitespace than current layout offset *)
+      seq (once_or_many (charclass "\r\n")) (seq (many (charclass " \t"))
+        (bind layout.current_line_offset (fun current_line_offset =>
+        (eval `return JSON.parse(${result current_line_offset}) >= JSON.parse(${result current_layout_offset}) ? "unit" : null;`))))
+    ])))).
+
+>> parse_opt (seq ws layout.current_line_offset) "\n  hello" (X, _) ?
+>> Yes:
+>> X := 2.
+
+>> parse_opt (seq (seq ws (seq (exact "hello") ws)) layout.current_line_offset) "\n  hello\r   tata" (X, _) ?
+>> Yes:
+>> X := 3.
+
+parse_opt (layout.enter (seq ws_opt (seq (exact "do") (seq layout.begin (seq (once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")) (seq ws layout.current_layout_offset)))))) {
+     do foo
+        bar
+   } (X, _) ?
+>> Yes:
+>> X := 8.
+
+rosetree : type.
+rosetree : string -> list rosetree -> rosetree.
+
+rosetree_grammar : peg rosetree.
+label : peg string.
+
+rule label (syntax (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyz"))).
+
+rule rosetree_grammar (
+  apply rosetree [
+    captured (seq (ignore (option layout.whitespace)) label),
+    captured (choices [
+      (bind layout.begin (fun i =>
+      (bind (many (seq (layout.next i) rosetree_grammar)) (fun res =>
+      (seq (layout.end i) (action res))))))
+    , seq empty (action []) ])
+  ]
+).
+
+parse_opt (layout.enter rosetree_grammar) {
+tree foofoo
+     barbar lelele
+            kukuvaua
+     lepante
+} X ?
+
+%end.
