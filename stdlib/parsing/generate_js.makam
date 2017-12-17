@@ -251,7 +251,7 @@ gen_parse_js P Dict Dict' Result
         if (!(${Key_js} in memoize)) memoize[${Key_js}] = {};
         memoize[${Key_js}][keepOffset] = {
           result: data.result,
-          newOffset: data.result === null ? keepOffset : data.offset
+          newOffset: data.result === null ? keepOffset : data.newOffset
          };
         history = historyCopy;
         return data.result;
