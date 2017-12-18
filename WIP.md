@@ -1,1 +1,2 @@
-- [ ] Haskell-like example
+- [ ] add pretty and syntax
+

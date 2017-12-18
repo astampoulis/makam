@@ -29,6 +29,7 @@ empty : syntax unit.
 void : syntax A.
 many : syntax A -> syntax (list A).
 choices : list (syntax A) -> syntax A.
+iso : peg.peg A -> pretty.pretty A -> syntax A.
 
 (* The syntax descriptions have semantic actions that are defined in
    applicative style. They need to be isomorphisms so that they
@@ -58,18 +59,12 @@ cons : syntax_captured A -> syntax_args B C -> syntax_args (A -> B) C.
 
 apply : A -> syntax_args A B -> syntax B.
 
-(* There's three kind of syntax combinators:
+(* There are two kinds of syntax combinators:
 
    - builtin ones, defined here
    - `rule` ones, where we define one syntax combinator in terms of others
-   - `rule_iso` ones, where we define how a syntax combinator corresponds
-     to parsing and pretty printing combinators.
    - `inline` controls whether definitions are inlined or not; useful
      for non-recursive user-defined combinators that get used a lot.
-
-   Each user-defined combinator should be either completely defined by
-   `rule`-type definitions, or by `rule_iso` definitions; the two can't
-   be mixed for the same combinator.
 
    Since deterministic choice is used, the ordering of the rules is
    important. The rules are tried in the order that they are defined,
@@ -78,7 +73,6 @@ apply : A -> syntax_args A B -> syntax B.
 builtin : [A] syntax A -> prop.
 inline : [A] syntax A -> prop.
 rule : [A] syntax A -> syntax A -> prop.
-rule_iso : [A] syntax A -> peg.peg A -> pretty.pretty A -> prop.
 
 to_peg : [A] syntax A -> peg.peg A -> prop.
 to_pretty : [A] syntax A -> pretty.pretty A -> prop.
@@ -90,6 +84,7 @@ builtin empty.
 builtin void.
 builtin (many _).
 builtin (choices _).
+builtin (iso _ _).
 builtin (apply _ _).
 
 to_peg_args : [A B] syntax_args A B -> peg.peg_args A B -> prop.
@@ -115,6 +110,9 @@ to_pretty (many P) (pretty.many P') :- to_pretty P P'.
 
 to_peg (choices PS) (peg.choices PS') :- map to_peg PS PS'.
 to_pretty (choices PS) (pretty.choices PS') :- map to_pretty PS PS'.
+
+to_peg (iso Peg Pretty) Peg.
+to_pretty (iso Peg Pretty) Pretty.
 
 to_peg_args [] peg.nil.
 to_pretty_args [] pretty.nil.
@@ -173,29 +171,6 @@ to_pretty S P when not(builtin S), rule S _ :-
   ) Rules Defs,
   if (inline S) then (to_pretty (choices Defs) P)
   else (eq P (pretty.syntax (choices Defs))).
-
-to_peg S P when not(builtin S), rule_iso S _ _ :-
-  refl.assume_get_applicable (rule_iso S _ _) Rules0,
-  refl.rules_get_applicable (rule_iso S _ _) Rules1,
-  append Rules0 Rules1 Rules,
-  map (pfun rul def => [Def Unused Guard]
-    (clause.get_goal rul (rule_iso S Def Unused),
-    clause.get_guard rul Guard,
-    once(Guard), once(clause.premise rul),
-    eq def Def)
-  ) Rules Defs,
-  eq P (peg.choices Defs).
-to_pretty S P when not(builtin S), rule_iso S _ _ :-
-  refl.assume_get_applicable (rule_iso S _ _) Rules0,
-  refl.rules_get_applicable (rule_iso S _ _) Rules1,
-  append Rules0 Rules1 Rules,
-  map (pfun rul def => [Def Unused Guard]
-    (clause.get_goal rul (rule_iso S Unused Def),
-     clause.get_guard rul Guard,
-     once(Guard), once(clause.premise rul),
-     eq def Def)
-  ) Rules Defs,
-  eq P (pretty.choices Defs).
 
 peg.rule (peg.syntax Syn) Peg :- to_peg Syn Peg.
 pretty.rule (pretty.syntax Syn) Pretty :- to_pretty Syn Pretty.

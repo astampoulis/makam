@@ -7,7 +7,7 @@
    into a string representing a makam term; when this
    string is parsed with `refl.fromstring` we'll get something
    of `syntax A` type. The pretty-printer does work normally,
-   so the syntax of syntax is defined through `rule_iso`,
+   so the syntax of syntax is defined through `iso`,
    handling parsing and pretty-printing differently.
 *)
 
@@ -62,8 +62,8 @@ token_id : string -> syntax unit.
 token_id, token_id_cached : string -> peg string.
 syntax.inline (token _).
 
-syntax.rule_iso (token_id S) (bind (token_id S) (fun _ => action unit))
-                             (unapply unit [ syntax (optunit ws_empty), const S, syntax (optunit ws_space) ]).
+syntax.rule (token_id S) (iso (bind (token_id S) (fun _ => action unit))
+                              (unapply unit [ syntax (optunit ws_empty), const S, syntax (optunit ws_space) ])).
 
 peg.rule (token_id S) (transform (pfun ident res => eq ident S, eq res ident)
                               JS_Code
@@ -157,13 +157,13 @@ pretty.rule top
      (unapply syntax.apply
       [ pretty.captured (makam_term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
-syntax.rule_iso top
-         (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
-         (top).
+syntax.rule top
+         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
+              (top)).
 
-syntax.rule_iso args
-         (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str_cached ])
-         (args).
+syntax.rule args
+         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str_cached ])
+              (args)).
 
 new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
 new_rule Syntax Constructor Args_S
