@@ -50,7 +50,7 @@ ws_empty : syntax unit. inline (ws_empty).
 ws_space : syntax unit. inline (ws_space).
 ws_newline : syntax unit. inline (ws_newline).
 
-rule_iso ws_empty peg.ws pretty.empty.
-rule_iso ws_space peg.ws (pretty.const " ").
-rule_iso ws_newline peg.ws (pretty.const "\n").
+rule ws_empty (iso peg.ws pretty.empty).
+rule ws_space (iso peg.ws (pretty.const " ")).
+rule ws_newline (iso peg.ws (pretty.const "\n")).
 %end.

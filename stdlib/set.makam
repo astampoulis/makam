@@ -33,8 +33,14 @@ merge S (cons A S') Result :- merge S S' S'', ccons A S'' Result.
 diff : set A -> set A -> set A -> prop.
 diff S nil S.
 diff S (cons A S') Result :- remove_if_member S A S'', diff S'' S' Result.
+
+to_list : set A -> list A -> prop.
+to_list nil nil.
+to_list (cons HD SetTL) (cons HD ListTL) :-
+  remove_if_member SetTL HD SetTL',
+  to_list SetTL' ListTL.
   
 %end.
 
 eqv (nil : set A) nil.
-eqv (cons A B) C :- set.member C A B', eqv B' B''.
+eqv (cons A B) C :- set.member C A B', set.remove_if_member B A B'', eqv B' B''.

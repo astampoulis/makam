@@ -10,6 +10,11 @@ parsing_opt : testsuite. %testsuite parsing_opt.
 >> Yes:
 >> Res := ("a", "!").
 
+(* Actual bind *)
+>> parse_opt (bind anychar (fun a => exact a)) "aa" Res ?
+>> Yes:
+>> Res := ("a", "").
+
 slow_many : peg A -> peg (list A).
 
 rule (slow_many P) (bind P (fun hd => bind (slow_many P) (fun tl => action (hd :: tl)))).
@@ -19,23 +24,19 @@ rule (slow_many P) (action []).
 >> Yes:
 >> Res := ([ "hi", "hi" ], "").
 
-once_or_many : peg A -> peg (list A).
-
-rule (once_or_many P) (bind P (fun hd => bind (many P) (fun tl => action (hd :: tl)))).
-
-whitespace : peg unit.
-rule whitespace (seq (once_or_many (charclass " \n\t")) (action unit)).
-
->> parse_opt (seq whitespace (action unit)) "   return " Res ?
+>> parse_opt (seq ws (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
 
-option : peg A -> peg (option A).
-rule (option P) (bind P (fun res => action (some res))).
-rule (option P) (action none).
+>> parse_opt eof "" Res ?
+>> Yes:
+>> Res := (unit, "").
+
+>> parse_opt eof "a" Res ?
+>> Impossible.
 
 token : peg A -> peg A.
-rule (token P) (seq (option whitespace) P).
+rule (token P) (seq (option ws) P).
 
 >> parse_opt (seq (token (exact "return")) (token (exact "true"))) " return true " Res ?
 >> Yes:
@@ -64,7 +65,7 @@ rule cterm0 (seq (token (exact "λ")) (bind (token ident) (fun var => seq (token
 
 rule cterm0 cterm1.
 
-rule cterm1 (bind cterm2 (fun hd => bind (once_or_many (seq whitespace cterm2)) (fun tl => action (capp hd tl)))).
+rule cterm1 (bind cterm2 (fun hd => bind (once_or_many (seq ws cterm2)) (fun tl => action (capp hd tl)))).
 
 rule cterm1 cterm2.
 
@@ -156,15 +157,21 @@ rule (rec I)
 >> Yes:
 >> X := clam "x" (clam "y" (clam "x" (cvar "x"))).
 
+(* Actual bind, with user-defined PEGs *)
+>> parse_opt (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
+
 (* tests specific for parse_opt *)
 
 >> parse_opt (many (bind anychar (fun a => eval `return ${a} == '"a"' ? null : ${a};`))) "tralalala" X ?
 >> Yes:
 >> X := (["t", "r"], "alalala").
 
-external : peg cterm.
+ext_peg : peg cterm.
 
-extern_def external Code
+external ext_peg.
+extern_def ext_peg Code
   when expansion.str
   `
   function (input, offset) {
@@ -177,7 +184,7 @@ extern_def external Code
   }
   ` Code.
 
->> parse_opt (many (choices [ external, cterm ] )) "identity λx.x" (X, _) ?
+>> parse_opt (many (choices [ ext_peg, cterm ] )) "identity λx.x" (X, _) ?
 >> Yes:
 >> X := [ clam "x" (cvar "x"), clam "x" (cvar "x") ].
 
@@ -185,5 +192,9 @@ extern_def external Code
 >> Yes:
 >> X := "F",
 >> Rest := "oo".
+
+>> parse_opt (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
 
 %end.

@@ -10,6 +10,11 @@ parsing : testsuite. %testsuite parsing.
 >> Yes:
 >> Res := ("a", "!").
 
+(* Actual bind *)
+>> parse (bind anychar (fun a => exact a)) "aa" Res ?
+>> Yes:
+>> Res := ("a", "").
+
 slow_many : peg A -> peg (list A).
 
 rule (slow_many P) (bind P (fun hd => bind (slow_many P) (fun tl => action (hd :: tl)))).
@@ -22,6 +27,13 @@ rule (slow_many P) (action []).
 >> parse (seq ws (action unit)) "   return " Res ?
 >> Yes:
 >> Res := (unit, "return ").
+
+>> parse eof "" Res ?
+>> Yes:
+>> Res := (unit, "").
+
+>> parse eof "a" Res ?
+>> Impossible.
 
 token : peg A -> peg A.
 rule (token P) (seq (option ws) P).
@@ -142,5 +154,10 @@ rule (rec I)
 >> parse (choices [ seq (neg (rec 0)) (action (cvar "nope")), rec 1 ]) " λ x . λ y . (λx. x)" (X, _) ?
 >> Yes:
 >> X := clam "x" (clam "y" (clam "x" (cvar "x"))).
+
+(* Actual bind, with user-defined PEGs *)
+>> parse (bind ident (fun id => token (exact id))) "lala lala" X ?
+>> Yes:
+>> X := ("lala", "").
 
 %end.

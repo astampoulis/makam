@@ -52,6 +52,7 @@ testcase set :- (set.ccons 1 [2,3,4,2] X, eq X [1,2,3,4,2]).
 testcase set :- (eqv 1 1).
 testcase set :- (eqv A A).
 testcase set :- (eqv ([1,2,3,4,1]: set A) [4,3,1,2]).
+testcase set :- not(eqv ([1,2,3,4,1]: set A) [1]).
 testcase set :- (eqv ([1,1]: set A) [1,1,1,1,1,1,1,1]).
 testcase set :- (not(eqv ([1,1]: set A) [2,3,4])).
 testcase set :- (eqv ([[1,1], [1,2,3], [3,2,1]]: set (set A)) [[1],[1,2,3]]).
@@ -67,7 +68,8 @@ testcase set :- (set.diff [1,1] [1] X, eqv X []).
 testcase set :- (set.diff [2,1] [1] X, eqv X [2]).
 testcase set :- (set.diff [1,2,3,4,2,3,4] [2,3] X, eqv X [1,4]).
 
-
+testcase set :- (set.to_list [1,2,3,4,1] X, eq X [1,2,3,4]).
+testcase set :- (set.to_list [1,1,1,1,1] X, eq X [1]).
 
 (* ------------------- map *)
 
