@@ -79,16 +79,23 @@ abort : pretty A.
 peg.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
 pretty.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
 
+syntax.inline (layout_to_bracket.enter _ _).
 syntax.rule (layout_to_bracket.enter I S) (iso
   (layout.enter (peg.syntax S))
   (bracket_layout.enter I (pretty.syntax S))).
 
+syntax.inline (layout_to_bracket.block _).
 syntax.rule (layout_to_bracket.block F) (iso
   (layout.block (fun sep => peg.syntax (F (iso sep abort))))
   (bracket_layout.block (fun sep => pretty.syntax (F (iso abort sep))))).
 
+syntax.inline (layout_to_bracket.ws_empty).
 syntax.rule (layout_to_bracket.ws_empty) (iso layout.ws (const "")).
+
+syntax.inline (layout_to_bracket.ws_space).
 syntax.rule (layout_to_bracket.ws_space) (iso layout.ws (const " ")).
+
+syntax.inline (layout_to_bracket.ws_newline).
 syntax.rule (layout_to_bracket.ws_newline) (iso layout.ws bracket_layout.ws_newline).
 
 (* iso syntax layout parses whitespace layout and pretty prints as whitespace layout *)
@@ -107,14 +114,21 @@ abort : pretty A.
 peg.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
 pretty.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
 
+syntax.inline (layout.enter _ _).
 syntax.rule (layout.enter I S) (iso
   (layout.enter (peg.syntax S))
   (layout.enter I (pretty.syntax S))).
 
+syntax.inline (layout.block _).
 syntax.rule (layout.block F) (iso
   (layout.block (fun sep => peg.syntax (F (iso sep abort))))
   (layout.block (fun sep => pretty.syntax (F (iso abort sep))))).
 
+syntax.inline (layout.ws_empty).
 syntax.rule (layout.ws_empty) (iso layout.ws (const "")).
+
+syntax.inline (layout.ws_space).
 syntax.rule (layout.ws_space) (iso layout.ws (const " ")).
+
+syntax.inline (layout.ws_newline).
 syntax.rule (layout.ws_newline) (iso layout.ws layout.ws_newline).

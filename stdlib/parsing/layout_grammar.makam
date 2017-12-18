@@ -61,12 +61,15 @@ extern_def (layout.enter P) Code :-
   }`
   Code.
 
+inline (layout.current_line_offset).
 rule layout.current_line_offset P' when layout.available P' :-
   eq P' (eval `return currentLineOffset(offset);`).
 
+inline (layout.current_layout_offset).
 rule layout.current_layout_offset P' when layout.available P' :-
   eq P' (eval `return previousLayoutOffset(offset);`).
 
+inline (layout.begin).
 rule layout.begin P' when layout.available P' :-
   eq P'
   (bind layout.current_layout_offset (fun current_layout_offset =>
@@ -78,6 +81,7 @@ rule layout.begin P' when layout.available P' :-
       } else return null;
     `))))).
 
+inline (layout.next _).
 rule (layout.next I) P' when layout.available P' :-
   eq P'
   (bind (action I) (fun current_layout_offset =>
@@ -91,6 +95,7 @@ rule (layout.next I) P' when layout.available P' :-
       }
     `))))).
 
+inline (layout.end _).
 rule (layout.end I) P' when layout.available P' :-
   eq P'
   (bind (action I) (fun current_layout_offset =>
@@ -107,8 +112,10 @@ rule (layout.end I) P' when layout.available P' :-
       `
     ]))))).
 
+inline (layout.ws_opt).
 rule (layout.ws_opt) (ignore (option layout.ws)).
 
+inline (layout.ws).
 rule layout.ws
   (ignore (bind layout.current_layout_offset (fun current_layout_offset =>
     once_or_many (choices [

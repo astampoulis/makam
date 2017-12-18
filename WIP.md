@@ -1,1 +1,1 @@
-- [ ] see if we can optimize stuff
+- [ ] have both bracket and layout syntaxes, use iso for convs
