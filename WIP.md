@@ -1,2 +1,1 @@
-- [ ] add tests to all_tests
 - [ ] Haskell-like example
