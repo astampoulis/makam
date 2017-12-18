@@ -1,0 +1,120 @@
+%use "../parsing/layout_grammar".
+
+%open syntax.
+%open peg.
+%open pretty.
+
+(* printing layout as brackets *)
+
+%extend pretty. %extend bracket_layout.
+
+enter : int -> pretty A -> pretty A.
+block : (pretty unit -> pretty A) -> pretty A.
+ws_newline : pretty unit.
+
+%end. %end.
+
+pretty.rule (bracket_layout.enter I P) P.
+pretty.rule (bracket_layout.block F)
+  (pretty.unapply (fun x => x) [
+    const " { ",
+    pretty.captured (F (const " ; ")),
+    const "}"
+  ]).
+pretty.rule (bracket_layout.ws_newline) (const "\n").
+
+(* printing layout as (whitespace-sensitive) layout *)
+
+%extend pretty. %extend layout.
+
+enter : int -> pretty A -> pretty A.
+block : (pretty unit -> pretty A) -> pretty A.
+ws_newline : pretty unit.
+
+indentation_spaces : int -> prop.
+indentation_level : int -> prop.
+
+pretty.builtin (layout.enter _ _).
+pretty.pretty (layout.enter I P) X S :-
+  (indentation_spaces I -> indentation_level 0 ->
+  (pretty.pretty (unapply (fun x => x) [ const "\n", pretty.captured P ]) X S)).
+
+pretty.builtin (layout.block _).
+pretty.pretty (layout.block F) X MaybeS :-
+  once(indentation_level CurLevel), indentation_spaces Indent,
+  plus CurLevel Indent NextLevel,
+  (indentation_level NextLevel ->
+  (pretty.pretty
+    (unapply (fun x => x) [
+      layout.ws_newline,
+      pretty.captured (F layout.ws_newline)
+    ])
+    X MaybeS')),
+  if (eq MaybeS' (some S')) then (
+    (* try to get rid of the last ws_newline, if it's the last thing we printed. *)
+    string.repeat NextLevel " " Spaces, expansion.str `\n${Spaces}` Spaces',
+    if (string.append S Spaces' S') then eq MaybeS (some S) else eq MaybeS MaybeS'
+  ) else eq MaybeS none.
+
+pretty.builtin (layout.ws_newline).
+pretty.pretty (layout.ws_newline) X S :-
+  once(indentation_level CurLevel), string.repeat CurLevel " " Spaces,
+  (pretty.pretty (unapply (fun x => x) [ const "\n", pretty.captured (const Spaces) ]) X S).
+
+%end. %end.
+
+(* iso syntax layout_to_bracket parses whitespace layout and pretty prints as brackets *)
+
+%extend syntax. %extend layout_to_bracket.
+
+enter : int -> syntax A -> syntax A.
+block : (syntax unit -> syntax A) -> syntax A.
+
+ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
+
+%end. %end.
+
+abort : peg A.
+abort : pretty A.
+peg.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
+pretty.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
+
+syntax.rule (layout_to_bracket.enter I S) (iso
+  (layout.enter (peg.syntax S))
+  (bracket_layout.enter I (pretty.syntax S))).
+
+syntax.rule (layout_to_bracket.block F) (iso
+  (layout.block (fun sep => peg.syntax (F (iso sep abort))))
+  (bracket_layout.block (fun sep => pretty.syntax (F (iso abort sep))))).
+
+syntax.rule (layout_to_bracket.ws_empty) (iso layout.ws (const "")).
+syntax.rule (layout_to_bracket.ws_space) (iso layout.ws (const " ")).
+syntax.rule (layout_to_bracket.ws_newline) (iso layout.ws bracket_layout.ws_newline).
+
+(* iso syntax layout parses whitespace layout and pretty prints as whitespace layout *)
+
+%extend syntax. %extend layout.
+
+enter : int -> syntax A -> syntax A.
+block : (syntax unit -> syntax A) -> syntax A.
+
+ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
+
+%end. %end.
+
+abort : peg A.
+abort : pretty A.
+peg.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
+pretty.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
+
+syntax.rule (layout.enter I S) (iso
+  (layout.enter (peg.syntax S))
+  (layout.enter I (pretty.syntax S))).
+
+syntax.rule (layout.block F) (iso
+  (layout.block (fun sep => peg.syntax (F (iso sep abort))))
+  (layout.block (fun sep => pretty.syntax (F (iso abort sep))))).
+
+syntax.rule (layout.ws_empty) (iso layout.ws (const "")).
+syntax.rule (layout.ws_space) (iso layout.ws (const " ")).
+syntax.rule (layout.ws_newline) (iso layout.ws layout.ws_newline).

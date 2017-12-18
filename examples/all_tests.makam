@@ -12,6 +12,7 @@ all_tests : testsuite.
 %use "stdlib/pretty/tests".
 %use "stdlib/syntax/tests".
 %use "stdlib/syntax/syntax_syntax_tests".
+%use "stdlib/syntax/layout_syntax_tests".
 
 %extend dyn_expansion.
 %use "stdlib/dyn_expansion".

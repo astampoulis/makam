@@ -1,0 +1,65 @@
+%use "layout_syntax".
+
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend layout_syntax_tests.
+all : testsuite. %testsuite all.
+
+rosetree : type.
+rosetree : string -> list rosetree -> rosetree.
+
+label : syntax string.
+syntax.rule label (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")).
+
+(* Tests for layout to bracket *)
+
+l2b_rosetree_aux, l2b_rosetree : syntax rosetree.
+
+syntax.rule l2b_rosetree_aux (
+  apply rosetree [
+    syntax.captured label,
+    syntax.captured (choices [
+      layout_to_bracket.block (fun sep => many (group [syntax.captured l2b_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js l2b_rosetree (group [optunit ws_empty, syntax.captured (layout_to_bracket.enter 2 l2b_rosetree_aux)])).
+
+>> (syntax.parse_opt l2b_rosetree {
+ foo bar
+     baz
+ } X, syntax.pretty l2b_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := "foo { bar { } ; baz { } ; }".
+
+(* Tests layout to layout *)
+
+l2l_rosetree_aux, l2l_rosetree : syntax rosetree.
+
+syntax.rule l2l_rosetree_aux (
+  apply rosetree [
+    syntax.captured label,
+    syntax.captured (choices [
+      layout.block (fun sep => many (group [syntax.captured l2l_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js l2l_rosetree (group [optunit ws_empty, syntax.captured (layout.enter 2 l2l_rosetree_aux)])).
+
+>> (syntax.parse_opt l2l_rosetree {
+ foo bar
+     baz
+ } X, syntax.pretty l2l_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := {
+foo
+  bar
+  baz}.
+
+%end.

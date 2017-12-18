@@ -28,6 +28,10 @@ starts_with : string -> string -> string -> prop.
 starts_with Input What Rest :-
   string.append What Rest Input.
 
+repeat : int -> string -> string -> prop.
+repeat 0 _ "".
+repeat N X XS :- plus N' 1 N, repeat N' X XS', string.append X XS' XS.
+
 %end.
 
 %extend builtin.

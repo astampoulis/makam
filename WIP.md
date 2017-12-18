@@ -1,2 +1,1 @@
-- [ ] add layout-to-bracket syntax
-- [ ] add layout-to-layout syntax
+- [ ] see if we can optimize stuff
