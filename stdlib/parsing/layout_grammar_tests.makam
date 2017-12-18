@@ -25,12 +25,15 @@ rosetree_aux, rosetree : peg rosetree.
 rosetree : string -> list rosetree -> rosetree.
 
 label : peg string.
-
 rule label (syntax (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyz"))).
+
+token : peg A -> peg A.
+rule (token S) (seq (option layout.ws) (bind S (fun res => seq (option layout.ws) (action res)))).
+inline (token S).
 
 rule rosetree_aux (
   apply rosetree [
-    captured label,
+    captured (token label),
     captured (choices [layout.block (fun sep => many (seq sep rosetree_aux)), action []])
   ]).
 rule rosetree (seq ws_opt (layout.enter rosetree_aux)).
