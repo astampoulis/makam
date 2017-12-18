@@ -46,7 +46,7 @@ syntax.rule b2b_rosetree_aux (
 
 `( def_js b2b_rosetree (group [optunit ws_empty, syntax.captured (bracket.enter (b2b_token "{") (b2b_token ";") (b2b_token "}") b2b_rosetree_aux)])).
 
-(syntax.parse_opt b2b_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2b_rosetree X Y) ?
+>> (syntax.parse_opt b2b_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2b_rosetree X Y) ?
 >> Yes:
 >> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
 >> Y := "foo{ bar{ } ; baz{ } ; } ".
@@ -54,6 +54,10 @@ syntax.rule b2b_rosetree_aux (
 (* Tests layout to layout *)
 
 l2l_rosetree_aux, l2l_rosetree : syntax rosetree.
+
+l2l_token : syntax A -> syntax A.
+syntax.rule (l2l_token S) (group [ optunit layout.ws_empty, syntax.captured S, optunit layout.ws_space ]).
+syntax.inline (l2l_token S).
 
 syntax.rule l2l_rosetree_aux (
   apply rosetree [
@@ -66,7 +70,7 @@ syntax.rule l2l_rosetree_aux (
 
 `( def_js l2l_rosetree (group [optunit ws_empty, syntax.captured (layout.enter 2 l2l_rosetree_aux)])).
 
-(syntax.parse_opt l2l_rosetree {
+>> (syntax.parse_opt l2l_rosetree {
  foo bar
      baz
  } X, syntax.pretty l2l_rosetree X Y) ?
@@ -96,7 +100,7 @@ syntax.rule l2b_rosetree_aux (
 
 `( def_js l2b_rosetree (group [optunit ws_empty, syntax.captured (layout_to_bracket.enter 2 (l2b_token "{") (l2b_token ";") (l2b_token "}") l2b_rosetree_aux)])).
 
-(syntax.parse_opt l2b_rosetree {
+>> (syntax.parse_opt l2b_rosetree {
  foo bar
      baz
  } X, syntax.pretty l2b_rosetree X Y) ?
@@ -123,9 +127,12 @@ syntax.rule b2l_rosetree_aux (
 
 `( def_js b2l_rosetree (group [optunit ws_empty, syntax.captured (bracket_to_layout.enter 2 (b2l_token "{") (b2l_token ";") (b2l_token "}") b2l_rosetree_aux)])).
 
-(syntax.parse_opt b2l_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2l_rosetree X Y) ?
+>> (syntax.parse_opt b2l_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2l_rosetree X Y) ?
 >> Yes:
 >> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
->> Y := "foo{ bar{ } ; baz{ } ; } ".
+>> Y := {{
+foo
+  bar
+  baz}}.
 
 %end.
