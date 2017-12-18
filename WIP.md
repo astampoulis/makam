@@ -1,3 +1,7 @@
 - [x] fix end delimiter for free-form quotes
-- [ ] add block_layout
+- [x] fixes for layout_grammar and debugging
+- [ ] subtask: fix token : string -> peg string
+- [ ] subtask: maybe switch to haskell syntax
 - [ ] change layout.end to handle same-line block end
+- [ ] add block_layout, make sure it's called bracket-layout
+- [ ] test mix of layout and bracket rosetrees

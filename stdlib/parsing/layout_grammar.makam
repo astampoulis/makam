@@ -46,7 +46,7 @@ extern_def (layout.enter P) Code :-
        return JSON.stringify(lastLineOffset == -1 ? offset : offset - lastLineOffset - 1);
      };
 
-     const layoutOffsets = [ { stringOffset: startOffset, layoutOffset: currentLineOffset(startOffset) } ];
+     const layoutOffsets = [ { stringOffset: startOffset, layoutOffset: -1 } ];
 
      const previousLayoutOffset = (offset) => {
        const previous = layoutOffsets.slice().reverse().find(({stringOffset}) => stringOffset <= offset);
@@ -56,6 +56,10 @@ extern_def (layout.enter P) Code :-
        if (layoutOffsets.find(x => x.stringOffset === stringOffset)) return;
        layoutOffsets.push({stringOffset, layoutOffset});
        layoutOffsets.sort((a, b) => a.stringOffset - b.stringOffset);
+     };
+     const popLayoutOffset = (offset, curLayoutOffset) => {
+       const previous = layoutOffsets.slice().reverse().find(({stringOffset, layoutOffset}) => stringOffset <= offset && layoutOffset < curLayoutOffset);
+       addLayoutOffset(offset, previous.layoutOffset);
      };
      return ${InnerCode}(input, startOffset);
   }`
@@ -75,7 +79,9 @@ rule layout.begin P' when layout.available P' :-
   (bind layout.current_layout_offset (fun current_layout_offset =>
   (seq ws_opt (bind layout.current_line_offset (fun new_layout_offset =>
     eval `
+      // console.error("layout.begin", "current", ${jsresult current_layout_offset}, "new", ${jsresult new_layout_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
       if (${jsresult new_layout_offset} > ${jsresult current_layout_offset}) {
+        // console.error(\`layout.begin successful for layout offset \${${jsresult new_layout_offset}}\`);
         addLayoutOffset(offset, ${jsresult new_layout_offset});
         return ${result new_layout_offset};
       } else return null;
@@ -87,7 +93,9 @@ rule (layout.next I) P' when layout.available P' :-
   (bind (action I) (fun current_layout_offset =>
   (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
     eval `
+      // console.error("layout.next", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
       if (${jsresult current_layout_offset} == ${jsresult current_line_offset}) {
+        // console.error(\`layout.next successful for layout offset \${${jsresult current_layout_offset}}\`);
         addLayoutOffset(offset, ${jsresult current_layout_offset});
         return "unit";
       } else {
@@ -99,12 +107,14 @@ inline (layout.end _).
 rule (layout.end I) P' when layout.available P' :-
   eq P'
   (bind (action I) (fun current_layout_offset =>
-  (seq ws_opt (bind layout.current_line_offset (fun new_layout_offset =>
+  (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
     choices [
       seq eof (eval `return "unit";`),
       eval `
-        if (${jsresult new_layout_offset} < ${jsresult current_layout_offset}) {
-          addLayoutOffset(offset, ${jsresult new_layout_offset});
+        // console.error("layout.end", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
+        if (${jsresult current_line_offset} < ${jsresult current_layout_offset}) {
+          // console.error(\`layout.end successful for layout offset \${${jsresult current_layout_offset}}\`);
+          popLayoutOffset(offset, ${jsresult current_layout_offset});
           return "unit";
         } else {
           return null;
@@ -126,7 +136,15 @@ rule layout.ws
       (* line break followed by the same or more whitespace than current layout offset *)
       seq (once_or_many (charclass "\r\n")) (seq (many (charclass " \t"))
         (bind layout.current_line_offset (fun current_line_offset =>
-        (eval `return ${jsresult current_line_offset} > ${jsresult current_layout_offset} ? "unit" : null;`))))
+        (eval `
+          // console.error("layout.ws", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
+          if (${jsresult current_line_offset} > ${jsresult current_layout_offset}) {
+            // console.error(\`layout.ws successful for layout offset \${${jsresult current_layout_offset}}\`);
+            return "unit";
+          } else {
+            return null;
+          }
+        `))))
     ])))).
 
 rule (layout.block Main)
