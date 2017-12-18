@@ -1,0 +1,150 @@
+%use "layout_syntax".
+
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend layout_syntax_tests.
+all : testsuite. %testsuite all.
+
+(* Unit tests *)
+
+>> peg.parse (bracket.enter (ignore (exact "{")) (ignore (exact ";")) (ignore (exact "}")) (bracket.block (fun sep => many (bind anychar (fun res => seq sep (action res)))))) "{l;a;l;a;}" X ?
+>> Yes:
+>> X := (["l","a","l","a"], "").
+
+>> peg.parse_opt (bracket.enter (ignore (exact "{")) (ignore (exact ";")) (ignore (exact "}")) (bracket.block (fun sep => many (bind anychar (fun res => seq sep (action res)))))) "{l;a;l;a;}" X ?
+>> Yes:
+>> X := (["l","a","l","a"], "").
+
+
+(* Full tests: syntax for rose-trees, both layout-sensitive and bracket-based. *)
+
+rosetree : type.
+rosetree : string -> list rosetree -> rosetree.
+
+label : syntax string.
+syntax.rule label (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")).
+
+
+(* Tests for bracket to bracket *)
+
+b2b_rosetree_aux, b2b_rosetree : syntax rosetree.
+
+b2b_token : string -> syntax unit.
+syntax.rule (b2b_token S) (group [ optunit bracket.ws_empty, syntax.captured (exact S), optunit bracket.ws_space ]).
+syntax.inline (b2b_token S).
+
+b2b_token : syntax A -> syntax A.
+syntax.rule (b2b_token S) (group [ optunit bracket.ws_empty, syntax.captured S, optunit bracket.ws_space ]).
+syntax.inline (b2b_token S).
+
+syntax.rule b2b_rosetree_aux (
+  apply rosetree [
+    syntax.captured (b2b_token label),
+    syntax.captured (choices [
+      bracket.block (fun sep => many (group [syntax.captured b2b_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js b2b_rosetree (group [optunit ws_empty, syntax.captured (bracket.enter (b2b_token "{") (b2b_token ";") (b2b_token "}") b2b_rosetree_aux)])).
+
+>> (syntax.parse_opt b2b_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2b_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := "foo { bar { } ; baz { } ; } ".
+
+(* Tests layout to layout *)
+
+l2l_rosetree_aux, l2l_rosetree : syntax rosetree.
+
+l2l_token : syntax A -> syntax A.
+syntax.rule (l2l_token S) (group [ optunit layout.ws_empty, syntax.captured S, optunit layout.ws_empty ]).
+syntax.inline (l2l_token S).
+
+syntax.rule l2l_rosetree_aux (
+  apply rosetree [
+    syntax.captured (l2l_token label),
+    syntax.captured (choices [
+      layout.block (fun sep => many (group [syntax.captured l2l_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js l2l_rosetree (group [optunit ws_empty, syntax.captured (layout.enter 2 l2l_rosetree_aux)])).
+
+>> (syntax.parse_opt l2l_rosetree {
+ foo bar
+     baz
+ } X, syntax.pretty l2l_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := {
+foo
+  bar
+  baz}.
+
+(* Tests for layout to bracket *)
+
+l2b_rosetree_aux, l2b_rosetree : syntax rosetree.
+
+l2b_token : string -> syntax unit.
+syntax.rule (l2b_token S) (group [ optunit layout_to_bracket.ws_empty, syntax.captured (exact S), optunit layout_to_bracket.ws_space ]).
+syntax.inline (l2b_token S).
+
+l2b_token : syntax A -> syntax A.
+syntax.rule (l2b_token S) (group [ optunit layout_to_bracket.ws_empty, syntax.captured S, optunit layout_to_bracket.ws_space ]).
+syntax.inline (l2b_token S).
+
+syntax.rule l2b_rosetree_aux (
+  apply rosetree [
+    syntax.captured (l2b_token label),
+    syntax.captured (choices [
+      layout_to_bracket.block (fun sep => many (group [syntax.captured l2b_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js l2b_rosetree (group [optunit ws_empty, syntax.captured (layout_to_bracket.enter 2 (l2b_token "{") (l2b_token ";") (l2b_token "}") l2b_rosetree_aux)])).
+
+>> (syntax.parse_opt l2b_rosetree {
+ foo bar
+     baz
+ } X, syntax.pretty l2b_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := "foo { bar { } ; baz { } ; } ".
+
+(* Tests for bracket to layout *)
+
+b2l_rosetree_aux, b2l_rosetree : syntax rosetree.
+
+b2l_token : string -> syntax unit.
+syntax.rule (b2l_token S) (group [ optunit bracket_to_layout.ws_empty, syntax.captured (exact S), optunit bracket_to_layout.ws_space ]).
+syntax.inline (b2l_token S).
+
+b2l_token : syntax A -> syntax A.
+syntax.rule (b2l_token S) (group [ optunit bracket_to_layout.ws_empty, syntax.captured S, optunit bracket_to_layout.ws_empty ]).
+syntax.inline (b2l_token S).
+
+syntax.rule b2l_rosetree_aux (
+  apply rosetree [
+    syntax.captured (b2l_token label),
+    syntax.captured (choices [
+      bracket_to_layout.block (fun sep => many (group [syntax.captured b2l_rosetree_aux, optunit sep])),
+      apply [] []
+    ])
+  ]).
+
+`( def_js b2l_rosetree (group [optunit ws_empty, syntax.captured (bracket_to_layout.enter 2 (b2l_token "{") (b2l_token ";") (b2l_token "}") b2l_rosetree_aux)])).
+
+>> (syntax.parse_opt b2l_rosetree "foo { bar {}; baz {} }" X, syntax.pretty b2l_rosetree X Y) ?
+>> Yes:
+>> X := rosetree "foo" [rosetree "bar" [], rosetree "baz" []],
+>> Y := {{
+foo
+  bar
+  baz}}.
+
+%end.
