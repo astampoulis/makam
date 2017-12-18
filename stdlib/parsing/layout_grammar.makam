@@ -73,7 +73,7 @@ inline (layout.begin).
 rule layout.begin P' when layout.available P' :-
   eq P'
   (bind layout.current_layout_offset (fun current_layout_offset =>
-  (seq ws (bind layout.current_line_offset (fun new_layout_offset =>
+  (seq ws_opt (bind layout.current_line_offset (fun new_layout_offset =>
     eval `
       if (${jsresult new_layout_offset} > ${jsresult current_layout_offset}) {
         addLayoutOffset(offset, ${jsresult new_layout_offset});
