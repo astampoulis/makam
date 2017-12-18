@@ -1,2 +1,2 @@
-- [ ] add pretty and syntax
-
+- [ ] add layout-to-bracket syntax
+- [ ] add layout-to-layout syntax

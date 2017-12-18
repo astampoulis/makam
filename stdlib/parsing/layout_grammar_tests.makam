@@ -1,0 +1,90 @@
+%use layout_grammar.
+%open peg.
+
+%extend layout_grammar_tests.
+
+all : testsuite. %testsuite all.
+
+>> parse_opt (layout.enter (seq ws layout.current_line_offset)) "\n  hello" (X, _) ?
+>> Yes:
+>> X := 2.
+
+>> parse_opt (layout.enter (seq (seq ws (seq (exact "hello") ws)) layout.current_line_offset)) "\n  hello\r   foo" (X, _) ?
+>> Yes:
+>> X := 3.
+
+>> parse_opt (layout.enter (seq ws_opt (seq (exact "do") (seq layout.begin (seq (once_or_many (charclass "abcdefghijklmnopqrstuvwxyz")) (seq ws layout.current_layout_offset)))))) {
+     do foo
+        bar
+   } (X, _) ?
+>> Yes:
+>> X := 8.
+
+rosetree : type.
+rosetree_aux, rosetree : peg rosetree.
+rosetree : string -> list rosetree -> rosetree.
+
+label : peg string.
+
+rule label (syntax (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyz"))).
+
+rule rosetree_aux (
+  apply rosetree [
+    captured label,
+    captured (choices [layout.block (fun sep => many (seq sep rosetree_aux)), action []])
+  ]).
+rule rosetree (seq ws_opt (layout.enter rosetree_aux)).
+
+`( def_toplevel_parser_js rosetree ).
+
+>> parse_opt rosetree {
+ foo bar
+     baz
+ } X ?
+>> Yes:
+>> X := (rosetree "foo" [ rosetree "bar" [], rosetree "baz" [] ], "").
+
+>> parse_opt rosetree {
+ foo
+   bar
+     roo
+     noo
+   baz
+     roo
+     noo
+ } X ?
+>> Yes:
+>> X := (rosetree "foo" [ rosetree "bar" [ rosetree "roo" [], rosetree "noo" [] ], rosetree "baz" [ rosetree "roo" [], rosetree "noo" [] ] ], "").
+
+>> parse_opt rosetree {
+ foo bar baz
+     roo noo
+     baa  daa
+          naa
+ } X ?
+>> Yes:
+>> X := (rosetree "foo" [ rosetree "bar" [ rosetree "baz" [] ], rosetree "roo" [ rosetree "noo" [] ], rosetree "baa" [ rosetree "daa" [], rosetree "naa" [] ] ], "").
+
+>> parse_opt rosetree {
+ foo bar} X ?
+>> Yes:
+>> X := (rosetree "foo" [ rosetree "bar" [] ], "").
+
+>> parse_opt rosetree {
+ foo
+
+
+   bar
+
+   baz} X ?
+>> Yes:
+>> X := (rosetree "foo" [ rosetree "bar" [], rosetree "baz" [] ], "").
+
+>> parse_opt rosetree {
+    foo
+ lala
+} X ?
+>> Yes:
+>> X := (rosetree "foo" [ ], "\n lala\n").
+
+%end.
