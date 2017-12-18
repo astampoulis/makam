@@ -439,9 +439,7 @@ start_enclosed -> &&( enclosed_starter << fun s -> end_enclosed_marker := enclos
 end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
                 e:enclosed_ender << e >>
 
-enclosed -> str:repplus((!enclosed_ender c:. << c >>)) << str |> UString.implode >>
-          / &&(enclosed_ender << fun s -> not (s = !end_enclosed_marker) >>)
-            str:enclosed_ender << str >>
+enclosed -> str:repplus((!end_enclosed c:. << c >>)) << str |> UString.implode >>
 
 enclosed_starter -> hd:enclosed_starter_first tl:enclosed_starter_rest << ([UString.implode [hd]; fst tl] |> UString.concat, snd tl) >>
 enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_head << () >>) ) << () >>
@@ -454,7 +452,6 @@ enclosed_starter_rest -> xs:rep(enclosed_starter_rest_char) id:identaux ys:reppl
                        / xs:rep(enclosed_starter_rest_char) << (xs |> UString.implode, "") >>
 enclosed_starter_rest_char -> x:enclosed_starter_first << x >>
                        / x:[(<`:|[] << x >>
-
 enclosed_ender_head -> x:enclosed_ender_last << x >>
                      / x:[)>`:|]] << x >>
 enclosed_ender_last -> x:[}〛>] << x >>
