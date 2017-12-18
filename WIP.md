@@ -1,3 +1,2 @@
-- [ ] layout peg combinators seem to work
 - [ ] make result return a JSON.parsed thing
 - [ ] Haskell-like example

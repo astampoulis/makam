@@ -28,6 +28,13 @@ rule (slow_many P) (action []).
 >> Yes:
 >> Res := (unit, "return ").
 
+>> parse eof "" Res ?
+>> Yes:
+>> Res := (unit, "").
+
+>> parse eof "a" Res ?
+>> Impossible.
+
 token : peg A -> peg A.
 rule (token P) (seq (option ws) P).
 

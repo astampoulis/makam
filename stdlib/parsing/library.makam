@@ -23,6 +23,9 @@ inline (ws). inline (ws_opt). inline (ws_char).
 rule ws (seq (once_or_many (charclass " \n\t\r")) (action unit)).
 rule ws_opt (seq (many (charclass " \n\t\r")) (action unit)).
 
+eof : peg unit. inline (eof).
+rule eof (neg anychar).
+
 eval_when : peg string -> string -> peg string.
 inline (eval_when _ _).
 
