@@ -1,2 +1,2 @@
-- [ ] make result return a JSON.parsed thing
+- [ ] add tests to all_tests
 - [ ] Haskell-like example

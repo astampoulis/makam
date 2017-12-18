@@ -69,8 +69,8 @@ rule P P' when eq P layout.begin :-
   (bind layout.current_layout_offset (fun current_layout_offset =>
   (seq ws (bind layout.current_line_offset (fun new_layout_offset =>
     eval `
-      if (JSON.parse(${result new_layout_offset}) > JSON.parse(${result current_layout_offset})) {
-        addLayoutOffset(offset, JSON.parse(${result new_layout_offset}));
+      if (${jsresult new_layout_offset} > ${jsresult current_layout_offset}) {
+        addLayoutOffset(offset, ${jsresult new_layout_offset});
         return ${result new_layout_offset};
       } else return null;
     `))))).
@@ -82,8 +82,8 @@ rule P P' when eq P (layout.next I) :-
   (bind (action I) (fun current_layout_offset =>
   (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
     eval `
-      if (JSON.parse(${result current_layout_offset}) == JSON.parse(${result current_line_offset})) {
-        addLayoutOffset(offset, JSON.parse(${result current_layout_offset}));
+      if (${jsresult current_layout_offset} == ${jsresult current_line_offset}) {
+        addLayoutOffset(offset, ${jsresult current_layout_offset});
         return "unit";
       } else {
         return null;
@@ -99,8 +99,8 @@ rule P P' when eq P (layout.end I) :-
     choices [
       seq eof (eval `return "unit";`),
       eval `
-        if (JSON.parse(${result new_layout_offset}) < JSON.parse(${result current_layout_offset})) {
-          addLayoutOffset(offset, JSON.parse(${result new_layout_offset}));
+        if (${jsresult new_layout_offset} < ${jsresult current_layout_offset}) {
+          addLayoutOffset(offset, ${jsresult new_layout_offset});
           return "unit";
         } else {
           return null;
@@ -123,7 +123,7 @@ rule P P' when eq P layout.ws :-
       (* line break followed by the same or more whitespace than current layout offset *)
       seq (once_or_many (charclass "\r\n")) (seq (many (charclass " \t"))
         (bind layout.current_line_offset (fun current_line_offset =>
-        (eval `return JSON.parse(${result current_line_offset}) > JSON.parse(${result current_layout_offset}) ? "unit" : null;`))))
+        (eval `return ${jsresult current_line_offset} > ${jsresult current_layout_offset} ? "unit" : null;`))))
     ])))).
 
 rule P P' when eq P (layout.block Main) :-

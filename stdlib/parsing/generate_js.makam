@@ -362,6 +362,11 @@ gen_dictionary_js Map Result :-
    an expansion, regardless of its type. *)
 result : [A]A -> string.
 
+(* Similarly, if the result (represented as a string) makes sense in JavaScript as a term,
+   then we can use `jsresult` to parse it into a JavaScript value. For example, this
+   would convert a quoted string into a string and a quoted number into a number. *)
+jsresult : [A]A -> string.
+
 quote_expansion_js : list (reified string) -> list (reified string) -> prop.
 
 quote_expansion_js [] [].
@@ -372,7 +377,9 @@ quote_expansion_js (HD :: TL) (reified.const (S' : string) :: TL') :-
   else
     (if (eq HD (reified.term result [X]))
      then (quote_term_js X HD', expansion.str `\`${HD'}\`` S')
-     else (quote_term_js HD HD', expansion.str `\`${HD'}\`` S')),
+     else (if (eq HD (reified.term jsresult [X]))
+     then (quote_term_js X HD', expansion.str `JSON.parse(\`${HD'}\`)` S')
+     else (quote_term_js HD HD', expansion.str `\`${HD'}\`` S'))),
   quote_expansion_js TL TL'.
 
 gen_parse_js Eval Dict Dict Result
