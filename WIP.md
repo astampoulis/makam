@@ -1,1 +1,1 @@
-- [ ] have both bracket and layout syntaxes, use iso for convs
+- [ ] investigate what happens when we add relevant token to label

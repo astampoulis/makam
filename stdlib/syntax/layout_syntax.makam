@@ -4,24 +4,63 @@
 %open peg.
 %open pretty.
 
-(* printing layout as brackets *)
+(* bracket syntax. useful for tests and for conversions between layout and bracket. *)
 
-%extend pretty. %extend bracket_layout.
+%extend peg. %extend bracket.
 
-enter : int -> pretty A -> pretty A.
-block : (pretty unit -> pretty A) -> pretty A.
-ws_newline : pretty unit.
+(* enter BlockBegin BlockNext BlockEnd P *)
+enter : peg unit -> peg unit -> peg unit -> peg A -> peg A.
+block : (peg unit -> peg A) -> peg A.
+
+block_begin : peg unit -> prop.
+block_next : peg unit -> prop.
+block_end : peg unit -> prop.
 
 %end. %end.
 
-pretty.rule (bracket_layout.enter I P) P.
-pretty.rule (bracket_layout.block F)
+peg.rule (bracket.enter Begin Next End P)
+         (peg.assume (clause (bracket.block_begin Begin) success)
+         (peg.assume (clause (bracket.block_next Next) success)
+         (peg.assume (clause (bracket.block_end End) success)
+         P))).
+
+peg.rule (bracket.block P)
+         (peg.apply (fun x => x) [
+           Begin,
+           peg.captured (P Next),
+           End
+          ]) :-
+  bracket.block_begin Begin,
+  bracket.block_next Next,
+  bracket.block_end End.
+
+%extend pretty. %extend bracket.
+
+enter : pretty unit -> pretty unit -> pretty unit -> pretty A -> pretty A.
+block : (pretty unit -> pretty A) -> pretty A.
+
+block_begin : pretty unit -> prop.
+block_next : pretty unit -> prop.
+block_end : pretty unit -> prop.
+
+%end. %end.
+
+pretty.builtin (bracket.enter _ _ _ _).
+pretty.pretty (bracket.enter Begin Next End P) X S :-
+  (bracket.block_begin Begin ->
+   bracket.block_next Next ->
+   bracket.block_end End ->
+   (pretty.pretty P X S)).
+
+pretty.rule (bracket.block F)
   (pretty.unapply (fun x => x) [
-    const " { ",
-    pretty.captured (F (const " ; ")),
-    const "}"
-  ]).
-pretty.rule (bracket_layout.ws_newline) (const "\n").
+    Begin,
+    pretty.captured (F Next),
+    End
+  ]) :-
+  bracket.block_begin Begin,
+  bracket.block_next Next,
+  bracket.block_end End.
 
 (* printing layout as (whitespace-sensitive) layout *)
 
@@ -65,41 +104,6 @@ pretty.pretty (layout.ws_newline) X S :-
 
 (* iso syntax layout_to_bracket parses whitespace layout and pretty prints as brackets *)
 
-%extend syntax. %extend layout_to_bracket.
-
-enter : int -> syntax A -> syntax A.
-block : (syntax unit -> syntax A) -> syntax A.
-
-ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
-
-%end. %end.
-
-abort : peg A.
-abort : pretty A.
-peg.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
-pretty.rule abort P' :- log_error P' `This should never get used, look at layout_syntax.`, failure.
-
-syntax.inline (layout_to_bracket.enter _ _).
-syntax.rule (layout_to_bracket.enter I S) (iso
-  (layout.enter (peg.syntax S))
-  (bracket_layout.enter I (pretty.syntax S))).
-
-syntax.inline (layout_to_bracket.block _).
-syntax.rule (layout_to_bracket.block F) (iso
-  (layout.block (fun sep => peg.syntax (F (iso sep abort))))
-  (bracket_layout.block (fun sep => pretty.syntax (F (iso abort sep))))).
-
-syntax.inline (layout_to_bracket.ws_empty).
-syntax.rule (layout_to_bracket.ws_empty) (iso layout.ws (const "")).
-
-syntax.inline (layout_to_bracket.ws_space).
-syntax.rule (layout_to_bracket.ws_space) (iso layout.ws (const " ")).
-
-syntax.inline (layout_to_bracket.ws_newline).
-syntax.rule (layout_to_bracket.ws_newline) (iso layout.ws bracket_layout.ws_newline).
-
-(* iso syntax layout parses whitespace layout and pretty prints as whitespace layout *)
-
 %extend syntax. %extend layout.
 
 enter : int -> syntax A -> syntax A.
@@ -132,3 +136,93 @@ syntax.rule (layout.ws_space) (iso layout.ws (const " ")).
 
 syntax.inline (layout.ws_newline).
 syntax.rule (layout.ws_newline) (iso layout.ws layout.ws_newline).
+
+(* iso syntax layout parses whitespace layout and pretty prints as whitespace layout *)
+
+%extend syntax. %extend bracket.
+
+enter : syntax unit -> syntax unit -> syntax unit -> syntax A -> syntax A.
+block : (syntax unit -> syntax A) -> syntax A.
+
+ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
+
+%end. %end.
+
+syntax.rule (bracket.enter Begin Next End S) (iso
+  (bracket.enter (syntax Begin) (syntax Next) (syntax End) (syntax S))
+  (bracket.enter (syntax Begin) (syntax Next) (syntax End) (syntax S))).
+
+syntax.inline (bracket.block _).
+syntax.rule (bracket.block F) (iso
+  (bracket.block (fun sep => peg.syntax (F (iso sep abort))))
+  (bracket.block (fun sep => pretty.syntax (F (iso abort sep))))).
+
+syntax.inline (bracket.ws_empty).
+syntax.rule (bracket.ws_empty) syntax.ws_empty.
+
+syntax.inline (bracket.ws_space).
+syntax.rule (bracket.ws_space) syntax.ws_space.
+
+syntax.inline (bracket.ws_newline).
+syntax.rule (bracket.ws_newline) syntax.ws_newline.
+
+
+(* Layout-to-block and the other way around *)
+
+%extend syntax. %extend layout_to_bracket.
+
+enter : int -> syntax unit -> syntax unit -> syntax unit -> syntax A -> syntax A.
+block : (syntax unit -> syntax A) -> syntax A.
+
+ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
+
+%end. %end.
+
+syntax.inline (layout_to_bracket.enter _ _ _ _ _).
+syntax.rule (layout_to_bracket.enter I Begin Next End S)
+            (iso (syntax (layout.enter I S))
+                 (syntax (bracket.enter Begin Next End S))).
+
+syntax.inline (layout_to_bracket.block F).
+syntax.rule (layout_to_bracket.block F)
+            (iso (syntax (layout.block F))
+                 (syntax (bracket.block F))).
+
+syntax.inline (layout_to_bracket.ws_empty).
+syntax.rule (layout_to_bracket.ws_empty) (iso (syntax layout.ws_empty) (syntax bracket.ws_empty)).
+
+syntax.inline (layout_to_bracket.ws_space).
+syntax.rule (layout_to_bracket.ws_space) (iso (syntax layout.ws_space) (syntax bracket.ws_space)).
+
+syntax.inline (layout_to_bracket.ws_newline).
+syntax.rule (layout_to_bracket.ws_newline) (iso (syntax layout.ws_newline) (syntax bracket.ws_newline)).
+
+(* The other way around. *)
+
+%extend syntax. %extend bracket_to_layout.
+
+enter : int -> syntax unit -> syntax unit -> syntax unit -> syntax A -> syntax A.
+block : (syntax unit -> syntax A) -> syntax A.
+
+ws_empty : syntax unit. ws_space : syntax unit. ws_newline : syntax unit.
+
+%end. %end.
+
+syntax.inline (bracket_to_layout.enter _ _ _ _ _).
+syntax.rule (bracket_to_layout.enter I Begin Next End S)
+            (iso (syntax (bracket.enter Begin Next End S))
+                 (syntax (layout.enter I S))).
+
+syntax.inline (bracket_to_layout.block F).
+syntax.rule (bracket_to_layout.block F)
+            (iso (syntax (bracket.block F))
+                 (syntax (layout.block F))).
+
+syntax.inline (bracket_to_layout.ws_empty).
+syntax.rule (bracket_to_layout.ws_empty) (iso (syntax bracket.ws_empty) (syntax layout.ws_empty)).
+
+syntax.inline (bracket_to_layout.ws_space).
+syntax.rule (bracket_to_layout.ws_space) (iso (syntax bracket.ws_space) (syntax layout.ws_space)).
+
+syntax.inline (bracket_to_layout.ws_newline).
+syntax.rule (bracket_to_layout.ws_newline) (iso (syntax bracket.ws_newline) (syntax layout.ws_newline)).

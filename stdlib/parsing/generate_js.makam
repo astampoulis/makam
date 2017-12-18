@@ -154,6 +154,9 @@ gen_parse_js (many P) Dict Dict' Result :-
    })())`
   Result.
 
+gen_parse_js (assume Clause P) Dict Dict' Result :-
+  assume Clause (gen_parse_js P Dict Dict' Result).
+
 quote_terms_js : [A B]reified_args A B -> string -> prop.
 
 quote_terms_js X Result

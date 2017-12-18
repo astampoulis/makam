@@ -15,6 +15,12 @@ void : peg A.
 many : peg A -> peg (list A).
 eval : (A -> prop) -> expansion -> peg A.
        (* this is eval with a Makam version and a JS version of the predicate. *)
+assume : clause -> peg A -> peg A.
+       (* assume Clause P adds a local assumption while expanding P.
+          Make sure calls to this are directly part of a user definition and are NOT inlined!
+          That would be a problem because JS generation only takes the parsing expression
+          into account for seeing whether a parser has already been generated; if the local
+          assumptions change, a new parser won't get generated. *)
 
 (* js-only peg expressions: *)
 eval : expansion -> peg A. (* evaluate in host language. needs to return a string of a term of type A *)
@@ -37,6 +43,7 @@ builtin (empty).
 builtin (void).
 builtin (many _).
 builtin (eval _ _).
+builtin (assume _ _).
 
 builtin (eval _). js_builtin (eval _).
 
@@ -108,6 +115,9 @@ parse (eval P _) S Res :-
   if (P Str)
   then (eq Res (some (Str, S)))
   else (eq Res none).
+
+parse (assume Clause P) S Res :-
+  assume Clause (parse P S Res).
 
 (* js-specific parsers *)
 parse X _ _
