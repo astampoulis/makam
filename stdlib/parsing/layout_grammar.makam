@@ -84,7 +84,10 @@ rule layout.begin P' when layout.available P' :-
         // console.error(\`layout.begin successful for layout offset \${${jsresult new_layout_offset}}\`);
         addLayoutOffset(offset, ${jsresult new_layout_offset});
         return ${result new_layout_offset};
-      } else return null;
+      } else {
+        // console.error(\`layout.begin failed for layout offset \${${jsresult new_layout_offset}}\`);
+        return null;
+      }
     `))))).
 
 inline (layout.next _).
@@ -92,6 +95,7 @@ rule (layout.next I) P' when layout.available P' :-
   eq P'
   (bind (action I) (fun current_layout_offset =>
   (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
+    (seq (neg eof) (
     eval `
       // console.error("layout.next", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
       if (${jsresult current_layout_offset} == ${jsresult current_line_offset}) {
@@ -99,28 +103,25 @@ rule (layout.next I) P' when layout.available P' :-
         addLayoutOffset(offset, ${jsresult current_layout_offset});
         return "unit";
       } else {
+        // console.error(\`layout.next failed for layout offset \${${jsresult current_layout_offset}}\`);
         return null;
       }
-    `))))).
+    `))))))).
 
 inline (layout.end _).
 rule (layout.end I) P' when layout.available P' :-
   eq P'
   (bind (action I) (fun current_layout_offset =>
   (seq ws_opt (bind layout.current_line_offset (fun current_line_offset =>
-    choices [
-      seq eof (eval `return "unit";`),
-      eval `
-        // console.error("layout.end", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
-        if (${jsresult current_line_offset} < ${jsresult current_layout_offset}) {
-          // console.error(\`layout.end successful for layout offset \${${jsresult current_layout_offset}}\`);
-          popLayoutOffset(offset, ${jsresult current_layout_offset});
-          return "unit";
-        } else {
-          return null;
-        }
-      `
-    ]))))).
+  (seq (eval `
+      // console.error("layout.end", "layout", ${jsresult current_layout_offset}, "line", ${jsresult current_line_offset}, \`start of input is <<\${input.substr(offset, 15)}>>\`);
+    `)
+    (seq (neg (layout.next I))
+    (eval `
+        // console.error(\`layout.end successful for layout offset \${${jsresult current_layout_offset}}\`);
+        popLayoutOffset(offset, ${jsresult current_layout_offset});
+        return "unit";
+    `)))))))).
 
 inline (layout.ws_opt).
 rule (layout.ws_opt) (ignore (option layout.ws)).
