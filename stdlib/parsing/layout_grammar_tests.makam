@@ -31,12 +31,16 @@ token : peg A -> peg A.
 rule (token S) (seq (option layout.ws) (bind S (fun res => seq (option layout.ws) (action res)))).
 inline (token S).
 
+token : string -> peg string.
+rule (token (S: string)) (seq (option layout.ws) (bind (exact S) (fun res => seq (option layout.ws) (action res)))).
+inline (token S).
+
 rule rosetree_aux (
   apply rosetree [
     captured (token label),
     captured (choices [layout.block (fun sep => many (seq sep rosetree_aux)), action []])
   ]).
-rule rosetree (seq ws_opt (layout.enter rosetree_aux)).
+rule rosetree (apply (fun x => x) [captured (layout.enter (layout.block (fun _ => rosetree_aux))), ws_opt]).
 
 `( def_toplevel_parser_js rosetree ).
 
@@ -88,6 +92,91 @@ rule rosetree (seq ws_opt (layout.enter rosetree_aux)).
  lala
 } X ?
 >> Yes:
->> X := (rosetree "foo" [ ], "\n lala\n").
+>> X := (rosetree "foo" [ ], "lala\n").
+
+
+(* let-in's as in Haskell *)
+
+term : type.
+letin : list (string * term) -> term -> term.
+const : string -> term.
+
+ptermtop : peg term.
+pterm : peg term.
+
+rule pterm (apply letin [
+  token "'let",
+  captured (layout.block (fun sep => many (apply tuple [
+    sep,
+    captured (token label),
+    token "=",
+    captured pterm
+  ]))),
+  token "'in",
+  captured (layout.block (fun _ => pterm))
+]).
+
+rule pterm (apply const [ captured (token label) ]).
+
+rule ptermtop (seq ws_opt (layout.enter pterm)).
+
+`( def_toplevel_parser_js ptermtop ).
+
+>> parse_opt ptermtop {{
+'let x = hello
+     y = hullo
+'in x
+}}
+X ?
+>> Yes:
+>> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
+
+>> parse_opt ptermtop {{
+'let x = hello
+     y = hullo
+'in
+x
+}}
+X ?
+>> Yes:
+>> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
+
+>> parse_opt ptermtop {{
+'let x = hello
+     y = hullo
+'in
+ x
+}}
+X ?
+>> Yes:
+>> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
+
+>> parse_opt ptermtop {{
+'let
+   x = hello
+   y = hullo
+'in x
+}}
+X ?
+>> Yes:
+>> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
+
+>> parse_opt ptermtop {{
+'let x = hello
+     y = hullo 'in x
+}}
+X ?
+>> Yes:
+>> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
+
+>> parse_opt ptermtop {{
+'let x = 'let a = hello
+              b = hullo
+         'in a
+     y = hullo 'in x
+}}
+X ?
+>> Yes:
+>> X := (letin [("x", letin [("a", const "hello"), ("b", const "hullo")] (const "a")), ("y", (const "hullo"))] (const "x"), "").
 
 %end.
