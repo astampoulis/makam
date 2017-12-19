@@ -147,4 +147,43 @@ foo
    bar
    baz}}.
 
+
+(* Haskell-like let-in *)
+
+term : type.
+letin : list (string * term) -> term -> term.
+const : string -> term.
+
+ptermtop : syntax term.
+pterm : syntax term.
+
+syntax.rule pterm (apply letin [
+  l2l_token "'let",
+  syntax.captured (layout.block (fun sep => list_sep_plus sep (apply tuple [
+    syntax.captured (l2l_token label),
+    l2l_token "=",
+    syntax.captured pterm
+  ]))),
+  l2l_token "'in",
+  syntax.captured (layout.block (fun _ => pterm))
+]).
+
+syntax.rule pterm (apply const [ syntax.captured (l2l_token label) ]).
+
+`( def_js ptermtop (layout.enter 2 pterm) ).
+
+>> (parse_opt ptermtop {{
+'let x = foo
+     y = bar 'in x
+}} X, pretty ptermtop X Y) ?
+>> Yes:
+>> X := letin [("x", const "foo"), ("y", const "bubu")] (const "x"),
+>> Y := {{
+'let
+   x=lala
+   y=bubu
+'in
+   x
+}}.
+
 %end.

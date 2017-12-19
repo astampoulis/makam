@@ -169,5 +169,14 @@ X ?
 >> Yes:
 >> X := (letin [ ("x", const "hello"), ("y", const "hullo") ] (const "x"), "").
 
+>> parse_opt ptermtop {{
+'let x = 'let a = hello
+              b = hullo
+         'in a
+     y = hullo 'in x
+}}
+X ?
+>> Yes:
+>> X := (letin [("x", letin [("a", const "hello"), ("b", const "hullo")] (const "a")), ("y", (const "hullo"))] (const "x"), "").
 
 %end.
