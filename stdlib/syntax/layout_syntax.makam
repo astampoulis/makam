@@ -98,7 +98,8 @@ pretty.pretty (layout.block F) X MaybeS :-
 pretty.builtin (layout.ws_newline).
 pretty.pretty (layout.ws_newline) X S :-
   once(indentation_level CurLevel), string.repeat CurLevel " " Spaces,
-  (pretty.pretty (unapply (fun x => x) [ const "\n", pretty.captured (const Spaces) ]) X S).
+  (* extra space so that we don't make this a layout.next *)
+  (pretty.pretty (unapply (fun x => x) [ const "\n ", pretty.captured (const Spaces) ]) X S).
 
 %end. %end.
 
