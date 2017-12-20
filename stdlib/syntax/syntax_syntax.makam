@@ -23,13 +23,13 @@ string_literal : syntax string.
 makam_term : int -> pretty A.
 makam_term_str : int -> peg string.
 
-top_str, base_str : peg string.
+appl_str, base_str : peg string.
 args_str : peg string.
 
-top, base : pretty (syntax A).
+appl, base : pretty (syntax A).
 args : pretty (syntax_args A B).
 
-top : syntax (syntax A).
+appl : syntax (syntax A).
 args : syntax (syntax_args A B).
 
 (* TODO: make this more precise *)
@@ -127,23 +127,23 @@ pretty.rule base
 
 peg.rule base_str
          (string_transform (fun s => expansion.str `(${s})`)
-                [ exact "{", peg.captured top_str, exact "}" ]).
+                [ exact "{", peg.captured appl_str, exact "}" ]).
 pretty.rule base
          (unapply (fun x => x)
-                [ const "{", pretty.captured top, const "}" ]).
+                [ const "{", pretty.captured appl, const "}" ]).
 
 (* syntax.apply and syntax rules *)
 
 peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (token "<"),
-              peg.captured top_str,
+              peg.captured appl_str,
               syntax (token ">"),
               peg.captured args_str ]).
 pretty.rule args
      (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
        [ syntax (token "<"),
-         pretty.captured top,
+         pretty.captured appl,
          syntax (token ">"),
          pretty.captured args ]).
 
@@ -161,19 +161,19 @@ peg.rule args_str
 pretty.rule args
      (unapply syntax.nil []).
 
-peg.rule top_str
+peg.rule appl_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
           [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
-pretty.rule top
+pretty.rule appl
      (unapply syntax.apply
       [ pretty.captured (makam_term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
-peg.rule top_str base_str.
-pretty.rule top base.
+peg.rule appl_str base_str.
+pretty.rule appl base.
 
-syntax.rule top
-         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
-              (top)).
+syntax.rule appl
+         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured appl_str ])
+              (appl)).
 
 syntax.rule args
          (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str ])
@@ -184,17 +184,23 @@ choices : pretty (list (syntax A)).
 
 peg.rule choices_str
           (string_transform (fun c cs => expansion.str `(cons ${c} ${cs})`)
-          [ peg.captured top_str, syntax (token "/"), peg.captured choices_str ]).
+          [ peg.captured appl_str, syntax (token "/"), peg.captured choices_str ]).
 pretty.rule choices
      (unapply cons
-      [ pretty.captured top, syntax (token "/"), pretty.captured choices ]).
+      [ pretty.captured appl, syntax (token "/"), pretty.captured choices ]).
 
 peg.rule choices_str
           (string_transform (fun c => expansion.str `(cons ${c} nil)`)
-          [ peg.captured top_str ]).
+          [ peg.captured appl_str ]).
 pretty.rule choices
      (unapply (fun hd => cons hd nil)
-      [ pretty.captured top ]).
+      [ pretty.captured appl ]).
+
+choices_str_cached : peg string.
+`( peg.def_parser_js choices_str_cached choices_str ).
+
+choices : syntax (list (syntax A)).
+syntax.rule choices (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured choices_str_cached ]) choices).
 
 syndef : type.
 syndef : syntax A -> syntax A -> syndef.
@@ -204,7 +210,7 @@ syndef : pretty syndef.
 
 peg.rule syndef_str
        (string_transform (fun constr def => expansion.str `(syntax_syntax.syndef ${constr} (choices ${def}))`)
-        [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str ]).
+        [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
 pretty.rule syndef
        (unapply (fun constr def => syndef constr (choices def))
         [ pretty.captured (makam_term 0), syntax (token "->"), pretty.captured choices ]).

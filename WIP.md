@@ -1,3 +1,0 @@
-- [x] add syntax for syntax rules
-- [ ] rename top to apply
-- [ ] optimize stuff
