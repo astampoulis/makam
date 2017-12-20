@@ -20,17 +20,21 @@ syntax.inline ident.
 
 all : testsuite. %testsuite all.
 
->> syntax.parse_opt top "syntax_syntax_tests.lam { 'λ' <syntax_syntax_tests.ident> '.' <syntax_syntax_tests.term> }" X ?
+>> syntax.parse_opt choices "syntax_syntax_tests.lam { 'λ' <syntax_syntax_tests.ident> '.' <syntax_syntax_tests.term> }" X ?
 >> Yes:
->> X := (syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]).
+>> X := [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]].
 
->> syntax.pretty top (syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]) X ?
+>> syntax.pretty choices [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]] X ?
 >> Yes:
 >> X := "syntax_syntax_tests.lam { 'λ' < syntax_syntax_tests.ident > '.' < syntax_syntax_tests.term > } ".
 
-`( new_rule term lam { 'λ' <ident> '.' <term> } ).
-`( new_rule term var { <ident> } ).
-`( new_rule term app { '(' <term> <many term> ')' } ).
+`( syntax_rules {{
+
+term ->   lam { 'λ' <ident> '.' <term> }
+        / var { <ident> }
+        / app { '(' <term> <many term> ')' }
+
+}} ).
 
 `( def_toplevel_js term ).
 

@@ -23,13 +23,13 @@ string_literal : syntax string.
 makam_term : int -> pretty A.
 makam_term_str : int -> peg string.
 
-top_str, base_str : peg string.
+appl_str, base_str : peg string.
 args_str : peg string.
 
-top, base : pretty (syntax A).
+appl, base : pretty (syntax A).
 args : pretty (syntax_args A B).
 
-top : syntax (syntax A).
+appl : syntax (syntax A).
 args : syntax (syntax_args A B).
 
 (* TODO: make this more precise *)
@@ -83,6 +83,9 @@ peg.rule (token_id S) (transform (pfun ident res => eq ident S, eq res ident)
             expansion.str `(function() { const inputString = ${Quoted}; return ${FunctionCode}; })()` JS_Code |} ))).
 *)
 
+
+(* makam terms *)
+
 makam_term_args_str : peg string.
 
 peg.rule (makam_term_str 0) (string_transform
@@ -108,6 +111,8 @@ pretty.rule (makam_term 1)
 pretty.rule (makam_term 1)
             (unapply (fun x => x) [ syntax (token "("), pretty.captured (makam_term 0), syntax (token ")") ]).
 
+(* actual syntax combinators *)
+
 peg.rule base_str
          (string_transform (fun s => expansion.str `(syntax_syntax.token "${s}")`)
                 [ peg.captured (syntax (token string_literal)) ]).
@@ -120,16 +125,25 @@ peg.rule base_str
 pretty.rule base
          (makam_term 0).
 
+peg.rule base_str
+         (string_transform (fun s => expansion.str `(${s})`)
+                [ exact "{", peg.captured appl_str, exact "}" ]).
+pretty.rule base
+         (unapply (fun x => x)
+                [ const "{", pretty.captured appl, const "}" ]).
+
+(* syntax.apply and syntax rules *)
+
 peg.rule args_str
      (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (token "<"),
-              peg.captured base_str,
+              peg.captured appl_str,
               syntax (token ">"),
               peg.captured args_str ]).
 pretty.rule args
      (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
        [ syntax (token "<"),
-         pretty.captured base,
+         pretty.captured appl,
          syntax (token ">"),
          pretty.captured args ]).
 
@@ -147,40 +161,72 @@ peg.rule args_str
 pretty.rule args
      (unapply syntax.nil []).
 
-args_str_cached : peg string.
-`( peg.def_parser_js args_str_cached args_str ).
-
-peg.rule top_str
+peg.rule appl_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
-          [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str_cached, syntax (token "}") ]).
-pretty.rule top
+          [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
+pretty.rule appl
      (unapply syntax.apply
       [ pretty.captured (makam_term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
-syntax.rule top
-         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured top_str ])
-              (top)).
+peg.rule appl_str base_str.
+pretty.rule appl base.
+
+syntax.rule appl
+         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured appl_str ])
+              (appl)).
 
 syntax.rule args
-         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str_cached ])
+         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str ])
               (args)).
 
-new_rule : [A B] syntax A -> B -> string -> cmd -> prop.
-new_rule Syntax Constructor Args_S
-         (cmd_newclause (clause
-           (syntax.rule Syntax (syntax.apply Constructor Args))
-           success)) :-
-  if (syntax.parse_opt args Args_S Args_Untyped)
-  then
-    (if (dyn.eq Args_Untyped Args)
-     then success
-     else (if (refl.typstring Args_Untyped TypArgsS')
-           then expansion.str `(${TypArgsS'}) ` TypArgsS
-           else eq TypArgsS "",
-           if (refl.typstring Args TypConstrS')
-           then expansion.str `(${TypConstrS'}) ` TypConstrS
-           else eq TypConstrS "",
-           log_error Args_S `type of syntax arguments ${TypArgsS}does not match type of constructor${TypConstrS}`, failure))
-  else (log_error Args_S `parsing the syntax rule failed`, failure).
+choices_str : peg string.
+choices : pretty (list (syntax A)).
+
+peg.rule choices_str
+          (string_transform (fun c cs => expansion.str `(cons ${c} ${cs})`)
+          [ peg.captured appl_str, syntax (token "/"), peg.captured choices_str ]).
+pretty.rule choices
+     (unapply cons
+      [ pretty.captured appl, syntax (token "/"), pretty.captured choices ]).
+
+peg.rule choices_str
+          (string_transform (fun c => expansion.str `(cons ${c} nil)`)
+          [ peg.captured appl_str ]).
+pretty.rule choices
+     (unapply (fun hd => cons hd nil)
+      [ pretty.captured appl ]).
+
+choices_str_cached : peg string.
+`( peg.def_parser_js choices_str_cached choices_str ).
+
+choices : syntax (list (syntax A)).
+syntax.rule choices (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured choices_str_cached ]) choices).
+
+syndef : type.
+syndef : syntax A -> syntax A -> syndef.
+
+syndef_str, syndef_str_cached : peg string.
+syndef : pretty syndef.
+
+peg.rule syndef_str
+       (string_transform (fun constr def => expansion.str `(syntax_syntax.syndef ${constr} (choices ${def}))`)
+        [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
+pretty.rule syndef
+       (unapply (fun constr def => syndef constr (choices def))
+        [ pretty.captured (makam_term 0), syntax (token "->"), pretty.captured choices ]).
+
+`( peg.def_parser_js syndef_str_cached syndef_str ).
+
+syndef : syntax syndef.
+syntax.rule syndef (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured syndef_str_cached ]) syndef).
+
+syntax_rule_clause : syndef -> cmd -> prop.
+syntax_rule_clause (syndef SyntaxConstr SyntaxDef) (cmd_newclause (clause (syntax.rule SyntaxConstr SyntaxDef) success)).
 
 %end.
+
+syntax_rules : string -> cmd -> prop.
+syntax_rules RulesS (cmd_many Clauses) :-
+  if (syntax.parse_opt (once_or_many syntax_syntax.syndef) RulesS Rules)
+  then map syntax_syntax.syntax_rule_clause Rules Clauses
+  else (log_error RuleS `parsing the syntax rules failed`, failure).
