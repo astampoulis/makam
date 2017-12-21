@@ -12,6 +12,17 @@ let version = Version.version;;
 let makam_parser = MakamGrammar.parse_prologcmd ;;
 let print_now s = Printf.printf "%s%!" s ;;
 
+let _ =
+  (* Seed the input statehash with the hash of makam's binary.
+     This way cached predicates get invalidated when there are changes
+     to the implementation. *)
+  let binary = File.open_in ~mode:[] Sys.argv.(0) in
+  let contents = IO.read_all binary in
+  let _ = IO.close_in binary in
+  let binary_hash = Hashtbl.hash contents in
+  UChannel.input_statehash := binary_hash
+;;
+
 let meta_print_exception : (exn -> unit) ref =
   ref (fun e -> print_now "Uncaught OCaml-level exception; use bytecode Makam toplevel to debug.\n")
 ;;
