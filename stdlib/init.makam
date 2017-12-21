@@ -30,6 +30,8 @@
 
 %use vars.
 
+%use cache.
+
 %extend peg.
 %use "parsing/init".
 %end.

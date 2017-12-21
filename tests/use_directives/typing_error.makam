@@ -1,5 +1,5 @@
 print_string "starting to load error module.\n" ?
 
-print_string 5 ?
+eq 5 "five" ?
 
 print_string "(should not print) continuing to load.\n" ?

@@ -43,6 +43,12 @@ configure:
 makam-tests:
 	makam --run-tests all_tests
 
+makam-timing-tests:
+	./scripts/timing-test.sh
+
+cache-clean:
+	rm -rf .makam-cache
+
 makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
 	bash -c "grep SUCCESSFUL output; RES=\$$?; rm output; exit \$$RES"
@@ -61,4 +67,4 @@ md2makam:
 md2makam-watch:
 	while true; do inotifywait -e modify `git ls-files --cached --others */*.md` && find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk; done
 
-.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests
+.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests cache-clean
