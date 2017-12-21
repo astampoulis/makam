@@ -1,0 +1,6339 @@
+(function (input, startOffset) {
+      let offset = startOffset;
+      const parsers = {
+    "syntax_syntax.choices_str_cached": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.choices_str_cached`;
+      const historyEntry = `syntax_syntax.choices_str_cached:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const data = (function (input, offset) { return ((function (input, startOffset) {
+      let offset = startOffset;
+      const parsers = {
+    "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil))))`;
+      const historyEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil)))):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_2}`, `${result_3}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.base_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.base_str`;
+      const historyEntry = `syntax_syntax.base_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("'", offset)
+    ? (offset += "'".length, JSON.stringify("'"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\/?".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\\\\/?\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("'", offset)
+    ? (offset += "'".length, JSON.stringify("'"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0) { const res_0 = JSON.parse(var_0); return JSON.stringify(`(syntax_syntax.token "${res_0}")`); })(`${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "(syntax_syntax.makam_term_str 0)", args: {  } };
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("{", offset)
+    ? (offset += "{".length, JSON.stringify("{"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.appl_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("}", offset)
+    ? (offset += "}".length, JSON.stringify("}"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0) { const res_0 = JSON.parse(var_0); return JSON.stringify(`(${res_0})`); })(`${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.args_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.args_str`;
+      const historyEntry = `syntax_syntax.args_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("<", offset)
+    ? (offset += "<".length, JSON.stringify("<"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.appl_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith(">", offset)
+    ? (offset += ">".length, JSON.stringify(">"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_4 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_4 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_3} ${result_4})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_2}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "syntax_syntax.args_str", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(syntax.cons (syntax.captured ${res_0}) ${res_1})`); })(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.base_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "syntax_syntax.args_str", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(syntax.cons (${res_0}: syntax unit) ${res_1})`); })(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `"syntax.nil"`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.makam_term_args_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.makam_term_args_str`;
+      const historyEntry = `syntax_syntax.makam_term_args_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "syntax_syntax.makam_term_args_str", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`${res_0} ${res_1}`); })(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyz._")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyz._"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil))))`;
+      const historyEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyz._")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyz._"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil)))):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyz._".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(syntax_syntax.makam_term_str 1)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(syntax_syntax.makam_term_str 1)`;
+      const historyEntry = `(syntax_syntax.makam_term_str 1):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyz._".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("(", offset)
+    ? (offset += "(".length, JSON.stringify("("))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 0)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith(")", offset)
+    ? (offset += ")".length, JSON.stringify(")"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(syntax_syntax.makam_term_str 0)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(syntax_syntax.makam_term_str 0)`;
+      const historyEntry = `(syntax_syntax.makam_term_str 0):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.makam_term_args_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(${res_0} ${res_1})`); })(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.appl_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.appl_str`;
+      const historyEntry = `syntax_syntax.appl_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 0)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("{", offset)
+    ? (offset += "{".length, JSON.stringify("{"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.args_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("}", offset)
+    ? (offset += "}".length, JSON.stringify("}"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_4 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_4 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_3} ${result_4})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_2}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(syntax.apply ${res_0} ${res_1})`); })(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "syntax_syntax.base_str", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.choices_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.choices_str`;
+      const historyEntry = `syntax_syntax.choices_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "syntax_syntax.appl_str", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("/", offset)
+    ? (offset += "/".length, JSON.stringify("/"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.choices_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(cons ${res_0} ${res_1})`); })(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "syntax_syntax.appl_str", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0) { const res_0 = JSON.parse(var_0); return JSON.stringify(`(cons ${res_0} nil)`); })(`${result_0}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   
+  };
+      const memoize = {};
+      let history = [];
+      const firstGen = (function*() { return yield { parser: "syntax_syntax.choices_str", args: {  } }; })();
+      const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];
+      let lastRes;
+      while (recurseOrResult.length > 0) {
+        const { gen: genTop, val: valTop } = recurseOrResult[recurseOrResult.length-1];
+        if (valTop.done) {
+          lastRes = valTop.value;
+          recurseOrResult.pop();
+          if (recurseOrResult.length > 0) {
+            const { gen, val } = recurseOrResult[recurseOrResult.length - 1];
+            recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
+          }
+        } else {
+          const nextGen = parsers[valTop.value.parser](valTop.value.args);
+          recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
+        }
+      }
+      if (lastRes === null) {
+        return { result: null, newOffset: startOffset };
+      } else {
+        return { result: lastRes, newOffset: offset };
+      }
+   }))(input, offset); })(input, offset);
+        if (data.result !== null) offset = data.newOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = {
+          result: data.result,
+          newOffset: data.result === null ? keepOffset : data.newOffset
+         };
+        history = historyCopy;
+        return data.result;
+      }
+     }),
+   "syntax_syntax.makam_term_args_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.makam_term_args_str`;
+      const historyEntry = `syntax_syntax.makam_term_args_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "syntax_syntax.makam_term_args_str", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`${res_0} ${res_1}`); })(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyz._")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyz._"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil))))`;
+      const historyEntry = `(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass "abcdefghijklmnopqrstuvwxyz._")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass "abcdefghijklmnopqrstuvwxyz._"))) syntax.nil))) (cons (syntax.apply "" syntax.nil) nil)))):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyz._".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(syntax_syntax.makam_term_str 1)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(syntax_syntax.makam_term_str 1)`;
+      const historyEntry = `(syntax_syntax.makam_term_str 1):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && "abcdefghijklmnopqrstuvwxyz._".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "(peg.syntax (syntax.choices (cons (syntax.transform (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.append x_0 x_1 x_2)))) \"(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))\" (fun (x_0: string) => (fun (x_1: string) => (fun (x_2: string) => (string.headtail x_2 x_0 x_1)))) (syntax.cons (syntax.captured (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\")) (syntax.cons (syntax.captured (syntax.charmany (syntax.charclass \"abcdefghijklmnopqrstuvwxyz._\"))) syntax.nil))) (cons (syntax.apply \"\" syntax.nil) nil))))", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("(", offset)
+    ? (offset += "(".length, JSON.stringify("("))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 0)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith(")", offset)
+    ? (offset += ")".length, JSON.stringify(")"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(syntax_syntax.makam_term_str 0)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(syntax_syntax.makam_term_str 0)`;
+      const historyEntry = `(syntax_syntax.makam_term_str 0):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.makam_term_args_str", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(${res_0} ${res_1})`); })(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "(syntax_syntax.makam_term_str 1)", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "syntax_syntax.syndef_str": (function*(args) {
+      const {  } = args;
+      const memoEntry = `syntax_syntax.syndef_str`;
+      const historyEntry = `syntax_syntax.syndef_str:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(syntax_syntax.makam_term_str 0)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (input.startsWith("->", offset)
+    ? (offset += "->".length, JSON.stringify("->"))
+    : null);
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = "unit";
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_1}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "syntax_syntax.choices_str_cached", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return (function (var_0, var_1) { const res_0 = JSON.parse(var_0); const res_1 = JSON.parse(var_1); return JSON.stringify(`(syntax_syntax.syndef ${res_0} (choices ${res_1}))`); })(`${result_0}`, `${result_1}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   
+  };
+      const memoize = {};
+      let history = [];
+      const firstGen = (function*() { return yield { parser: "syntax_syntax.syndef_str", args: {  } }; })();
+      const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];
+      let lastRes;
+      while (recurseOrResult.length > 0) {
+        const { gen: genTop, val: valTop } = recurseOrResult[recurseOrResult.length-1];
+        if (valTop.done) {
+          lastRes = valTop.value;
+          recurseOrResult.pop();
+          if (recurseOrResult.length > 0) {
+            const { gen, val } = recurseOrResult[recurseOrResult.length - 1];
+            recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
+          }
+        } else {
+          const nextGen = parsers[valTop.value.parser](valTop.value.args);
+          recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
+        }
+      }
+      if (lastRes === null) {
+        return { result: null, newOffset: startOffset };
+      } else {
+        return { result: lastRes, newOffset: offset };
+      }
+   })

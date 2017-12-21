@@ -1,0 +1,98 @@
+(function (input, startOffset) {
+      let offset = startOffset;
+      const parsers = {
+    
+  };
+      const memoize = {};
+      let history = [];
+      const firstGen = (function*() { return (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && "abcdef".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && "abcdef".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })()); })();
+      const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];
+      let lastRes;
+      while (recurseOrResult.length > 0) {
+        const { gen: genTop, val: valTop } = recurseOrResult[recurseOrResult.length-1];
+        if (valTop.done) {
+          lastRes = valTop.value;
+          recurseOrResult.pop();
+          if (recurseOrResult.length > 0) {
+            const { gen, val } = recurseOrResult[recurseOrResult.length - 1];
+            recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
+          }
+        } else {
+          const nextGen = parsers[valTop.value.parser](valTop.value.args);
+          recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
+        }
+      }
+      if (lastRes === null) {
+        return { result: null, newOffset: startOffset };
+      } else {
+        return { result: lastRes, newOffset: offset };
+      }
+   })

@@ -1,0 +1,1455 @@
+(function (input, startOffset) {
+      let offset = startOffset;
+      const parsers = {
+    "(peg.token (peg.exact \")\"))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.token (peg.exact ")"))`;
+      const historyEntry = `(peg.token (peg.exact ")")):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(some ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `none`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (input.startsWith(")", offset)
+    ? (offset += ")".length, JSON.stringify(")"))
+    : null);
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.token (peg.exact \"(\"))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.token (peg.exact "("))`;
+      const historyEntry = `(peg.token (peg.exact "(")):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(some ${result_0})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `none`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (input.startsWith("(", offset)
+    ? (offset += "(".length, JSON.stringify("("))
+    : null);
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.cterm2": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.cterm2`;
+      const historyEntry = `peg.cterm2:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(peg.token peg.ident)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(peg.cvar ${result_0})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = yield { parser: "(peg.token (peg.exact \"(\"))", args: {  } };
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "peg.cterm0", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = yield { parser: "(peg.token (peg.exact \")\"))", args: {  } };
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `${result_0}`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.cterm1": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.cterm1`;
+      const historyEntry = `peg.cterm1:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "peg.cterm2", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = yield { parser: "peg.cterm2", args: {  } };
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_3 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_3 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_2} ${result_3})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = yield { parser: "peg.cterm2", args: {  } };
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(peg.capp ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "peg.cterm2", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.token (peg.exact \".\"))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.token (peg.exact "."))`;
+      const historyEntry = `(peg.token (peg.exact ".")):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_1} ${result_2})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(some ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `none`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (input.startsWith(".", offset)
+    ? (offset += ".".length, JSON.stringify("."))
+    : null);
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.identrest": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.identrest`;
+      const historyEntry = `peg.identrest:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = ((offset < input.length && "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.charmany peg.identrest)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.charmany peg.identrest)`;
+      const historyEntry = `(peg.charmany peg.identrest):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "peg.identrest", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_2 = yield { parser: "(peg.charmany peg.identrest)", args: {  } };
+     if (result_2 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return ((a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b)))(`${result_1}`, `${result_2}`);})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `""`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.identfirst": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.identfirst`;
+      const historyEntry = `peg.identfirst:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = ((offset < input.length && "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.ident": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.ident`;
+      const historyEntry = `peg.ident:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "peg.identfirst", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "(peg.charmany peg.identrest)", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (function(){return JSON.stringify(JSON.parse(`${result_0}`) + JSON.parse(`${result_1}`));})();
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.token peg.ident)": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.token peg.ident)`;
+      const historyEntry = `(peg.token peg.ident):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(some ${result_0})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `none`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = yield { parser: "peg.ident", args: {  } };
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "(peg.token (peg.exact \"λ\"))": (function*(args) {
+      const {  } = args;
+      const memoEntry = `(peg.token (peg.exact "λ"))`;
+      const historyEntry = `(peg.token (peg.exact "λ")):${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = (yield* (function*() {
+     let result = [];
+     while (true) {
+       const current = ((offset < input.length && " \n\t\r".includes(input[offset]))
+     ? JSON.stringify(input[offset++])
+     : null);
+       if (current === null) break;
+       else result.push(current);
+     }
+     return `[${result.join(", ")}]`;
+   })());
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(cons ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `unit`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(some ${result_0})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = `none`;
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (input.startsWith("λ", offset)
+    ? (offset += "λ".length, JSON.stringify("λ"))
+    : null);
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.cterm0": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.cterm0`;
+      const historyEntry = `peg.cterm0:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = yield { parser: "(peg.token (peg.exact \"λ\"))", args: {  } };
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_0 = yield { parser: "(peg.token peg.ident)", args: {  } };
+     if (result_0 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result = yield { parser: "(peg.token (peg.exact \".\"))", args: {  } };
+     if (result === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = (yield* (function*() {
+     const keepOffset = offset;
+     const result_1 = yield { parser: "peg.cterm0", args: {  } };
+     if (result_1 === null) {
+       offset = keepOffset;
+       return null;
+     } else {
+       const result = `(peg.clam ${result_0} ${result_1})`;
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result === null) {
+         offset = keepOffset;
+         return null;
+       } else return result;
+     }
+   })());
+       if (result !== null) return result;
+     }
+     {
+       offset = keepOffset;
+       const result = yield { parser: "peg.cterm1", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   "peg.cterm": (function*(args) {
+      const {  } = args;
+      const memoEntry = `peg.cterm`;
+      const historyEntry = `peg.cterm:${offset}`;
+      const keepOffset = offset;
+      if (history.includes(historyEntry)) {
+        throw new Error(`left recursion found: adding ${historyEntry} to ${history}`);
+      }
+      if (memoEntry in memoize && memoize[memoEntry][keepOffset] !== undefined) {
+        const { result, newOffset } = memoize[memoEntry][keepOffset];
+        offset = newOffset;
+        return result;
+      } else {
+        let historyCopy = history.slice();
+        history.push(historyEntry);
+        const result = (yield* (function*() {
+     const keepOffset = offset;
+     
+     {
+       offset = keepOffset;
+       const result = yield { parser: "peg.cterm0", args: {  } };
+       if (result !== null) return result;
+     }
+     offset = keepOffset;
+     return null;
+   })());
+        if (result === null) offset = keepOffset;
+        if (!(memoEntry in memoize)) memoize[memoEntry] = {};
+        memoize[memoEntry][keepOffset] = { result, newOffset: offset };
+        history = historyCopy;
+        return result;
+      }
+     }),
+   
+  };
+      const memoize = {};
+      let history = [];
+      const firstGen = (function*() { return yield { parser: "peg.cterm", args: {  } }; })();
+      const recurseOrResult = [ { gen: firstGen, val: firstGen.next() } ];
+      let lastRes;
+      while (recurseOrResult.length > 0) {
+        const { gen: genTop, val: valTop } = recurseOrResult[recurseOrResult.length-1];
+        if (valTop.done) {
+          lastRes = valTop.value;
+          recurseOrResult.pop();
+          if (recurseOrResult.length > 0) {
+            const { gen, val } = recurseOrResult[recurseOrResult.length - 1];
+            recurseOrResult[recurseOrResult.length - 1] = { gen, val: gen.next(lastRes) };
+          }
+        } else {
+          const nextGen = parsers[valTop.value.parser](valTop.value.args);
+          recurseOrResult.push( {gen: nextGen, val: nextGen.next() } );
+        }
+      }
+      if (lastRes === null) {
+        return { result: null, newOffset: startOffset };
+      } else {
+        return { result: lastRes, newOffset: offset };
+      }
+   })

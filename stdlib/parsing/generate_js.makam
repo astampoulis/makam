@@ -474,7 +474,7 @@ parse_opt P Input Result :-
   else success,
   if (refl.typstring P Typ, generated_toplevel_parser_js Typ P Function_js)
   then success
-  else gen_toplevel_parser_js_cached P Function_js,
+  else gen_toplevel_parser_js P Function_js,
   eval_parser_js P Function_js Input Result.
 
 
