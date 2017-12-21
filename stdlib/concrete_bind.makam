@@ -1,0 +1,139 @@
+concrete : type -> type.
+concrete_args : type -> type -> type.
+
+%extend concrete.
+
+apply : A -> concrete_args A B -> concrete B.
+lambda : string -> concrete B -> concrete (A -> B).
+bindone : string -> concrete B -> concrete (bindone A B).
+var : string -> concrete A.
+
+nil : concrete_args A A.
+cons : concrete A -> concrete_args B C -> concrete_args (A -> B) C.
+
+resolve : [A] concrete A -> A -> prop.
+resolve_var : [A] string -> A -> prop.
+resolve_args : [A B] concrete_args A B -> args A B -> prop.
+
+vars_in_context, vars_in_context_store : list (dyn * string) -> prop.
+vars_in_context_store [].
+vars_in_context Vars :- once(vars_in_context_store Vars).
+
+pick_var_name : [A] A -> string -> prop.
+pick_var_name _ ID :- vars_in_context Vars, length Vars L, tostring L L_S, expansion.str `x_${L_S}` ID.
+
+resolve (lambda ID Body) (F: A -> B) :-
+  vars_in_context Vars,
+  (x:A -> resolve_var ID x -> vars_in_context_store ((dyn x, ID) :: Vars) ->
+     ((if (refl.isunif ID) then pick_var_name x ID else success),
+      resolve Body (F x))).
+resolve (bindone ID Body) (bindone ID Body') :-
+  resolve (lambda ID Body) Body'.
+resolve (var ID) X when once(resolve_var ID X).
+resolve (apply F Args) Result when refl.isunif Result :-
+  resolve_args Args Args',
+  args.apply F Args' Result.
+resolve X Result when not(refl.isunif Result) :-
+  refl.headargs Result Head ArgsDyn,
+  dyn.to_args ArgsDyn Args,
+  resolve_args ArgsConcrete Args,
+  dyn.eq X (concrete.apply Head ArgsConcrete).
+
+resolve_args nil nil.
+resolve_args (cons HD TL) (cons HD' TL') :-
+  resolve HD HD', resolve_args TL TL'.
+
+%end.
+
+
+
+term : type.
+
+stringconst : string -> term.
+stringappend : term -> term -> term.
+let : term -> bindone term term -> term.
+
+local_variable : term -> prop.
+
+transform : term -> term -> prop.
+transform (stringconst S) (stringconst S).
+
+transform (stringappend X Y) (let X' (bindone _ (fun x' =>
+                             (let Y' (bindone _ (fun y' =>
+                             (stringappend x' y')))))))
+  when not(local_variable X), not(local_variable Y) :-
+  transform X X', transform Y Y'.
+
+transform (stringappend X Y) (stringappend X Y)
+  when (local_variable X; local_variable Y).
+
+transform (let Def X_Body) (let Def' (bindone _ (fun x' =>
+                           (X_Body' x')))) :-
+  transform Def Def',
+  bindone.open X_Body (pfun x body => [X_Body'']
+    (local_variable x -> (transform body X_Body'', eq X_Body'' (X_Body' x)))).
+
+transform (let 
+            (stringappend (stringappend (stringconst "a") (stringconst "b"))
+                          (stringappend (stringconst "a") (stringconst "b")))
+            (bindone "z" (fun z => stringappend z z))) X ?
+
+transform X X when local_variable X.
+
+
+cterm : type.
+cconst : string -> cterm.
+cappend : cterm -> cterm -> cterm.
+clet : string -> cterm -> cterm -> cterm.
+cvar : string -> cterm.
+
+%open concrete.
+
+convert : cterm -> concrete term -> prop.
+convert (cconst S) (concrete.apply stringconst [ concrete.apply S [] ]).
+convert (cappend E1 E2) (concrete.apply stringappend [E1', E2']) :-
+  convert E1 E1', convert E2 E2'.
+convert (clet ID Def Body) (concrete.apply let [Def', concrete.bindone ID Body']) :-
+  convert Def Def', convert Body Body'.
+convert (cvar ID) (concrete.var ID).
+
+resolve_cterm : cterm -> term -> prop.
+resolve_cterm CTerm Term when refl.isunif(Term) :- convert CTerm C', concrete.resolve C' Term.
+resolve_cterm CTerm Term when refl.isunif(CTerm) :- concrete.resolve C' Term, print C', convert CTerm C'.
+
+%open peg.
+%use "stdlib/syntax/syntax_syntax".
+
+cterm : syntax cterm.
+
+ident : syntax string.
+syntax.rule ident (syntax_syntax.token (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyz_0123456789"))).
+syntax.inline ident.
+
+
+(concrete.resolve (concrete.apply let [ concrete.apply stringconst [ concrete.apply "lala" [] ],
+                                       concrete.bindone "x" (concrete.var "x") ]) X ) ?
+
+resolve_cterm (clet "x" (cconst "lala") (cvar "x")) X ?
+
+concrete.resolve X (let (stringconst "lala") (bindone _ (fun x => x))) ?
+resolve_cterm X (let (stringconst "lala") (bindone _ (fun x => x))) ?
+
+
+`( syntax_rules {{
+
+cterm -> cconst  { <syntax_syntax.token syntax_syntax.string_literal> }
+       / cappend { '(' <cterm> '++' <cterm> ')' }
+       / clet    { 'let' <ident> '=' <cterm> 'in' <cterm> }
+       / cvar    { <ident> }
+
+}} ).
+
+`( syntax.def_toplevel_js cterm ).
+
+
+(syntax.parse_opt cterm {{
+(('lala' ++ 'foo') ++ 'jon')
+}} _X, resolve_cterm _X X, 
+transform X Y,
+resolve_cterm _Y Y, syntax.pretty cterm _Y Result, print_string `\n\n${Result}\n\n`) ?

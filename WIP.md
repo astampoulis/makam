@@ -1,0 +1,6 @@
+- [x] fix bug in syntax_syntax
+- [x] very much WIP -- example + some concrete binding
+- [ ] add concrete binding module
+- [ ] syntax_syntax parses makam lambdas now
+- [ ] some kind of sugar for generating concrete constructors
+- [ ] add a full end-to-end language definition test
