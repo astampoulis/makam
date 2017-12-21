@@ -1,2 +1,4 @@
 %benchmark+.
 %use testocaml.
+run_tests X ?
+

@@ -76,7 +76,7 @@ let (process_input : string -> unit) input =
 
       if not (UChannel.at_eof input) then
       match res with
-	  Some(f, input') -> f (); loop input'
+          Some(_, input') -> loop input'
 	| _ -> print_now
 	           ("\nParsing error at " ^
 		    (input |> UChannel.loc |> UChannel.string_of_loc) ^
@@ -105,7 +105,7 @@ let (process_input : string -> unit) input =
          (Printf.printf "In %s:\n  Last command was not a query.\n%!"
             (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
-        (print_now ("\nIncomplete parse at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
+        (print_now ("\nParse error at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
       | e ->
 	raise e
   in

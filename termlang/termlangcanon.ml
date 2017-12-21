@@ -1720,7 +1720,7 @@ let syntax_type_of (s: string) =
 ;;
 
 let global_load_file_resolved ?modul
-    (pars : syntax_type -> string -> (unit -> unit) list) (filename : string) =
+    (pars : syntax_type -> string -> unit) (filename : string) =
 
   let state = !globalstate in
   let fullmodul =
@@ -1749,7 +1749,6 @@ let global_load_file_resolved ?modul
 
     let cur_dir = Path.of_string filename |> Path.parent |> Path.to_string in
     let syntax = Option.default `Makam (syntax_type_of filename) in
-    let res = pars syntax filename in
     let updateLoadedModules () =
 
       let state' = !globalstate in
@@ -1783,7 +1782,7 @@ let global_load_file_resolved ?modul
     in
 
     let original_state = !globalstate in
-    let res = reifyexn (fun () -> doit (fun () -> List.iter (fun f -> f ()) res)) in
+    let res = reifyexn (fun () -> doit (fun () -> pars syntax filename)) in
     global_restore_post_file_import original_state ;
     reflectexn res
 
@@ -1813,7 +1812,7 @@ let global_add_directory dir =
 ;;
 
 let global_load_file ?modul
-    (pars : syntax_type -> string -> (unit -> unit) list) (filename : string) =
+    (pars : syntax_type -> string -> unit) (filename : string) =
   let filename =
     match syntax_type_of filename with
       Some _ -> filename

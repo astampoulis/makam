@@ -118,6 +118,8 @@ let loc    c = c.location ;;
 let reached_eof c = !(c.reached_eof) ;;
 let at_eof c = UString.is_end !(c.contents) c.current && !(c.reached_eof) ;;
 
+let input_statehash = ref 0;;
+
 let get_one c =
   try
     let u, next = c.looknext c.current in
@@ -129,7 +131,12 @@ let get_one c =
       then { loc with lineno = loc.lineno + 1 ; charno = 1; offset = loc.offset + 1 }
       else { loc with charno = loc.charno + 1 ; offset = loc.offset + 1 }
     in
-    let _ = if next > !(c.furthest) then c.furthest := next in
+    let _ =
+      if next > !(c.furthest) then (
+        input_statehash := Hashtbl.hash (!input_statehash + ucode);
+        c.furthest := next
+      )
+    in
     Some (u, { c with current = next ; location = newloc})
   with IO.No_more_input -> None
 ;;

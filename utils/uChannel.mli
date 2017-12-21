@@ -23,6 +23,8 @@ val  loc               : t -> loc ;;
 val  reached_eof       : t -> bool ;;
 val  at_eof            : t -> bool ;;
 
+val  input_statehash   : int ref;;
+
 val  get_one           : t -> (UChar.uchar * t) option ;;
 val  map               : (t -> UChar.uchar -> 'a) -> t -> 'a list ;;
 val  flush_to_furthest : t -> t ;;
