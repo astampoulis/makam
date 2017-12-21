@@ -118,7 +118,7 @@ let loc    c = c.location ;;
 let reached_eof c = !(c.reached_eof) ;;
 let at_eof c = UString.is_end !(c.contents) c.current && !(c.reached_eof) ;;
 
-let current_statehash = ref 0;;
+let input_statehash = ref 0;;
 
 let get_one c =
   try
@@ -133,7 +133,7 @@ let get_one c =
     in
     let _ =
       if next > !(c.furthest) then (
-        current_statehash := Hashtbl.hash (!current_statehash + ucode);
+        input_statehash := Hashtbl.hash (!input_statehash + ucode);
         c.furthest := next
       )
     in

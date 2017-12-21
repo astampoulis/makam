@@ -469,7 +469,12 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "statehash" ( _tString **> _tProp ) begin
   let open RunCtx.Monad in
   (fun _ -> fun [ s ] -> perform
-    let statehash = string_of_int !UChannel.current_statehash in
+    statehash <-- inmonad ~statewrite:false (fun _ ->
+      let inp = !UChannel.input_statehash in
+      let st = Hashtbl.hash_param 1024 256 !tempstate.rsmeta_parent in
+      let env = Hashtbl.hash_param 1024 256 !tempenv.retemp_constr_for_pred in
+      inp + st + env);
+    let statehash = string_of_int statehash in
     pattcanonUnifyFull s (_PofString statehash ~loc:s.loc))
   end;;
 

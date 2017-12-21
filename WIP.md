@@ -1,6 +1,8 @@
 - [x] calculate state hash based on input
 - [x] load/save file predicate
+- [x] statehash needs to incorporate current prolog state
 - [ ] cache predicate
+- [ ] make sure that things work
 - [ ] make sure tests are faster
 - [ ] make sure that two cache stuff works
 - [ ] add timing test
