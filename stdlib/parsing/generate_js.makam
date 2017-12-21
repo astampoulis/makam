@@ -445,19 +445,26 @@ eval_parser_js P Function_js Input Result :-
 
 cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 
+gen_toplevel_parser_js_cached : [A] peg A -> string -> prop.
+gen_toplevel_parser_js_cached P Code :-
+  refl.statehash StateHash,
+  expansion.str `.makam-cache/parsergen_${StateHash}.js` Filename,
+  if (string.readfile Filename Code) then success
+  else (gen_toplevel_parser_js P Code, unless (string.writefile Filename Code) success).
+
 def_toplevel_parser_js : [A]peg A -> cmd -> prop.
 def_toplevel_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
   (* this does not play well with polymorphism, so we require a monomorphic type.
      we can have different instantiations of the same polymorphic constant though,
      hence we store a representation of the type as part of the cached predicate. *)
   refl.typstring P Typ,
-  gen_toplevel_parser_js P Code.
+  gen_toplevel_parser_js_cached P Code.
 
 def_parser_js : [A]peg A -> peg A -> cmd -> prop.
 def_parser_js P P' (cmd_many [ cmd_newclause (clause (external P) success),
                                cmd_newclause (clause (extern_def P Code) success) ]) :-
   refl.typstring P Typ, (* require the type to be monomorphic *)
-  gen_toplevel_parser_js P' Code.
+  gen_toplevel_parser_js_cached P' Code.
 
 parse_opt : [A] peg A -> string -> (A * string) -> prop.
 
@@ -470,7 +477,7 @@ parse_opt P Input Result :-
   else success,
   if (refl.typstring P Typ, cached_toplevel_parser_js Typ P Function_js)
   then success
-  else gen_toplevel_parser_js P Function_js,
+  else gen_toplevel_parser_js_cached P Function_js,
   eval_parser_js P Function_js Input Result.
 
 

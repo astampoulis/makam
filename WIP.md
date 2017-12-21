@@ -1,10 +1,8 @@
 - [x] calculate state hash based on input
 - [x] load/save file predicate
 - [x] statehash needs to incorporate current prolog state
-- [ ] cache predicate
-- [ ] make sure that things work
-- [ ] make sure tests are faster
-- [ ] make sure that two cache stuff works
+- [x] cache predicate
+- [ ] disable input state for readcache
+- [ ] create directory as part of writefile
 - [ ] add timing test
 - [ ] start the hash based on the binary hash
-- [ ] make sure that basic string predicates preserve locs
