@@ -2,7 +2,8 @@
 - [x] load/save file predicate
 - [x] statehash needs to incorporate current prolog state
 - [x] cache predicate
-- [ ] disable input state for readcache
-- [ ] create directory as part of writefile
+- [x] readcache/writecache with disabled input update
+- [ ] make sure that changes later in the file dont invalidate cache
+- [ ] generalize the cache predicate
 - [ ] add timing test
 - [ ] start the hash based on the binary hash

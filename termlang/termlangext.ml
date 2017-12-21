@@ -308,28 +308,44 @@ new_builtin_predicate "contains" ( _tString **> _tString **> _tProp ) begin
     moneOrMzero (String.exists str1' str2'))
 end;;
 
+let readFileAsString filename =
+  let chan = UChannel.from_filename filename in
+  let startLoc = UChannel.loc chan in
+  let (s, chan') =
+    let store = ref [] in
+    let rec aux c =
+      match UChannel.get_one c with
+        None -> (!store |> List.rev |> UString.implode, c)
+      | Some (hd, c') -> store := (hd :: !store); aux c'
+    in
+    aux chan
+  in
+  let endLoc = UChannel.loc chan' in
+  let span = UChannel.mk_span startLoc endLoc in
+  _PofString (UString.to_string s) ~loc:span
+;;
+
 new_builtin_predicate "readfile" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
   (fun _ -> fun [ filename; content ] -> perform
     filename <-- chasePattcanon [] filename ;
     filename <-- _PtoString filename ;
     contentString <--
-      (try
-        let chan = UChannel.from_filename filename in
-        let startLoc = UChannel.loc chan in
-        let (s, chan') =
-          let store = ref [] in
-          let rec aux c =
-            match UChannel.get_one c with
-              None -> (!store |> List.rev |> UString.implode, c)
-            | Some (hd, c') -> store := (hd :: !store); aux c'
-          in
-          aux chan
-        in
-        let endLoc = UChannel.loc chan' in
-        let span = UChannel.mk_span startLoc endLoc in
-        return (_PofString (UString.to_string s) ~loc:span)
-      with _ -> mzero);
+      (try return (readFileAsString filename) with _ -> mzero);
+    pattcanonUnifyFull content contentString)
+end;;
+
+new_builtin_predicate "readcachefile" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ filename; content ] -> perform
+    filename <-- chasePattcanon [] filename ;
+    filename <-- _PtoString filename ;
+    contentString <-- (
+      let input_statehash = !UChannel.input_statehash in
+      let res = try return (readFileAsString (makam_cache_dir ^ "/" ^ filename)) with _ -> mzero in
+      let _ = UChannel.input_statehash := input_statehash in
+      res
+    );
     pattcanonUnifyFull content contentString)
 end;;
 
@@ -342,6 +358,28 @@ new_builtin_predicate "writefile" ( _tString **> _tString **> _tProp ) begin
     content <-- _PtoString content ;
     try
       let output = File.open_out filename in
+      let _ = IO.nwrite output content in
+      let _ = IO.close_out output in
+      return ()
+    with _ ->
+      mzero)
+end;;
+
+new_builtin_predicate "writecachefile" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ filename; content ] -> perform
+    filename <-- chasePattcanon [] filename ;
+    filename <-- _PtoString filename ;
+    content <-- chasePattcanon [] content ;
+    content <-- _PtoString content ;
+    _ <-- (try
+             if Sys.is_directory makam_cache_dir then return () else mzero
+           with _ ->
+             (try
+                Unix.mkdir makam_cache_dir 0o775; return ()
+              with _ -> mzero));
+    try
+      let output = File.open_out (makam_cache_dir ^ "/" ^ filename) in
       let _ = IO.nwrite output content in
       let _ = IO.close_out output in
       return ()

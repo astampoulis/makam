@@ -448,9 +448,9 @@ cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 gen_toplevel_parser_js_cached : [A] peg A -> string -> prop.
 gen_toplevel_parser_js_cached P Code :-
   refl.statehash StateHash,
-  expansion.str `.makam-cache/parsergen_${StateHash}.js` Filename,
-  if (string.readfile Filename Code) then success
-  else (gen_toplevel_parser_js P Code, unless (string.writefile Filename Code) success).
+  expansion.str `parsergen_${StateHash}.js` Filename,
+  if (string.readcachefile Filename Code) then success
+  else (gen_toplevel_parser_js P Code, unless (string.writecachefile Filename Code) success).
 
 def_toplevel_parser_js : [A]peg A -> cmd -> prop.
 def_toplevel_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
