@@ -1,0 +1,6 @@
+- [x] calculate state hash based on input
+- [ ] load/save file predicate
+- [ ] cache predicate
+- [ ] make sure tests are faster
+- [ ] add timing test
+- [ ] start the hash based on the binary hash

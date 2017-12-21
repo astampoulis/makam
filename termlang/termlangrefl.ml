@@ -466,6 +466,13 @@ builtin_enter_module "refl" ;;
      | None -> mzero))
   ;;
 
+  new_builtin_predicate "statehash" ( _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ s ] -> perform
+    let statehash = string_of_int !UChannel.current_statehash in
+    pattcanonUnifyFull s (_PofString statehash ~loc:s.loc))
+  end;;
+
   new_builtin_predicate "getunif" ( ~* "A" **> ~* "B" **> _tProp )
     (fun _ -> function [ input ; output ] -> begin
       (let open RunCtx.Monad in
