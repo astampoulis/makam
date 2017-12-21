@@ -1,0 +1,5 @@
+- [x] fix bug in syntax_syntax
+- [ ] add concrete binding module
+- [ ] generic concrete.lift that makes everything nice
+- [ ] maybe add binding-based specification of terms
+- [ ] add a full end-to-end language definition test

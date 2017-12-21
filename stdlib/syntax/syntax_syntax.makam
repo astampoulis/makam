@@ -209,7 +209,7 @@ syndef_str, syndef_str_cached : peg string.
 syndef : pretty syndef.
 
 peg.rule syndef_str
-       (string_transform (fun constr def => expansion.str `(syntax_syntax.syndef ${constr} (choices ${def}))`)
+       (string_transform (fun constr def => expansion.str `(syntax_syntax.syndef ${constr} (syntax.choices ${def}))`)
         [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
 pretty.rule syndef
        (unapply (fun constr def => syndef constr (choices def))
