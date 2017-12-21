@@ -3,7 +3,7 @@
 - [x] statehash needs to incorporate current prolog state
 - [x] cache predicate
 - [x] readcache/writecache with disabled input update
-- [ ] make sure that changes later in the file dont invalidate cache
+- [x] switch parser to immediately execute code
 - [ ] generalize the cache predicate
 - [ ] add timing test
 - [ ] start the hash based on the binary hash

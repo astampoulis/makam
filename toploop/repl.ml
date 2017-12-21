@@ -160,12 +160,12 @@ let rec repl ?input () : unit =
 
       if not (reached_eof input) then
       match res with
-          Some(f, input') -> f (); store_state (); loop input'
-        | _ ->  print_now
-                   ("\nParsing error at " ^
-                    (input |> UChannel.loc |> UChannel.string_of_loc) ^
-                    ".\n");
-               recover ()
+          Some(_, input') -> store_state (); loop input'
+        | _ ->
+           if is_stdin then
+             raise (Peg.IncompleteParse(input, input |> UChannel.loc |> UChannel.string_of_loc))
+           else
+             recover ()
     end
       with
       | BatInnerIO.Input_closed -> ()
@@ -193,7 +193,7 @@ let rec repl ?input () : unit =
       | MakamGrammar.Forget(s) ->
         (forget_to_state s; loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
-        (print_now ("\nIncomplete parse at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
+        (print_now ("\nParse error at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
       | e ->
         raise e
         (*
