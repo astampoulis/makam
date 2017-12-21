@@ -8,6 +8,7 @@ bin: [
 share: [
   "stdlib/basic_predicates.makam" {"stdlib/basic_predicates.makam"}
   "stdlib/bind.makam" {"stdlib/bind.makam"}
+  "stdlib/cache.makam" {"stdlib/cache.makam"}
   "stdlib/clause.makam" {"stdlib/clause.makam"}
   "stdlib/connectives.makam" {"stdlib/connectives.makam"}
   "stdlib/demand.makam" {"stdlib/demand.makam"}
@@ -34,11 +35,13 @@ share: [
   "stdlib/parsing/library.makam" {"stdlib/parsing/library.makam"}
   "stdlib/parsing/tests.makam" {"stdlib/parsing/tests.makam"}
   "stdlib/parsing/tests_opt.makam" {"stdlib/parsing/tests_opt.makam"}
+  "stdlib/parsing/layout_grammar.makam" {"stdlib/parsing/layout_grammar.makam"}
   "stdlib/pretty/init.makam" {"stdlib/pretty/init.makam"}
   "stdlib/pretty/pretty.makam" {"stdlib/pretty/pretty.makam"}
   "stdlib/pretty/tests.makam" {"stdlib/pretty/tests.makam"}
   "stdlib/syntax/init.makam" {"stdlib/syntax/init.makam"}
   "stdlib/syntax/syntax.makam" {"stdlib/syntax/syntax.makam"}
+  "stdlib/syntax/layout_syntax.makam" {"stdlib/syntax/layout_syntax.makam"}
   "stdlib/syntax/syntax_syntax.makam" {"stdlib/syntax/syntax_syntax.makam"}
   "stdlib/syntax/library.makam" {"stdlib/syntax/library.makam"}
   "stdlib/syntax/tests.makam" {"stdlib/syntax/tests.makam"}

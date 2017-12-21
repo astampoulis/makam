@@ -443,17 +443,14 @@ eval_parser_js P Function_js Input Result :-
   js.eval FinalCode ResultS,
   refl.fromstring ResultS (some Result).
 
-cached_toplevel_parser_js : [A] string -> peg A -> string -> prop.
+generated_toplevel_parser_js : [A] string -> peg A -> string -> prop.
 
 gen_toplevel_parser_js_cached : [A] peg A -> string -> prop.
 gen_toplevel_parser_js_cached P Code :-
-  refl.statehash StateHash,
-  expansion.str `parsergen_${StateHash}.js` Filename,
-  if (string.readcachefile Filename Code) then success
-  else (gen_toplevel_parser_js P Code, unless (string.writecachefile Filename Code) success).
+  persistent_cache.predicate (gen_toplevel_parser_js P) Code.
 
 def_toplevel_parser_js : [A]peg A -> cmd -> prop.
-def_toplevel_parser_js P (cmd_newclause (clause (cached_toplevel_parser_js Typ P Code) success)) :-
+def_toplevel_parser_js P (cmd_newclause (clause (generated_toplevel_parser_js Typ P Code) success)) :-
   (* this does not play well with polymorphism, so we require a monomorphic type.
      we can have different instantiations of the same polymorphic constant though,
      hence we store a representation of the type as part of the cached predicate. *)
@@ -475,7 +472,7 @@ parse_opt P Input Result :-
      print_string `-- At ${LocS}, using parse_opt with uninstantiated PEG.\n`,
      failure)
   else success,
-  if (refl.typstring P Typ, cached_toplevel_parser_js Typ P Function_js)
+  if (refl.typstring P Typ, generated_toplevel_parser_js Typ P Function_js)
   then success
   else gen_toplevel_parser_js_cached P Function_js,
   eval_parser_js P Function_js Input Result.

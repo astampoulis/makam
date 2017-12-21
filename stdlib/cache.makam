@@ -1,0 +1,9 @@
+%extend persistent_cache.
+
+predicate : (string -> prop) -> string -> prop.
+predicate P Result :-
+  refl.statehash StateHash,
+  if (string.readcachefile StateHash Result) then success
+  else (P Result, unless (string.writecachefile StateHash Result) success).
+
+%end.
