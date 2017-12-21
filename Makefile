@@ -43,6 +43,9 @@ configure:
 makam-tests:
 	makam --run-tests all_tests
 
+makam-timing-tests:
+	./scripts/timing-test.sh
+
 cache-clean:
 	rm -rf .makam-cache
 

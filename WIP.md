@@ -6,5 +6,5 @@
 - [x] switch parser to immediately execute code
 - [x] fixes in repl [ci-test-js]
 - [x] generalize the cache predicate
-- [ ] add timing test
+- [x] add timing test
 - [ ] start the hash based on the binary hash
