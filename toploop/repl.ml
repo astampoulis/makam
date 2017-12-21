@@ -161,11 +161,12 @@ let rec repl ?input () : unit =
       if not (reached_eof input) then
       match res with
           Some(_, input') -> store_state (); loop input'
-        | _ ->
-           if is_stdin then
-             raise (Peg.IncompleteParse(input, input |> UChannel.loc |> UChannel.string_of_loc))
-           else
-             recover ()
+        | _ when is_stdin ->
+           print_now
+             ("\nParse error at " ^
+                (input |> UChannel.loc |> UChannel.string_of_loc) ^ ".\n");
+           recover ()
+        | _ -> recover ()
     end
       with
       | BatInnerIO.Input_closed -> ()

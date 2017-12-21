@@ -4,6 +4,7 @@
 - [x] cache predicate
 - [x] readcache/writecache with disabled input update
 - [x] switch parser to immediately execute code
+- [x] fixes in repl [ci-test-js]
 - [ ] generalize the cache predicate
 - [ ] add timing test
 - [ ] start the hash based on the binary hash

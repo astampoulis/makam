@@ -76,8 +76,12 @@ let (process_input : string -> unit) input =
 
       if not (UChannel.at_eof input) then
       match res with
-          Some(_, input') -> store_state (); loop input'
-        | _ -> recover ()
+          Some(_, input') -> loop input'
+	| _ -> print_now
+	           ("\nParsing error at " ^
+		    (input |> UChannel.loc |> UChannel.string_of_loc) ^
+		    ".\n");
+	       recover ()
     end 
       with 
       | BatInnerIO.Input_closed -> ()
