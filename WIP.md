@@ -1,6 +1,8 @@
 - [x] calculate state hash based on input
-- [ ] load/save file predicate
+- [x] load/save file predicate
 - [ ] cache predicate
 - [ ] make sure tests are faster
+- [ ] make sure that two cache stuff works
 - [ ] add timing test
 - [ ] start the hash based on the binary hash
+- [ ] make sure that basic string predicates preserve locs

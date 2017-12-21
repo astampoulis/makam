@@ -308,6 +308,48 @@ new_builtin_predicate "contains" ( _tString **> _tString **> _tProp ) begin
     moneOrMzero (String.exists str1' str2'))
 end;;
 
+new_builtin_predicate "readfile" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ filename; content ] -> perform
+    filename <-- chasePattcanon [] filename ;
+    filename <-- _PtoString filename ;
+    contentString <--
+      (try
+        let chan = UChannel.from_filename filename in
+        let startLoc = UChannel.loc chan in
+        let (s, chan') =
+          let store = ref [] in
+          let rec aux c =
+            match UChannel.get_one c with
+              None -> (!store |> List.rev |> UString.implode, c)
+            | Some (hd, c') -> store := (hd :: !store); aux c'
+          in
+          aux chan
+        in
+        let endLoc = UChannel.loc chan' in
+        let span = UChannel.mk_span startLoc endLoc in
+        return (_PofString (UString.to_string s) ~loc:span)
+      with _ -> mzero);
+    pattcanonUnifyFull content contentString)
+end;;
+
+new_builtin_predicate "writefile" ( _tString **> _tString **> _tProp ) begin
+  let open RunCtx.Monad in
+  (fun _ -> fun [ filename; content ] -> perform
+    filename <-- chasePattcanon [] filename ;
+    filename <-- _PtoString filename ;
+    content <-- chasePattcanon [] content ;
+    content <-- _PtoString content ;
+    try
+      let output = File.open_out filename in
+      let _ = IO.nwrite output content in
+      let _ = IO.close_out output in
+      return ()
+    with _ ->
+      mzero)
+end;;
+
+
 builtin_leave_module ();;
 
 
