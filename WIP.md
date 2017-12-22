@@ -2,7 +2,10 @@
 - [x] rename test files a bit
 - [x] fix parsing of keywords in grammar
 - [x] better error and recovery in repl
-- [ ] add concrete binding module
-- [ ] generic concrete.lift that makes everything nice
-- [ ] maybe add binding-based specification of terms
+- [x] add timing tests to circle
+- [ ] implement binddep and add to concrete_bind
+- [ ] examples for letrec, patterns, etc.
+- [ ] namespace union and per-namespace resolve
+- [ ] syntax_syntax parses makam lambdas now
+- [ ] some kind of sugar for generating concrete constructors
 - [ ] add a full end-to-end language definition test
