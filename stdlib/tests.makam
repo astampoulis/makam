@@ -286,3 +286,5 @@ let_in : term -> (term -> term) -> term.
 >> X := "world".
 
 %end.
+
+%use "concrete_bind.tests.makam".

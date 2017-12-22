@@ -1,6 +1,9 @@
 - [x] fix bug in syntax_syntax
 - [x] very much WIP -- example + some concrete binding
-- [ ] add concrete binding module
-- [ ] syntax_syntax parses makam lambdas now
+- [x] add concrete binding module
+- [ ] add bindrec to concrete_bind
+- [ ] implement binddep and add to concrete_bind
+- [ ] examples for letrec, patterns, etc.
+- [ ] namespace union and per-namespace resolve
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] add a full end-to-end language definition test
