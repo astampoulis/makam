@@ -1,5 +1,7 @@
 - [x] fix bug in syntax_syntax
 - [x] rename test files a bit
+- [x] fix parsing of keywords in grammar
+- [ ] better error and recovery in repl
 - [ ] add concrete binding module
 - [ ] generic concrete.lift that makes everything nice
 - [ ] maybe add binding-based specification of terms
