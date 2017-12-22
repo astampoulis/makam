@@ -131,6 +131,45 @@ let use_files files =
   String.concat "\n" (List.map (fun s -> "%use \"" ^ s ^ "\".") files)
 ;;
 
+let exception_handler f last_cmd_span recover recover_break =
+  try f ()
+  with
+  | BatInnerIO.Input_closed -> ()
+  | Sys.Break ->
+     (print_now "\nInterrupted.\n"; recover_break ())
+  | Termlangcanon.FileNotFound(s, all) ->
+     (Printf.printf "In %s:\n  File %s not found (searched: %a).\n%!"
+                    (last_cmd_span ()) s
+                    (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all
+     ; recover())
+  | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
+     (recover())
+  | Termlangprolog.ResetInModule m ->
+     (Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
+                    (last_cmd_span ()) m; recover())
+  | Termlangcanon.NotInModule ->
+     (Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
+                    (last_cmd_span ()); recover())
+  | MakamGrammar.NoTestSuite ->
+     (Printf.printf "In %s:\n  Test suite has not been specified, use %%testsuite directive.\n%!"
+                    (last_cmd_span ()); recover())
+  | MakamGrammar.NoQueryToTest ->
+     (Printf.printf "In %s:\n  Last command was not a query.\n%!"
+                    (last_cmd_span ()); recover())
+  | MakamGrammar.Forget(s) ->
+     (forget_to_state s; recover())
+  | Peg.IncompleteParse(_, s) ->
+     (print_now ("\nParse error at " ^ s ^ ".\n"); recover())
+  | e ->
+     raise e
+     (*
+     !meta_print_exception e ;
+     flush IO.stdout;
+     restore_debug () ;
+     loop (UChannel.flush_to_furthest input)
+     *)
+;;
+
 let rec repl ?input () : unit =
   Sys.catch_break true;
   let input, prompt, reached_eof, is_stdin =
@@ -161,7 +200,7 @@ let rec repl ?input () : unit =
     if not (reached_eof input) then
     print_now prompt;
 
-    try
+    exception_handler (fun () ->
     begin
       old_debug := !Termlangcanon._DEBUG ;
 
@@ -178,45 +217,13 @@ let rec repl ?input () : unit =
                 (input |> UChannel.loc |> UChannel.string_of_loc) ^ ".\n");
            recover ()
         | _ -> recover ()
-    end
-      with
-      | BatInnerIO.Input_closed -> ()
-      | Sys.Break ->
-        (print_now "\nInterrupted.\n"; restore_debug () ; if is_stdin then repl () else loop (UChannel.flush_to_furthest input))
-      | Termlangcanon.FileNotFound(s, all) ->
-        (Printf.printf "In %s:\n  File %s not found (searched: %a).\n%!"
-                       (last_cmd_span ()) s
-                       (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all
-        ; loop (UChannel.flush_to_furthest input))
-      | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
-        (restore_debug (); loop (UChannel.flush_to_furthest input))
-      | Termlangprolog.ResetInModule m ->
-        (Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
-           (last_cmd_span ()) m; loop (UChannel.flush_to_furthest input))
-      | Termlangcanon.NotInModule ->
-        (Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
-           (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
-      | MakamGrammar.NoTestSuite ->
-         (Printf.printf "In %s:\n  Test suite has not been specified, use %%testsuite directive.\n%!"
-            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
-      | MakamGrammar.NoQueryToTest ->
-         (Printf.printf "In %s:\n  Last command was not a query.\n%!"
-            (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
-      | MakamGrammar.Forget(s) ->
-        (forget_to_state s; loop (UChannel.flush_to_furthest input))
-      | Peg.IncompleteParse(_, s) ->
-        (print_now ("\nParse error at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
-      | e ->
-        raise e
-        (*
-        !meta_print_exception e ;
-        flush IO.stdout;
-        restore_debug () ;
-        loop (UChannel.flush_to_furthest input)
-        *)
+    end)
+    last_cmd_span
+    (fun () -> restore_debug (); loop (UChannel.flush_to_furthest input))
+    (fun () -> restore_debug () ; if is_stdin then repl () else loop (UChannel.flush_to_furthest input))
   in
   loop input
-
+;;
 
 let benchmark_results () =
   let results = Benchmark.cumulative_results () in
