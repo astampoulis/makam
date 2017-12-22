@@ -1,4 +1,5 @@
 - [x] fix bug in syntax_syntax
+- [x] rename test files a bit
 - [ ] add concrete binding module
 - [ ] generic concrete.lift that makes everything nice
 - [ ] maybe add binding-based specification of terms
