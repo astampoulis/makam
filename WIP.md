@@ -1,9 +1,9 @@
 - [x] fix bug in syntax_syntax
 - [x] very much WIP -- example + some concrete binding
 - [x] add concrete binding module
-- [ ] add bindrec to concrete_bind
+- [x] switched to poly-target constructors instead
 - [ ] implement binddep and add to concrete_bind
+- [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
-- [ ] namespace union and per-namespace resolve
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] add a full end-to-end language definition test

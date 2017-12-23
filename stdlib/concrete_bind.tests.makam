@@ -1,72 +1,90 @@
-%open concrete.
 %extend stdlib_tests.
 
 concrete_bind : testsuite. %testsuite concrete_bind.
 
 term : type.
 typ : type.
+
 stringconst : string -> term.
 function : (term -> term) -> term.
 tfunction : (typ -> term) -> term.
+ascribe : term -> typ -> term.
 letin : term -> bindone term term -> term.
+letrec : bindmany term (list term) -> bindmany term term -> term.
 globalvar : string -> term.
 
-termvars, typvars : namespace.
-namespace_for_variable (_: term) termvars.
-namespace_for_variable (_: typ) typvars.
+termvars, typvars : concrete.namespace.
+concrete.namespace_for_variable (_: term) termvars.
+concrete.namespace_for_variable (_: typ) typvars.
 
-pick_var_prefix_userdef typvars "α".
+concrete.pick_var_prefix_userdef typvars "α".
 
-handle_unresolved_var termvars ID (globalvar ID).
+concrete.handle_unresolved_var termvars ID (globalvar ID).
 
->> resolve (apply stringconst [ apply "foo" [] ]) X ?
+>> concrete.resolve (stringconst "foo") X ?
 >> Yes:
 >> X := stringconst "foo".
 
->> resolve X (stringconst "foo") ?
+>> concrete.resolve X (stringconst "foo") ?
 >> Yes:
->> X := apply stringconst [apply "foo" [] ].
+>> X := stringconst "foo".
 
->> resolve (apply function [ lambda termvars "x" (var termvars "x") ]) X ?
+>> concrete.resolve (function (concrete.lambda termvars "x" (concrete.var termvars "x"))) X ?
 >> Yes:
 >> X := function (fun x => x).
 
->> resolve X (function (fun x => x)) ?
+>> concrete.resolve X (function (fun x => x)) ?
 >> Yes:
->> X := apply function [lambda termvars "x1" (var termvars "x1")].
+>> X := function (concrete.lambda termvars "x1" (concrete.var termvars "x1")).
 
->> (pick_var_prefix_userdef termvars "z" ->
-     resolve X (function (fun x => x))) ?
+>> (concrete.pick_var_prefix_userdef termvars "z" ->
+     concrete.resolve X (function (fun x => x))) ?
 >> Yes:
->> X := apply function [lambda termvars "z1" (var termvars "z1")].
+>> X := function (concrete.lambda termvars "z1" (concrete.var termvars "z1")).
 
->> (pick_var_name_userdef termvars "z" ->
-      resolve X (function (fun x => x))) ?
+>> (concrete.pick_var_name_userdef termvars "z" ->
+      concrete.resolve X (function (fun x => x))) ?
 >> Yes:
->> X := apply function [lambda termvars "z" (var termvars "z")].
+>> X := function (concrete.lambda termvars "z" (concrete.var termvars "z")).
 
->> resolve X (function (fun x => (function (fun y => x)))) ?
+>> concrete.resolve X (function (fun x => (function (fun y => x)))) ?
 >> Yes:
->> X := apply function [lambda termvars "x1" (apply function [lambda termvars "x2" (var termvars "x1")])].
+>> X := function (concrete.lambda termvars "x1" (function (concrete.lambda termvars "x2" (concrete.var termvars "x1")))).
 
->> resolve X (function (fun x => tfunction (fun a => x))) ?
+>> concrete.resolve (function (concrete.lambda termvars "x" (tfunction (concrete.lambda typvars "α" (ascribe (concrete.var termvars "x") (concrete.var typvars "α")))))) X ?
 >> Yes:
->> X := apply function [lambda termvars "x1" (apply tfunction [lambda typvars "α1" (var termvars "x1")])].
+>> X := function (fun x => tfunction (fun a => ascribe x a)).
 
->> resolve (apply letin [apply stringconst [ apply "foo" [] ], bindone termvars "x" (var termvars "x")]) X ?
+>> concrete.resolve X (function (fun x => tfunction (fun a => ascribe x a))) ?
+>> Yes:
+>> X := function (concrete.lambda termvars "x1" (tfunction (concrete.lambda typvars "α1" (ascribe (concrete.var termvars "x1") (concrete.var typvars "α1"))))).
+
+>> concrete.resolve (letin (stringconst "foo") (bindone "x" (concrete.lambda termvars "x" (concrete.var termvars "x")))) X ?
 >> Yes:
 >> X := letin (stringconst "foo") (bindone "x" (fun x => x)).
 
->> resolve X (letin (stringconst "foo") (bindone _ (fun x => letin (stringconst "bar") (bindone _ (fun y => y))))) ?
+>> concrete.resolve X (letin (stringconst "foo") (bindone _ (fun x => letin (stringconst "bar") (bindone _ (fun y => y))))) ?
 >> Yes:
->> X := apply letin [apply stringconst [apply "foo" []], bindone termvars "x1" (apply letin [apply stringconst [apply "bar" []], bindone termvars "x2" (var termvars "x2")])].
+>> X := letin (stringconst "foo") (bindone "x1" (concrete.lambda termvars "x1" (letin (stringconst "bar") (bindone "x2" (concrete.lambda termvars "x2" (concrete.var termvars "x2")))))).
 
->> resolve (var termvars "some_global_var") X ?
+>> concrete.resolve (concrete.var termvars "some_global_var") X ?
 >> Yes:
 >> X := globalvar "some_global_var".
 
->> resolve X (globalvar "some_global_var") ?
+>> concrete.resolve X (globalvar "some_global_var") ?
 >> Yes:
->> X := var termvars "some_global_var".
+>> X := concrete.var termvars "some_global_var".
+
+>> concrete.resolve (letrec (bindnext "a" (concrete.lambda termvars "a" (bindnext "b" (concrete.lambda termvars "b" (bindend [stringconst "a", stringconst "b"]))))) (bindnext "a" (concrete.lambda termvars "a" (bindnext "b" (concrete.lambda termvars "b" (bindend (stringconst "body"))))))) X ?
+>> Yes:
+>> X := (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))).
+
+>> concrete.resolve X (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))) ?
+>> Yes:
+>> X := letrec (bindnext "a" (concrete.lambda termvars "a" (bindnext "b" (concrete.lambda termvars "b" (bindend [stringconst "a", stringconst "b"]))))) (bindnext "a" (concrete.lambda termvars "a" (bindnext "b" (concrete.lambda termvars "b" (bindend (stringconst "body")))))).
+
+>> (concrete.pattern_mode -> concrete.resolve (letin (stringconst "a") (bindone "x" (concrete.lambda termvars "x" (concrete.var termvars "x")))) X) ?
+>> Yes:
+>> X := letin (stringconst "a") (bindone ID' (fun x => x)).
 
 %end.
