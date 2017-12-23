@@ -285,6 +285,25 @@ let_in : term -> (term -> term) -> term.
 >> Yes:
 >> X := "world".
 
+(* ------------------- dependent bind *)
+
+bind : testsuite. %testsuite bind.
+
+>> dyn.eq (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body x))) (_: bind string (string * string * unit) string) ?
+>> Yes.
+
+>> bind.open (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?
+
+>> bind.apply (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) ["a","b"] X ?
+>> Yes:
+>> X := `${"a"}${"b"}`.
+
+>> bind.pair (bind.binder "x" (fun (x: string) => bind.binder YName (fun (y: string) => bind.body 1))) (bind.binder XName (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body "foo"))) X ?
+>> Yes:
+>> X := bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body (1, "foo"))),
+>> XName := "x",
+>> YName := "y".
+
 %end.
 
 %use "concrete_bind.tests.makam".

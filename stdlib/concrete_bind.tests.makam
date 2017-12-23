@@ -11,6 +11,7 @@ tfunction : (typ -> term) -> term.
 ascribe : term -> typ -> term.
 letin : term -> bindone term term -> term.
 letrec : bindmany term (list term) -> bindmany term term -> term.
+letrec_dep : bind term A (hlist A) -> bind term A term -> term.
 globalvar : string -> term.
 
 termvars, typvars : concrete.namespace.
@@ -86,5 +87,13 @@ concrete.handle_unresolved_var termvars ID (globalvar ID).
 >> (concrete.pattern_mode -> concrete.resolve (letin (stringconst "a") (bindone "x" (concrete.lambda termvars "x" (concrete.var termvars "x")))) X) ?
 >> Yes:
 >> X := letin (stringconst "a") (bindone ID' (fun x => x)).
+
+>> concrete.resolve (letrec_dep (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body [stringconst "a", stringconst "b"]))))) (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body (stringconst "body"))))))) X ?
+>> Yes:
+>> X := (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))).
+
+>> concrete.resolve X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))) ?
+>> Yes:
+>> X := letrec_dep (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body [stringconst "a", stringconst "b"]))))) (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body (stringconst "body")))))).
 
 %end.

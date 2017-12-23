@@ -62,4 +62,8 @@ resolve_aux (bindnext ID (lambda Namespace ID Body)) (bindnext ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve (lambda Namespace ID Body) Body'.
 
+resolve_aux (bind.binder ID (lambda Namespace ID Body)) (bind.binder ID' Body') :-
+  if (pattern_mode, refl.isunif ID') then success else eq ID ID',
+  resolve (lambda Namespace ID Body) Body'.
+
 %end.

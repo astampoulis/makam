@@ -2,7 +2,7 @@
 - [x] very much WIP -- example + some concrete binding
 - [x] add concrete binding module
 - [x] switched to poly-target constructors instead
-- [ ] implement binddep and add to concrete_bind
+- [x] implement binddep and add to concrete_bind
 - [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
 - [ ] some kind of sugar for generating concrete constructors
