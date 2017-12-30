@@ -8,7 +8,7 @@
 %extend syntax_syntax_tests.
 
 term : type.
-term : syntax term.
+term, baseterm : syntax term.
 
 lam : string -> term -> term.
 app : term -> list term -> term.
@@ -32,15 +32,35 @@ all : testsuite. %testsuite all.
 >> Yes:
 >> X := "syntax_syntax_tests.lam { 'λ' < syntax_syntax_tests.ident > '.' < syntax_syntax_tests.term > } ".
 
+>> pretty.pretty (makam_term 0) lam (some X) ?
+>> Yes:
+>> X := "syntax_syntax_tests.lam ".
+
+>> pretty.pretty (makam_term 0) (fun (x: term) => x) (some X) ?
+>> Yes:
+>> X := "fun anon0 => anon0 ".
+
+>> pretty.pretty (makam_term 0) (fun x y => lam y x) (some X) ?
+>> Yes:
+>> X := "fun anon0 => fun anon1 => syntax_syntax_tests.lam anon1 anon0 ".
+
 `( syntax_rules {{
 
-term ->   lam { 'λ' <ident> '.' <term> }
-        / var { <ident> }
-        / app { '(' <term> <many term> ')' }
+term ->
+        lam { 'λ' <ident> '.' <term> }
+      / app { <baseterm> <once_or_many baseterm> }
+      / fun x => x { <baseterm> }
+baseterm ->
+        var { <ident> }
+      / fun x => x { '(' <term> ')' }
 
 }} ).
 
 `( def_toplevel_js term ).
+
+>> syntax.parse_opt term { λx.λy.y x x } X ?
+>> Yes:
+>> X := lam "x" (lam "y" (app (var "y") [var "x", var "x"])).
 
 >> syntax.parse_opt term { λx.λy.(y x x) } X ?
 >> Yes:
@@ -48,12 +68,14 @@ term ->   lam { 'λ' <ident> '.' <term> }
 
 >> syntax.pretty term (lam "x" (lam "y" (app (var "y") [var "x", var "x"]))) X ?
 >> Yes:
->> X := "λ x . λ y . ( y x x ) ".
+>> X := "λ x . λ y . y x x ".
 
 >> (syntax.parse_opt term { λx.λy.((y x) x) } _Parsed, syntax.pretty term _Parsed Printed) ?
 >> Yes:
->> Printed := "λ x . λ y . ( ( y x ) x ) ".
+>> Printed := "λ x . λ y . ( y x ) x ".
 
-pretty.pretty (makam_term 0) lam X ?
+>> (syntax.parse_opt term { λx.(λy.((y x) x)) } _Parsed, syntax.pretty term _Parsed Printed) ?
+>> Yes:
+>> Printed := "λ x . λ y . ( y x ) x ".
 
 %end.

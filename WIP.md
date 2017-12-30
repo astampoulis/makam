@@ -5,7 +5,7 @@
 - [x] add timing tests to circle
 - [x] fixes in peg.gen_js string quoting
 - [x] syntax_syntax ident and string is more precise
-- [ ] syntax_syntax parses makam lambdas now
+- [x] syntax_syntax parses makam lambdas now
 - [ ] free-form end should allow prefix to be the close
 - [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
