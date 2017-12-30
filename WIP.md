@@ -3,9 +3,13 @@
 - [x] fix parsing of keywords in grammar
 - [x] better error and recovery in repl
 - [x] add timing tests to circle
-- [ ] implement binddep and add to concrete_bind
-- [ ] examples for letrec, patterns, etc.
-- [ ] namespace union and per-namespace resolve
+- [x] fixes in peg.gen_js string quoting
+- [ ] syntax_syntax ident and string is more precise
 - [ ] syntax_syntax parses makam lambdas now
+- [ ] free-form end should allow prefix to be the close
+- [ ] add unification variables?
+- [ ] examples for letrec, patterns, etc.
+- [ ] unresolved variable capturing
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] add a full end-to-end language definition test
+- [ ] add group to syntax_syntax
