@@ -173,10 +173,10 @@ pretty.rule base
 
 peg.rule base_str
          (string_transform (fun s => expansion.str `(${s})`)
-                [ exact "{", peg.captured appl_str, exact "}" ]).
+                [ exact "(", peg.captured appl_str, exact ")" ]).
 pretty.rule base
          (unapply (fun x => x)
-                [ const "{", pretty.captured appl, const "}" ]).
+                [ const "(", pretty.captured appl, const ")" ]).
 
 (* syntax.apply and syntax rules *)
 
@@ -208,11 +208,18 @@ pretty.rule args
      (unapply syntax.nil []).
 
 peg.rule appl_str
+          (string_transform (fun args => expansion.str `(syntax.apply (fun x => x) ${args})`)
+          [ syntax (token "("), peg.captured args_str, syntax (token ")") ]).
+pretty.rule appl
+     (unapply (syntax.apply (fun (x: A) => x))
+      [ syntax (token "("), pretty.captured (args: pretty (syntax_args (A -> A) A)), syntax (token ")") ]).
+
+peg.rule appl_str
           (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
           [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
 pretty.rule appl
      (unapply syntax.apply
-      [ pretty.captured (makam_term 1), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
+      [ pretty.captured (makam_term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
 peg.rule appl_str base_str.
 pretty.rule appl base.
@@ -259,7 +266,7 @@ peg.rule syndef_str
         [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
 pretty.rule syndef
        (unapply (fun constr def => syndef constr (choices def))
-        [ pretty.captured (makam_term 0), syntax (token "->"), pretty.captured choices ]).
+        [ pretty.captured (makam_term 0), syntax (token "->"), pretty.captured choices, const "\n" ]).
 
 `( peg.def_parser_js syndef_str_cached syndef_str ).
 
@@ -273,6 +280,6 @@ syntax_rule_clause (syndef SyntaxConstr SyntaxDef) (cmd_newclause (clause (synta
 
 syntax_rules : string -> cmd -> prop.
 syntax_rules RulesS (cmd_many Clauses) :-
-  if (syntax.parse_opt (once_or_many syntax_syntax.syndef) RulesS Rules)
+  if (syntax.parse_opt (list_sep_plus (optunit (syntax_syntax.token ";")) syntax_syntax.syndef) RulesS Rules)
   then map syntax_syntax.syntax_rule_clause Rules Clauses
   else (log_error RuleS `parsing the syntax rules failed`, failure).

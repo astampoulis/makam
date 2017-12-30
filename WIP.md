@@ -7,9 +7,9 @@
 - [x] syntax_syntax ident and string is more precise
 - [x] syntax_syntax parses makam lambdas now
 - [x] free-form end should allow parens to end ('}})')
+- [x] add group to syntax_syntax
 - [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
 - [ ] unresolved variable capturing
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] add a full end-to-end language definition test
-- [ ] add group to syntax_syntax

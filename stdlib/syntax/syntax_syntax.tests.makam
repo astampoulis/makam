@@ -49,10 +49,10 @@ all : testsuite. %testsuite all.
 term ->
         lam { 'λ' <ident> '.' <term> }
       / app { <baseterm> <once_or_many baseterm> }
-      / fun x => x { <baseterm> }
+      / baseterm ;
 baseterm ->
         var { <ident> }
-      / fun x => x { '(' <term> ')' }
+      / ( '(' <term> ')' )
 
 }}).
 
