@@ -443,7 +443,8 @@ end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
 enclosed -> str:repplus((!end_enclosed c:. << c >>)) << str |> UString.implode >>
 
 enclosed_starter -> hd:enclosed_starter_first tl:enclosed_starter_rest << ([UString.implode [hd]; fst tl] |> UString.concat, snd tl) >>
-enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_head << () >>) ) << () >>
+enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_last << () >>) ) << () >>
+                         / &( (enclosed_ender_head enclosed_ender_not_last << () >>) ) << () >>
 enclosed_ender -> hd:rep( (enclosed_ender_not_last x:enclosed_ender_head << x >>) )
                   tl:enclosed_ender_last << (List.append hd [tl]) |> UString.implode >>
 

@@ -6,7 +6,7 @@
 - [x] fixes in peg.gen_js string quoting
 - [x] syntax_syntax ident and string is more precise
 - [x] syntax_syntax parses makam lambdas now
-- [ ] free-form end should allow prefix to be the close
+- [x] free-form end should allow parens to end ('}})')
 - [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
 - [ ] unresolved variable capturing

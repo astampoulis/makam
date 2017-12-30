@@ -54,7 +54,7 @@ baseterm ->
         var { <ident> }
       / fun x => x { '(' <term> ')' }
 
-}} ).
+}}).
 
 `( def_toplevel_js term ).
 
