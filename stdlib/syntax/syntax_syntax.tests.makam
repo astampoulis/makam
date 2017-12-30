@@ -20,6 +20,10 @@ syntax.inline ident.
 
 all : testsuite. %testsuite all.
 
+>> syntax.parse_opt string_literal "'hello\\'\\n'" X ?
+>> Yes:
+>> X := "hello'\n".
+
 >> syntax.parse_opt choices "syntax_syntax_tests.lam { 'λ' <syntax_syntax_tests.ident> '.' <syntax_syntax_tests.term> }" X ?
 >> Yes:
 >> X := [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]].
@@ -49,5 +53,7 @@ term ->   lam { 'λ' <ident> '.' <term> }
 >> (syntax.parse_opt term { λx.λy.((y x) x) } _Parsed, syntax.pretty term _Parsed Printed) ?
 >> Yes:
 >> Printed := "λ x . λ y . ( ( y x ) x ) ".
+
+pretty.pretty (makam_term 0) lam X ?
 
 %end.

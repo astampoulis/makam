@@ -32,15 +32,29 @@ args : pretty (syntax_args A B).
 appl : syntax (syntax A).
 args : syntax (syntax_args A B).
 
-(* TODO: make this more precise *)
-syntax.rule makam_ident (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyz._")).
+makam_ident_first, makam_ident_rest : syntax string.
+syntax.inline makam_ident_first. syntax.inline makam_ident_rest.
+
+syntax.rule makam_ident_first (charclass "abcdefghijklmnopqrstuvwxyz_.").
+syntax.rule makam_ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule makam_ident (charcons makam_ident_first (charmany makam_ident_rest)).
 syntax.inline makam_ident.
 
 (* TODO: string literals should be more general than this too *)
+string_literal_char : syntax string.
+syntax.inline string_literal_char.
+syntax.rule string_literal_char (apply "'" [ exact "\\'" ]).
+syntax.rule string_literal_char (apply "\n" [ exact "\\n" ]).
+syntax.rule string_literal_char (apply "\r" [ exact "\\r" ]).
+syntax.rule string_literal_char (transform (pfun x res => not(string.contains "'\n\r" x), eq res x)
+                                           "function(x) { return \"'\\n\\r\".includes(JSON.parse(x)) ? null : x; }"
+                                           (pfun res x => not(string.contains "'\n\r" x), eq res x)
+                                           [ syntax.captured anychar ]).
+
 rule string_literal
      (group [
       exact "'",
-      syntax.captured (char_once_or_many (charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικλμνξοπρστυφχψω!@#$%^&*()-=+_;:<>[]{}.\/?")),
+      syntax.captured (charmany string_literal_char),
       exact "'"]).
 syntax.inline string_literal.
 
