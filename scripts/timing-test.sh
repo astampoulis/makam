@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TIMING_DEADLINE="65.0"
+NOCACHE_REFERENCE="107.50"
 
 set -eux
 
@@ -16,5 +17,5 @@ CACHE_TIME=$(tail -n 1 cache_time)
 rm nocache_time cache_time
 
 ( eval $(node -e "console.log(($CACHE_TIME / $NOCACHE_TIME) < 0.75 ? true : false)") ) &&
-( eval $(node -e "console.log($CACHE_TIME < $TIMING_DEADLINE ? true : false)") ) ||
+( eval $(node -e "console.log($CACHE_TIME < $TIMING_DEADLINE * ($NOCACHE_TIME / $NOCACHE_REFERENCE) ? true : false)") ) ||
 (echo "Timing regression"; exit 1)
