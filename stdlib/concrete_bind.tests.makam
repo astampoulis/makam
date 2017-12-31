@@ -96,4 +96,34 @@ concrete.handle_unresolved_var termvars ID (globalvar ID).
 >> Yes:
 >> X := letrec_dep (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body [stringconst "a", stringconst "b"]))))) (bind.binder "a" (concrete.lambda termvars "a" (bind.binder "b" (concrete.lambda termvars "b" (bind.body (stringconst "body")))))).
 
+term : syntax term. typ : syntax typ. ident : syntax string.
+
+syntax.rule ident (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικμνψοπρστυφχψω0123456789")).
+syntax.inline ident.
+
+`( syntax_rules {{
+
+typ -> concrete.var typvars { <syntax_syntax.token ident> }
+
+term -> stringconst
+        { <syntax_syntax.token syntax_syntax.string_literal> }
+      / fun id => fun body => function (concrete.lambda termvars id body)
+        { 'λ' <syntax_syntax.token ident> '.' <term> }
+      / fun id => fun body => tfunction (concrete.lambda typvars id body)
+        { 'Λ' <syntax_syntax.token ident> '.' <term> }
+      / ascribe
+        { '(' <term> ':' <typ> ')' }
+      / fun id => fun def => fun body => letin def (bindone id (concrete.lambda termvars id body))
+        { 'let' <syntax_syntax.token ident> '=' <term> 'in' <term> }
+      / concrete.var termvars
+        { <syntax_syntax.token ident> }
+
+}}).
+
+`( syntax.def_toplevel_js term ).
+
+>> (syntax.parse_opt term {{ λw.Λa.let x = ('foo' : a) in let y = 'bar' in w }} _X, concrete.resolve _X _Y, concrete.resolve _Z _Y, syntax.pretty term _Z QQ) ?
+>> Yes:
+>> QQ := "λ x1 . Λ α1 . let x = ( 'foo' : α1 ) in let y = 'bar' in x1 ".
+
 %end.

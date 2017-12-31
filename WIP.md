@@ -4,7 +4,7 @@
 - [x] switched to poly-target constructors instead
 - [x] implement binddep and add to concrete_bind
 - [x] forgot opam/files
-- [ ] add unification variables?
-- [ ] examples for letrec, patterns, etc.
+- [x] add an end-to-end language definition test
+- [ ] add concrete.binder and concrete.bind
 - [ ] some kind of sugar for generating concrete constructors
-- [ ] add a full end-to-end language definition test
+- [ ] examples for letrec, patterns, etc.
