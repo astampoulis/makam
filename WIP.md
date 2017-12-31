@@ -3,6 +3,7 @@
 - [x] add concrete binding module
 - [x] switched to poly-target constructors instead
 - [x] implement binddep and add to concrete_bind
+- [x] forgot opam/files
 - [ ] add unification variables?
 - [ ] examples for letrec, patterns, etc.
 - [ ] some kind of sugar for generating concrete constructors
