@@ -121,13 +121,14 @@ loced(p) -> startloc:(epsilon << UChannel.loc _input >>)
             endloc:(epsilon << UChannel.loc _input >>)
             << { content = res ; span = UChannel.mk_span startloc endloc } >>
 ltoken(p) -> r:token(loced(p)) << r >>
+lkeyword(p) -> r:token(loced(keyword(p))) << r >>
 
-lexpr -> fn:ltoken("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
+lexpr -> fn:lkeyword("fun") bindings:repplusWHITE(binding) token("=>") body:lexpr
         << let bindings = List.flatten bindings in
            let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
            List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
 
-       / fn:ltoken("pfun") bindings:repplusWHITE(binding) token("=>") body:prop
+       / fn:lkeyword("pfun") bindings:repplusWHITE(binding) token("=>") body:prop
         << let bindings = List.flatten bindings in
            let bindings = match bindings with hd :: tl -> { hd with span = fn ---> hd } :: tl | _ -> bindings in
            List.fold_right (fun binding body -> autospan_bin mkLamO binding body) bindings body >>
@@ -208,7 +209,7 @@ apptyp -> x:loced(typconstr)
 typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
 
 basetyp -> id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
-         / id:ltoken("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
+         / id:lkeyword("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
          / t:lparenthesized(lmonotyp)   << t >>
 
 binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")
@@ -219,11 +220,11 @@ binding -> token("(") ids:repWHITE(ltoken(identnamed)) token(":") t:lmonotyp tok
 
 (* Lambda Prolog part *)
 
-clause   -> goal:lexpr^ token("when") cond:prop token("<-") premise:prop
+clause   -> goal:lexpr^ token(keyword("when")) cond:prop token("<-") premise:prop
              << mkTm "whenclause" [ goal ; cond ; premise ] >>
-          / goal:lexpr^ token("when") cond:prop token(":-") premise:prop
+          / goal:lexpr^ token(keyword("when")) cond:prop token(":-") premise:prop
              << mkTm "whenclause" [ goal ; cond ; premise ] >>
-          / goal:lexpr^ token("when") cond:prop endspan:loced(epsilon)
+          / goal:lexpr^ token(keyword("when")) cond:prop endspan:loced(epsilon)
              << mkTm "whenclause" [ goal ; cond ; mkTmConst endspan "success" ] >>
           / goal:lexpr^ x:token("<-") premise:prop
             << mkTm "clause" [ goal ; premise ] >>
@@ -246,7 +247,7 @@ newmetas -> s:ltoken("[") bindings:repplusWHITE(binding) token("]")
                    bindings body >>
           / epsilon << fun x -> x >>
 
-hyp      -> token("if") ifh:hyp1 token("then") thenh:hyp1 token("else") elseh:hyp
+hyp      -> token(keyword("if")) ifh:hyp1 token(keyword("then")) thenh:hyp1 token(keyword("else")) elseh:hyp
             << mkTm "ifte" [ ifh ; thenh ; elseh ] >>
           / h:hyp1 << h >>
 
@@ -442,7 +443,8 @@ end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
 enclosed -> str:repplus((!end_enclosed c:. << c >>)) << str |> UString.implode >>
 
 enclosed_starter -> hd:enclosed_starter_first tl:enclosed_starter_rest << ([UString.implode [hd]; fst tl] |> UString.concat, snd tl) >>
-enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_head << () >>) ) << () >>
+enclosed_ender_not_last -> &( (enclosed_ender_head enclosed_ender_last << () >>) ) << () >>
+                         / &( (enclosed_ender_head enclosed_ender_not_last << () >>) ) << () >>
 enclosed_ender -> hd:rep( (enclosed_ender_not_last x:enclosed_ender_head << x >>) )
                   tl:enclosed_ender_last << (List.append hd [tl]) |> UString.implode >>
 
@@ -534,6 +536,7 @@ identfstchar -> c:letterchar    << c >>
 identrstchar -> c:(letterchar / digitchar / [_']) << c >>
 identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
 ident        -> &&( identaux^ << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux^ << id >>
+keyword(p)   -> &&( identaux^ << fun x -> StringSet.mem x _KEYWORDS >>) x:p << x >>
 
 cmdnamefstchar -> &latin1char c:letterchar    << c >>
 cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
