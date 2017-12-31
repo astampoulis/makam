@@ -26,25 +26,20 @@ share: [
   "stdlib/option.makam" {"stdlib/option.makam"}
   "stdlib/reify.makam" {"stdlib/reify.makam"}
   "stdlib/set.makam" {"stdlib/set.makam"}
-  "stdlib/tests.makam" {"stdlib/tests.makam"}
   "stdlib/string.makam" {"stdlib/string.makam"}
   "stdlib/testing.makam" {"stdlib/testing.makam"}
   "stdlib/parsing/init.makam" {"stdlib/parsing/init.makam"}
   "stdlib/parsing/peg.makam" {"stdlib/parsing/peg.makam"}
   "stdlib/parsing/generate_js.makam" {"stdlib/parsing/generate_js.makam"}
   "stdlib/parsing/library.makam" {"stdlib/parsing/library.makam"}
-  "stdlib/parsing/tests.makam" {"stdlib/parsing/tests.makam"}
-  "stdlib/parsing/tests_opt.makam" {"stdlib/parsing/tests_opt.makam"}
   "stdlib/parsing/layout_grammar.makam" {"stdlib/parsing/layout_grammar.makam"}
   "stdlib/pretty/init.makam" {"stdlib/pretty/init.makam"}
   "stdlib/pretty/pretty.makam" {"stdlib/pretty/pretty.makam"}
-  "stdlib/pretty/tests.makam" {"stdlib/pretty/tests.makam"}
   "stdlib/syntax/init.makam" {"stdlib/syntax/init.makam"}
   "stdlib/syntax/syntax.makam" {"stdlib/syntax/syntax.makam"}
   "stdlib/syntax/layout_syntax.makam" {"stdlib/syntax/layout_syntax.makam"}
   "stdlib/syntax/syntax_syntax.makam" {"stdlib/syntax/syntax_syntax.makam"}
   "stdlib/syntax/library.makam" {"stdlib/syntax/library.makam"}
-  "stdlib/syntax/tests.makam" {"stdlib/syntax/tests.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}
   "stdlib/vars.makam" {"stdlib/vars.makam"}

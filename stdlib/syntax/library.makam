@@ -25,20 +25,21 @@ rule (list_sep_plus Sep P) (apply cons [captured P, captured (apply nil [])]).
 rule (list_sep Sep P) (list_sep_plus Sep P).
 rule (list_sep Sep P) (apply nil []).
 
-charmany : syntax string -> syntax string.
-rule (charmany P) (transform string.append
+charcons : syntax string -> syntax string -> syntax string.
+inline (charcons _ _).
+rule (charcons HD TL) (transform string.append
                              "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
                              (pfun hd tl str => string.headtail str hd tl)
-                             [ captured P, captured (charmany P) ]).
+                             [ captured HD, captured TL ]).
+
+charmany : syntax string -> syntax string.
+rule (charmany P) (charcons P (charmany P)).
 rule (charmany P) (apply "" []).
 
 char_once_or_many : syntax string -> syntax string.
 inline (char_once_or_many _).
 rule (char_once_or_many P)
-     (transform string.append
-                "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                (pfun hd tl str => string.headtail str hd tl)
-                [ captured P, captured (charmany P) ]).
+     (charcons P (charmany P)).
 
 (* whitespace is not completely isomorphic between parsing and pretty-printing.
    when parsing, we just ignore whitespace.

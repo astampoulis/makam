@@ -15,14 +15,19 @@ let iter = parseInt(iterations);
 (async () => {
   while (iter > 0) {
     iter--;
-    const start = Date.now();
-    const result = await exec(command);
-    console.log(result.stdout);
-    const end = Date.now();
-    const current = (end - start) / 1000.0;
-    count++;
-    sum += current;
-    console.log("This run:", current, "Moving average:", sum / count);
+    try {
+      const start = Date.now();
+      const result = await exec(command);
+      console.log(result.stdout);
+      const end = Date.now();
+      const current = (end - start) / 1000.0;
+      count++;
+      sum += current;
+      console.log("This run:", current, "Moving average:", sum / count);
+    } catch (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
   }
 
   console.log(sum / count);

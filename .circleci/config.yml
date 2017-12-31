@@ -30,7 +30,7 @@ jobs:
 
       - run: &tests
           name: Run Tests
-          command: opam config exec make makam-tests
+          command: opam config exec make makam-timing-tests
 
       - run: &compile-js
           name: Compile Makam.js

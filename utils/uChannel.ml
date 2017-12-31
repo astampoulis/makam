@@ -57,12 +57,14 @@ let combine_span span1 span2 =
 
 type t = { contents : UString.t ref ; location : loc ;
 	   current  : UString.bidx ; furthest : UString.bidx ref ; reached_eof : bool ref ;
-	   looknext : UString.bidx -> UChar.t * UString.bidx } ;;
+	   looknext : UString.bidx -> UChar.t * UString.bidx ;
+           update_statehash : bool } ;;
 
 let from_string  ?(initloc={ description = "<string>" ; lineno = 1; charno = 1; offset = 0 }) string =
   let str = ref (UString.of_string string) in
   { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = ref true ;
     location = initloc ;
+    update_statehash = false ;
     looknext = (fun off ->
       if UString.is_end !str off then raise IO.No_more_input
       else UString.looknext_unsafe !str off) } ;;
@@ -72,7 +74,7 @@ let from_filename filename =
   let str   = IO.read_all input in
   let _     = IO.close_in input in
   let location = { description = filename ; lineno = 1 ; charno = 1; offset = 0 } in
-  from_string ~initloc:location str
+  { from_string ~initloc:location str with update_statehash = true }
 ;;
 
 let from_filename_buffered ?(buffersize = 1024) filename =
@@ -81,6 +83,7 @@ let from_filename_buffered ?(buffersize = 1024) filename =
   let reached_eof = ref false in
   { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
     location = { description = filename ; lineno = 1 ; charno = 1; offset = 0 };
+    update_statehash = true ;
     looknext = (fun off ->
       if UString.safe_offset !str off then UString.looknext_unsafe !str off
       else if !reached_eof then raise IO.No_more_input
@@ -100,6 +103,7 @@ let from_stream  ?(initloc={ description = "<toplevel>" ; lineno = 1; charno = 1
   let reached_eof = ref false in
   { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
     location = initloc ;
+    update_statehash = true ;
     looknext = (fun off ->
       if not (UString.is_end !str off) then UString.looknext_unsafe !str off
       else if !reached_eof then raise IO.No_more_input
@@ -133,7 +137,8 @@ let get_one c =
     in
     let _ =
       if next > !(c.furthest) then (
-        input_statehash := Hashtbl.hash (!input_statehash + ucode);
+        (if (c.update_statehash) then
+          input_statehash := Hashtbl.hash (!input_statehash + ucode));
         c.furthest := next
       )
     in

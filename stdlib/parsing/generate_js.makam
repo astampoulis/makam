@@ -181,7 +181,15 @@ quote_term_js (reified.term Head Args) Result :-
   quote_paren_term_js HeadS ArgsS Result.
 
 quote_term_js (reified.const (S : string)) S_js :-
-  quote_string_js S S_js.
+  quote_string_js S S_quoted,
+  string.explode S_quoted S_quoted',
+  map (pfun char res =>
+    if eq char "\\"
+    then eq res "\\\\"
+    else (if eq char "`"
+    then eq res "\\`"
+    else eq res char)) S_quoted' S_quoted'',
+  string.explode S_js S_quoted''.
 
 quote_term_js (reified.const (I : int)) I_js :-
   tostring I I_js.
