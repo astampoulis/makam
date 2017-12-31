@@ -2,68 +2,74 @@ concrete : type -> type.
 
 %extend concrete.
 
-namespace : type.
-lambda : namespace -> string -> B -> (A -> B).
-var : namespace -> string -> A.
+namespace : type -> type.
+name : type -> type.
 
-resolve_var : [A] namespace -> string -> A -> prop.
-handle_unresolved_var : [A] namespace -> string -> A -> prop.
+name : namespace A -> string -> name A.
+
+lambda : name A -> B -> (A -> B).
+var : name A -> A.
+bindone : name A -> B -> bindone A B.
+bindnext : name A -> bindmany A B -> bindmany A B.
+
+resolve_name : [A] name A -> A -> prop.
+handle_unresolved_name : [A] name A -> A -> prop.
 pattern_mode : prop.
 
-vars_in_context, vars_in_context_store : namespace -> list (dyn * string) -> prop.
+vars_in_context, vars_in_context_store : [A] namespace A -> list (A * string) -> prop.
 vars_in_context_store Namespace [].
 vars_in_context Namespace Vars :- once(vars_in_context_store Namespace Vars).
 
-pick_var_prefix, pick_var_prefix_userdef : namespace -> string -> prop.
-pick_var_prefix Namespace ID :-
-  unless (pick_var_prefix_userdef Namespace ID)
+pick_name_prefix, pick_name_prefix_userdef : [A] namespace A -> string -> prop.
+pick_name_prefix Namespace ID :-
+  unless (pick_name_prefix_userdef Namespace ID)
          (eq ID "x").
 
-pick_var_name, pick_var_name_userdef : namespace -> string -> prop.
-pick_var_name Namespace ID :-
-  unless (pick_var_name_userdef Namespace ID)
+pick_name, pick_name_userdef : [A] namespace A -> string -> prop.
+pick_name Namespace ID when not(refl.isunif ID).
+pick_name Namespace ID when refl.isunif ID :-
+  unless (pick_name_userdef Namespace ID)
          {prop|
           vars_in_context Namespace Vars,
           length Vars L, tostring L L_S,
-          pick_var_prefix Namespace Prefix,
+          pick_name_prefix Namespace Prefix,
           expansion.str `${Prefix}${L_S}` ID |}.
 
-namespace_for_variable : [Type] Type -> namespace -> prop.
-pick_namespace : [Type] Type -> namespace -> prop.
+pick_namespace, pick_namespace_userdef : [Type] Type -> namespace Type -> prop.
 
 pick_namespace _ Namespace when not(refl.isunif Namespace).
 pick_namespace Var Namespace when refl.isunif Namespace :-
-  namespace_for_variable Var Namespace.
+  pick_namespace_userdef Var Namespace.
 
 resolve, resolve_aux : [A]A -> A -> prop.
 resolve X Y :- demand.case_otherwise (resolve_aux X Y) (structural resolve X Y).
 
-resolve_aux (lambda Namespace ID Body) (F: A -> B) :-
+resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
   (x:A ->
-   resolve_var Namespace ID x ->
+   resolve_name (name Namespace ID) x ->
    (pick_namespace x Namespace,
     vars_in_context Namespace Vars,
-    (vars_in_context_store Namespace ((dyn x, ID) :: Vars) ->
-      (if (refl.isunif ID) then pick_var_name Namespace ID else success,
+    (vars_in_context_store Namespace ((x, ID) :: Vars) ->
+      (pick_name Namespace ID,
        resolve Body (F x))))).
 
-resolve_aux (var Namespace ID) X
-    when pick_namespace X Namespace, either (once(resolve_var Namespace ID X)) (handle_unresolved_var Namespace ID X) :-
+resolve_aux (var (name Namespace ID)) X
+    when pick_namespace X Namespace, either (once(resolve_name (name Namespace ID) X)) (handle_unresolved_name (name Namespace ID) X) :-
   pick_namespace X Namespace,
-  if (once(resolve_var Namespace ID X))
+  if (once(resolve_name (name Namespace ID) X))
   then success
-  else handle_unresolved_var Namespace ID X.
+  else handle_unresolved_name (name Namespace ID) X.
 
-resolve_aux (bindone ID (lambda Namespace ID Body)) (bindone ID' Body') :-
+resolve_aux (bindone (name Namespace ID) Body) (bindone ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
-  resolve (lambda Namespace ID Body) Body'.
+  resolve (lambda (name Namespace ID) Body) Body'.
 
-resolve_aux (bindnext ID (lambda Namespace ID Body)) (bindnext ID' Body') :-
+resolve_aux (bindnext (name Namespace ID) Body) (bindnext ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
-  resolve (lambda Namespace ID Body) Body'.
+  resolve (lambda (name Namespace ID) Body) Body'.
 
-resolve_aux (bind.binder ID (lambda Namespace ID Body)) (bind.binder ID' Body') :-
+resolve_aux (bind.binder ID (lambda (name Namespace ID) Body)) (bind.binder ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
-  resolve (lambda Namespace ID Body) Body'.
+  resolve (lambda (name Namespace ID) Body) Body'.
 
 %end.

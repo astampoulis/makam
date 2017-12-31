@@ -5,6 +5,7 @@
 - [x] implement binddep and add to concrete_bind
 - [x] forgot opam/files
 - [x] add an end-to-end language definition test
-- [ ] add concrete.binder and concrete.bind
+- [x] add concrete.name and type concrete.namespace
+- [ ] add concrete.names and concrete.bind
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] examples for letrec, patterns, etc.
