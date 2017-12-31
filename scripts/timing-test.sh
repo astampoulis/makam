@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TIMING_DEADLINE="65.0"
-NOCACHE_REFERENCE="107.50"
+NOCACHE_REFERENCE="91.0"
 
 set -eux
 
