@@ -273,6 +273,10 @@ pretty.rule syndef
 syndef : syntax syndef.
 syntax.rule syndef (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured syndef_str_cached ]) syndef).
 
+syndef_many : syntax (list syndef).
+syntax.rule syndef_many (list_sep_plus (optunit (token ";")) syndef).
+`( syntax.def_toplevel_js syndef_many ).
+
 syntax_rule_clause : syndef -> cmd -> prop.
 syntax_rule_clause (syndef SyntaxConstr SyntaxDef) (cmd_newclause (clause (syntax.rule SyntaxConstr SyntaxDef) success)).
 
@@ -280,6 +284,6 @@ syntax_rule_clause (syndef SyntaxConstr SyntaxDef) (cmd_newclause (clause (synta
 
 syntax_rules : string -> cmd -> prop.
 syntax_rules RulesS (cmd_many Clauses) :-
-  if (syntax.parse_opt (list_sep_plus (optunit (syntax_syntax.token ";")) syntax_syntax.syndef) RulesS Rules)
+  if (syntax.parse_opt syntax_syntax.syndef_many RulesS Rules)
   then map syntax_syntax.syntax_rule_clause Rules Clauses
   else (log_error RuleS `parsing the syntax rules failed`, failure).
