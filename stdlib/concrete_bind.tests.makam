@@ -11,8 +11,14 @@ tfunction : (typ -> term) -> term.
 ascribe : term -> typ -> term.
 letin : term -> bindone term term -> term.
 letrec : bindmany term (list term) -> bindmany term term -> term.
-letrec_dep : bind term A (hlist A) -> bind term A term -> term.
+letrec_dep : bind term A (list term) -> bind term A term -> term.
 globalvar : string -> term.
+
+letrec_dep_concrete : list (concrete.name term * term) -> term -> term.
+concrete.resolve_conversion
+    (letrec_dep_concrete NamesDefs Body)
+    (letrec_dep (concrete.binders Names Defs) (concrete.binders Names Body)) :-
+  zip Names Defs NamesDefs.
 
 termvars : concrete.namespace term.
 typvars : concrete.namespace typ.
@@ -89,15 +95,25 @@ concrete.handle_unresolved_name (concrete.name termvars ID) (globalvar ID).
 >> Yes:
 >> X := letin (stringconst "a") (bindone ID' (fun x => x)).
 
->> concrete.resolve (letrec_dep (bind.binder "a" (concrete.lambda (concrete.name termvars "a") (bind.binder "b" (concrete.lambda (concrete.name termvars "b") (bind.body [stringconst "a", stringconst "b"]))))) (bind.binder "a" (concrete.lambda (concrete.name termvars "a") (bind.binder "b" (concrete.lambda (concrete.name termvars "b") (bind.body (stringconst "body"))))))) X ?
+>> concrete.resolve (letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body"))) X ?
 >> Yes:
 >> X := (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))).
 
+>> (concrete.pattern_mode -> concrete.resolve (letrec_dep (concrete.binders [concrete.name termvars "a"] [stringconst "a"]) (concrete.binders [concrete.name termvars "a"] (stringconst "body"))) X) ?
+>> Yes:
+>> X := letrec_dep (bind.binder ID (fun a => bind.body (cons (stringconst "a") nil))) (bind.binder ID' (fun a => bind.body (stringconst "body"))).
+
+>> (concrete.resolve_conversion (letrec_dep _A _B) (letrec_dep _A _B) -> concrete.resolve X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body")))))) ?
+>> Yes:
+>> X := letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body")).
+
 >> concrete.resolve X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))) ?
 >> Yes:
->> X := letrec_dep (bind.binder "a" (concrete.lambda (concrete.name termvars "a") (bind.binder "b" (concrete.lambda (concrete.name termvars "b") (bind.body [stringconst "a", stringconst "b"]))))) (bind.binder "a" (concrete.lambda (concrete.name termvars "a") (bind.binder "b" (concrete.lambda (concrete.name termvars "b") (bind.body (stringconst "body")))))).
+>> X := letrec_dep_concrete [(concrete.name termvars "a", stringconst "a"), (concrete.name termvars "b", stringconst "b")] (stringconst "body").
 
 term : syntax term. typ : syntax typ. ident : syntax string.
+recdefs : syntax (list (concrete.name term * term)).
+recdef : syntax (concrete.name term * term).
 
 syntax.rule ident (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικμνψοπρστυφχψω0123456789")).
 syntax.inline ident.
@@ -116,8 +132,16 @@ term -> stringconst
         { '(' <term> ':' <typ> ')' }
       / fun id => fun def => fun body => letin def (concrete.bindone (concrete.name termvars id) body)
         { 'let' <syntax_syntax.token ident> '=' <term> 'in' <term> }
+      / fun defs => fun body => letrec_dep_concrete defs body
+        { 'letrec' <recdefs> 'in' <term> }
       / fun id => concrete.var (concrete.name termvars id)
         { <syntax_syntax.token ident> }
+
+recdefs -> cons { <recdef> 'and' <recdefs> }
+         / fun hd => cons hd nil { <recdef> }
+
+recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
+           { <syntax_syntax.token ident> '=' <term> }
 
 }}).
 
@@ -126,5 +150,9 @@ term -> stringconst
 >> (syntax.parse_opt term {{ λw.Λa.let x = ('foo' : a) in let y = 'bar' in w }} _X, concrete.resolve _X _Y, concrete.resolve _Z _Y, syntax.pretty term _Z QQ) ?
 >> Yes:
 >> QQ := "λ x1 . Λ α1 . let x = ( 'foo' : α1 ) in let y = 'bar' in x1 ".
+
+>> (syntax.parse_opt term {{ letrec x = y and y = x in x }} _X, concrete.resolve _X _Y, concrete.resolve _Z _Y, syntax.pretty term _Z QQ) ?
+>> Yes:
+>> QQ := "letrec x = y and y = x in x ".
 
 %end.

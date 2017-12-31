@@ -6,6 +6,7 @@
 - [x] forgot opam/files
 - [x] add an end-to-end language definition test
 - [x] add concrete.name and type concrete.namespace
-- [ ] add concrete.names and concrete.bind
+- [x] add concrete.names, concrete.binders and conversion
+- [ ] split out conversion from resolution?
 - [ ] some kind of sugar for generating concrete constructors
 - [ ] examples for letrec, patterns, etc.
