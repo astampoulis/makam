@@ -10,4 +10,5 @@
 - [x] fix timing test failure
 - [x] another attempt at fix
 - [x] split out tests to run individually
+- [x] fix for split out tests
 - [ ] split out conversion from resolution?
