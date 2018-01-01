@@ -1,0 +1,9 @@
+- [x] WIP add constructor definition syntax
+- [ ] try straight syntax, no string quoting
+- [ ] less general string transform
+- [ ] split out makam stuff into makam_syntax
+- [ ] add proper tests
+- [ ] typstring now handles polymorphic types
+- [ ] ismonotyp to check whether something is polytyped
+- [ ] add pretty printing
+- [ ] be able to get syntax for existing constructor
