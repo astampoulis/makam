@@ -40,8 +40,10 @@ configure:
 
 # OASIS_STOP
 
+TESTS=tests/core_tests stdlib/tests stdlib/concrete_bind.tests stdlib/parsing/tests stdlib/parsing/tests_opt stdlib/parsing/peg_grammar stdlib/parsing/layout_grammar.tests.makam stdlib/pretty/tests stdlib/syntax/tests stdlib/syntax/syntax_syntax.tests.makam stdlib/syntax/layout_syntax.tests.makam stdlib/dyn_expansion new/testocaml new/testcases_ocaml small/systemf big/testocaml big/testveriml big/testurweb big/testf2tal 
+
 makam-tests:
-	makam --run-tests all_tests
+	for i in $(TESTS); do makam --run-tests $$i; done
 
 makam-timing-tests:
 	./scripts/timing-test.sh

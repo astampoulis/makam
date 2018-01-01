@@ -305,5 +305,3 @@ bind : testsuite. %testsuite bind.
 >> YName := "y".
 
 %end.
-
-%use "concrete_bind.tests.makam".

@@ -9,4 +9,5 @@
 - [x] add concrete.names, concrete.binders and conversion
 - [x] fix timing test failure
 - [x] another attempt at fix
+- [x] split out tests to run individually
 - [ ] split out conversion from resolution?
