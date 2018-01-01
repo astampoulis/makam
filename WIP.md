@@ -1,5 +1,5 @@
 - [x] WIP add constructor definition syntax
-- [ ] try straight syntax, no string quoting
+- [x] a little bit of a cleanup plus additions
 - [ ] less general string transform
 - [ ] split out makam stuff into makam_syntax
 - [ ] add proper tests

@@ -2,6 +2,14 @@
 %open peg.
 %open syntax_syntax.
 
+makam_unif_ident_first, makam_unif_ident_rest, makam_unif_ident : syntax string.
+syntax.inline makam_unif_ident_first. syntax.inline makam_unif_ident_rest.
+
+syntax.rule makam_unif_ident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
+syntax.rule makam_unif_ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule makam_unif_ident (charcons makam_unif_ident_first (charmany makam_unif_ident_rest)).
+syntax.inline makam_unif_ident.
+
 %extend constructor_syntax.
 
 constructor_def : type.
@@ -19,11 +27,11 @@ to_cmd (constructor_def S ArgsTypes TargetType)
        (cmd_newterm S Type) :-
   to_type ArgsTypes TargetType Type.
 
-constructor_def_str : peg string.
-constructor_arg_str : peg string.
+constructor_def : peg constructor_def.
+constructor_def_str, constructor_arg_str, type_str, basetype_str : peg string.
 many_str : peg string -> peg string.
-type_str : peg string.
 
+peg.rule constructor_def (makam_antiquote constructor_def_str).
 peg.rule constructor_def_str
          (string_transform (pfun name argstypes targettype =>
            expansion.str
@@ -33,15 +41,20 @@ peg.rule constructor_def_str
            syntax (syntax_syntax.token ":"),
            peg.captured type_str ]).
 
-peg.rule type_str (syntax (syntax_syntax.token makam_ident)).
-
-makam_unif_ident_first, makam_unif_ident_rest, makam_unif_ident : syntax string.
-syntax.inline makam_unif_ident_first. syntax.inline makam_unif_ident_rest.
-
-syntax.rule makam_unif_ident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
-syntax.rule makam_unif_ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule makam_unif_ident (charcons makam_unif_ident_first (charmany makam_unif_ident_rest)).
-syntax.inline makam_unif_ident.
+peg.rule type_str (string_transform (pfun typconstr args =>
+                   expansion.str `${typconstr} ${args}`)
+                   [ peg.captured (syntax (syntax_syntax.token makam_ident)),
+                     peg.captured (stringmany (
+                       string_transform (fun x => expansion.str ` ${x}`)
+                       [ peg.captured basetype_str ]
+                     )) ]).
+peg.rule type_str basetype_str.
+peg.rule basetype_str (syntax (syntax_syntax.token makam_ident)).
+peg.rule basetype_str (syntax (syntax_syntax.token makam_unif_ident)).
+peg.rule basetype_str (string_transform (pfun x => expansion.str `(${x})`)
+                       [ syntax (syntax_syntax.token "("),
+                         peg.captured type_str,
+                         syntax (syntax_syntax.token ")") ]).
 
 peg.rule constructor_arg_str
          (string_transform (pfun var typ => expansion.str `(${var}: ${typ})`)
@@ -58,13 +71,13 @@ peg.rule (many_str P)
 peg.rule (many_str P)
          (apply "nil" []).
 
-`( peg.def_toplevel_parser_js constructor_def_str ).
+`( peg.def_toplevel_parser_js constructor_def ).
 
 hello : type.
 
 `( pfun res =>
-   (peg.parse_opt constructor_def_str {{ kalimera (X: hello) (Y: string) : hello }}
-       (Q, ""), print Q, refl.fromstring Q Q', to_cmd Q' res) ).
+   (peg.parse_opt constructor_def {{ kalimera (X: list (list hello)) (Y: string) : hello }}
+       (Q, ""), to_cmd Q res) ).
 
 %type kalimera.
 

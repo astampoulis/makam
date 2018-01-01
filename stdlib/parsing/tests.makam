@@ -48,7 +48,7 @@ identfirst, identrest : peg string.
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun (hd: string) => bind (charmany identrest) (fun tl =>
+rule ident (bind identfirst (fun (hd: string) => bind (stringmany identrest) (fun tl =>
             eval (string.append hd tl) `return JSON.stringify(JSON.parse(${hd}) + JSON.parse(${tl}));`))).
 
 cterm : type.

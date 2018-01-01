@@ -5,7 +5,7 @@
    Due to the typed nature of `syntax`, typeful parsing
    does not really work; so we parse syntax combinators
    into a string representing a makam term; when this
-   string is parsed with `refl.fromstring` we'll get something
+   string is parsed with `makam_antiquote` we'll get something
    of `syntax A` type. The pretty-printer does work normally,
    so the syntax of syntax is defined through `iso`,
    handling parsing and pretty-printing differently.
@@ -225,11 +225,11 @@ peg.rule appl_str base_str.
 pretty.rule appl base.
 
 syntax.rule appl
-         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured appl_str ])
+         (iso (makam_antiquote appl_str)
               (appl)).
 
 syntax.rule args
-         (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured args_str ])
+         (iso (makam_antiquote args_str)
               (args)).
 
 choices_str : peg string.
@@ -253,7 +253,7 @@ choices_str_cached : peg string.
 `( peg.def_parser_js choices_str_cached choices_str ).
 
 choices : syntax (list (syntax A)).
-syntax.rule choices (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured choices_str_cached ]) choices).
+syntax.rule choices (iso (makam_antiquote choices_str_cached) choices).
 
 syndef : type.
 syndef : syntax A -> syntax A -> syndef.
@@ -271,7 +271,7 @@ pretty.rule syndef
 `( peg.def_parser_js syndef_str_cached syndef_str ).
 
 syndef : syntax syndef.
-syntax.rule syndef (iso (peg.transform refl.fromstring "JSON.parse" [ peg.captured syndef_str_cached ]) syndef).
+syntax.rule syndef (iso (makam_antiquote syndef_str_cached) syndef).
 
 syndef_many : syntax (list syndef).
 syntax.rule syndef_many (list_sep_plus (optunit (token ";")) syndef).
