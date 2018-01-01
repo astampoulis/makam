@@ -151,8 +151,8 @@ recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
 >> Yes:
 >> QQ := "λ x1 . Λ α1 . let x = ( 'foo' : α1 ) in let y = 'bar' in x1 ".
 
->> (syntax.parse_opt term {{ letrec x = y and y = x in x }} _X, concrete.resolve _X _Y, concrete.resolve _Z _Y, syntax.pretty term _Z QQ) ?
+>> (syntax.parse_opt term {{ letrec x = y and y = x in x }} _X, concrete.resolve _X Y, concrete.resolve _Z Y, eq _X _Z) ?
 >> Yes:
->> QQ := "letrec x = y and y = x in x ".
+>> Y := letrec_dep (bind.binder "x" (fun x => bind.binder "y" (fun y => bind.body [y, x]))) (bind.binder "x" (fun x => bind.binder "y" (fun y => bind.body x))).
 
 %end.

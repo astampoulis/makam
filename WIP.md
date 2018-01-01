@@ -8,4 +8,5 @@
 - [x] add concrete.name and type concrete.namespace
 - [x] add concrete.names, concrete.binders and conversion
 - [x] fix timing test failure
+- [x] another attempt at fix
 - [ ] split out conversion from resolution?
