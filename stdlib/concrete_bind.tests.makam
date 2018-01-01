@@ -120,28 +120,28 @@ syntax.inline ident.
 
 `( syntax_rules {{
 
-typ -> fun id => concrete.var (concrete.name typvars id) { <syntax_syntax.token ident> }
+typ -> fun id => concrete.var (concrete.name typvars id) { <syntax.token ident> }
 
 term -> stringconst
-        { <syntax_syntax.token syntax_syntax.string_literal> }
+        { <syntax.token syntax_syntax.string_literal> }
       / fun id => fun body => function (concrete.lambda (concrete.name termvars id) body)
-        { 'λ' <syntax_syntax.token ident> '.' <term> }
+        { 'λ' <syntax.token ident> '.' <term> }
       / fun id => fun body => tfunction (concrete.lambda (concrete.name typvars id) body)
-        { 'Λ' <syntax_syntax.token ident> '.' <term> }
+        { 'Λ' <syntax.token ident> '.' <term> }
       / ascribe
         { '(' <term> ':' <typ> ')' }
       / fun id => fun def => fun body => letin def (concrete.bindone (concrete.name termvars id) body)
-        { 'let' <syntax_syntax.token ident> '=' <term> 'in' <term> }
+        { 'let' <syntax.token ident> '=' <term> 'in' <term> }
       / fun defs => fun body => letrec_dep_concrete defs body
         { 'letrec' <recdefs> 'in' <term> }
       / fun id => concrete.var (concrete.name termvars id)
-        { <syntax_syntax.token ident> }
+        { <syntax.token ident> }
 
 recdefs -> cons { <recdef> 'and' <recdefs> }
          / fun hd => cons hd nil { <recdef> }
 
 recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
-           { <syntax_syntax.token ident> '=' <term> }
+           { <syntax.token ident> '=' <term> }
 
 }}).
 

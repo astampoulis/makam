@@ -2,14 +2,6 @@
 %open peg.
 %open syntax_syntax.
 
-makam_unif_ident_first, makam_unif_ident_rest, makam_unif_ident : syntax string.
-syntax.inline makam_unif_ident_first. syntax.inline makam_unif_ident_rest.
-
-syntax.rule makam_unif_ident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
-syntax.rule makam_unif_ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule makam_unif_ident (charcons makam_unif_ident_first (charmany makam_unif_ident_rest)).
-syntax.inline makam_unif_ident.
-
 %extend constructor_syntax.
 
 constructor_def : type.
@@ -28,39 +20,25 @@ to_cmd (constructor_def S ArgsTypes TargetType)
   to_type ArgsTypes TargetType Type.
 
 constructor_def : peg constructor_def.
-constructor_def_str, constructor_arg_str, type_str, basetype_str : peg string.
+constructor_def_str, constructor_arg_str : peg string.
 many_str : peg string -> peg string.
 
-peg.rule constructor_def (makam_antiquote constructor_def_str).
+peg.rule constructor_def (makam.antiquote constructor_def_str).
 peg.rule constructor_def_str
          (string_transform (fun name argstypes targettype =>
            `constructor_syntax.constructor_def "${name}" ${argstypes} (_: ${targettype})`)
-         [ peg.captured (syntax (syntax_syntax.token makam_ident)),
+         [ peg.captured (syntax (token makam.ident)),
            peg.captured (many_str constructor_arg_str),
-           syntax (syntax_syntax.token ":"),
-           peg.captured type_str ]).
-
-peg.rule type_str (string_transform (fun typconstr args => `${typconstr} ${args}`)
-                   [ peg.captured (syntax (syntax_syntax.token makam_ident)),
-                     peg.captured (stringmany (
-                       string_transform (fun x => ` ${x}`)
-                       [ peg.captured basetype_str ]
-                     )) ]).
-peg.rule type_str basetype_str.
-peg.rule basetype_str (syntax (syntax_syntax.token makam_ident)).
-peg.rule basetype_str (syntax (syntax_syntax.token makam_unif_ident)).
-peg.rule basetype_str (string_transform (fun x => `(${x})`)
-                       [ syntax (syntax_syntax.token "("),
-                         peg.captured type_str,
-                         syntax (syntax_syntax.token ")") ]).
+           syntax (token ":"),
+           peg.captured makam.typ_str ]).
 
 peg.rule constructor_arg_str
          (string_transform (fun var typ => `(${var}: ${typ})`)
-         [ syntax (syntax_syntax.token "("),
-           peg.captured (syntax (syntax_syntax.token makam_unif_ident)),
-           syntax (syntax_syntax.token ":"),
-           peg.captured type_str,
-           syntax (syntax_syntax.token ")") ]).
+         [ syntax (token "("),
+           peg.captured (syntax (token makam.unifident)),
+           syntax (token ":"),
+           peg.captured makam.typ_str,
+           syntax (token ")") ]).
 
 peg.rule (many_str P)
          (string_transform (fun hd tl => `(cons ${hd} ${tl})`)

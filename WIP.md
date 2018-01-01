@@ -2,7 +2,8 @@
 - [x] a little bit of a cleanup plus additions
 - [x] less general string transform
 - [x] fix error handling in repl
-- [ ] split out makam stuff into makam_syntax
+- [x] split out makam stuff into makam_syntax
+- [ ] add makam.string_literal
 - [ ] add proper tests
 - [ ] typstring now handles polymorphic types
 - [ ] ismonotyp to check whether something is polytyped

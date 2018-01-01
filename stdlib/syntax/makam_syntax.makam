@@ -1,0 +1,120 @@
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend makam.
+
+ident, ident_first, ident_rest : syntax string.
+syntax.inline ident. syntax.inline ident_first. syntax.inline ident_rest.
+
+(* TODO: make this even more precise *)
+
+syntax.rule ident_first (charclass "abcdefghijklmnopqrstuvwxyz_.").
+syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule ident (charcons ident_first (charmany ident_rest)).
+syntax.inline ident.
+
+
+unifident_first, unifident_rest, unifident : syntax string.
+syntax.inline unifident. syntax.inline unifident_first. syntax.inline unifident_rest.
+
+syntax.rule unifident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
+syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule unifident (charcons unifident_first (charmany unifident_rest)).
+
+
+(* antiquote *)
+
+antiquote : peg string -> peg A.
+peg.inline (antiquote _).
+peg.rule (antiquote P) (transform refl.fromstring "JSON.parse" [ peg.captured P ]).
+
+(* makam terms *)
+
+term : int -> pretty A.
+term_str : int -> peg string.
+term_args_str : peg string.
+
+term : syntax A.
+syntax.rule term (iso (antiquote (term_str 0)) (term 0)).
+
+(* makam terms: parsing *)
+
+peg.rule (term_str 0) (string_transform
+            (fun binder body => `(fun ${binder} => ${body})`)
+            [ syntax (token_id ident "fun"), peg.captured (syntax (token ident)), syntax (token "=>"), peg.captured (term_str 0) ]).
+peg.rule (term_str 0) (term_str 1).
+peg.rule (term_str 1) (string_transform
+            (fun hd args => `(${hd} ${args})`)
+            [ peg.captured (term_str 2), peg.captured term_args_str ]).
+peg.rule (term_str 1) (term_str 2).
+peg.rule (term_str 2) (syntax (token ident)).
+peg.rule (term_str 2) (apply (fun x => x) [ syntax (token "("), peg.captured (term_str 0), syntax (token ")") ]).
+
+peg.rule term_args_str (string_transform
+            (fun hd tl => `${hd} ${tl}`)
+            [ peg.captured (term_str 2), peg.captured term_args_str ]).
+peg.rule term_args_str (apply "" []).
+
+
+(* makam terms: printing *)
+
+lambda : pretty (A -> B).
+pretty.builtin lambda.
+
+string_of_head, string_of_var : [A] A -> string -> prop.
+string_of_head X Y :- if (string_of_var X Y) then success else tostring_qualified X Y.
+
+lambda_depth : int -> prop.
+lambda_depth 0.
+
+pretty.pretty lambda (F: A -> B) Res :-
+  apply_all F Args F_Body,
+  (* check if this is an eta-expansion of a constant *)
+  if (refl.headargs F_Body F_HD _, eq F F_HD) then (eq Res none) else
+  (x:A ->
+    (once(lambda_depth N),
+     tostring N NS,
+     expansion.str `anon${NS}` X_S,
+     plus N 1 N',
+     (lambda_depth N' ->
+      string_of_var x X_S ->
+      if (pretty.pretty (term 0) (F x) (some R)) then (expansion.str `fun ${X_S} => ${R}` R', eq Res (some R')) else eq Res none))).
+
+pretty.rule (term 0) lambda.
+pretty.rule (term 0) (term 1).
+
+term_arg : pretty A.
+pretty.rule term_arg (unapply dyn [ pretty.captured (term 2) ]).
+pretty.rule (term 1)
+     (untransform
+            (pfun hd args input => refl.headargs input hd args)
+            [ pretty.captured (term 2), pretty.captured (many term_arg) ]).
+pretty.rule (term 1) (term 2).
+
+pretty.rule (term 2)
+     (untransform (pfun str x => string_of_head x str)
+       [ pretty.captured (syntax (token ident)) ]).
+pretty.rule (term 2)
+            (unapply (fun x => x) [ syntax (token "("), pretty.captured (term 0), syntax (token ")") ]).
+
+
+(* makam types *)
+
+typ_str, basetyp_str : peg string.
+
+peg.rule typ_str (string_transform (fun typconstr args => `${typconstr} ${args}`)
+                   [ peg.captured (syntax (token makam.ident)),
+                     peg.captured (stringmany (
+                       string_transform (fun x => ` ${x}`)
+                       [ peg.captured basetyp_str ]
+                     )) ]).
+peg.rule typ_str basetyp_str.
+peg.rule basetyp_str (syntax (token makam.ident)).
+peg.rule basetyp_str (syntax (token makam.unifident)).
+peg.rule basetyp_str (string_transform (fun x => `(${x})`)
+                       [ syntax (token "("),
+                         peg.captured typ_str,
+                         syntax (token ")") ]).
+
+%end.

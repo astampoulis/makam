@@ -30,18 +30,6 @@ all : testsuite. %testsuite all.
 >> Yes:
 >> X := "syntax_syntax_tests.lam { 'λ' < syntax_syntax_tests.ident > '.' < syntax_syntax_tests.term > } ".
 
->> pretty.pretty (makam_term 0) lam (some X) ?
->> Yes:
->> X := "syntax_syntax_tests.lam ".
-
->> pretty.pretty (makam_term 0) (fun (x: term) => x) (some X) ?
->> Yes:
->> X := "fun anon0 => anon0 ".
-
->> pretty.pretty (makam_term 0) (fun x y => lam y x) (some X) ?
->> Yes:
->> X := "fun anon0 => fun anon1 => syntax_syntax_tests.lam anon1 anon0 ".
-
 `( syntax_rules {{
 
 term ->

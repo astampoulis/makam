@@ -54,4 +54,37 @@ ws_newline : syntax unit. inline (ws_newline).
 rule ws_empty (iso peg.ws pretty.empty).
 rule ws_space (iso peg.ws (pretty.const " ")).
 rule ws_newline (iso peg.ws (pretty.const "\n")).
+
+(* simple tokens. these just parse out any whitespace. *)
+
+token : string -> syntax unit.
+syntax.rule (token S) (group [ optunit ws_empty, syntax.captured (exact S), optunit ws_space ]).
+syntax.inline (token S).
+
+token : syntax P -> syntax P.
+syntax.rule (token P) (group [ optunit ws_empty, syntax.captured P, optunit ws_space ]).
+syntax.inline (token P).
+
+(* if the string used with the token is an identifier, we should try to parse an identifier from the input string;
+   if that works, then we make sure that the identifier is the token exactly.
+   that way, if we have a token "foo" and an identifier "foobar", we won't parse the prefix of "foobar" into an independent
+   token "foo" and an identifier "bar".
+   if we can't parse the token as an identifier, it's a symbol, so we just use `exact`. *)
+
+token_id : syntax string -> string -> syntax unit.
+syntax.inline (token_id _ _).
+
+syntax.rule (token_id Ident S)
+            (iso
+              (peg.ignore (peg.transform (pfun ident res => eq ident S, eq res ident) JS_Code
+                (peg.cons (peg.syntax (optunit ws_empty))
+                (peg.cons (peg.captured (peg.syntax Ident))
+                (peg.cons (peg.syntax (optunit ws_space)) peg.nil)))))
+              (pretty.unapply unit
+                (pretty.cons (pretty.syntax (optunit ws_empty))
+                (pretty.cons (pretty.const S)
+                (pretty.cons (pretty.syntax (optunit ws_space)) pretty.nil))))) :-
+  peg.quote_string_js S S_Quoted,
+  expansion.str `function(ident) { if (JSON.parse(ident) === ${S_Quoted}) return ident; else return null; }` JS_Code.
+
 %end.

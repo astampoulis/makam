@@ -125,9 +125,3 @@ rule (string_transform Expansion PS)
   peg_args_change_bodytype PS PS',
   string_transform_gen_vars 0 PS Expansion Result_js Params_js GetResults_js,
   expansion.str `function (${Params_js}) { ${GetResults_js} return JSON.stringify(\`${Result_js}\`); }` Code.
-
-(* antiquote *)
-
-makam_antiquote : peg string -> peg A.
-inline (makam_antiquote _).
-rule (makam_antiquote P) (transform refl.fromstring "JSON.parse" [ captured P ]).

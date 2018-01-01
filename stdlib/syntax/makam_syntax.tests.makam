@@ -1,0 +1,24 @@
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend makam_syntax_tests.
+
+all : testsuite. %testsuite all.
+
+term : type.
+lam : string -> term -> term.
+
+>> syntax.pretty makam.term lam X ?
+>> Yes:
+>> X := "makam_syntax_tests.lam ".
+
+>> syntax.pretty makam.term (fun (x: term) => x) X ?
+>> Yes:
+>> X := "fun anon0 => anon0 ".
+
+>> syntax.pretty makam.term (fun x y => lam y x) X ?
+>> Yes:
+>> X := "fun anon0 => fun anon1 => makam_syntax_tests.lam anon1 anon0 ".
+
+%end.
