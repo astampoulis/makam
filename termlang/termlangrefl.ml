@@ -628,6 +628,7 @@ let exprRemoveUnresolved (e : expr) : exprU =
 
 ;;
 
+exception StagingError of exprU;;
 
 let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
 
@@ -636,7 +637,7 @@ let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
     code   <-- intermlang (let code' = mkAnnot ~loc:code.loc (fun _ -> code) (t **> _tProp) in
                            mkApp ~loc:code.loc code' (mkVar "Result~~")) ;
     metas  <-- ifte (queryGoal ~print:false code) (fun x -> return (Some x))
-      (lazy(Printf.printf "Error in staged code at %s.\n" (UChannel.string_of_span code.loc); return None)) ;
+      (lazy(raise (StagingError(code)))) ;
     result <-- (match metas with Some metas -> intermlang (fun _ ->
       let result = List.assoc "Result~~" metas in
       let result =

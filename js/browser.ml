@@ -92,6 +92,10 @@ let (process_input : string -> unit) input =
         ; loop (UChannel.flush_to_furthest input))
       | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
         (restore_debug (); loop (UChannel.flush_to_furthest input))
+      | Termlangrefl.StagingError(code) ->
+        (Printf.printf "In %s:\n  Error in staged code.\n%!"
+                    (UChannel.string_of_span code.loc)
+        ; restore_debug (); loop (UChannel.flush_to_furthest input))
       | Termlangprolog.ResetInModule m ->
 	(Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
 	   (last_cmd_span ()) m; loop (UChannel.flush_to_furthest input))

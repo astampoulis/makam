@@ -1,6 +1,7 @@
 - [x] WIP add constructor definition syntax
 - [x] a little bit of a cleanup plus additions
 - [x] less general string transform
+- [x] fix error handling in repl
 - [ ] split out makam stuff into makam_syntax
 - [ ] add proper tests
 - [ ] typstring now handles polymorphic types
