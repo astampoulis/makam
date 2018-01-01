@@ -19,6 +19,7 @@
 %use set.
 %use map.
 %use fluid.
+%use iso.
 
 %use bind.
 
@@ -31,6 +32,7 @@
 %use vars.
 
 %use cache.
+%use concrete_bind.
 
 %extend peg.
 %use "parsing/init".

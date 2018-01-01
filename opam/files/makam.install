@@ -10,6 +10,7 @@ share: [
   "stdlib/bind.makam" {"stdlib/bind.makam"}
   "stdlib/cache.makam" {"stdlib/cache.makam"}
   "stdlib/clause.makam" {"stdlib/clause.makam"}
+  "stdlib/concrete_bind.makam" {"stdlib/concrete_bind.makam"}
   "stdlib/connectives.makam" {"stdlib/connectives.makam"}
   "stdlib/demand.makam" {"stdlib/demand.makam"}
   "stdlib/dyn.makam" {"stdlib/dyn.makam"}
@@ -19,6 +20,7 @@ share: [
   "stdlib/guard.makam" {"stdlib/guard.makam"}
   "stdlib/heterogeneous.makam" {"stdlib/heterogeneous.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
+  "stdlib/iso.makam" {"stdlib/iso.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
   "stdlib/logging.makam" {"stdlib/logging.makam"}
   "stdlib/map.makam" {"stdlib/map.makam"}

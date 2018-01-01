@@ -1,0 +1,41 @@
+iso : type -> type -> type.
+isos : type -> type -> type.
+
+nil : isos A A.
+cons : iso A B -> isos B C -> isos A C.
+
+%extend iso.
+
+iso : (A -> B -> prop) -> (B -> A -> prop) -> iso A B.
+bidi : (A -> B -> prop) -> iso A B.
+inverse : iso A B -> iso B A.
+compose : isos A B -> iso A B.
+
+forward : [A B] iso A B -> A -> B -> prop.
+backward : [A B] iso A B -> B -> A -> prop.
+
+%end.
+
+iso.forward (iso.iso Forward Backward) A B :- Forward A B.
+iso.backward (iso.iso Forward Backward) B A :- Backward B A.
+
+iso.forward (iso.bidi Bidi) A B :- Bidi A B.
+iso.backward (iso.bidi Bidi) B A :- Bidi A B.
+
+iso.forward (iso.inverse Iso) A B :- iso.backward Iso A B.
+iso.backward (iso.inverse Iso) B A :- iso.forward Iso B A.
+
+iso.forward (iso.compose []) A A.
+iso.forward (iso.compose (HD :: TL)) A C :- iso.forward HD A B, iso.forward (iso.compose TL) B C.
+
+iso.backward (iso.compose []) A A.
+iso.backward (iso.compose (HD :: TL)) C A :- iso.backward (iso.compose TL) C B, iso.backward HD B A.
+
+isocast_def : [A B] iso A B -> prop.
+
+isocast : [A B] A -> B -> prop.
+isocast (From: A) (To: B) when once(isocast_def (Iso: iso A B)) :-
+  iso.forward Iso From To.
+
+isocast (From: A) (To: B) when once(isocast_def (Iso: iso B A)) :-
+  iso.backward Iso From To.
