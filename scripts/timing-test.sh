@@ -4,6 +4,7 @@ TIMING_DEADLINE="65.0"
 NOCACHE_REFERENCE="91.0"
 
 set -eux
+set -o pipefail
 
 make cache-clean
 COMMAND="make makam-tests"

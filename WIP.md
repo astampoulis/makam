@@ -7,6 +7,5 @@
 - [x] add an end-to-end language definition test
 - [x] add concrete.name and type concrete.namespace
 - [x] add concrete.names, concrete.binders and conversion
+- [x] fix timing test failure
 - [ ] split out conversion from resolution?
-- [ ] some kind of sugar for generating concrete constructors
-- [ ] examples for letrec, patterns, etc.
