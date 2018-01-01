@@ -103,18 +103,18 @@ peg.rule (token_id S) (transform (pfun ident res => eq ident S, eq res ident)
 makam_term_args_str : peg string.
 
 peg.rule (makam_term_str 0) (string_transform
-            (pfun binder body => expansion.str `(fun ${binder} => ${body})`)
+            (fun binder body => `(fun ${binder} => ${body})`)
             [ syntax (token_id "fun"), peg.captured (syntax (token makam_ident)), syntax (token "=>"), peg.captured (makam_term_str 0) ]).
 peg.rule (makam_term_str 0) (makam_term_str 1).
 peg.rule (makam_term_str 1) (string_transform
-            (pfun hd args => expansion.str `(${hd} ${args})`)
+            (fun hd args => `(${hd} ${args})`)
             [ peg.captured (makam_term_str 2), peg.captured makam_term_args_str ]).
 peg.rule (makam_term_str 1) (makam_term_str 2).
 peg.rule (makam_term_str 2) (syntax (token makam_ident)).
 peg.rule (makam_term_str 2) (apply (fun x => x) [ syntax (token "("), peg.captured (makam_term_str 0), syntax (token ")") ]).
 
 peg.rule makam_term_args_str (string_transform
-            (pfun hd tl => expansion.str `${hd} ${tl}`)
+            (fun hd tl => `${hd} ${tl}`)
             [ peg.captured (makam_term_str 2), peg.captured makam_term_args_str ]).
 peg.rule makam_term_args_str (apply "" []).
 
@@ -160,7 +160,7 @@ pretty.rule (makam_term 2)
 (* actual syntax combinators *)
 
 peg.rule base_str
-         (string_transform (fun s => expansion.str `(syntax_syntax.token "${s}")`)
+         (string_transform (fun s => `(syntax_syntax.token "${s}")`)
                 [ peg.captured (syntax (token string_literal)) ]).
 pretty.rule base
          (unapply (fun (s: string) => (token s: syntax unit))
@@ -172,7 +172,7 @@ pretty.rule base
          (makam_term 0).
 
 peg.rule base_str
-         (string_transform (fun s => expansion.str `(${s})`)
+         (string_transform (fun s => `(${s})`)
                 [ exact "(", peg.captured appl_str, exact ")" ]).
 pretty.rule base
          (unapply (fun x => x)
@@ -181,7 +181,7 @@ pretty.rule base
 (* syntax.apply and syntax rules *)
 
 peg.rule args_str
-     (string_transform (fun hd tl => expansion.str `(syntax.cons (syntax.captured ${hd}) ${tl})`)
+     (string_transform (fun hd tl => `(syntax.cons (syntax.captured ${hd}) ${tl})`)
             [ syntax (token "<"),
               peg.captured appl_str,
               syntax (token ">"),
@@ -194,7 +194,7 @@ pretty.rule args
          pretty.captured args ]).
 
 peg.rule args_str
-     (string_transform (fun hd tl => expansion.str `(syntax.cons (${hd}: syntax unit) ${tl})`)
+     (string_transform (fun hd tl => `(syntax.cons (${hd}: syntax unit) ${tl})`)
             [ peg.captured base_str,
               peg.captured args_str ]).
 pretty.rule args
@@ -208,14 +208,14 @@ pretty.rule args
      (unapply syntax.nil []).
 
 peg.rule appl_str
-          (string_transform (fun args => expansion.str `(syntax.apply (fun x => x) ${args})`)
+          (string_transform (fun args => `(syntax.apply (fun x => x) ${args})`)
           [ syntax (token "("), peg.captured args_str, syntax (token ")") ]).
 pretty.rule appl
      (unapply (syntax.apply (fun (x: A) => x))
       [ syntax (token "("), pretty.captured (args: pretty (syntax_args (A -> A) A)), syntax (token ")") ]).
 
 peg.rule appl_str
-          (string_transform (fun id args => expansion.str `(syntax.apply ${id} ${args})`)
+          (string_transform (fun id args => `(syntax.apply ${id} ${args})`)
           [ peg.captured (makam_term_str 0), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
 pretty.rule appl
      (unapply syntax.apply
@@ -236,14 +236,14 @@ choices_str : peg string.
 choices : pretty (list (syntax A)).
 
 peg.rule choices_str
-          (string_transform (fun c cs => expansion.str `(cons ${c} ${cs})`)
+          (string_transform (fun c cs => `(cons ${c} ${cs})`)
           [ peg.captured appl_str, syntax (token "/"), peg.captured choices_str ]).
 pretty.rule choices
      (unapply cons
       [ pretty.captured appl, syntax (token "/"), pretty.captured choices ]).
 
 peg.rule choices_str
-          (string_transform (fun c => expansion.str `(cons ${c} nil)`)
+          (string_transform (fun c => `(cons ${c} nil)`)
           [ peg.captured appl_str ]).
 pretty.rule choices
      (unapply (fun hd => cons hd nil)
@@ -262,7 +262,7 @@ syndef_str, syndef_str_cached : peg string.
 syndef : pretty syndef.
 
 peg.rule syndef_str
-       (string_transform (fun constr def => expansion.str `(syntax_syntax.syndef ${constr} (syntax.choices ${def}))`)
+       (string_transform (fun constr def => `(syntax_syntax.syndef ${constr} (syntax.choices ${def}))`)
         [ peg.captured (makam_term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
 pretty.rule syndef
        (unapply (fun constr def => syndef constr (choices def))

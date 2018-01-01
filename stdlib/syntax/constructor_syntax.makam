@@ -33,31 +33,29 @@ many_str : peg string -> peg string.
 
 peg.rule constructor_def (makam_antiquote constructor_def_str).
 peg.rule constructor_def_str
-         (string_transform (pfun name argstypes targettype =>
-           expansion.str
+         (string_transform (fun name argstypes targettype =>
            `constructor_syntax.constructor_def "${name}" ${argstypes} (_: ${targettype})`)
          [ peg.captured (syntax (syntax_syntax.token makam_ident)),
            peg.captured (many_str constructor_arg_str),
            syntax (syntax_syntax.token ":"),
            peg.captured type_str ]).
 
-peg.rule type_str (string_transform (pfun typconstr args =>
-                   expansion.str `${typconstr} ${args}`)
+peg.rule type_str (string_transform (fun typconstr args => `${typconstr} ${args}`)
                    [ peg.captured (syntax (syntax_syntax.token makam_ident)),
                      peg.captured (stringmany (
-                       string_transform (fun x => expansion.str ` ${x}`)
+                       string_transform (fun x => ` ${x}`)
                        [ peg.captured basetype_str ]
                      )) ]).
 peg.rule type_str basetype_str.
 peg.rule basetype_str (syntax (syntax_syntax.token makam_ident)).
 peg.rule basetype_str (syntax (syntax_syntax.token makam_unif_ident)).
-peg.rule basetype_str (string_transform (pfun x => expansion.str `(${x})`)
+peg.rule basetype_str (string_transform (fun x => `(${x})`)
                        [ syntax (syntax_syntax.token "("),
                          peg.captured type_str,
                          syntax (syntax_syntax.token ")") ]).
 
 peg.rule constructor_arg_str
-         (string_transform (pfun var typ => expansion.str `(${var}: ${typ})`)
+         (string_transform (fun var typ => `(${var}: ${typ})`)
          [ syntax (syntax_syntax.token "("),
            peg.captured (syntax (syntax_syntax.token makam_unif_ident)),
            syntax (syntax_syntax.token ":"),
@@ -65,7 +63,7 @@ peg.rule constructor_arg_str
            syntax (syntax_syntax.token ")") ]).
 
 peg.rule (many_str P)
-         (string_transform (pfun hd tl => expansion.str `(cons ${hd} ${tl})`)
+         (string_transform (fun hd tl => `(cons ${hd} ${tl})`)
          [ peg.captured P,
            peg.captured (many_str P) ]).
 peg.rule (many_str P)

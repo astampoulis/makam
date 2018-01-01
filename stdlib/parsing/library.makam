@@ -84,36 +84,50 @@ rule (stringmany P) (transform string.append
                              [ captured P, captured (stringmany P) ]).
 rule (stringmany P) (action "").
 
-string_transform_gen_vars : [A] int -> peg_args A (string -> prop) -> A ->
+string_transform_gen_vars : [A] int -> peg_args A expansion -> A ->
                                 string -> string -> string -> prop.
 
-string_transform_gen_vars _ [] P_String Result_js "" "" :- P_String Result_js.
-string_transform_gen_vars N ((HD: peg A) :: TL) P_String Result_js Params_js GetResults_js :-
-  string_transform_gen_vars N TL P_String Result_js Params_js GetResults_js.
-string_transform_gen_vars N ((captured HD) :: TL) P_String Result_js Params_js GetResults_js :-
+string_transform_gen_vars _ [] Expansion Result_js "" "" :- expansion.str Expansion Result_js.
+string_transform_gen_vars N ((HD: peg A) :: TL) Expansion Result_js Params_js GetResults_js :-
+  string_transform_gen_vars N TL Expansion Result_js Params_js GetResults_js.
+string_transform_gen_vars N ((captured HD) :: TL) Expansion Result_js Params_js GetResults_js :-
   tostring N N_S,
   plus N 1 N',
   expansion.str `res_${N_S}` Result_var,
   expansion.str `\${res_${N_S}}` Result_quote,
   expansion.str `var_${N_S}` Param_js,
   expansion.str `const ${Result_var} = JSON.parse(${Param_js});` GetResult_js,
-  string_transform_gen_vars N' TL (P_String Result_quote) Result_js Params_js' GetResults_js',
+  string_transform_gen_vars N' TL (Expansion Result_quote) Result_js Params_js' GetResults_js',
   if (eq Params_js' "") then
     (eq Param_js Params_js, eq GetResult_js GetResults_js)
   else
     (expansion.str `${Param_js}, ${Params_js'}` Params_js,
      expansion.str `${GetResult_js} ${GetResults_js'}` GetResults_js).
 
-string_transform : StringsToStringProp ->
-                   peg_args StringsToStringProp (string -> prop) -> peg string.
+expansion_to_stringprop : [StringsToStringProp StringsToExpansion] StringsToExpansion -> StringsToStringProp -> prop.
+expansion_to_stringprop (X: expansion) (expansion.str X).
+expansion_to_stringprop (F: string -> A) (F': string -> A') :-
+  (x:string -> expansion_to_stringprop (F x) (F' x)).
+
+peg_args_change_bodytype : [A A' B B'] peg_args A B -> peg_args A' B' -> prop.
+peg_args_change_bodytype [] [].
+peg_args_change_bodytype (cons (X: peg A) Y) (cons X Y') :-
+  peg_args_change_bodytype Y Y'.
+peg_args_change_bodytype (cons (X: peg_captured A) Y) (cons X Y') :-
+  peg_args_change_bodytype Y Y'.
+
+string_transform : StringsToExpansion ->
+                   peg_args StringsToExpansion expansion -> peg string.
 inline (string_transform _ _).
-rule (string_transform P_String PS)
-     (transform P_String Code PS) :-
-  string_transform_gen_vars 0 PS P_String Result_js Params_js GetResults_js,
+rule (string_transform Expansion PS)
+     (transform P_String Code PS') :-
+  expansion_to_stringprop Expansion P_String,
+  peg_args_change_bodytype PS PS',
+  string_transform_gen_vars 0 PS Expansion Result_js Params_js GetResults_js,
   expansion.str `function (${Params_js}) { ${GetResults_js} return JSON.stringify(\`${Result_js}\`); }` Code.
 
 (* antiquote *)
 
 makam_antiquote : peg string -> peg A.
 inline (makam_antiquote _).
-rule (makam_antiquote P) (transform refl.fromstring "(a) => { console.error(a); return JSON.parse(a); }" [ captured P ]).
+rule (makam_antiquote P) (transform refl.fromstring "JSON.parse" [ captured P ]).
