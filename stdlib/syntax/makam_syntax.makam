@@ -7,12 +7,12 @@
 ident, ident_first, ident_rest : syntax string.
 syntax.inline ident. syntax.inline ident_first. syntax.inline ident_rest.
 
+(* identifiers *)
 (* TODO: make this even more precise *)
 
 syntax.rule ident_first (charclass "abcdefghijklmnopqrstuvwxyz_.").
 syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule ident (charcons ident_first (charmany ident_rest)).
-syntax.inline ident.
+syntax.rule ident (token (charcons ident_first (charmany ident_rest))).
 
 
 unifident_first, unifident_rest, unifident : syntax string.
@@ -20,7 +20,44 @@ syntax.inline unifident. syntax.inline unifident_first. syntax.inline unifident_
 
 syntax.rule unifident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
 syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule unifident (charcons unifident_first (charmany unifident_rest)).
+syntax.rule unifident (token (charcons unifident_first (charmany unifident_rest))).
+
+
+(* string literals *)
+
+string_literal_char : syntax string.
+syntax.inline string_literal_char.
+syntax.rule string_literal_char (apply "\"" [ exact "\\\"" ]).
+syntax.rule string_literal_char (apply "\n" [ exact "\\n" ]).
+syntax.rule string_literal_char (apply "\r" [ exact "\\r" ]).
+syntax.rule string_literal_char
+  (iso (seq (neg (charclass "\"\n\r")) anychar)
+       (untransform
+         (pfun res x => not(string.contains "\\\"\n\r" x), eq res x)
+         [ pretty.captured anychar ])).
+
+string_literal : syntax string.
+rule string_literal
+     (token (group [
+      exact "\"",
+      syntax.captured (charmany string_literal_char),
+      exact "\""])).
+syntax.inline string_literal.
+
+string_literal_char_str : peg string.
+peg.inline string_literal_char_str.
+peg.rule string_literal_char_str (exact "\\\"").
+peg.rule string_literal_char_str (exact "\\n").
+peg.rule string_literal_char_str (exact "\\r").
+peg.rule string_literal_char_str (seq (neg (exact "\"")) anychar).
+
+string_literal_str : peg string.
+rule string_literal_str (syntax (token (iso
+     (string_transform (fun quoted => `"${quoted}"`)
+      [ exact "\"",
+        peg.captured (stringmany string_literal_char_str),
+        exact "\""] ) void))).
+peg.inline string_literal_str.
 
 
 (* antiquote *)
@@ -42,13 +79,14 @@ syntax.rule term (iso (antiquote (term_str 0)) (term 0)).
 
 peg.rule (term_str 0) (string_transform
             (fun binder body => `(fun ${binder} => ${body})`)
-            [ syntax (token_id ident "fun"), peg.captured (syntax (token ident)), syntax (token "=>"), peg.captured (term_str 0) ]).
+            [ syntax (token_id ident "fun"), peg.captured (syntax ident), syntax (token "=>"), peg.captured (term_str 0) ]).
 peg.rule (term_str 0) (term_str 1).
 peg.rule (term_str 1) (string_transform
             (fun hd args => `(${hd} ${args})`)
             [ peg.captured (term_str 2), peg.captured term_args_str ]).
 peg.rule (term_str 1) (term_str 2).
-peg.rule (term_str 2) (syntax (token ident)).
+peg.rule (term_str 2) (syntax ident).
+peg.rule (term_str 2) (string_literal_str).
 peg.rule (term_str 2) (apply (fun x => x) [ syntax (token "("), peg.captured (term_str 0), syntax (token ")") ]).
 
 peg.rule term_args_str (string_transform
@@ -94,7 +132,8 @@ pretty.rule (term 1) (term 2).
 
 pretty.rule (term 2)
      (untransform (pfun str x => string_of_head x str)
-       [ pretty.captured (syntax (token ident)) ]).
+       [ pretty.captured (syntax ident) ]).
+pretty.rule (term 2) (syntax string_literal).
 pretty.rule (term 2)
             (unapply (fun x => x) [ syntax (token "("), pretty.captured (term 0), syntax (token ")") ]).
 
@@ -104,14 +143,14 @@ pretty.rule (term 2)
 typ_str, basetyp_str : peg string.
 
 peg.rule typ_str (string_transform (fun typconstr args => `${typconstr} ${args}`)
-                   [ peg.captured (syntax (token makam.ident)),
+                   [ peg.captured (syntax ident),
                      peg.captured (stringmany (
                        string_transform (fun x => ` ${x}`)
                        [ peg.captured basetyp_str ]
                      )) ]).
 peg.rule typ_str basetyp_str.
-peg.rule basetyp_str (syntax (token makam.ident)).
-peg.rule basetyp_str (syntax (token makam.unifident)).
+peg.rule basetyp_str (syntax ident).
+peg.rule basetyp_str (syntax unifident).
 peg.rule basetyp_str (string_transform (fun x => `(${x})`)
                        [ syntax (token "("),
                          peg.captured typ_str,

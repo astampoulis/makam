@@ -47,12 +47,12 @@ stdlib/concrete_bind.tests \
 stdlib/parsing/tests \
 stdlib/parsing/tests_opt \
 stdlib/parsing/peg_grammar \
-stdlib/parsing/layout_grammar.tests.makam \
+stdlib/parsing/layout_grammar.tests \
 stdlib/pretty/tests \
 stdlib/syntax/tests \
-stdlib/syntax/makam_syntax.tests.makam \
-stdlib/syntax/syntax_syntax.tests.makam \
-stdlib/syntax/layout_syntax.tests.makam \
+stdlib/syntax/makam_syntax.tests \
+stdlib/syntax/syntax_syntax.tests \
+stdlib/syntax/layout_syntax.tests \
 stdlib/dyn_expansion \
 new/testocaml \
 new/testcases_ocaml \

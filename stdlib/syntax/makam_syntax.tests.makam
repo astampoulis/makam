@@ -6,6 +6,16 @@
 
 all : testsuite. %testsuite all.
 
+>> syntax.parse_opt makam.string_literal {"hello\"\n"} X ?
+>> Yes:
+>> X := {hello"
+}.
+
+>> syntax.pretty makam.string_literal {hello"
+} X ?
+>> Yes:
+>> X := {"hello\"\n" }.
+
 term : type.
 lam : string -> term -> term.
 
@@ -20,5 +30,13 @@ lam : string -> term -> term.
 >> syntax.pretty makam.term (fun x y => lam y x) X ?
 >> Yes:
 >> X := "fun anon0 => fun anon1 => makam_syntax_tests.lam anon1 anon0 ".
+
+>> syntax.pretty makam.term (fun x => lam "hello" x) X ?
+>> Yes:
+>> X := "fun anon0 => makam_syntax_tests.lam \"hello\" anon0 ".
+
+>> syntax.parse_opt makam.term {makam_syntax_tests.lam "hello\""} Y ?
+>> Yes:
+>> Y := lam {hello"}.
 
 %end.

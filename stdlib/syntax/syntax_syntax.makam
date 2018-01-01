@@ -17,8 +17,6 @@
 
 %extend syntax_syntax.
 
-string_literal : syntax string.
-
 appl_str, base_str : peg string.
 args_str : peg string.
 
@@ -28,32 +26,14 @@ args : pretty (syntax_args A B).
 appl : syntax (syntax A).
 args : syntax (syntax_args A B).
 
-(* TODO: string literals should be more general than this too *)
-string_literal_char : syntax string.
-syntax.inline string_literal_char.
-syntax.rule string_literal_char (apply "'" [ exact "\\'" ]).
-syntax.rule string_literal_char (apply "\n" [ exact "\\n" ]).
-syntax.rule string_literal_char (apply "\r" [ exact "\\r" ]).
-syntax.rule string_literal_char (transform (pfun x res => not(string.contains "'\n\r" x), eq res x)
-                                           "function(x) { return \"'\\n\\r\".includes(JSON.parse(x)) ? null : x; }"
-                                           (pfun res x => not(string.contains "'\n\r" x), eq res x)
-                                           [ syntax.captured anychar ]).
-
-rule string_literal
-     (group [
-      exact "'",
-      syntax.captured (charmany string_literal_char),
-      exact "'"]).
-syntax.inline string_literal.
-
 (* actual syntax combinators *)
 
 peg.rule base_str
          (string_transform (fun s => `(syntax.token "${s}")`)
-                [ peg.captured (syntax (token string_literal)) ]).
+                [ peg.captured (syntax (token makam.string_literal)) ]).
 pretty.rule base
          (unapply (fun (s: string) => (token s: syntax unit))
-                [ pretty.captured (syntax (token string_literal)) ]).
+                [ pretty.captured (syntax (token makam.string_literal)) ]).
 
 peg.rule base_str
          (makam.term_str 0).
