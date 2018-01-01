@@ -147,12 +147,16 @@ recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
 
 `( syntax.def_toplevel_js term ).
 
->> (syntax.parse_opt term {{ λw.Λa.let x = ('foo' : a) in let y = 'bar' in w }} _X, concrete.resolve _X _Y, concrete.resolve _Z _Y, syntax.pretty term _Z QQ) ?
+isocast_def (iso.compose
+              [iso.iso (syntax.parse_opt term) (syntax.pretty term),
+               iso.bidi concrete.resolve]).
+
+>> (isocast {{ λw.Λa.let x = ('foo' : a) in let y = 'bar' in w }} (_X: term), isocast _X QQ) ?
 >> Yes:
 >> QQ := "λ x1 . Λ α1 . let x = ( 'foo' : α1 ) in let y = 'bar' in x1 ".
 
->> (syntax.parse_opt term {{ letrec x = y and y = x in x }} _X, concrete.resolve _X Y, concrete.resolve _Z Y, eq _X _Z) ?
+>> (isocast {{ letrec x = y and y = x in x }} (_X: term), isocast _X QQ) ?
 >> Yes:
->> Y := letrec_dep (bind.binder "x" (fun x => bind.binder "y" (fun y => bind.body [y, x]))) (bind.binder "x" (fun x => bind.binder "y" (fun y => bind.body x))).
+>> QQ := "letrec x = y and y = x in x ".
 
 %end.

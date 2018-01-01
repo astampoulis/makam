@@ -19,6 +19,7 @@
 %use set.
 %use map.
 %use fluid.
+%use iso.
 
 %use bind.
 
