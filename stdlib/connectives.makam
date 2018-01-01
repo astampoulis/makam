@@ -26,3 +26,5 @@ assume_many : (A -> B -> prop) -> list A -> list B -> prop -> prop.
 assume_many P [] [] G <- G.
 assume_many P (A :: AS) (B :: BS) G <- (P A B -> assume_many P AS BS G).
 
+either : prop -> prop -> prop.
+either P Q <- if P then success else Q.

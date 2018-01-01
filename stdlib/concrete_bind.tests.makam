@@ -1,0 +1,162 @@
+%extend stdlib_tests.
+
+concrete_bind : testsuite. %testsuite concrete_bind.
+
+term : type.
+typ : type.
+
+stringconst : string -> term.
+function : (term -> term) -> term.
+tfunction : (typ -> term) -> term.
+ascribe : term -> typ -> term.
+letin : term -> bindone term term -> term.
+letrec : bindmany term (list term) -> bindmany term term -> term.
+letrec_dep : bind term A (list term) -> bind term A term -> term.
+globalvar : string -> term.
+
+letrec_dep_concrete : list (concrete.name term * term) -> term -> term.
+concrete.resolve_conversion
+    (letrec_dep_concrete NamesDefs Body)
+    (letrec_dep (concrete.binders Names Defs) (concrete.binders Names Body)) :-
+  zip Names Defs NamesDefs.
+
+termvars : concrete.namespace term.
+typvars : concrete.namespace typ.
+concrete.pick_namespace_userdef (_: term) termvars.
+concrete.pick_namespace_userdef (_: typ) typvars.
+
+concrete.pick_name_prefix_userdef typvars "α".
+
+concrete.handle_unresolved_name (concrete.name termvars ID) (globalvar ID).
+
+>> concrete.resolve (stringconst "foo") X ?
+>> Yes:
+>> X := stringconst "foo".
+
+>> concrete.resolve X (stringconst "foo") ?
+>> Yes:
+>> X := stringconst "foo".
+
+>> concrete.resolve (function (concrete.lambda (concrete.name termvars "x") (concrete.var (concrete.name termvars "x")))) X ?
+>> Yes:
+>> X := function (fun x => x).
+
+>> concrete.resolve X (function (fun x => x)) ?
+>> Yes:
+>> X := function (concrete.lambda (concrete.name termvars "x1") (concrete.var (concrete.name termvars "x1"))).
+
+>> (concrete.pick_name_prefix_userdef termvars "z" ->
+     concrete.resolve X (function (fun x => x))) ?
+>> Yes:
+>> X := function (concrete.lambda (concrete.name termvars "z1") (concrete.var (concrete.name termvars "z1"))).
+
+>> (concrete.pick_name_userdef termvars "z" ->
+      concrete.resolve X (function (fun x => x))) ?
+>> Yes:
+>> X := function (concrete.lambda (concrete.name termvars "z") (concrete.var (concrete.name termvars "z"))).
+
+>> concrete.resolve X (function (fun x => (function (fun y => x)))) ?
+>> Yes:
+>> X := function (concrete.lambda (concrete.name termvars "x1") (function (concrete.lambda (concrete.name termvars "x2") (concrete.var (concrete.name termvars "x1"))))).
+
+>> concrete.resolve (function (concrete.lambda (concrete.name termvars "x") (tfunction (concrete.lambda (concrete.name typvars "α") (ascribe (concrete.var (concrete.name termvars "x")) (concrete.var (concrete.name typvars "α"))))))) X ?
+>> Yes:
+>> X := function (fun x => tfunction (fun a => ascribe x a)).
+
+>> concrete.resolve X (function (fun x => tfunction (fun a => ascribe x a))) ?
+>> Yes:
+>> X := function (concrete.lambda (concrete.name termvars "x1") (tfunction (concrete.lambda (concrete.name typvars "α1") (ascribe (concrete.var (concrete.name termvars "x1")) (concrete.var (concrete.name typvars "α1")))))).
+
+>> concrete.resolve (letin (stringconst "foo") (bindone "x" (concrete.lambda (concrete.name termvars "x") (concrete.var (concrete.name termvars "x"))))) X ?
+>> Yes:
+>> X := letin (stringconst "foo") (bindone "x" (fun x => x)).
+
+>> concrete.resolve X (letin (stringconst "foo") (bindone _ (fun x => letin (stringconst "bar") (bindone _ (fun y => y))))) ?
+>> Yes:
+>> X := letin (stringconst "foo") (concrete.bindone (concrete.name termvars "x1") (letin (stringconst "bar") (concrete.bindone (concrete.name termvars "x2") (concrete.var (concrete.name termvars "x2"))))).
+
+>> concrete.resolve (concrete.var (concrete.name termvars "some_global_var")) X ?
+>> Yes:
+>> X := globalvar "some_global_var".
+
+>> concrete.resolve X (globalvar "some_global_var") ?
+>> Yes:
+>> X := concrete.var (concrete.name termvars "some_global_var").
+
+>> concrete.resolve (letrec (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend [stringconst "a", stringconst "b"]))) (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend (stringconst "body"))))) X ?
+>> Yes:
+>> X := (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))).
+
+>> concrete.resolve X (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))) ?
+>> Yes:
+>> X := letrec (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend [stringconst "a", stringconst "b"]))) (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend (stringconst "body")))).
+
+>> (concrete.pattern_mode -> concrete.resolve (letin (stringconst "a") (concrete.bindone (concrete.name termvars "x") (concrete.var (concrete.name termvars "x")))) X) ?
+>> Yes:
+>> X := letin (stringconst "a") (bindone ID' (fun x => x)).
+
+>> concrete.resolve (letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body"))) X ?
+>> Yes:
+>> X := (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))).
+
+>> (concrete.pattern_mode -> concrete.resolve (letrec_dep (concrete.binders [concrete.name termvars "a"] [stringconst "a"]) (concrete.binders [concrete.name termvars "a"] (stringconst "body"))) X) ?
+>> Yes:
+>> X := letrec_dep (bind.binder ID (fun a => bind.body (cons (stringconst "a") nil))) (bind.binder ID' (fun a => bind.body (stringconst "body"))).
+
+>> (concrete.resolve_conversion (letrec_dep _A _B) (letrec_dep _A _B) -> concrete.resolve X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body")))))) ?
+>> Yes:
+>> X := letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body")).
+
+>> concrete.resolve X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))) ?
+>> Yes:
+>> X := letrec_dep_concrete [(concrete.name termvars "a", stringconst "a"), (concrete.name termvars "b", stringconst "b")] (stringconst "body").
+
+term : syntax term. typ : syntax typ. ident : syntax string.
+recdefs : syntax (list (concrete.name term * term)).
+recdef : syntax (concrete.name term * term).
+
+syntax.rule ident (syntax.char_once_or_many (syntax.charclass "abcdefghijklmnopqrstuvwxyzαβγδεζηθικμνψοπρστυφχψω0123456789")).
+syntax.inline ident.
+
+`( syntax_rules {{
+
+typ -> fun id => concrete.var (concrete.name typvars id) { <syntax_syntax.token ident> }
+
+term -> stringconst
+        { <syntax_syntax.token syntax_syntax.string_literal> }
+      / fun id => fun body => function (concrete.lambda (concrete.name termvars id) body)
+        { 'λ' <syntax_syntax.token ident> '.' <term> }
+      / fun id => fun body => tfunction (concrete.lambda (concrete.name typvars id) body)
+        { 'Λ' <syntax_syntax.token ident> '.' <term> }
+      / ascribe
+        { '(' <term> ':' <typ> ')' }
+      / fun id => fun def => fun body => letin def (concrete.bindone (concrete.name termvars id) body)
+        { 'let' <syntax_syntax.token ident> '=' <term> 'in' <term> }
+      / fun defs => fun body => letrec_dep_concrete defs body
+        { 'letrec' <recdefs> 'in' <term> }
+      / fun id => concrete.var (concrete.name termvars id)
+        { <syntax_syntax.token ident> }
+
+recdefs -> cons { <recdef> 'and' <recdefs> }
+         / fun hd => cons hd nil { <recdef> }
+
+recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
+           { <syntax_syntax.token ident> '=' <term> }
+
+}}).
+
+`( syntax.def_toplevel_js term ).
+
+isocast_def (iso.compose
+              [iso.iso (syntax.parse_opt term) (syntax.pretty term),
+               iso.bidi concrete.resolve]).
+
+>> (isocast {{ λw.Λa.let x = ('foo' : a) in let y = 'bar' in w }} (_X: term), isocast _X QQ) ?
+>> Yes:
+>> QQ := "λ x1 . Λ α1 . let x = ( 'foo' : α1 ) in let y = 'bar' in x1 ".
+
+>> (isocast {{ letrec x = y and y = x in x }} (_X: term), isocast _X QQ) ?
+>> Yes:
+>> QQ := "letrec x = y and y = x in x ".
+
+%end.

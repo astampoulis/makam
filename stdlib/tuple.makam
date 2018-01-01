@@ -3,6 +3,12 @@
 map : (A -> C -> prop) -> (B -> D -> prop) -> A * B -> C * D -> prop.
 map P Q (X, Y) (X', Y') <- P X X', Q Y Y'.
 
+fst : (A * B) -> A -> prop.
+fst (X, _) X.
+
+snd : (A * B) -> B -> prop.
+snd (_, X) X.
+
 dynlist : A -> list dyn -> prop.
 dynlist Res [dyn Res]
   when unless (typ.isunif Res) (not(typ.eq Res (_ : A * B))).
