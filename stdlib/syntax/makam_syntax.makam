@@ -159,4 +159,6 @@ syntax.rule basetyp_reified (apply (fun x => tbase x []) [ syntax.captured ident
 syntax.rule basetyp_reified (apply tunif [ syntax.captured unifident ]).
 syntax.rule basetyp_reified (group [ token "(", syntax.captured typ_reified, token ")" ]).
 
+`( syntax.def_toplevel_js typ_reified ).
+
 %end.

@@ -9,5 +9,5 @@
 - [x] use normal syntax and thin translation layer
 - [x] typstring now handles polymorphic types
 - [x] able to get printing for existing constructor
-- [ ] isocast does resolution
+- [x] isocast does resolution
 - [ ] cleanup and add proper tests

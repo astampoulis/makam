@@ -7,33 +7,47 @@ constructor_definitions : string -> cmd -> prop.
 %extend constructor_syntax.
 
 constructor_def : type.
-constructor_def : string -> list makam.typ_reified -> makam.typ_reified -> constructor_def.
+constructor_type : type.
+constructor_type : list makam.typ_reified -> makam.typ_reified -> constructor_type.
+constructor_def : string -> constructor_type -> constructor_def.
 
-typ_reified_arrows : list makam.typ_reified -> makam.typ_reified -> makam.typ_reified -> prop.
-typ_reified_arrows [] Target Target when not(eq Target (makam.tarrow _ _)).
-typ_reified_arrows (HD :: TL) Target (makam.tarrow HD T') :-
-  typ_reified_arrows TL Target T'.
+constructor_type_to_reified : constructor_type -> makam.typ_reified -> prop.
+constructor_type_to_reified (constructor_type [] Target) Target
+  when not(eq Target (makam.tarrow _ _)).
+constructor_type_to_reified (constructor_type (HD :: TL) Target) (makam.tarrow HD T') :-
+  constructor_type_to_reified (constructor_type TL Target) T'.
 
-to_type : constructor_def -> Type -> prop.
-to_type (constructor_def _ Args Target) Type :-
-  typ_reified_arrows Args Target TypeReified,
-  syntax.pretty makam.typ_reified TypeReified TypeString,
-  expansion.str `(_: ${TypeString})` FullString,
-  refl.fromstring FullString Type.
+constructor_def_of : type -> type.
+constructor_def_of : A -> constructor_def_of A.
+
+isocast_def (Iso: iso constructor_def (constructor_def_of Type)) :-
+  isocast_find unit (String_to_TypReified: iso string makam.typ_reified),
+  eq Iso (iso.compose [
+    iso.iso
+      (pfun cdef ctype => eq cdef (constructor_def _ ctype))
+      (pfun ctype cdef => eq cdef (constructor_def CName ctype)),
+    iso.bidi constructor_type_to_reified,
+    iso.inverse String_to_TypReified,
+    iso.iso (pfun str => expansion.str `(_: ${str})`) eq,
+    iso.iso refl.fromstring refl.typstring,
+    iso.iso eq (pfun term res => refl.headname term CName, eq term res),
+    iso.bidi (pfun term res => eq res (constructor_def_of term))
+  ]).
 
 to_cmd : constructor_def -> cmd -> prop.
-to_cmd Def (cmd_newterm Name Type) when eq Def (constructor_def Name _ _) :-
-  to_type Def Type.
+to_cmd Def (cmd_newterm Name Type) when eq Def (constructor_def Name _) :-
+  isocast Def (constructor_def_of Type).
 
 s_constructor_defs : syntax (list constructor_def).
-s_constructor_def : syntax constructor_def.
+s_constructor_def, s_constructor_def_ : syntax constructor_def.
 constructor_arg : syntax makam.typ_reified.
 param_name : syntax unit.
 
 `( syntax_rules {{
 
-s_constructor_def ->
-  constructor_def { <makam.ident> <many constructor_arg> ":" <makam.typ_reified> "." }
+s_constructor_def_ ->
+  fun id => fun arg => fun tgt => constructor_def id (constructor_type arg tgt)
+  { <makam.ident> <many constructor_arg> ":" <makam.typ_reified> "." }
 
 constructor_arg -> { "(" param_name ":" <makam.typ_reified> ")" }
 
@@ -41,10 +55,11 @@ param_name -> { <iso (ignore (syntax makam.unifident)) (pretty.const "_")> }
 
 }}).
 
+`( syntax.def_js s_constructor_def s_constructor_def_ ).
 `( syntax.def_js s_constructor_defs (once_or_many s_constructor_def) ).
 
 constructor_definitions S (cmd_many Cmds) :-
-  syntax.parse_opt s_constructor_defs S Defs, map to_cmd Defs Cmds.
+  isocast S Defs, map to_cmd Defs Cmds.
 
 hello : type.
 
@@ -56,10 +71,10 @@ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello.
 
 %type kalimera.
 
-(syntax.parse_opt s_constructor_defs {{ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello. }} X,
- syntax.pretty s_constructor_defs X Y) ?
+(isocast {{ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello. }} (X: constructor_def),
+ isocast X (Y: string)) ?
 
-(refl.typstring kalimera X, print X, syntax.parse_opt makam.typ_reified X Y, typ_reified_arrows Args Target Y, syntax.pretty s_constructor_def (constructor_def "kalimera" Args Target) ZZ ) ?
+(isocast (constructor_def_of kalimera) (X: constructor_def), print X, isocast X (Y: string), print_string `${Y}\n`) ?
 
 %end.
 

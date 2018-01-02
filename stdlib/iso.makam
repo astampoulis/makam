@@ -33,9 +33,24 @@ iso.backward (iso.compose (HD :: TL)) C A :- iso.backward (iso.compose TL) C B, 
 
 isocast_def : [A B] iso A B -> prop.
 
-isocast : [A B] A -> B -> prop.
-isocast (From: A) (To: B) when once(isocast_def (Iso: iso A B)) :-
-  iso.forward Iso From To.
+isocast_find : [A B] isos A B -> prop.
+isocast_find ([Iso]: isos From To) when once(isocast_def Iso).
+isocast_find (Isos: isos From To)
+  when once(isocast_def (Iso: iso From Intermediate)), isocast_find (Isos': isos Intermediate To) :-
+  eq Isos (Iso :: Isos').
 
-isocast (From: A) (To: B) when once(isocast_def (Iso: iso B A)) :-
-  iso.backward Iso From To.
+isocast_find : [A B] Source -> iso A B -> prop.
+isocast_find Source (Iso: iso From To) :-
+  if (not(typ.isunif (_: From)), isocast_find (Isos: isos From To)) then
+    eq Iso (iso.compose Isos)
+  else if (not(typ.isunif (_: To)), isocast_find (Isos': isos To From)) then
+    eq Iso (iso.inverse (iso.compose Isos'))
+  else (
+    refl.typstring Iso IsoS,
+    log_error Source `Could not find an instance for ${IsoS}`,
+    failure
+  ).
+
+isocast : [A B] A -> B -> prop.
+isocast (From: A) (To: B) when once(isocast_find To (Iso: iso A B)) :-
+  iso.forward Iso From To.
