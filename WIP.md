@@ -8,5 +8,6 @@
 - [x] fix dot in makam identifiers
 - [x] use normal syntax and thin translation layer
 - [x] typstring now handles polymorphic types
-- [ ] add proper tests
-- [ ] able to get printing for existing constructor
+- [x] able to get printing for existing constructor
+- [ ] isocast does resolution
+- [ ] cleanup and add proper tests

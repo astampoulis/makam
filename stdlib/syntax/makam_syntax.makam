@@ -143,20 +143,20 @@ pretty.rule (term 2)
 
 (* makam types *)
 
-typ_str, basetyp_str : peg string.
+typ_reified : type.
 
-peg.rule typ_str (string_transform (fun typconstr args => `${typconstr} ${args}`)
-                   [ peg.captured (syntax ident),
-                     peg.captured (stringmany (
-                       string_transform (fun x => ` ${x}`)
-                       [ peg.captured basetyp_str ]
-                     )) ]).
-peg.rule typ_str basetyp_str.
-peg.rule basetyp_str (syntax ident).
-peg.rule basetyp_str (syntax unifident).
-peg.rule basetyp_str (string_transform (fun x => `(${x})`)
-                       [ syntax (token "("),
-                         peg.captured typ_str,
-                         syntax (token ")") ]).
+tarrow : typ_reified -> typ_reified -> typ_reified.
+tbase : string -> list typ_reified -> typ_reified.
+tunif : string -> typ_reified.
+
+typ_reified, apptyp_reified, basetyp_reified : syntax typ_reified.
+
+syntax.rule typ_reified (apply tarrow [ syntax.captured apptyp_reified, token "->", syntax.captured typ_reified ]).
+syntax.rule typ_reified apptyp_reified.
+syntax.rule apptyp_reified (apply tbase [ syntax.captured ident, syntax.captured (many basetyp_reified) ]).
+syntax.rule apptyp_reified basetyp_reified.
+syntax.rule basetyp_reified (apply (fun x => tbase x []) [ syntax.captured ident ]).
+syntax.rule basetyp_reified (apply tunif [ syntax.captured unifident ]).
+syntax.rule basetyp_reified (group [ token "(", syntax.captured typ_reified, token ")" ]).
 
 %end.

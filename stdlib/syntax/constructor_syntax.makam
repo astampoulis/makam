@@ -7,17 +7,17 @@ constructor_definitions : string -> cmd -> prop.
 %extend constructor_syntax.
 
 constructor_def : type.
-constructor_def : string -> list string -> string -> constructor_def.
+constructor_def : string -> list makam.typ_reified -> makam.typ_reified -> constructor_def.
 
-create_type_string : list string -> string -> string -> prop.
-create_type_string [] Target Target.
-create_type_string (HDType :: TL) Target Result :-
-  create_type_string TL Target Result',
-  expansion.str `${HDType} -> ${Result'}` Result.
+typ_reified_arrows : list makam.typ_reified -> makam.typ_reified -> makam.typ_reified -> prop.
+typ_reified_arrows [] Target Target when not(eq Target (makam.tarrow _ _)).
+typ_reified_arrows (HD :: TL) Target (makam.tarrow HD T') :-
+  typ_reified_arrows TL Target T'.
 
 to_type : constructor_def -> Type -> prop.
 to_type (constructor_def _ Args Target) Type :-
-  create_type_string Args Target TypeString,
+  typ_reified_arrows Args Target TypeReified,
+  syntax.pretty makam.typ_reified TypeReified TypeString,
   expansion.str `(_: ${TypeString})` FullString,
   refl.fromstring FullString Type.
 
@@ -27,18 +27,15 @@ to_cmd Def (cmd_newterm Name Type) when eq Def (constructor_def Name _ _) :-
 
 s_constructor_defs : syntax (list constructor_def).
 s_constructor_def : syntax constructor_def.
-constructor_arg : syntax string.
-typ : syntax string.
+constructor_arg : syntax makam.typ_reified.
 param_name : syntax unit.
 
 `( syntax_rules {{
 
-typ -> { <iso makam.typ_str (pretty.syntax (charmany anychar))> }
-
 s_constructor_def ->
-  constructor_def { <makam.ident> <many constructor_arg> ":" <typ> "." }
+  constructor_def { <makam.ident> <many constructor_arg> ":" <makam.typ_reified> "." }
 
-constructor_arg -> { "(" param_name ":" <typ> ")" }
+constructor_arg -> { "(" param_name ":" <makam.typ_reified> ")" }
 
 param_name -> { <iso (ignore (syntax makam.unifident)) (pretty.const "_")> }
 
@@ -59,7 +56,10 @@ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello.
 
 %type kalimera.
 
-syntax.pretty s_constructor_def (constructor_def "lala" ["list Q"] "list Q") X ?
+(syntax.parse_opt s_constructor_defs {{ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello. }} X,
+ syntax.pretty s_constructor_defs X Y) ?
+
+(refl.typstring kalimera X, print X, syntax.parse_opt makam.typ_reified X Y, typ_reified_arrows Args Target Y, syntax.pretty s_constructor_def (constructor_def "kalimera" Args Target) ZZ ) ?
 
 %end.
 
