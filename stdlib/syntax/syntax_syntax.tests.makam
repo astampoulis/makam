@@ -18,39 +18,24 @@ syntax.inline ident.
 
 all : testsuite. %testsuite all.
 
->> syntax.parse_opt string_literal "'hello\\'\\n'" X ?
->> Yes:
->> X := "hello'\n".
-
->> syntax.parse_opt choices "syntax_syntax_tests.lam { 'λ' <syntax_syntax_tests.ident> '.' <syntax_syntax_tests.term> }" X ?
+>> syntax.parse_opt choices {{ syntax_syntax_tests.lam { "λ" <syntax_syntax_tests.ident> "." <syntax_syntax_tests.term> } }} X ?
 >> Yes:
 >> X := [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]].
 
 >> syntax.pretty choices [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]] X ?
 >> Yes:
->> X := "syntax_syntax_tests.lam { 'λ' < syntax_syntax_tests.ident > '.' < syntax_syntax_tests.term > } ".
-
->> pretty.pretty (makam_term 0) lam (some X) ?
->> Yes:
->> X := "syntax_syntax_tests.lam ".
-
->> pretty.pretty (makam_term 0) (fun (x: term) => x) (some X) ?
->> Yes:
->> X := "fun anon0 => anon0 ".
-
->> pretty.pretty (makam_term 0) (fun x y => lam y x) (some X) ?
->> Yes:
->> X := "fun anon0 => fun anon1 => syntax_syntax_tests.lam anon1 anon0 ".
+>> X := {{syntax_syntax_tests.lam { "λ"  < syntax_syntax_tests.ident > "."  < syntax_syntax_tests.term > } }}.
 
 `( syntax_rules {{
 
 term ->
-        lam { 'λ' <ident> '.' <term> }
+        lam { "λ" <ident> "." <term> }
       / app { <baseterm> <once_or_many baseterm> }
       / baseterm ;
+
 baseterm ->
         var { <ident> }
-      / ( '(' <term> ')' )
+      / { "(" <term> ")" }
 
 }}).
 

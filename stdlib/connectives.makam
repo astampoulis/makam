@@ -28,3 +28,12 @@ assume_many P (A :: AS) (B :: BS) G <- (P A B -> assume_many P AS BS G).
 
 either : prop -> prop -> prop.
 either P Q <- if P then success else Q.
+
+for_least_upto : int -> int -> (int -> prop) -> prop.
+for_least_upto_aux : int -> int -> int -> (int -> prop) -> prop.
+
+for_least_upto_aux MaxDepth Depth DepthRes P when lessthan Depth MaxDepth true :-
+  if (P Depth) then eq DepthRes Depth
+  else (plus Depth 1 Depth', for_least_upto_aux MaxDepth Depth' DepthRes P).
+
+for_least_upto MaxDepth Depth P :- once(for_least_upto_aux MaxDepth 0 Depth P).

@@ -144,6 +144,10 @@ let exception_handler f last_cmd_span recover recover_break =
      ; recover())
   | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
      (recover())
+  | Termlangrefl.StagingError(code) ->
+     (Printf.printf "In %s:\n  Error in staged code.\n%!"
+                    (UChannel.string_of_span code.loc)
+     ; recover())
   | Termlangprolog.ResetInModule m ->
      (Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
                     (last_cmd_span ()) m; recover())
@@ -188,6 +192,7 @@ let rec repl ?input () : unit =
   let last_cmd_span () = UChannel.string_of_span !MakamGrammar.last_command_span in
   let rec loop input : unit =
     let recover () =
+      if not is_stdin then exit 1;
       let furthest = UChannel.flush_to_furthest input in
       let rec find_newline input =
         match UChannel.get_one input with

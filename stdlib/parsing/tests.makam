@@ -48,7 +48,7 @@ identfirst, identrest : peg string.
 rule identfirst (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_").
 rule identrest (charclass "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZαβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩάέήίύόώ_1234567890'").
 
-rule ident (bind identfirst (fun (hd: string) => bind (charmany identrest) (fun tl =>
+rule ident (bind identfirst (fun (hd: string) => bind (stringmany identrest) (fun tl =>
             eval (string.append hd tl) `return JSON.stringify(JSON.parse(${hd}) + JSON.parse(${tl}));`))).
 
 cterm : type.
@@ -111,7 +111,7 @@ rule cterm2 (seq (token (exact "(")) (bind cterm0 (fun t => seq (token (exact ")
 >> Yes:
 >> X := ("ba", "").
 
->> parse (string_transform (fun a b => expansion.str `${a} : ${b}`) [ captured anychar, captured anychar ]) "xy" (X, _) ?
+>> parse (string_transform (fun a b => `${a} : ${b}`) [ captured anychar, captured anychar ]) "xy" (X, _) ?
 >> Yes:
 >> X := "x : y".
 

@@ -40,7 +40,9 @@ share: [
   "stdlib/syntax/init.makam" {"stdlib/syntax/init.makam"}
   "stdlib/syntax/syntax.makam" {"stdlib/syntax/syntax.makam"}
   "stdlib/syntax/layout_syntax.makam" {"stdlib/syntax/layout_syntax.makam"}
+  "stdlib/syntax/makam_syntax.makam" {"stdlib/syntax/makam_syntax.makam"}
   "stdlib/syntax/syntax_syntax.makam" {"stdlib/syntax/syntax_syntax.makam"}
+  "stdlib/syntax/constructor_syntax.makam" {"stdlib/syntax/constructor_syntax.makam"}
   "stdlib/syntax/library.makam" {"stdlib/syntax/library.makam"}
   "stdlib/tuple.makam" {"stdlib/tuple.makam"}
   "stdlib/typ.makam" {"stdlib/typ.makam"}
