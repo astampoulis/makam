@@ -64,7 +64,7 @@ big/testurweb \
 big/testf2tal
 
 makam-tests:
-	bash -c "set -e; for i in $(TESTS); do makam --run-tests \$$i; done"
+	bash -c "set -e; for i in $(TESTS); do (makam --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
 
 makam-timing-tests:
 	./scripts/timing-test.sh

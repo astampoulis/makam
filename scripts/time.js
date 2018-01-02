@@ -25,6 +25,7 @@ let iter = parseInt(iterations);
       sum += current;
       console.log("This run:", current, "Moving average:", sum / count);
     } catch (err) {
+      console.log(err.stdout);
       console.error(err.message);
       process.exit(1);
     }
