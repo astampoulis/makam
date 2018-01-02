@@ -439,7 +439,29 @@ builtin_enter_module "refl" ;;
 
   ;;
 
-  exception TypStringUninstantiatedTMetas;;
+  exception MonotypUninstantiatedTMetas;;
+  new_builtin_predicate "monotyp" ( ( ~* "A" ) **> _tProp)
+  (fun _ -> fun [ e ] ->
+    (let open RunCtx.Monad in
+     perform
+     e <-- pattcanonRenormalize e ;
+     p <-- chasePattcanon ~deep:true [] e ;
+     state <-- getbacktrackstate;
+     b <-- intermlang (fun _ ->
+              try
+                let p' =
+                 p |> pattcanonToExpr 0
+                   |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
+                in
+                traverseTypeDeep
+                        ~uninstantiatedMeta:(fun _ -> raise MonotypUninstantiatedTMetas)
+                        p'.classifier;
+                true
+               with MonotypUninstantiatedTMetas -> false);
+     setstate state;
+     moneOrMzero b))
+  ;;
+
   new_builtin_predicate "typstring" ( ( ~* "A" ) **> _tString **> _tProp)
   (fun _ -> fun [ e ; s ] ->
     (let open RunCtx.Monad in
@@ -448,22 +470,18 @@ builtin_enter_module "refl" ;;
      p <-- chasePattcanon ~deep:true [] e ;
      state <-- getbacktrackstate;
      p' <-- intermlang (fun _ ->
-              try
                 let p' =
                  p |> pattcanonToExpr 0
                    |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
                 in
-                traverseTypeDeep
-                        ~uninstantiatedMeta:(fun _ -> raise TypStringUninstantiatedTMetas)
+                chaseTypeDeep
+                        ~metasAreFine:true
+                        ~replaceUninst:true
                         p'.classifier;
-                Some p'
-               with TypStringUninstantiatedTMetas -> None);
+                p');
      setstate state;
-     match p' with
-       Some p' ->
-       (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
-        pattcanonUnifyFull s (_PofString ~loc:e.loc res))
-     | None -> mzero))
+     (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
+      pattcanonUnifyFull s (_PofString ~loc:e.loc res))))
   ;;
 
   new_builtin_predicate "statehash" ( _tString **> _tProp ) begin

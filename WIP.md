@@ -7,7 +7,6 @@
 - [x] add a couple of string predicates
 - [x] fix dot in makam identifiers
 - [x] use normal syntax and thin translation layer
+- [x] typstring now handles polymorphic types
 - [ ] add proper tests
-- [ ] typstring now handles polymorphic types
-- [ ] ismonotyp to check whether something is polytyped
 - [ ] able to get printing for existing constructor
