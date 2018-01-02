@@ -36,16 +36,16 @@ pretty.rule base
                 [ pretty.captured (syntax (token makam.string_literal)) ]).
 
 peg.rule base_str
-         (makam.term_str 0).
+         (makam.term_str 2).
 pretty.rule base
-         (makam.term 0).
+         (makam.term 2).
 
 peg.rule base_str
          (string_transform (fun s => `(${s})`)
-                [ exact "(", peg.captured appl_str, exact ")" ]).
+                [ exact "{", peg.captured appl_str, exact "}" ]).
 pretty.rule base
          (unapply (fun x => x)
-                [ const "(", pretty.captured appl, const ")" ]).
+                [ const "{", pretty.captured appl, const "}" ]).
 
 (* syntax.apply and syntax rules *)
 
@@ -78,10 +78,10 @@ pretty.rule args
 
 peg.rule appl_str
           (string_transform (fun args => `(syntax.apply (fun x => x) ${args})`)
-          [ syntax (token "("), peg.captured args_str, syntax (token ")") ]).
+          [ syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
 pretty.rule appl
      (unapply (syntax.apply (fun (x: A) => x))
-      [ syntax (token "("), pretty.captured (args: pretty (syntax_args (A -> A) A)), syntax (token ")") ]).
+      [ syntax (token "{"), pretty.captured (args: pretty (syntax_args (A -> A) A)), syntax (token "}") ]).
 
 peg.rule appl_str
           (string_transform (fun id args => `(syntax.apply ${id} ${args})`)
@@ -90,8 +90,8 @@ pretty.rule appl
      (unapply syntax.apply
       [ pretty.captured (makam.term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
 
-peg.rule appl_str base_str.
-pretty.rule appl base.
+peg.rule appl_str (makam.term_str 1).
+pretty.rule appl (makam.term 1).
 
 syntax.rule appl
          (iso (makam.antiquote appl_str)

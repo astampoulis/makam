@@ -7,64 +7,59 @@ constructor_definitions : string -> cmd -> prop.
 %extend constructor_syntax.
 
 constructor_def : type.
-constructor_def : string -> args A B -> B -> constructor_def.
+constructor_def : string -> list string -> string -> constructor_def.
 
-to_type : [ArgsTypes TargetType Type] 
-          args ArgsTypes TargetType -> TargetType -> Type -> prop.
-to_type [] TargetType TargetType.
-to_type ((_: HDType) :: TL) TargetType (_: HDType -> Rest) :-
-  to_type TL TargetType (_: Rest).
+create_type_string : list string -> string -> string -> prop.
+create_type_string [] Target Target.
+create_type_string (HDType :: TL) Target Result :-
+  create_type_string TL Target Result',
+  expansion.str `${HDType} -> ${Result'}` Result.
+
+to_type : constructor_def -> Type -> prop.
+to_type (constructor_def _ Args Target) Type :-
+  create_type_string Args Target TypeString,
+  expansion.str `(_: ${TypeString})` FullString,
+  refl.fromstring FullString Type.
 
 to_cmd : constructor_def -> cmd -> prop.
+to_cmd Def (cmd_newterm Name Type) when eq Def (constructor_def Name _ _) :-
+  to_type Def Type.
 
-to_cmd (constructor_def S ArgsTypes TargetType)
-       (cmd_newterm S Type) :-
-  to_type ArgsTypes TargetType Type.
+s_constructor_defs : syntax (list constructor_def).
+s_constructor_def : syntax constructor_def.
+constructor_arg : syntax string.
+typ : syntax string.
+param_name : syntax unit.
 
-constructor_def : peg constructor_def.
-constructor_defs : peg (list constructor_def).
-constructor_def_str, constructor_arg_str : peg string.
-many_str : peg string -> peg string.
+`( syntax_rules {{
 
-peg.rule constructor_def (makam.antiquote constructor_def_str).
-peg.rule constructor_def_str
-         (string_transform (fun name argstypes targettype =>
-           `(constructor_syntax.constructor_def "${name}" ${argstypes} (_: ${targettype}))`)
-         [ peg.captured (syntax (token makam.ident)),
-           peg.captured (many_str constructor_arg_str),
-           syntax (token ":"),
-           peg.captured makam.typ_str,
-           syntax (token ".") ]).
+typ -> { <iso makam.typ_str (pretty.syntax (charmany anychar))> }
 
-peg.rule constructor_arg_str
-         (string_transform (fun var typ => `(${var}: ${typ})`)
-         [ syntax (token "("),
-           peg.captured (syntax (token makam.unifident)),
-           syntax (token ":"),
-           peg.captured makam.typ_str,
-           syntax (token ")") ]).
+s_constructor_def ->
+  constructor_def { <makam.ident> <many constructor_arg> ":" <typ> "." }
 
-peg.rule (many_str P)
-         (string_transform (fun hd tl => `(cons ${hd} ${tl})`)
-         [ peg.captured P,
-           peg.captured (many_str P) ]).
-peg.rule (many_str P)
-         (apply "nil" []).
+constructor_arg -> { "(" param_name ":" <typ> ")" }
 
-`( peg.def_parser_js constructor_defs (once_or_many constructor_def) ).
+param_name -> { <iso (ignore (syntax makam.unifident)) (pretty.const "_")> }
+
+}}).
+
+`( syntax.def_js s_constructor_defs (once_or_many s_constructor_def) ).
 
 constructor_definitions S (cmd_many Cmds) :-
-  peg.parse_opt constructor_defs S (Defs, ""), map to_cmd Defs Cmds.
+  syntax.parse_opt s_constructor_defs S Defs, map to_cmd Defs Cmds.
 
 hello : type.
 
 `( constructor_definitions {{
 
-kalimera (X: hello) (Y: string) : hello.
+kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello.
 
 }}).
 
 %type kalimera.
+
+syntax.pretty s_constructor_def (constructor_def "lala" ["list Q"] "list Q") X ?
 
 %end.
 

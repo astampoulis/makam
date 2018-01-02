@@ -32,9 +32,10 @@ term ->
         lam { "λ" <ident> "." <term> }
       / app { <baseterm> <once_or_many baseterm> }
       / baseterm ;
+
 baseterm ->
         var { <ident> }
-      / ( "(" <term> ")" )
+      / { "(" <term> ")" }
 
 }}).
 
