@@ -53,6 +53,7 @@ stdlib/syntax/tests \
 stdlib/syntax/makam_syntax.tests \
 stdlib/syntax/syntax_syntax.tests \
 stdlib/syntax/layout_syntax.tests \
+stdlib/syntax/constructor_syntax.tests \
 stdlib/dyn_expansion \
 new/testocaml \
 new/testcases_ocaml \

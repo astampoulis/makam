@@ -31,7 +31,7 @@ isocast_def (Iso: iso constructor_def (constructor_def_of Type)) :-
     iso.iso (pfun str => expansion.str `(_: ${str})`) eq,
     iso.iso refl.fromstring refl.typstring,
     iso.iso eq (pfun term res => refl.headname term CName, eq term res),
-    iso.bidi (pfun term res => eq res (constructor_def_of term))
+    iso.bidi (pfun term res => dyn.eq res (constructor_def_of term))
   ]).
 
 to_cmd : constructor_def -> cmd -> prop.
@@ -60,21 +60,6 @@ param_name -> { <iso (ignore (syntax makam.unifident)) (pretty.const "_")> }
 
 constructor_definitions S (cmd_many Cmds) :-
   isocast S Defs, map to_cmd Defs Cmds.
-
-hello : type.
-
-`( constructor_definitions {{
-
-kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello.
-
-}}).
-
-%type kalimera.
-
-(isocast {{ kalimera (H: hello) (S: string) (Q : list Q) (E : list Q) : hello. }} (X: constructor_def),
- isocast X (Y: string)) ?
-
-(isocast (constructor_def_of kalimera) (X: constructor_def), print X, isocast X (Y: string), print_string `${Y}\n`) ?
 
 %end.
 
