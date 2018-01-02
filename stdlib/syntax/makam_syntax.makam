@@ -4,24 +4,26 @@
 
 %extend makam.
 
-ident, ident_first, ident_rest : syntax string.
-syntax.inline ident. syntax.inline ident_first. syntax.inline ident_rest.
+baseident, ident_, ident, ident_first, ident_rest : syntax string.
+syntax.inline ident. syntax.inline baseident. syntax.inline ident_first. syntax.inline ident_rest.
 
 (* identifiers *)
 (* TODO: make this even more precise *)
 
-syntax.rule ident_first (charclass "abcdefghijklmnopqrstuvwxyz_.").
-syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule ident (token (charcons ident_first (charmany ident_rest))).
+syntax.rule ident_first (charclass "abcdefghijklmnopqrstuvwxyz_").
+syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule baseident (charcons ident_first (charmany ident_rest)).
+syntax.rule ident_ (string_join baseident "." ident_).
+syntax.rule ident_ baseident.
+syntax.rule ident (token ident_).
 
-
-unifident_first, unifident_rest, unifident : syntax string.
-syntax.inline unifident. syntax.inline unifident_first. syntax.inline unifident_rest.
+unifident_first, unifident_rest, unifident, unifident_ : syntax string.
+syntax.inline unifident. syntax.inline unifident_. syntax.inline unifident_first. syntax.inline unifident_rest.
 
 syntax.rule unifident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
-syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
-syntax.rule unifident (token (charcons unifident_first (charmany unifident_rest))).
-
+syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule unifident_ (charcons unifident_first (charmany unifident_rest)).
+syntax.rule unifident (token unifident_).
 
 (* string literals *)
 
@@ -36,13 +38,14 @@ syntax.rule string_literal_char
          (pfun res x => not(string.contains "\\\"\n\r" x), eq res x)
          [ pretty.captured anychar ])).
 
-string_literal : syntax string.
-rule string_literal
-     (token (group [
+string_literal_, string_literal : syntax string.
+rule string_literal (token string_literal_).
+rule string_literal_
+     (group [
       exact "\"",
       syntax.captured (charmany string_literal_char),
-      exact "\""])).
-syntax.inline string_literal.
+      exact "\""]).
+syntax.inline string_literal_. syntax.inline string_literal.
 
 string_literal_char_str : peg string.
 peg.inline string_literal_char_str.

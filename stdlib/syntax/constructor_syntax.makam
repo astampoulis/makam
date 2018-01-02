@@ -1,3 +1,5 @@
+constructor_definitions : string -> cmd -> prop.
+
 %open syntax.
 %open peg.
 %open syntax_syntax.
@@ -20,17 +22,19 @@ to_cmd (constructor_def S ArgsTypes TargetType)
   to_type ArgsTypes TargetType Type.
 
 constructor_def : peg constructor_def.
+constructor_defs : peg (list constructor_def).
 constructor_def_str, constructor_arg_str : peg string.
 many_str : peg string -> peg string.
 
 peg.rule constructor_def (makam.antiquote constructor_def_str).
 peg.rule constructor_def_str
          (string_transform (fun name argstypes targettype =>
-           `constructor_syntax.constructor_def "${name}" ${argstypes} (_: ${targettype})`)
+           `(constructor_syntax.constructor_def "${name}" ${argstypes} (_: ${targettype}))`)
          [ peg.captured (syntax (token makam.ident)),
            peg.captured (many_str constructor_arg_str),
            syntax (token ":"),
-           peg.captured makam.typ_str ]).
+           peg.captured makam.typ_str,
+           syntax (token ".") ]).
 
 peg.rule constructor_arg_str
          (string_transform (fun var typ => `(${var}: ${typ})`)
@@ -47,14 +51,20 @@ peg.rule (many_str P)
 peg.rule (many_str P)
          (apply "nil" []).
 
-`( peg.def_toplevel_parser_js constructor_def ).
+`( peg.def_parser_js constructor_defs (once_or_many constructor_def) ).
+
+constructor_definitions S (cmd_many Cmds) :-
+  peg.parse_opt constructor_defs S (Defs, ""), map to_cmd Defs Cmds.
 
 hello : type.
 
-`( pfun res =>
-   (peg.parse_opt constructor_def {{ kalimera (X: list (list hello)) (Y: string) : hello }}
-       (Q, ""), to_cmd Q res) ).
+`( constructor_definitions {{
+
+kalimera (X: hello) (Y: string) : hello.
+
+}}).
 
 %type kalimera.
 
 %end.
+

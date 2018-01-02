@@ -77,11 +77,14 @@ transform_convert F F_JS Args_JS ((captured (HD: peg A)) :: TL) (bind HD Rest) :
 
 rule (transform F F_JS PS) P' when transform_convert F F_JS [] PS P'.
 
+stringappend : peg string -> peg string -> peg string.
 stringmany : peg string -> peg string.
+inline (stringappend _ _).
 
-rule (stringmany P) (transform string.append
+rule (stringappend P1 P2) (transform string.append
                              "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
-                             [ captured P, captured (stringmany P) ]).
+                             [ captured P1, captured P2 ]).
+rule (stringmany P) (stringappend P (stringmany P)).
 rule (stringmany P) (action "").
 
 string_transform_gen_vars : [A] int -> peg_args A expansion -> A ->

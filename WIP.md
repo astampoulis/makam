@@ -5,7 +5,7 @@
 - [x] split out makam stuff into makam_syntax
 - [x] add makam.string_literal
 - [x] add a couple of string predicates
-- [ ] fix dot in makam identifiers
+- [x] fix dot in makam identifiers
 - [ ] add proper tests
 - [ ] typstring now handles polymorphic types
 - [ ] ismonotyp to check whether something is polytyped

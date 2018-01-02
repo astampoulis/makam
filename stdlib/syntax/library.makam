@@ -32,6 +32,13 @@ rule (charcons HD TL) (transform string.append
                              (pfun hd tl str => string.headtail str hd tl)
                              [ captured HD, captured TL ]).
 
+charsnoc : syntax string -> syntax string -> syntax string.
+inline (charsnoc _ _).
+rule (charsnoc Init Last) (transform string.append
+                             "(a, b) => JSON.stringify(JSON.parse(a) + JSON.parse(b))"
+                             (pfun init last str => string.initlast str init last)
+                             [ captured Init, captured Last ]).
+
 charmany : syntax string -> syntax string.
 rule (charmany P) (charcons P (charmany P)).
 rule (charmany P) (apply "" []).
@@ -40,6 +47,13 @@ char_once_or_many : syntax string -> syntax string.
 inline (char_once_or_many _).
 rule (char_once_or_many P)
      (charcons P (charmany P)).
+
+string_join : syntax string -> string -> syntax string -> syntax string.
+inline (string_join _ _ _).
+rule (string_join P1 Sep P2) (transform (pfun a b c => string.concat [a, b, c])
+                         "(a, b, c) => JSON.stringify(JSON.parse(a) + JSON.parse(b) + JSON.parse(c))"
+                         (pfun before sep after str => eq sep Sep, string.split_at_first Sep str before after)
+                         [ syntax.captured P1, syntax.captured (charclass Sep), syntax.captured P2 ]).
 
 (* whitespace is not completely isomorphic between parsing and pretty-printing.
    when parsing, we just ignore whitespace.
