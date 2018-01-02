@@ -33,18 +33,29 @@ iso.backward (iso.compose (HD :: TL)) C A :- iso.backward (iso.compose TL) C B, 
 
 isocast_def : [A B] iso A B -> prop.
 
-isocast_find : [A B] isos A B -> prop.
-isocast_find ([Iso]: isos From To) when once(isocast_def Iso).
-isocast_find (Isos: isos From To)
-  when once(isocast_def (Iso: iso From Intermediate)), isocast_find (Isos': isos Intermediate To) :-
+isocast_find : [A B] int -> isos A B -> prop.
+
+isocast_find Depth ([Iso]: isos From To)
+    when (not(typ.isunif (_: From))), (not(typ.isunif (_: To))) :-
+  once(isocast_def Iso).
+
+isocast_find Depth (Isos: isos From To)
+    when not(typ.isunif (_: From)), lessthan 0 Depth true :-
+  isocast_def (Iso: iso From Intermediate),
+  plus Depth' 1 Depth,
+  once(isocast_find Depth' (Isos': isos Intermediate To)),
   eq Isos (Iso :: Isos').
 
 isocast_find : [A B] Source -> iso A B -> prop.
 isocast_find Source (Iso: iso From To) :-
-  if (not(typ.isunif (_: From)), isocast_find (Isos: isos From To)) then
-    eq Iso (iso.compose Isos)
-  else if (not(typ.isunif (_: To)), isocast_find (Isos': isos To From)) then
-    eq Iso (iso.inverse (iso.compose Isos'))
+  eq MaxDepth 5,
+  if (for_least_upto MaxDepth _ (pfun depth =>
+    if (not(typ.isunif (_: From)), once(isocast_find depth (Isos: isos From To))) then
+      eq Iso (iso.compose Isos)
+    else if (not(typ.isunif (_: To)), once(isocast_find depth (Isos': isos To From))) then
+      eq Iso (iso.inverse (iso.compose Isos'))
+    else failure))
+  then success
   else (
     refl.typstring Iso IsoS,
     log_error Source `Could not find an instance for ${IsoS}`,
