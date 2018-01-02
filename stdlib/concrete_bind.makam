@@ -1,4 +1,8 @@
 concrete : type -> type.
+(* the `concrete` type constructor serves as an annotation that a term might contain
+   concrete constructors. This is supposed to be used only at the toplevel and mostly
+   as a way to drive `isocast` conversions. *)
+concrete : A -> concrete A.
 
 %extend concrete.
 
@@ -41,14 +45,19 @@ pick_namespace _ Namespace when not(refl.isunif Namespace).
 pick_namespace Var Namespace when refl.isunif Namespace :-
   pick_namespace_userdef Var Namespace.
 
-resolve, resolve_aux, resolve_conversion : [A]A -> A -> prop.
-resolve X Y when refl.isunif X :-
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve X' Y),
+resolve : [A] concrete A -> A -> prop.
+resolve_, resolve_aux, resolve_conversion : [A]A -> A -> prop.
+
+resolve (concrete X) Y :- resolve_ X Y.
+isocast_def (iso.bidi concrete.resolve).
+
+resolve_ X Y when refl.isunif X :-
+  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y),
   demand.case_otherwise (resolve_conversion X X') (eq X X').
 
-resolve X Y when not(refl.isunif X) :-
+resolve_ X Y when not(refl.isunif X) :-
   demand.case_otherwise (resolve_conversion X X') (eq X X'),
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve X' Y).
+  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y).
 
 resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
   (x:A ->
@@ -57,7 +66,7 @@ resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
     vars_in_context Namespace Vars,
     (vars_in_context_store Namespace ((x, ID) :: Vars) ->
       (pick_name Namespace ID,
-       resolve Body (F x))))).
+       resolve_ Body (F x))))).
 
 resolve_aux (var (name Namespace ID)) X
     when pick_namespace X Namespace, either (once(resolve_name (name Namespace ID) X)) (handle_unresolved_name (name Namespace ID) X) :-
@@ -68,11 +77,11 @@ resolve_aux (var (name Namespace ID)) X
 
 resolve_aux (bindone (name Namespace ID) Body) (bindone ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
-  resolve (lambda (name Namespace ID) Body) Body'.
+  resolve_ (lambda (name Namespace ID) Body) Body'.
 
 resolve_aux (bindnext (name Namespace ID) Body) (bindnext ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
-  resolve (lambda (name Namespace ID) Body) Body'.
+  resolve_ (lambda (name Namespace ID) Body) Body'.
 
 (* list of names and concrete.binders (standing for bind.binder and bind.body) *)
 
@@ -86,23 +95,23 @@ binders : list (name Type) -> BodyType -> bind Type NamesType BodyType.
 resolve_aux (binders ((name Namespace ID) :: Rest) Body) Result when refl.isunif Result :-
   eq Result (bind.binder ID' Body'),
   if (pattern_mode) then success else eq ID ID',
-  resolve (lambda (name Namespace ID) (binders Rest Body)) Body'.
+  resolve_ (lambda (name Namespace ID) (binders Rest Body)) Body'.
 
 resolve_aux (binders [] Body) Result when refl.isunif Result :-
   eq Result (bind.body Body'),
-  resolve Body Body'.
+  resolve_ Body Body'.
 
 resolve_aux Result (Bind: bind VarType AllVars BodyType) when not(refl.isunif Bind) :-
   if (dyn.eq Bind (bind.binder ID' Rest))
   then (
     if (pattern_mode, refl.isunif ID') then success else eq ID ID',
     eq Name (name Namespace ID),
-    resolve (lambda Name (binders Names Body)) Rest,
+    resolve_ (lambda Name (binders Names Body)) Rest,
     eq Result (binders (Name :: Names) Body)
   )
   else (
     dyn.eq Bind (bind.body Body),
-    resolve Body' Body,
+    resolve_ Body' Body,
     eq Result (binders [] Body')
   ).
 

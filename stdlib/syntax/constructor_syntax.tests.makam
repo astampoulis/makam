@@ -1,0 +1,37 @@
+%use "constructor_syntax".
+
+%extend constructor_syntax.
+
+tests : testsuite. %testsuite tests.
+
+term : type.
+
+>> (isocast {{
+      test (E: term) (Q: list term) (F: term -> term)
+           (Z: list (list (term -> term))) (W: list W) : term .
+    }} (_X: constructor_def), isocast _X (Y: string)) ?
+>> Yes:
+>> Y := "test ( _: term ) ( _: list term ) ( _: term -> term ) ( _: list ( list ( term -> term ) ) ) ( _: list W ) : term . ".
+
+`( constructor_definitions {{
+
+app (E1: term) (E2: term): term.
+lam (F: term -> term): term.
+tuple (ES: list term): term.
+globalvar (S: string): term.
+
+
+}}).
+
+(* this just checks that the constructor now exists. *)
+>> eq lam X ?
+>> Yes:
+>> X := lam.
+
+(* convert existing constructor to its definition in this syntax *)
+
+>> (isocast (constructor_def_of lam) (X: constructor_def), isocast X (Y: string)) ?
+>> Yes:
+>> Y := "constructor_syntax.lam ( _: constructor_syntax.term -> constructor_syntax.term ) : constructor_syntax.term . ".
+
+%end.

@@ -218,7 +218,8 @@ quote_term_js (reified.lambda (F : A -> B)) Result :-
   plus I 1 I',
   (x:A -> quote_var_js x Var -> latest_quote_var_js I' ->
     (quote_term_js (F x) Body,
-     if (refl.typstring x Typ) then
+     (* TODO: investigate if it's better to add this always. *)
+     if (refl.monotyp x, refl.typstring x Typ) then
        expansion.str `(${Var}: ${Typ})` Binder
      else
        eq Var Binder)),
@@ -462,13 +463,13 @@ def_toplevel_parser_js P (cmd_newclause (clause (generated_toplevel_parser_js Ty
   (* this does not play well with polymorphism, so we require a monomorphic type.
      we can have different instantiations of the same polymorphic constant though,
      hence we store a representation of the type as part of the cached predicate. *)
-  refl.typstring P Typ,
+  refl.monotyp P, refl.typstring P Typ,
   gen_toplevel_parser_js_cached P Code.
 
 def_parser_js : [A]peg A -> peg A -> cmd -> prop.
 def_parser_js P P' (cmd_many [ cmd_newclause (clause (external P) success),
                                cmd_newclause (clause (extern_def P Code) success) ]) :-
-  refl.typstring P Typ, (* require the type to be monomorphic *)
+  refl.monotyp P, refl.typstring P Typ,
   gen_toplevel_parser_js_cached P' Code.
 
 parse_opt : [A] peg A -> string -> (A * string) -> prop.
@@ -480,7 +481,7 @@ parse_opt P Input Result :-
      print_string `-- At ${LocS}, using parse_opt with uninstantiated PEG.\n`,
      failure)
   else success,
-  if (refl.typstring P Typ, generated_toplevel_parser_js Typ P Function_js)
+  if (refl.monotyp P, refl.typstring P Typ, generated_toplevel_parser_js Typ P Function_js)
   then success
   else gen_toplevel_parser_js P Function_js,
   eval_parser_js P Function_js Input Result.

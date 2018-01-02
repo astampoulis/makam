@@ -1,0 +1,164 @@
+%open syntax.
+%open peg.
+%open pretty.
+
+%extend makam.
+
+baseident, ident_, ident, ident_first, ident_rest : syntax string.
+syntax.inline ident. syntax.inline baseident. syntax.inline ident_first. syntax.inline ident_rest.
+
+(* identifiers *)
+(* TODO: make this even more precise *)
+
+syntax.rule ident_first (charclass "abcdefghijklmnopqrstuvwxyz_").
+syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule baseident (charcons ident_first (charmany ident_rest)).
+syntax.rule ident_ (string_join baseident "." ident_).
+syntax.rule ident_ baseident.
+syntax.rule ident (token ident_).
+
+unifident_first, unifident_rest, unifident, unifident_ : syntax string.
+syntax.inline unifident. syntax.inline unifident_. syntax.inline unifident_first. syntax.inline unifident_rest.
+
+syntax.rule unifident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
+syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
+syntax.rule unifident_ (charcons unifident_first (charmany unifident_rest)).
+syntax.rule unifident (token unifident_).
+
+(* string literals *)
+
+string_literal_char : syntax string.
+syntax.inline string_literal_char.
+syntax.rule string_literal_char (apply "\"" [ exact "\\\"" ]).
+syntax.rule string_literal_char (apply "\n" [ exact "\\n" ]).
+syntax.rule string_literal_char (apply "\r" [ exact "\\r" ]).
+syntax.rule string_literal_char
+  (iso (seq (neg (charclass "\"\n\r")) anychar)
+       (untransform
+         (pfun res x => not(string.contains "\\\"\n\r" x), eq res x)
+         [ pretty.captured anychar ])).
+
+string_literal_, string_literal : syntax string.
+rule string_literal (token string_literal_).
+rule string_literal_
+     (group [
+      exact "\"",
+      syntax.captured (charmany string_literal_char),
+      exact "\""]).
+syntax.inline string_literal_. syntax.inline string_literal.
+
+string_literal_char_str : peg string.
+peg.inline string_literal_char_str.
+peg.rule string_literal_char_str (exact "\\\"").
+peg.rule string_literal_char_str (exact "\\n").
+peg.rule string_literal_char_str (exact "\\r").
+peg.rule string_literal_char_str (seq (neg (exact "\"")) anychar).
+
+string_literal_str : peg string.
+rule string_literal_str (syntax (token (iso
+     (string_transform (fun quoted => `"${quoted}"`)
+      [ exact "\"",
+        peg.captured (stringmany string_literal_char_str),
+        exact "\""] ) void))).
+peg.inline string_literal_str.
+
+
+(* antiquote *)
+
+antiquote : peg string -> peg A.
+peg.inline (antiquote _).
+peg.rule (antiquote P) (transform refl.fromstring "JSON.parse" [ peg.captured P ]).
+
+(* makam terms *)
+
+term : int -> pretty A.
+term_str : int -> peg string.
+term_args_str : peg string.
+
+term : syntax A.
+syntax.rule term (iso (antiquote (term_str 0)) (term 0)).
+
+(* makam terms: parsing *)
+
+peg.rule (term_str 0) (string_transform
+            (fun binder body => `(fun ${binder} => ${body})`)
+            [ syntax (token_id ident "fun"), peg.captured (syntax ident), syntax (token "=>"), peg.captured (term_str 0) ]).
+peg.rule (term_str 0) (term_str 1).
+peg.rule (term_str 1) (string_transform
+            (fun hd args => `(${hd} ${args})`)
+            [ peg.captured (term_str 2), peg.captured term_args_str ]).
+peg.rule (term_str 1) (term_str 2).
+peg.rule (term_str 2) (syntax ident).
+peg.rule (term_str 2) (string_literal_str).
+peg.rule (term_str 2) (apply (fun x => x) [ syntax (token "("), peg.captured (term_str 0), syntax (token ")") ]).
+
+peg.rule term_args_str (string_transform
+            (fun hd tl => `${hd} ${tl}`)
+            [ peg.captured (term_str 2), peg.captured term_args_str ]).
+peg.rule term_args_str (apply "" []).
+
+
+(* makam terms: printing *)
+
+lambda : pretty (A -> B).
+pretty.builtin lambda.
+
+string_of_head, string_of_var : [A] A -> string -> prop.
+string_of_head X Y :- if (string_of_var X Y) then success else tostring_qualified X Y.
+
+lambda_depth : int -> prop.
+lambda_depth 0.
+
+pretty.pretty lambda (F: A -> B) Res :-
+  apply_all F Args F_Body,
+  (* check if this is an eta-expansion of a constant *)
+  if (refl.headargs F_Body F_HD _, eq F F_HD) then (eq Res none) else
+  (x:A ->
+    (once(lambda_depth N),
+     tostring N NS,
+     expansion.str `anon${NS}` X_S,
+     plus N 1 N',
+     (lambda_depth N' ->
+      string_of_var x X_S ->
+      if (pretty.pretty (term 0) (F x) (some R)) then (expansion.str `fun ${X_S} => ${R}` R', eq Res (some R')) else eq Res none))).
+
+pretty.rule (term 0) lambda.
+pretty.rule (term 0) (term 1).
+
+term_arg : pretty A.
+pretty.rule term_arg (unapply dyn [ pretty.captured (term 2) ]).
+pretty.rule (term 1)
+     (untransform
+            (pfun hd args input => refl.headargs input hd args)
+            [ pretty.captured (term 2), pretty.captured (many term_arg) ]).
+pretty.rule (term 1) (term 2).
+
+pretty.rule (term 2)
+     (untransform (pfun str x => string_of_head x str)
+       [ pretty.captured (syntax ident) ]).
+pretty.rule (term 2) (syntax string_literal).
+pretty.rule (term 2)
+            (unapply (fun x => x) [ syntax (token "("), pretty.captured (term 0), syntax (token ")") ]).
+
+
+(* makam types *)
+
+typ_reified : type.
+
+tarrow : typ_reified -> typ_reified -> typ_reified.
+tbase : string -> list typ_reified -> typ_reified.
+tunif : string -> typ_reified.
+
+typ_reified, apptyp_reified, basetyp_reified : syntax typ_reified.
+
+syntax.rule typ_reified (apply tarrow [ syntax.captured apptyp_reified, token "->", syntax.captured typ_reified ]).
+syntax.rule typ_reified apptyp_reified.
+syntax.rule apptyp_reified (apply tbase [ syntax.captured ident, syntax.captured (many basetyp_reified) ]).
+syntax.rule apptyp_reified basetyp_reified.
+syntax.rule basetyp_reified (apply (fun x => tbase x []) [ syntax.captured ident ]).
+syntax.rule basetyp_reified (apply tunif [ syntax.captured unifident ]).
+syntax.rule basetyp_reified (group [ token "(", syntax.captured typ_reified, token ")" ]).
+
+`( syntax.def_toplevel_js typ_reified ).
+
+%end.

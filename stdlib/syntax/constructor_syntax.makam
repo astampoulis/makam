@@ -1,0 +1,65 @@
+constructor_definitions : string -> cmd -> prop.
+
+%open syntax.
+%open peg.
+%open syntax_syntax.
+
+%extend constructor_syntax.
+
+constructor_def : type.
+constructor_type : type.
+constructor_type : list makam.typ_reified -> makam.typ_reified -> constructor_type.
+constructor_def : string -> constructor_type -> constructor_def.
+
+constructor_type_to_reified : constructor_type -> makam.typ_reified -> prop.
+constructor_type_to_reified (constructor_type [] Target) Target
+  when not(eq Target (makam.tarrow _ _)).
+constructor_type_to_reified (constructor_type (HD :: TL) Target) (makam.tarrow HD T') :-
+  constructor_type_to_reified (constructor_type TL Target) T'.
+
+constructor_def_of : type -> type.
+constructor_def_of : A -> constructor_def_of A.
+
+isocast_def (Iso: iso constructor_def (constructor_def_of Type)) :-
+  isocast_find unit (String_to_TypReified: iso string makam.typ_reified),
+  eq Iso (iso.compose [
+    iso.iso
+      (pfun cdef ctype => eq cdef (constructor_def _ ctype))
+      (pfun ctype cdef => eq cdef (constructor_def CName ctype)),
+    iso.bidi constructor_type_to_reified,
+    iso.inverse String_to_TypReified,
+    iso.iso (pfun str => expansion.str `(_: ${str})`) eq,
+    iso.iso refl.fromstring refl.typstring,
+    iso.iso eq (pfun term res => refl.headname term CName, eq term res),
+    iso.bidi (pfun term res => dyn.eq res (constructor_def_of term))
+  ]).
+
+to_cmd : constructor_def -> cmd -> prop.
+to_cmd Def (cmd_newterm Name Type) when eq Def (constructor_def Name _) :-
+  isocast Def (constructor_def_of Type).
+
+s_constructor_defs : syntax (list constructor_def).
+s_constructor_def, s_constructor_def_ : syntax constructor_def.
+constructor_arg : syntax makam.typ_reified.
+param_name : syntax unit.
+
+`( syntax_rules {{
+
+s_constructor_def_ ->
+  fun id => fun arg => fun tgt => constructor_def id (constructor_type arg tgt)
+  { <makam.ident> <many constructor_arg> ":" <makam.typ_reified> "." }
+
+constructor_arg -> { "(" param_name ":" <makam.typ_reified> ")" }
+
+param_name -> { <iso (ignore (syntax makam.unifident)) (pretty.const "_")> }
+
+}}).
+
+`( syntax.def_js s_constructor_def s_constructor_def_ ).
+`( syntax.def_js s_constructor_defs (once_or_many s_constructor_def) ).
+
+constructor_definitions S (cmd_many Cmds) :-
+  isocast S Defs, map to_cmd Defs Cmds.
+
+%end.
+

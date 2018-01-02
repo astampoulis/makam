@@ -249,6 +249,10 @@ module Typ =
           `Arrow(t1,t2)   ->
             let oparen, cparen = paren 3 in
             Printf.fprintf oc "%s%a -> %a%s" oparen (aux 2) t1 (aux 3) t2 cparen
+        | `TVar("", (Some (`Meta, i) as idx), args) ->
+            let oparen, cparen = paren (if List.length args = 0 then 1 else 2) in
+            let s = "_X" ^ (string_of_int i) in
+            Printf.fprintf oc "%s%s%a%a%s" oparen s indexprint idx (printargs (aux 1)) args cparen
         | `TVar(s,i,args) ->
             let oparen, cparen = paren (if List.length args = 0 then 1 else 2) in
             (* TODO need a dequalify as well here for tfvars *)

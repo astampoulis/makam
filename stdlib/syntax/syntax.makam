@@ -177,15 +177,6 @@ pretty.rule (pretty.syntax Syn) Pretty :- to_pretty Syn Pretty.
 
 peg.inline (peg.syntax Syn) when inline Syn.
 
-def_toplevel_js : syntax A -> cmd -> prop.
-def_toplevel_js S Cmd :- peg.def_toplevel_parser_js (peg.syntax S) Cmd.
-
-def_js : syntax A -> syntax A -> cmd -> prop.
-def_js S S' (cmd_many [ cmd_newclause (clause (syntax.rule S S') success),
-                        cmd_newclause (clause (syntax.inline S) success),
-                        JS_Parser_Cmd ]) :-
-  peg.def_parser_js (peg.syntax S) (peg.syntax S') JS_Parser_Cmd.
-
 parse : [A] syntax A -> string -> A -> prop.
 parse Syntax Input Result :-
   peg.parse (peg.syntax Syntax) Input (Result, "").
@@ -197,5 +188,19 @@ parse_opt Syntax Input Result :-
 pretty : [A] syntax A -> A -> string -> prop.
 pretty Syntax Input Result :-
   pretty.pretty (pretty.syntax Syntax) Input (some Result).
+
+def_toplevel_js : syntax A -> cmd -> prop.
+def_toplevel_js S (cmd_many [ Parser_Cmd,
+                              cmd_newclause IsoCast ]) :-
+  peg.def_toplevel_parser_js (peg.syntax S) Parser_Cmd,
+  eq IsoCast (clause (isocast_def (iso.iso (parse_opt S) (pretty S))) success).
+
+def_js : syntax A -> syntax A -> cmd -> prop.
+def_js S S' (cmd_many [ cmd_newclause (clause (syntax.rule S S') success),
+                        cmd_newclause (clause (syntax.inline S) success),
+                        JS_Parser_Cmd,
+                        cmd_newclause IsoCast ]) :-
+  peg.def_parser_js (peg.syntax S) (peg.syntax S') JS_Parser_Cmd,
+  eq IsoCast (clause (isocast_def (iso.iso (parse_opt S) (pretty S))) success).
 
 %end.

@@ -250,6 +250,57 @@ new_builtin_predicate "headtail" ( _tString **> _tString **> _tString **> _tProp
 end
 ;;
 
+new_builtin_predicate "initlast" ( _tString **> _tString **> _tString **> _tProp) begin
+  let open RunCtx.Monad in
+  let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
+  (fun _ -> fun [ i; init; last ] -> perform
+    i' <-- chasePattcanon [] i ;
+    init' <-- chasePattcanon [] init ;
+    last' <-- chasePattcanon [] last ;
+    if (not (isMeta i')) then
+      (perform
+         is <-- _PtoString i';
+         _ <-- if String.is_empty is then mzero else return ();
+         pattcanonUnifyFull init' (_PofString (String.slice ~last:(-1) is) ~loc:i.loc);
+         pattcanonUnifyFull last' (_PofString (String.slice ~first:(-1) is) ~loc:i.loc))
+    else if (isMeta i' && not(isMeta init') && not(isMeta last')) then
+      (perform
+         inits <-- _PtoString init';
+         lasts <-- _PtoString last';
+         pattcanonUnifyFull i' (_PofString (inits ^ lasts) ~loc:init.loc))
+    else mzero)
+end
+;;
+
+new_builtin_predicate "split_at_first" ( _tString **> _tString **> _tString **> _tString **> _tProp) begin
+  let open RunCtx.Monad in
+  let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
+  (fun _ -> fun [ sep; full; splithd; splittl ] -> perform
+    sep' <-- chasePattcanon [] sep ;
+    full' <-- chasePattcanon [] full ;
+    splithd' <-- chasePattcanon [] splithd ;
+    splittl' <-- chasePattcanon [] splittl ;
+    if (isMeta sep') then
+      mzero
+    else if (not (isMeta full')) then
+      (perform
+         seps <-- _PtoString sep';
+         fulls <-- _PtoString full';
+         (shd, stl) <--
+           (try return (String.split fulls seps) with Not_found -> mzero);
+         pattcanonUnifyFull splithd' (_PofString shd ~loc:full.loc);
+         pattcanonUnifyFull splittl' (_PofString stl ~loc:full.loc))
+    else if (isMeta full' && not(isMeta splithd') && not(isMeta splittl')) then
+      (perform
+         seps <-- _PtoString sep';
+         hds <-- _PtoString splithd';
+         tls <-- _PtoString splittl';
+         pattcanonUnifyFull full' (_PofString (hds ^ seps ^ tls) ~loc:splithd.loc))
+    else mzero)
+end
+;;
+
+
 new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **> _tProp) begin
   let open RunCtx.Monad in
   [ (function [ ls ] ->
