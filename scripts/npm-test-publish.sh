@@ -16,6 +16,6 @@ VERSION=$BASEVERSION-test-$(git rev-parse --short HEAD)
 
 (cd npm;
  npm version $VERSION;
- set +e; npm publish; RES=$?;
+ set +e; npm publish --tag test; RES=$?;
  npm version $BASEVERSION;
  exit $RES)

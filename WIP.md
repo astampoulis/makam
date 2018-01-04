@@ -4,6 +4,8 @@
 - [x] add README to npm package
 - [x] update the version and version update script
 - [x] circleci can publish test versions
+- [x] don't update the npm latest tag for test versions
+- [ ] copy specific files off of stdlib
 - [ ] script that checks if version needs to be bumped
 - [ ] script that checks that npm/makam-bin matches version (and recompiles and commits if not)
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
@@ -11,4 +13,6 @@
 - [ ] add travis and mac binaries
 - [ ] test with a mac
 - [ ] circleci integration
-- [ ] publish package to npm
+- [ ] make sure that it works as a dependency, not just a cli tool
+- [ ] make sure that runkit works
+- [ ] publish 0.7.0 package to npm
