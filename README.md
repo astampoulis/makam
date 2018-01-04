@@ -1,5 +1,4 @@
 # The Makam metalanguage -- a tool for rapid language prototyping
-## Version 0.5
 
 [![CircleCI](https://circleci.com/gh/astampoulis/makam.svg?style=svg)](https://circleci.com/gh/astampoulis/makam)
 
