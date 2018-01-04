@@ -1,5 +1,10 @@
 - [x] publish dummy package to npm
-- [ ] publish binary to npm
-- [ ] every commit gets its own version
+- [x] make base npm package with binary
+- [ ] remove debug from build
+- [ ] bump version to 0.7.0
+- [ ] script that checks if version needs to be bumped (if changes to ocaml code)
+- [ ] script for circleci that compiles if the version has been bumped
+- [ ] publish package to npm
 - [ ] circleci integration
 - [ ] add travis and mac binaries
+- [ ] update documentation

@@ -1,0 +1,1 @@
+makam-bin-linux64 filter=lfs diff=lfs merge=lfs -text
