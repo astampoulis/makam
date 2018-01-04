@@ -63,18 +63,25 @@ big/testveriml \
 big/testurweb \
 big/testf2tal
 
+cache-clean:
+	rm -rf .makam-cache
+
 makam-tests:
 	bash -c "set -e; for i in $(TESTS); do (makam --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
 
 makam-timing-tests:
 	./scripts/timing-test.sh
 
-cache-clean:
-	rm -rf .makam-cache
-
 makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
 	bash -c "grep SUCCESSFUL output; RES=\$$?; rm output; exit \$$RES"
+
+# publishing to npm
+
+npm-test-publish: build
+	./scripts/npm-test-publish.sh
+
+# js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))

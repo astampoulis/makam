@@ -1,8 +1,7 @@
 {
   "name": "makam",
   "version": "0.0.0",
-  "description":
-    "The Makam metalanguage -- a tool for rapid language prototyping",
+  "description": "The Makam metalanguage -- a tool for rapid language prototyping",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +13,11 @@
   "bin": {
     "makam": "index.js"
   },
-  "files": ["index.js", "makam-bin-linux64", "stdlib"],
+  "files": [
+    "index.js",
+    "makam-bin-linux64",
+    "stdlib"
+  ],
   "devDependencies": {
     "flow-bin": "^0.62.0",
     "prettier": "^1.9.2"
@@ -29,5 +32,12 @@
     "url": "https://github.com/astampoulis/makam/issues"
   },
   "homepage": "http://astampoulis.github.io/makam/",
-  "keywords": ["makam", "lambda-prolog", "metalanguage", "cli", "binary", "bin"]
+  "keywords": [
+    "makam",
+    "lambda-prolog",
+    "metalanguage",
+    "cli",
+    "binary",
+    "bin"
+  ]
 }

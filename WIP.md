@@ -1,7 +1,6 @@
 - [x] publish dummy package to npm
 - [x] make base npm package with binary
-- [ ] remove debug from build
-- [ ] bump version to 0.7.0
+- [x] script that does the publish with a test version
 - [ ] script that checks if version needs to be bumped (if changes to ocaml code)
 - [ ] script for circleci that compiles if the version has been bumped
 - [ ] publish package to npm
