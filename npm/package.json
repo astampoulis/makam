@@ -1,0 +1,27 @@
+{
+  "name": "makam",
+  "version": "0.0.0",
+  "description": "The Makam metalanguage -- a tool for rapid language prototyping",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astampoulis/makam.git"
+  },
+  "keywords": [
+    "makam",
+    "lambda-prolog",
+    "metalanguage",
+    "cli",
+    "binary",
+    "bin"
+  ],
+  "author": "Antonis Stampoulis",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/astampoulis/makam/issues"
+  },
+  "homepage": "http://astampoulis.github.io/makam/"
+}

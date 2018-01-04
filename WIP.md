@@ -1,0 +1,5 @@
+- [x] publish dummy package to npm
+- [ ] publish binary to npm
+- [ ] every commit gets its own version
+- [ ] circleci integration
+- [ ] add travis and mac binaries
