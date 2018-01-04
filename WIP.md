@@ -5,7 +5,7 @@
 - [x] update the version and version update script
 - [x] circleci can publish test versions
 - [x] don't update the npm latest tag for test versions
-- [ ] copy specific files off of stdlib
+- [x] copy specific files off of stdlib
 - [ ] script that checks if version needs to be bumped
 - [ ] script that checks that npm/makam-bin matches version (and recompiles and commits if not)
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
