@@ -1,6 +1,8 @@
 - [x] publish dummy package to npm
 - [x] make base npm package with binary
 - [x] script that does the publish with a test version
+- [x] add README to npm package
+- [ ] update the version and version update script
 - [ ] script that checks if version needs to be bumped (if changes to ocaml code)
 - [ ] script for circleci that compiles if the version has been bumped
 - [ ] publish package to npm

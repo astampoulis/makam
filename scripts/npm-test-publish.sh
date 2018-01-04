@@ -5,7 +5,8 @@ set -o pipefail
 
 npm whoami >/dev/null
 
-cp nativerepl.native npm/makam-bin-linux64
+cp -f nativerepl.native npm/makam-bin-linux64
+cp -f README.md npm/
 
 rm -rf npm/stdlib/
 cp -R stdlib npm/
