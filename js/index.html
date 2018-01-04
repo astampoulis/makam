@@ -10,12 +10,13 @@
 
       var worker = new Worker('makam.js');
       var terminal = null;
+      const version = "0.7.0";
      
       $(function() {
 
         terminal = $('#terminal').terminal(function(command, term) {
           worker.postMessage(command);
-        }, { prompt: "م ", greetings: "\tMakam(js) version 0.5\n" });
+        }, { prompt: "م ", greetings: `\tMakam(js) version ${version}\n` });
 
         worker.addEventListener('message', function(e) {
           terminal.echo(e.data);
