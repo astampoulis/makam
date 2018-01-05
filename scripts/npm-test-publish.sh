@@ -21,6 +21,9 @@ rsync --del --archive --del --relative --verbose $STDLIB_FILES npm/
 
 (cd npm; yarn install; yarn build)
 
+# Generate result cache for stdlib so that startup time is fast
+(cd npm; rm -rf stdlib-cache; echo "" | yarn makam --cache-dir=stdlib-cache)
+
 BASEVERSION=$(node -p "require('./npm/package.json').version")
 VERSION=$BASEVERSION-test-$(git rev-parse --short HEAD)
 

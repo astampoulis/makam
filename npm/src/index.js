@@ -5,7 +5,12 @@ const { Readable } = require("stream");
 
 const OCAMLRUNPARAM = "l=100M,s=16M,i=2M,o=200";
 
-const defaultArguments = ["-I", path.join(__dirname, "..")];
+const defaultArguments = [
+  "-I",
+  path.join(__dirname, ".."),
+  "-I",
+  path.join(__dirname, "..", "stdlib-cache")
+];
 const binaryPath = path.join(__dirname, "..", "makam-bin-linux64");
 
 const _run = (args = [], extraOptions = {}) => {

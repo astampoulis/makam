@@ -1,4 +1,5 @@
 stdlib/
+stdlib-cache/
 vendor/
 makam-bin-*
 README.md

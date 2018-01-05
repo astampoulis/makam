@@ -1839,7 +1839,12 @@ let global_resolve_filename fn =
 
 let global_add_directory dir =
   let state = !globalstate in
-  globalstate := { state with included_directories = state.included_directories ++ [global_resolve_filename dir] }
+  let resolved_if_existing =
+    try
+      global_resolve_filename dir
+    with FileNotFound _ -> dir
+  in
+  globalstate := { state with included_directories = state.included_directories ++ [resolved_if_existing] }
 ;;
 
 let global_load_file ?modul
