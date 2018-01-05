@@ -63,11 +63,13 @@ big/testveriml \
 big/testurweb \
 big/testf2tal
 
+MAKAM ?= makam
+
 cache-clean:
 	rm -rf .makam-cache
 
 makam-tests:
-	bash -c "set -e; for i in $(TESTS); do (makam --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
+	bash -c "set -e; for i in $(TESTS); do ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
 
 makam-timing-tests:
 	./scripts/timing-test.sh

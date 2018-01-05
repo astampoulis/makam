@@ -16,10 +16,10 @@
 - [x] handle case where makamProcess dies
 - [x] better control for where cache is saved/loaded from
 - [x] add stdlib cache as part of the npm package
+- [x] use npm-installed makam for tests
 - [ ] make sure that it works with runkit
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
 - [ ] update documentation
-- [ ] switch to using npm-installed makam for tests and everything?
 - [ ] add travis and mac binaries
 - [ ] test with a mac
 - [ ] clean up circle config (see if we can get rid of the excessive opam config exec)
