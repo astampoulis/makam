@@ -9,7 +9,7 @@
 - [x] add batch mode input
 - [x] make sure that it works as a dependency
 - [x] fix for circle
-- [ ] remove git-lfs, we'll find another solution
+- [x] remove git-lfs, we'll find another solution
 - [ ] make sure that it works with runkit
 - [ ] script that checks if version needs to be bumped
 - [ ] script that checks that npm/makam-bin matches version (and recompiles and commits if not)
