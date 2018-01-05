@@ -14,9 +14,9 @@
 - [x] avoid recompiling on circle
 - [x] some circle fixes
 - [x] handle case where makamProcess dies
+- [x] better control for where cache is saved/loaded from
 - [ ] make sure that it works with runkit
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
-- [ ] better control for where cache is saved/loaded from
 - [ ] include cache for stdlib as part of the npm package so that startup is fast
 - [ ] update documentation
 - [ ] switch to using npm-installed makam for tests and everything?

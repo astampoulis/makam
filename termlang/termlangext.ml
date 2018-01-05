@@ -393,7 +393,12 @@ new_builtin_predicate "readcachefile" ( _tString **> _tString **> _tProp ) begin
     filename <-- _PtoString filename ;
     contentString <-- (
       let input_statehash = !UChannel.input_statehash in
-      let res = try return (readFileAsString (makam_cache_dir ^ "/" ^ filename)) with _ -> mzero in
+      let res =
+        try
+          let resolved = Termlangcanon.global_resolve_cache_filename (filename ^ ".makam-cache") in
+          return (readFileAsString resolved)
+        with _ -> mzero
+      in
       let _ = UChannel.input_statehash := input_statehash in
       res
     );
@@ -418,24 +423,28 @@ end;;
 
 new_builtin_predicate "writecachefile" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ filename; content ] -> perform
-    filename <-- chasePattcanon [] filename ;
-    filename <-- _PtoString filename ;
-    content <-- chasePattcanon [] content ;
-    content <-- _PtoString content ;
-    _ <-- (try
-             if Sys.is_directory makam_cache_dir then return () else mzero
-           with _ ->
-             (try
-                Unix.mkdir makam_cache_dir 0o775; return ()
-              with _ -> mzero));
-    try
-      let output = File.open_out (makam_cache_dir ^ "/" ^ filename) in
-      let _ = IO.nwrite output content in
-      let _ = IO.close_out output in
-      return ()
-    with _ ->
-      mzero)
+  (fun _ -> fun [ filename; content ] ->
+    match global_get_cache_directory () with
+      Some makam_cache_dir -> perform begin
+        filename <-- chasePattcanon [] filename ;
+        filename <-- _PtoString filename ;
+        content <-- chasePattcanon [] content ;
+        content <-- _PtoString content ;
+        _ <-- (try
+                 if Sys.is_directory makam_cache_dir then return () else mzero
+               with _ ->
+                 (try
+                    Unix.mkdir makam_cache_dir 0o775; return ()
+                  with _ -> mzero));
+        try
+          let output = File.open_out (makam_cache_dir ^ "/" ^ filename ^ ".makam-cache") in
+          let _ = IO.nwrite output content in
+          let _ = IO.close_out output in
+          return ()
+        with _ ->
+          mzero
+      end
+    | None -> mzero)
 end;;
 
 
