@@ -14,6 +14,10 @@ jobs:
       #       - v1-opam-4.04.2-{{ .Branch }}
       #       - v1-opam-4.04.2
 
+      - run: &check-source-hash
+          name: Check if source hash needs update
+          command: ./scripts/source-hash.sh check-if-updated
+
       - run: &compile
           name: Install dependencies and compile Makam
           command: opam pin add --yes .
