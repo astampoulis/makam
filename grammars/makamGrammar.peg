@@ -325,6 +325,7 @@ prologcmd1 ->
                               (lazy(Termlangprolog.global_new_clause (t query).content))))
                          >>
            / token("%") d:directive token(".") << (global_set_last_query None; d ) >>
+           / c:batch_mode << flush IO.stdout >>
            / repplusV(white)^ << () >>
 
 prologcmd  -> c:loced(prologcmd1)
@@ -396,6 +397,13 @@ flag(p) -> p token("+") << true  >>
 
 cmdflushed -> c:prologcmd << flush IO.stdout >>
 toplevel   -> c:rep(cmdflushed) repV(white) << () >>
+
+batch_mode -> token("%batch-begin.") l:(epsilon << UChannel.loc _input >>)
+              cs:rep( (!"%batch-end." c:. << c >>) )
+              "%batch-end."
+              << Peg.parse_of_string ~initloc:l
+                                     (!makam_toplevel_parser `Makam)
+                                     (UString.to_string (UString.implode cs)) >>
 
 to_EOL -> repV( (![\n] .) ) "\n" << () >>
 

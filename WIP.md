@@ -6,13 +6,18 @@
 - [x] circleci can publish test versions
 - [x] don't update the npm latest tag for test versions
 - [x] copy specific files off of stdlib
+- [x] add batch mode input
+- [ ] make sure that it works as a dependency
+- [ ] make sure that it works with runkit
+- [ ] get rid of types with flow-remove-types before publishing
+- [ ] maybe use persistent js.eval when driver is node?
 - [ ] script that checks if version needs to be bumped
 - [ ] script that checks that npm/makam-bin matches version (and recompiles and commits if not)
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
+- [ ] better control for where cache is saved/loaded from
+- [ ] include cache for stdlib as part of the npm package so that startup is fast
 - [ ] update documentation
+- [ ] switch to using npm-installed makam for tests and everything?
 - [ ] add travis and mac binaries
 - [ ] test with a mac
-- [ ] circleci integration
-- [ ] make sure that it works as a dependency, not just a cli tool
-- [ ] make sure that runkit works
 - [ ] publish 0.7.0 package to npm
