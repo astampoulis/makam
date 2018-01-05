@@ -8,9 +8,9 @@
 - [x] copy specific files off of stdlib
 - [x] add batch mode input
 - [x] make sure that it works as a dependency
+- [x] fix for circle
+- [ ] remove git-lfs, we'll find another solution
 - [ ] make sure that it works with runkit
-- [ ] get rid of types with flow-remove-types before publishing
-- [ ] maybe use persistent js.eval when driver is node?
 - [ ] script that checks if version needs to be bumped
 - [ ] script that checks that npm/makam-bin matches version (and recompiles and commits if not)
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
