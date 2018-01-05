@@ -1,11 +1,13 @@
 {
   "name": "makam",
   "version": "0.7.0",
-  "description": "The Makam metalanguage -- a tool for rapid language prototyping",
+  "description":
+    "The Makam metalanguage -- a tool for rapid language prototyping",
   "main": "vendor/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "flow-remove-types --all --out-dir vendor/ src/"
+    "build": "flow-remove-types --all --out-dir vendor/ src/",
+    "makam": "yarn build && node ./vendor/repl.js"
   },
   "repository": {
     "type": "git",
@@ -14,11 +16,7 @@
   "bin": {
     "makam": "vendor/repl.js"
   },
-  "files": [
-    "vendor",
-    "makam-bin-linux64",
-    "stdlib"
-  ],
+  "files": ["vendor", "makam-bin-linux64", "stdlib"],
   "devDependencies": {
     "flow-bin": "^0.62.0",
     "prettier": "^1.9.2"

@@ -22,6 +22,7 @@ class MakamProcess {
   gotResponse: GotResponseEmitter;
   stdout: Readable;
 
+  _processEnded: boolean;
   _currentResponse: string;
   _lastPromise: Promise<string>;
 
@@ -30,10 +31,13 @@ class MakamProcess {
     if (!this.makamProcess) throw new Error("could not start makam");
 
     this._currentResponse = "";
+    this._processEnded = false;
+
     this.gotResponse = new GotResponseEmitter();
     this.stdout = this.makamProcess.stdout;
 
     this.stdout.setEncoding("utf8");
+    this.stdout.on("end", () => this.gotResponse.emit("end"));
     this.stdout.on("data", s => {
       const lastOne = s.endsWith("# ");
       this._currentResponse += lastOne ? s.replace(/# $/, "") : s;
@@ -43,31 +47,47 @@ class MakamProcess {
       }
     });
 
-    this._lastPromise = this.getResponsePromise();
+    this._lastPromise = this._getResponsePromise();
   }
 
   async write(input: string) {
-    this._lastPromise = this.getResponsePromise();
-    this.makamProcess.stdin.write(
-      `%batch-begin.\n${input}\n%batch-end.\n`,
-      "utf8"
-    );
-    return await this._lastPromise;
+    this._lastPromise = this._getResponsePromise();
+    if (!this._processEnded) {
+      this.makamProcess.stdin.write(
+        `%batch-begin.\n${input}\n%batch-end.\n`,
+        "utf8"
+      );
+    }
+    return this._lastPromise;
   }
 
   async close() {
-    this._lastPromise = this.getResponsePromise();
-    this.makamProcess.stdin.end();
-    return await this._lastPromise;
+    if (this._processEnded) {
+      this._lastPromise = Promise.resolve(this._currentResponse);
+    } else {
+      this._lastPromise = this._getClosePromise();
+      this.makamProcess.stdin.end();
+    }
+    return this._lastPromise;
   }
 
   async lastResponse() {
     return this._lastPromise;
   }
 
-  getResponsePromise(): Promise<string> {
+  _getClosePromise(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.gotResponse.once("end", () => resolve(this._currentResponse));
+    });
+  }
+
+  _getResponsePromise(): Promise<string> {
     return new Promise((resolve, reject) => {
       this.gotResponse.once("got_response", resolve);
+      this.gotResponse.once("end", () => {
+        this._processEnded = true;
+        reject(new Error("Makam process ended"));
+      });
     });
   }
 }
