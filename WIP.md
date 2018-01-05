@@ -7,7 +7,7 @@
 - [x] don't update the npm latest tag for test versions
 - [x] copy specific files off of stdlib
 - [x] add batch mode input
-- [ ] make sure that it works as a dependency
+- [x] make sure that it works as a dependency
 - [ ] make sure that it works with runkit
 - [ ] get rid of types with flow-remove-types before publishing
 - [ ] maybe use persistent js.eval when driver is node?

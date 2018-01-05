@@ -2,19 +2,20 @@
   "name": "makam",
   "version": "0.7.0",
   "description": "The Makam metalanguage -- a tool for rapid language prototyping",
-  "main": "index.js",
+  "main": "vendor/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "flow-remove-types --all --out-dir vendor/ src/"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/astampoulis/makam.git"
   },
   "bin": {
-    "makam": "index.js"
+    "makam": "vendor/index.js"
   },
   "files": [
-    "index.js",
+    "vendor",
     "makam-bin-linux64",
     "stdlib"
   ],
@@ -39,5 +40,8 @@
     "cli",
     "binary",
     "bin"
-  ]
+  ],
+  "dependencies": {
+    "flow-remove-types": "^1.2.3"
+  }
 }

@@ -11,6 +11,8 @@ cp -f README.md npm/
 STDLIB_FILES=$(grep -E --only-matching "stdlib/[^\"]+" opam/files/makam.install | uniq)
 rsync --del --archive --del --relative --verbose $STDLIB_FILES npm/
 
+(cd npm; yarn install; yarn build)
+
 BASEVERSION=$(node -p "require('./npm/package.json').version")
 VERSION=$BASEVERSION-test-$(git rev-parse --short HEAD)
 
