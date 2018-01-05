@@ -12,7 +12,7 @@
     "url": "git+https://github.com/astampoulis/makam.git"
   },
   "bin": {
-    "makam": "vendor/index.js"
+    "makam": "vendor/repl.js"
   },
   "files": [
     "vendor",

@@ -81,6 +81,10 @@ makam-js-tests:
 npm-test-publish: build
 	./scripts/npm-test-publish.sh
 
+npm-test-publish-ci:
+	cp $(opam config var makam:lib)/makam-bin ./nativerepl.native
+	./scripts/npm-test-publish.sh
+
 # js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin

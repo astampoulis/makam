@@ -1,5 +1,3 @@
-#!/usr/bin/env flow-node -a
-
 const { spawn } = require("child_process");
 const path = require("path");
 const EventEmitter = require("events");
@@ -77,9 +75,5 @@ class MakamProcess {
 const repl = (args: Array<string> = []) => {
   return _run(args, { stdio: "inherit" });
 };
-
-if (require.main === module) {
-  repl(process.argv.slice(2)).on("exit", process.exit);
-}
 
 module.exports = { MakamProcess, repl, binaryPath };

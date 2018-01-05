@@ -11,7 +11,8 @@
 - [x] fix for circle
 - [x] remove git-lfs, we'll find another solution
 - [x] source-hash script
-- [ ] avoid recompiling on circle
+- [x] avoid recompiling on circle
+- [ ] clean up circle config
 - [ ] make sure that it works with runkit
 - [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
 - [ ] better control for where cache is saved/loaded from
