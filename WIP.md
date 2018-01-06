@@ -23,8 +23,8 @@
 - [x] update to 0.7.0-pre2
 - [x] move vendor to lib
 - [x] update documentation and installation procedure
-- [ ] update to newer opam to make dependency installation easier?
-- [ ] add travis and mac binaries
+- [x] avoid relying on npm test publish
+- [ ] add travis ci for building on a mac
 - [ ] test with a mac
 - [ ] clean up circle config (see if we can get rid of the excessive opam config exec)
 - [ ] start on the aws lambda stuff? or separate PR

@@ -83,8 +83,14 @@ check-version:
 	./scripts/makam-version.sh check-if-updated
 
 # publishing to npm
+prepare-npm-package: check-version build
+	./scripts/prepare-npm-package.sh
+
 npm-test-publish: check-version build
-	./scripts/npm-test-publish.sh
+	bash -c "set -e; \
+	         export TEST_VERSION=\$$(./scripts/makam-version.sh npm-test-version); \
+	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION; \
+	         ./scripts/publish-npm-package.sh makam-\$$TEST_VERSION.tgz"
 
 # js_of_ocaml compilation
 

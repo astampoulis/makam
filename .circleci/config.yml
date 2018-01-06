@@ -34,11 +34,15 @@ jobs:
           name: Login to NPM
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
 
-      - run: &npm-test-publish
-          name: Publish test version to npm and install
+      - run: &compile
+          name: Compile Makam
+          command: opam config exec make
+
+      - run: &prepare-npm-package
+          name: Prepare npm package and install it
           command: |
-            opam config exec make npm-test-publish
-            npm install makam@$(./scripts/makam-version.sh npm-test-version)
+            opam config exec make prepare-npm-package
+            npm install makam-$(./scripts/makam-version.sh).tgz
 
       - run: &tests
           name: Run Tests
