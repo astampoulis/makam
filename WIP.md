@@ -18,6 +18,7 @@
 - [x] add stdlib cache as part of the npm package
 - [x] use npm-installed makam for tests
 - [x] script to check if overall version bump is needed
+- [x] fix to the version script for CircleCI
 - [ ] make sure that it works with runkit
 - [ ] update documentation
 - [ ] add travis and mac binaries
