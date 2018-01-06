@@ -24,8 +24,8 @@
 - [x] move vendor to lib
 - [x] update documentation and installation procedure
 - [x] avoid relying on npm test publish
-- [ ] add travis ci for building on a mac
+- [x] add travis ci for building on a mac
+- [ ] add way to include mac binaries in npm package
 - [ ] test with a mac
-- [ ] clean up circle config (see if we can get rid of the excessive opam config exec)
 - [ ] start on the aws lambda stuff? or separate PR
 - [ ] publish 0.7.0 package to npm
