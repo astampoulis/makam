@@ -21,6 +21,10 @@ function get_version() {
   grep --only-matching -E "version = \"[^\"]+\"" | cut -d'"' -f 2
 }
 
+function code_changes_from_parent() {
+  git diff-tree -r --name-status $1..HEAD termlang toploop stdlib opam npm/src npm/package.json npm/yarn.lock | grep --invert-match "toploop/version.ml"
+}
+
 BASEVERSION=$(cat $TOPDIR/toploop/version.ml | get_version)
 
 if [[ $# -lt 1 ]]; then
@@ -53,8 +57,6 @@ update)
     exit 1
   fi
 
-  $TOPDIR/scripts/source-hash.sh update
-
   NEWVERSION=$2
 
   sed -i -r -e "s/version = \"[^\"]+\"/version = \"$NEWVERSION\"/" $TOPDIR/toploop/version.ml
@@ -62,6 +64,10 @@ update)
   sed -i -r -e "s/^version: \"[^\"]+\"/version: \"$NEWVERSION\"/" $TOPDIR/opam/opam
   sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/npm/package.json
   sed -i -r -e "s/version = \"[^\"]+\"/version = \"$NEWVERSION\"/" $TOPDIR/js/index.html
+
+  # Do the source hash update afterwards to make sure that the above gets incorporated
+  $TOPDIR/scripts/source-hash.sh update
+
   ;;
 
 check-if-updated)
@@ -83,11 +89,11 @@ check-if-updated)
   PARENTCOMMIT=$(git rev-list --boundary HEAD...origin/$PARENT | grep "^-" | cut -c2- | head -n 1)
   PARENTVERSION=$(git show $PARENTCOMMIT:toploop/version.ml | get_version)
 
-  if [[ ! -z $(git diff-tree -r --name-status $PARENTCOMMIT..HEAD termlang toploop stdlib opam npm/src npm/package.json) && $PARENTVERSION == $BASEVERSION ]]; then
+  if [[ ! -z $(code_changes_from_parent $PARENTCOMMIT) && $PARENTVERSION == $BASEVERSION ]]; then
     cat <<EOF
 Summary of changes:
 
-$(git diff-tree -r --name-status $PARENTCOMMIT..HEAD termlang toploop stdlib opam npm/src npm/package.json)
+$(code_changes_from_parent $PARENTCOMMIT)
 
 The current version is: $PARENTVERSION
 A version update is needed; please use \`$0 update <version>\`.
