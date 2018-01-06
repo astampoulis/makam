@@ -78,9 +78,12 @@ makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
 	bash -c "grep SUCCESSFUL output; RES=\$$?; rm output; exit \$$RES"
 
-# publishing to npm
+# version stuff
+check-version:
+	./scripts/makam-version.sh check-if-updated
 
-npm-test-publish:
+# publishing to npm
+npm-test-publish: check-version
 	./scripts/npm-test-publish.sh
 
 # js_of_ocaml compilation
@@ -99,4 +102,5 @@ md2makam:
 md2makam-watch:
 	while true; do inotifywait -e modify `git ls-files --cached --others */*.md` && find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk; done
 
-.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests cache-clean
+.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests cache-clean npm-test-publish check-version
+

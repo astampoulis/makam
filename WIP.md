@@ -17,8 +17,8 @@
 - [x] better control for where cache is saved/loaded from
 - [x] add stdlib cache as part of the npm package
 - [x] use npm-installed makam for tests
+- [x] script to check if overall version bump is needed
 - [ ] make sure that it works with runkit
-- [ ] script that checks if need to publish new version by comparing to HEAD^ and git tags the commit
 - [ ] update documentation
 - [ ] add travis and mac binaries
 - [ ] test with a mac

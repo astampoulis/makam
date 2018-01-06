@@ -30,7 +30,7 @@ elif [[ "$1" == "update" ]]; then
 
 else
 
-  echo "Usage: $0 [update]"
+  echo "Usage: $0 [check-if-updated|update]"
   exit 1
 
 fi

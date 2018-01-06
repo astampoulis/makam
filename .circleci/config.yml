@@ -8,9 +8,9 @@ jobs:
     steps:
       - checkout
 
-      - run: &check-source-hash
-          name: Check if source hash needs update
-          command: ./scripts/source-hash.sh check-if-updated
+      - run: &check-version-update
+          name: Check if version update is needed
+          command: ./scripts/makam-version.sh check-if-updated
 
       - run: &compile
           name: Install dependencies and compile Makam
@@ -32,7 +32,7 @@ jobs:
           name: Publish test version to npm and install
           command: |
             opam config exec make npm-test-publish
-            npm install makam@$(./scripts/npm-test-version.sh)
+            npm install makam@$(./scripts/makam-version.sh npm-test-version)
 
       - run: &tests
           name: Run Tests

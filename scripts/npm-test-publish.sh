@@ -24,11 +24,11 @@ rsync --del --archive --del --relative --verbose $STDLIB_FILES npm/
 # Generate result cache for stdlib so that startup time is fast
 (cd npm; rm -rf stdlib-cache; echo "" | yarn makam --cache-dir=stdlib-cache)
 
-BASEVERSION=$(node -p "require('./npm/package.json').version")
-VERSION=$BASEVERSION-test-$(git rev-parse --short HEAD)
+BASEVERSION=$(./scripts/makam-version.sh)
+TESTVERSION=$(./scripts/makam-version.sh npm-test-version)
 
 (cd npm;
- npm version $VERSION;
+ npm version $TESTVERSION;
  set +e; npm publish --tag test; RES=$?;
  npm version $BASEVERSION;
  exit $RES)
