@@ -21,7 +21,12 @@
 - [x] fix to the version script for CircleCI
 - [x] another fix for the version script
 - [x] update to 0.7.0-pre2
-- [ ] make sure that it works with runkit
+- [x] move vendor to lib
+- [ ] add version for older node
+- [ ] use transform-runtime, get rid of regenerator, but add babel-runtime to dependencies
+- [ ] try to see how makam.js fares when using cache
+- [ ] or think about aws lambda
+- [ ] add the patchelf etc. trick maybe
 - [ ] update documentation
 - [ ] add travis and mac binaries
 - [ ] test with a mac

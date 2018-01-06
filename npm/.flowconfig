@@ -3,4 +3,4 @@ all=true
 
 [ignore]
 .*/node_modules
-.*/vendor
+.*/lib

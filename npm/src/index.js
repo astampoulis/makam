@@ -14,10 +14,15 @@ const defaultArguments = [
 const binaryPath = path.join(__dirname, "..", "makam-bin-linux64");
 
 const _run = (args = [], extraOptions = {}) => {
-  return spawn(binaryPath, [...defaultArguments, ...args], {
-    env: Object.assign({}, process.env, { OCAMLRUNPARAM }),
-    ...extraOptions
-  });
+  return spawn(
+    binaryPath,
+    [].concat(defaultArguments, args),
+    Object.assign(
+      {},
+      { env: Object.assign({}, process.env, { OCAMLRUNPARAM }) },
+      extraOptions
+    )
+  );
 };
 
 class GotResponseEmitter extends EventEmitter {}

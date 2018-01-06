@@ -2,27 +2,24 @@
   "name": "makam",
   "version": "0.7.0-pre2",
   "description": "The Makam metalanguage -- a tool for rapid language prototyping",
-  "main": "vendor/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "flow-remove-types --all --out-dir vendor/ src/",
-    "makam": "yarn build && node ./vendor/repl.js"
+    "build": "flow-remove-types --all --out-dir lib/ src/",
+    "dev-makam": "yarn build && yarn makam",
+    "makam": "node ./lib/repl.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/astampoulis/makam.git"
   },
   "bin": {
-    "makam": "vendor/repl.js"
+    "makam": "lib/repl.js"
   },
-  "files": [
-    "vendor",
-    "makam-bin-linux64",
-    "stdlib",
-    "stdlib-cache"
-  ],
+  "files": ["lib", "makam-bin-linux64", "stdlib", "stdlib-cache"],
   "devDependencies": {
     "flow-bin": "^0.62.0",
+    "flow-remove-types": "^1.2.3",
     "prettier": "^1.9.2"
   },
   "author": {
@@ -35,15 +32,5 @@
     "url": "https://github.com/astampoulis/makam/issues"
   },
   "homepage": "http://astampoulis.github.io/makam/",
-  "keywords": [
-    "makam",
-    "lambda-prolog",
-    "metalanguage",
-    "cli",
-    "binary",
-    "bin"
-  ],
-  "dependencies": {
-    "flow-remove-types": "^1.2.3"
-  }
+  "keywords": ["makam", "lambda-prolog", "metalanguage", "cli", "binary", "bin"]
 }
