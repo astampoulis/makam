@@ -20,6 +20,7 @@
 - [x] script to check if overall version bump is needed
 - [x] fix to the version script for CircleCI
 - [x] another fix for the version script
+- [x] update to 0.7.0-pre2
 - [ ] make sure that it works with runkit
 - [ ] update documentation
 - [ ] add travis and mac binaries
