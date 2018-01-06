@@ -22,13 +22,10 @@
 - [x] another fix for the version script
 - [x] update to 0.7.0-pre2
 - [x] move vendor to lib
-- [ ] add version for older node
-- [ ] use transform-runtime, get rid of regenerator, but add babel-runtime to dependencies
-- [ ] try to see how makam.js fares when using cache
-- [ ] or think about aws lambda
-- [ ] add the patchelf etc. trick maybe
-- [ ] update documentation
+- [x] update documentation and installation procedure
+- [ ] update to newer opam to make dependency installation easier?
 - [ ] add travis and mac binaries
 - [ ] test with a mac
 - [ ] clean up circle config (see if we can get rid of the excessive opam config exec)
+- [ ] start on the aws lambda stuff? or separate PR
 - [ ] publish 0.7.0 package to npm

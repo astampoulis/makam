@@ -12,9 +12,15 @@ jobs:
           name: Check if version update is needed
           command: ./scripts/makam-version.sh check-if-updated
 
+      - run: &install-dependencies
+          name: Install dependencies
+          command: |
+            opam pin add --yes makam . --no-action
+            opam install --yes makam --deps-only
+
       - run: &compile
-          name: Install dependencies and compile Makam
-          command: opam pin add --yes .
+          name: Compile Makam
+          command: opam config exec make
 
       - run: &install-node
           name: Install Node.js

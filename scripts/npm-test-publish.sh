@@ -5,14 +5,16 @@ set -o pipefail
 
 npm whoami >/dev/null
 
-OPAM_MAKAM_BIN=$(opam config var makam:lib)/makam-bin
-if [[ -e $OPAM_MAKAM_BIN && \
-      $($OPAM_MAKAM_BIN --version | cut -d':' -f 2) == $(./scripts/source-hash.sh) ]]; then
-  echo Using makam binary from opam
-  cp $OPAM_MAKAM_BIN npm/makam-bin-linux64
-else
-  make build && cp -f nativerepl.native npm/makam-bin-linux64
-fi
+# OPAM_MAKAM_BIN=$(opam config var makam:lib)/makam-bin
+# if [[ -e $OPAM_MAKAM_BIN && \
+#       $($OPAM_MAKAM_BIN --version | cut -d':' -f 2) == $(./scripts/source-hash.sh) ]]; then
+#   echo Using makam binary from opam
+#   cp $OPAM_MAKAM_BIN npm/makam-bin-linux64
+# else
+#   make build && cp -f nativerepl.native npm/makam-bin-linux64
+# fi
+
+cp -f nativerepl.native npm/makam-bin-linux64
 
 cp -f README.md npm/
 

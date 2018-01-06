@@ -63,7 +63,7 @@ big/testveriml \
 big/testurweb \
 big/testf2tal
 
-MAKAM ?= makam
+MAKAM ?= ./makam
 
 cache-clean:
 	rm -rf .makam-cache
@@ -83,7 +83,7 @@ check-version:
 	./scripts/makam-version.sh check-if-updated
 
 # publishing to npm
-npm-test-publish: check-version
+npm-test-publish: check-version build
 	./scripts/npm-test-publish.sh
 
 # js_of_ocaml compilation
