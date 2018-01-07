@@ -63,18 +63,42 @@ big/testveriml \
 big/testurweb \
 big/testf2tal
 
-makam-tests:
-	bash -c "set -e; for i in $(TESTS); do (makam --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
-
-makam-timing-tests:
-	./scripts/timing-test.sh
+MAKAM ?= ./makam
 
 cache-clean:
 	rm -rf .makam-cache
 
+makam-tests:
+	bash -c "set -e; for i in $(TESTS); do ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
+
+makam-timing-tests:
+	./scripts/timing-test.sh
+
 makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
 	bash -c "grep SUCCESSFUL output; RES=\$$?; rm output; exit \$$RES"
+
+# version stuff
+check-version:
+	./scripts/makam-version.sh check-if-updated
+
+# publishing to npm
+prepare-npm-package: check-version build
+	./scripts/prepare-npm-package.sh
+
+prepare-test-npm-package: check-version build
+	bash -c "set -e; \
+	         export MACOS_BINARY_OPTIONAL=true; \
+	         export TEST_VERSION=\$$(./scripts/makam-version.sh npm-test-version); \
+	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION"
+
+npm-test-publish: prepare-test-npm-package
+	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh npm-test-version).tgz"
+
+npm-prod-publish: prepare-npm-package
+	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz"
+
+# js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
 MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))
@@ -90,4 +114,5 @@ md2makam:
 md2makam-watch:
 	while true; do inotifywait -e modify `git ls-files --cached --others */*.md` && find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk; done
 
-.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests cache-clean
+.PHONY: js md2makam md2makam-watch makam-tests makam-js-tests cache-clean npm-test-publish check-version
+

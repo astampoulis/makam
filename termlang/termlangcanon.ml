@@ -129,6 +129,7 @@ type ctxState = { name_to_fvar : (int list) Dict.t ;
                   open_modules : string list ;
                   included_directories : string list ;
                   current_directory : string ;
+                  cache_directory : string option ;
                   last_query : (unit -> exprU) located option
                 } ;;
 
@@ -151,6 +152,7 @@ let empty_state () =
     current_module = None ; current_testsuite = None;
     qualified_fvar_exists = StringSet.empty ; qualified_tfvar_exists = StringSet.empty ;
     globally_loaded_modules = StringSet.empty ; modules_loaded_in_modules = Dict.empty ;
+    cache_directory = None;
     module_extension_stack = [] ; open_modules = [] ; included_directories = [] ; current_directory = ".";
     last_query = None
   }
@@ -1800,6 +1802,31 @@ let first_existing_filename userfn fns =
   with _ -> raise (FileNotFound(userfn, fns))
 ;;
 
+let global_resolve_cache_filename fn =
+  let state = !globalstate in
+  if Path.is_absolute (Path.of_string fn) then
+    first_existing_filename fn [fn]
+  else
+    let cons_cache_dir tl =
+      match state.cache_directory with
+        None -> tl
+      | Some dir -> dir :: tl
+    in
+    let directories = (cons_cache_dir state.included_directories) |> List.map Path.of_string in
+    List.map (fun dir -> Path.to_string (Path.concat dir (Path.of_string fn))) directories
+    |> first_existing_filename fn
+;;
+
+let global_set_cache_directory dir =
+  let state = !globalstate in
+  globalstate := { state with cache_directory = dir }
+;;
+
+let global_get_cache_directory dir =
+  let state = !globalstate in
+  (!globalstate).cache_directory
+;;
+
 let global_resolve_filename fn =
   let state = !globalstate in
   if Path.is_absolute (Path.of_string fn) then
@@ -1812,7 +1839,12 @@ let global_resolve_filename fn =
 
 let global_add_directory dir =
   let state = !globalstate in
-  globalstate := { state with included_directories = state.included_directories ++ [global_resolve_filename dir] }
+  let resolved_if_existing =
+    try
+      global_resolve_filename dir
+    with FileNotFound _ -> dir
+  in
+  globalstate := { state with included_directories = state.included_directories ++ [resolved_if_existing] }
 ;;
 
 let global_load_file ?modul

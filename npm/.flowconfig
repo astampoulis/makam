@@ -1,0 +1,6 @@
+[options]
+all=true
+
+[ignore]
+.*/node_modules
+.*/lib

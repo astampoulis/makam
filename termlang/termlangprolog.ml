@@ -71,7 +71,8 @@ type runState  =
       rslogstackdepth    : int ref ;
       rsopengoals        : (pattneut * runEnv) list ;
       rsmetaswithconstraints : ISet.t ;
-      rstraced_predicates : ISet.t
+      rstraced_predicates : ISet.t ;
+      rsroot_query        : pattneut option
     }
 
 and  runEnv =
@@ -101,8 +102,6 @@ let _BENCHMARK      : bool ref = Benchmark.enabled ;;
 let _LOGGING        : bool ref = ref false ;;
 let _ONLY_TYPECHECK : bool ref = ref false ;;
 let last_query_successful : bool option ref = ref None ;;
-
-let makam_cache_dir = ".makam-cache" ;;
 
 let metaindex     (_, idx, _, _) = idx ;;
 let metasubst     (_, _, subst, _) = subst ;;
@@ -356,7 +355,8 @@ let empty_run_state termstate =
     rslogstackdepth = mut_logstackdepth ;
     rsopengoals = [] ;
     rsmetaswithconstraints = ISet.empty ;
-    rstraced_predicates = ISet.empty
+    rstraced_predicates = ISet.empty ;
+    rsroot_query = None
   }
 ;;
 
@@ -374,7 +374,8 @@ let clearRunMetas state =
     rsmeta_mode = IMap.empty ;
     rstermstate = clearMetas state.rstermstate ;
     rsmetaswithconstraints = ISet.empty ;
-    rsopengoals = [] }
+    rsopengoals = [] ;
+    rsroot_query = None }
 ;;
 
 let builtinprologstate = ref (empty_run_state !globalstate) ;;
@@ -1090,6 +1091,9 @@ let addOpenGoal_mutable (p : pattneut) (e : runEnv) : unit =
   tempstate := { !tempstate with rsopengoals = (p, e) :: (!tempstate).rsopengoals }
 ;;
 
+let setRootQuery_mutable (p : pattneut) : unit =
+  tempstate := { !tempstate with rsroot_query = Some p }
+;;
 
 let getMetaLevel_mutable (i : int) : int = IMap.find i (!tempstate).rsmeta_level ;;
 
@@ -3374,7 +3378,9 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
                                 clearMetasInState () ;
                                 newmetas) ;
     state <-- getstate ;
-    (goal'', nu) <-- inmonad ~statewrite:true (fun _ -> allocateMetas_mutable goal') ;
+    (goal'', nu) <-- inmonad ~statewrite:true (fun _ ->
+                               setRootQuery_mutable goal'.patt;
+                               allocateMetas_mutable goal') ;
     let newmetas =
       List.map
         (fun (i, n, t) -> (i, n, shiftMetasTyp state.rstermstate.tmetas t))

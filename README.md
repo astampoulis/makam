@@ -6,7 +6,7 @@ Copyright (C) 2012- Antonis Stampoulis
 
 This program is free software, licensed under the GPLv3 (see LICENSE).
 
-### Introduction
+## Introduction
 
 Makam is a metalanguage that eases implementation of languages with rich type systems, supporting
 concise and modular language definitions, aimed at allowing rapid prototyping and experimentation
@@ -24,113 +24,132 @@ To read more about Makam, visit my homepage:
 <http://astampoulis.github.io/>
 
 
-### Installation
+## Installation
 
-#### Dependencies
+There are multiple ways to install Makam: The easiest way is by using the `makam` Node.js package
+that includes a pre-compiled Makam binary.
 
-- [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
-- `opam switch 4.04.2`
-- [Node.js](https://nodejs.org/en/download/)
-- `opam pin add makam .`
-- `make`
+- [Install through Node](#install-through-node). This is the easiest way, as it requires
+  only a Node.js installation; the package includes a pre-compiled Makam binary.
+- [Install through OPAM](#install-through-opam). This requires both an OCaml and a Node.js
+  installation, and compiles Makam from source.
+
+### Install through Node
+
+#### TL;DR
+
+- Install [Node.js 8.x](https://nodejs.org/en/download/)
+- `npm install -g makam`
+- `makam`
 
 #### Instructions
 
-You first need to install OPAM, the OCaml Package Manager. Instructions are available at:
+- Install [Node.js 8.x](https://nodejs.org/en/download/)
 
-<http://opam.ocaml.org/doc/Quick_Install.html>
+  In Ubuntu/Debian Linux:
 
-We have been testing using the OCaml 4.04.2 configuration.
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    sudo apt-get install -y nodejs
 
-You will also need Node.js, which is used for optimized parser generation. Instructions are
-available at:
+  In MacOS X:
 
-<https://nodejs.org/en/download/>
+    brew install node
 
-Most recent versions of Node.js should work. If you want to run `makam.js` (the
-compiled-to-Javascript version of Makam, using `js_of_ocaml`), you need to call node either with
-`--stack-size=65536`, or use a Node version that supports tail-call optimization -- the latest such
-version is `7.10.1` and needs the `--harmony_tailcalls` flag.
+  Windows are not supported through this method at this time, as there
+  is no pre-compiled binary for this platform in the Node.js package.
+  [Compiling from source](#install-through-opam) should work though.
 
-After you have OPAM installed, you can install Makam:
+- Install the `makam` npm package globally (you might need `sudo`):
 
-    opam pin add makam https://github.com/astampoulis/makam.git
+    npm install -g makam
 
-(Makam is still under development and does not have a stable release yet, thus having its
-installation track the git repository is the recommended option for the time being.)
+- Clone the Makam repository to have examples locally:
 
-This compiles and installs Makam after installing all needed dependencies.
-Now, when you want to run Makam, just issue:
+    git clone https://github.com/astampoulis/makam.git
+    cd makam
+
+- Use `makam` to run the REPL:
 
     makam
 
-Examples written in Makam are available in the same repository. Having a local copy
-is useful as a reference point, since there's no tutorial yet:
+- If you `git pull` a newer version of the repository, make
+  sure to also update your Makam installation with:
+
+    npm install -g makam
+
+(Alternatively, instead of installing Makam globally, you can install
+Makam under `./node_modules` with `npm install makam`, in which case
+you'll have to use `./node_modules/.bin/makam` to run `makam`, or
+add `$(pwd)/node_modules/.bin` to your path.)
+
+### Install through OPAM
+
+#### TL;DR
+
+- [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
+- `opam switch 4.04.2`
+- `eval $(opam config env)`
+- [Node.js 8.x](https://nodejs.org/en/download/)
+- `opam pin add makam . --no-action`
+- `opam install makam --deps-only`
+- `make`
+- `./makam`
+
+#### Instructions
+
+Clone the repository to get the Makam source code.
 
     git clone https://github.com/astampoulis/makam.git
 
-Look in the `examples` directory.
+You then need to install OPAM, the OCaml Package Manager. Instructions are
+available at:
 
-It is recommended that you upgrade Makam frequently. OPAM can be used for that:
+<http://opam.ocaml.org/doc/Quick_Install.html>
 
-    opam upgrade makam
+We have been testing using the OCaml 4.04.2 configuration, which you can switch
+to with `opam switch 4.04.2` after you have installed OPAM. Make sure you have
+also loaded the needed environment variables with `eval $(opam config env)`.
 
-Alternatively, you can clone the repository and run:
+Makam also depends on Node.js, which is used for optimized parser
+generation. Instructions are available at:
 
-    opam pin add makam .
+<https://nodejs.org/en/download/>
 
-to install dependencies and
+Most recent versions of Node.js should work. If you are on an old version
+(before `7.x`), you can use `nave` to install a newer Node.js version:
+
+    npm install -g nave && nave use 8
+
+(Other Node version managers like `n` and `nvm` should also work.)
+
+After you have OPAM installed, you need to install the Makam dependencies:
+
+    opam pin add makam . --no-action
+    opam install makam --deps-only
+
+And finally, compile Makam:
 
     make
 
-to compile Makam.
+Now, when you want to run Makam, just issue:
 
-### How to use Makam
+    ./makam
 
-Unfortunately we do not have a Makam tutorial yet -- one will be out soon though.
-The closest thing to a proper tutorial is a technical overview paper which you can
-find on my website. However, note that some identifiers are different in the
-actual implementation compared to the paper. Also, to switch to specialized syntax
-for propositions the form `{prop| ... |}` needs to be used.
+Examples written in Makam are available in the same repository that you cloned
+above. Having a local copy is useful as a reference point, since there's no
+tutorial yet; look in the `examples` directory.
 
-Look into the files in the examples/ directory for sample developments in Makam.
+To update your version of Makam, you can do:
 
-Recommendations:
+    git pull
+    opam install makam --deps-only
+    make
 
-`small/systemf.makam`  -- a simple implementation of System F
+## Using Makam
 
-`big/ocaml.makam`      -- a fragment of the OCaml type system
+Unfortunately we do not have a Makam tutorial yet. I am in the process of
+writing introductory posts which will be available in my homepage:
 
-`big/hol.makam`        -- the HOL formal logic
+    http://astampoulis.github.io/makam/
 
-`big/veriml.makam`     -- the VeriML type system
-
-`big/urweb.makam`      -- type inference for Featherweight Ur
-
-`big/testocaml.makam`,
-`big/testveriml.makam`,
-`big/testurweb.makam`  -- files containing sample queries
-
-`lib/builtins.makam`   -- the builtin types and constants of Makam
-
-
-Some commands:
-
-`%use "examples/big/testocaml.makam".`       -- load a file
-
-`%use testocaml.`                            -- when testocaml.makam is in the search path
-
-`%reset.`                                    -- to reset the state of Makam
-
-`expr : type.`                               -- declare a new type (or type constructor)
-
-`ifthenelse : expr -> expr -> expr.`         -- declare a new constant
-
-`eval : expr -> expr -> prop.`               -- declare a new predicate
-
-`eval (ifthenelse E1 E2 E3) V2 <- eval E1 etrue, eval E2 V2.` -- declare a new rule
-
-`eval (ifthenelse etrue efalse etrue) E ?` -- perform a query
-
-
-That's basically it. For the rest, look at the examples!
+Look into the files in the `examples/` directory for sample developments in Makam.

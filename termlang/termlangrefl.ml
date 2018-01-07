@@ -487,11 +487,24 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "statehash" ( _tString **> _tProp ) begin
   let open RunCtx.Monad in
   (fun _ -> fun [ s ] -> perform
+    metaidx <-- (match s.term with
+         | `LamMany([], { term = `Meta(_, idx, _, _) }) ->
+            return idx
+         | _ -> mzero);
     statehash <-- inmonad ~statewrite:false (fun _ ->
       let inp = !UChannel.input_statehash in
-      let st = Hashtbl.hash_param 1024 256 !tempstate.rsmeta_parent in
-      let env = Hashtbl.hash_param 1024 256 !tempenv.retemp_constr_for_pred in
-      inp + st + env);
+      let mt = Hashtbl.hash metaidx in
+      let root =
+        match !tempstate.rsroot_query with
+          Some p -> (match p.loc with
+                       Some l -> (let open UChannel in Hashtbl.hash l.startloc.offset)
+                     | _ -> 0)
+        | _ -> failwith "statehash should always be within the context of a queryGoal?"
+      in
+      (* we need three components: the input so far, the query we're at,
+         and a distinct point within that query. The current metavariable should provide
+         that last one. *)
+      inp + mt + root);
     let statehash = string_of_int statehash in
     pattcanonUnifyFull s (_PofString statehash ~loc:s.loc))
   end;;

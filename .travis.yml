@@ -1,0 +1,37 @@
+os: osx
+
+language: node_js
+node_js: 8
+env:
+  - OPAM_SWITCH=4.04.2
+
+install: true
+
+script: ./scripts/travis-ci.sh
+
+deploy:
+  - provider: s3
+    access_key_id: "$AMAZON_ACCESS_KEY_ID"
+    secret_access_key: "$AMAZON_SECRET_ACCESS_KEY"
+    bucket: "makam-travis-artifacts"
+    local_dir: travis-artifacts/ocaml-mac-bin
+    upload-dir: ocaml-mac-bin
+    acl: public_read
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: -e upload-ocaml-bin
+  - provider: s3
+    access_key_id: "$AMAZON_ACCESS_KEY_ID"
+    secret_access_key: "$AMAZON_SECRET_ACCESS_KEY"
+    bucket: "makam-travis-artifacts"
+    local_dir: travis-artifacts/makam-mac-bin
+    upload-dir: makam-mac-bin
+    acl: public_read
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: -e upload-makam-bin
+
+notifications:
+  email: false
