@@ -12,7 +12,7 @@ jobs:
           name: Check if build should be skipped on CircleCI only
           command: |
             if [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) == *"[circle-skip]"* ]]; then echo 1 > skip; fi
-      
+
       - run: &check-version-update
           name: Check if version update is needed
           command: |
@@ -31,11 +31,6 @@ jobs:
             [[ -e skip ]] || sudo apt-get install -y nodejs
             [[ -e skip ]] || sudo npm install -g yarn
             [[ -e skip ]] || sudo chown -R $(whoami):$(id -gn $(whoami)) ~/.config
-
-      - run: &npm-login
-          name: Login to NPM
-          command: |
-            [[ -e skip ]] || echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
 
       - run: &compile
           name: Compile Makam
@@ -62,6 +57,14 @@ jobs:
           name: Run Tests for Makam.js
           command: |
             [[ -e skip ]] || if [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) == *"[ci-test-js]"* ]]; then make makam-js-tests; fi
+
+      - run: &publish-npm-package
+          name: Prepare production npm package and publish it
+          command: |
+            if [[ -e skip || $(git rev-parse --abbrev-ref HEAD) != as-publish-to-npm ]]; then echo 1 > skip-deploy; fi
+            [[ -e skip-deploy ]] || (set -u; echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc; set +u)
+            [[ -e skip-deploy ]] || opam config exec make npm-prod-publish
+
 
 workflows:
   version: 2

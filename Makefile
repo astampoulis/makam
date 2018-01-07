@@ -93,10 +93,10 @@ prepare-test-npm-package: check-version build
 	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION"
 
 npm-test-publish: prepare-test-npm-package
-	./scripts/publish-npm-package.sh makam-\$$TEST_VERSION.tgz
+	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh npm-test-version).tgz"
 
 npm-prod-publish: prepare-npm-package
-	./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz
+	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz"
 
 # js_of_ocaml compilation
 

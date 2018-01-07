@@ -45,6 +45,10 @@ if ! ( [[ -e $TOPDIR/npm/makam-bin-darwin64 ]] &&
     fi
   fi
 
+else
+
+  echo "Already present makam binary for MacOS X."
+
 fi
 
 cp -f $TOPDIR/README.md $TOPDIR/npm/
