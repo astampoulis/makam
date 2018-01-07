@@ -11,7 +11,14 @@ const defaultArguments = [
   "-I",
   path.join(__dirname, "..", "stdlib-cache")
 ];
-const binaryPath = path.join(__dirname, "..", "makam-bin-linux64");
+
+const binaryName =
+  process.platform === "linux" && process.arch === "x64"
+    ? "makam-bin-linux64"
+    : process.platform === "darwin" ? "makam-bin-darwin64" : null;
+if (!binaryName) throw new Error(`Platform ${process.platform} not supported`);
+
+const binaryPath = path.join(__dirname, "..", binaryName);
 
 const _run = (args = [], extraOptions = {}) => {
   return spawn(

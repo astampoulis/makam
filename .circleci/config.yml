@@ -61,7 +61,7 @@ jobs:
       - run: &tests-js
           name: Run Tests for Makam.js
           command: |
-            [[ -e skip ]] || ( [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) == *"[ci-test-js]"* ]] && make makam-js-tests )
+            [[ -e skip ]] || if [[ $(git log --format=oneline -n 1 $CIRCLE_SHA1) == *"[ci-test-js]"* ]]; then make makam-js-tests; fi
 
 workflows:
   version: 2

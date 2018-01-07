@@ -19,6 +19,7 @@
   "files": [
     "lib",
     "makam-bin-linux64",
+    "makam-bin-darwin64",
     "stdlib",
     "stdlib-cache"
   ],

@@ -5,6 +5,7 @@ set -o pipefail
 
 TOPDIR=$(git rev-parse --show-toplevel)
 BASEVERSION=$($TOPDIR/scripts/makam-version.sh)
+SOURCEHASH=$($TOPDIR/scripts/source-hash.sh)
 
 if [[ $# -lt 1 ]]; then
   UPDATE_VERSION=0
@@ -25,6 +26,23 @@ fi
 
 cp -f $TOPDIR/nativerepl.native $TOPDIR/npm/makam-bin-linux64
 
+if ! ( [[ -e $TOPDIR/npm/makam-bin-darwin64 ]] &&
+     ( strings -40 $TOPDIR/npm/makam-bin-darwin64 | grep $SOURCEHASH > /dev/null )); then
+
+  rm -f $TOPDIR/npm/makam-bin-darwin64
+  set +e
+  echo Downloading makam binary for MacOS X.
+  curl --silent https://s3.amazonaws.com/makam-travis-artifacts/makam-mac-bin/makam-bin-darwin64-$SOURCEHASH -o $TOPDIR/npm/makam-bin-darwin64 ; RES=$?
+  set -e
+  chmod +x $TOPDIR/npm/makam-bin-darwin64
+
+  if [[ $RES != 0 ]]; then
+    echo "Could not download the makam binary for MacOS X. Check the Travis CI build!"
+    exit $RES
+  fi
+
+fi
+
 cp -f $TOPDIR/README.md $TOPDIR/npm/
 
 STDLIB_FILES=$(cd $TOPDIR; grep -E --only-matching "stdlib/[^\"]+" opam/files/makam.install | uniq)
@@ -37,7 +55,7 @@ STDLIB_FILES=$(cd $TOPDIR; grep -E --only-matching "stdlib/[^\"]+" opam/files/ma
 
 (cd $TOPDIR/npm;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $PACKAGEVERSION;
- set +e; npm pack; RES=$?;
+ set +e; npm pack; RES=$?; set -e;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $BASEVERSION;
  mv makam-$PACKAGEVERSION.tgz $TOPDIR/;
  exit $RES)

@@ -92,6 +92,9 @@ npm-test-publish: check-version build
 	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION; \
 	         ./scripts/publish-npm-package.sh makam-\$$TEST_VERSION.tgz"
 
+npm-prod-publish: prepare-npm-package
+	./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz
+
 # js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
