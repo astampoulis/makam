@@ -14,7 +14,7 @@ val  combine_span      : span -> span -> span ;;
 
 type t ;;
 
-val  from_filename : string -> t ;;
+val  from_filename : ?statehash_update:bool -> string -> t ;;
 val  from_string   : ?initloc:loc -> string -> t ;;
 val  from_stdin    : unit -> t ;;
 

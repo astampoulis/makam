@@ -359,8 +359,8 @@ new_builtin_predicate "contains" ( _tString **> _tString **> _tProp ) begin
     moneOrMzero (String.exists str1' str2'))
 end;;
 
-let readFileAsString filename =
-  let chan = UChannel.from_filename filename in
+let readFileAsString ?(statehash_update = true) filename =
+  let chan = UChannel.from_filename ~statehash_update:statehash_update filename in
   let startLoc = UChannel.loc chan in
   let (s, chan') =
     let store = ref [] in
@@ -392,14 +392,12 @@ new_builtin_predicate "readcachefile" ( _tString **> _tString **> _tProp ) begin
     filename <-- chasePattcanon [] filename ;
     filename <-- _PtoString filename ;
     contentString <-- (
-      let input_statehash = !UChannel.input_statehash in
       let res =
         try
           let resolved = Termlangcanon.global_resolve_cache_filename (filename ^ ".makam-cache") in
-          return (readFileAsString resolved)
+          return (readFileAsString ~statehash_update:false resolved)
         with _ -> mzero
       in
-      let _ = UChannel.input_statehash := input_statehash in
       res
     );
     pattcanonUnifyFull content contentString)
