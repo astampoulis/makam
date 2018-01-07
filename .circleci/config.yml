@@ -61,7 +61,7 @@ jobs:
       - run: &publish-npm-package
           name: Prepare production npm package and publish it
           command: |
-            if [[ -e skip || $(git rev-parse --abbrev-ref HEAD) != as-publish-to-npm ]]; then echo 1 > skip-deploy; fi
+            if [[ -e skip || $(git rev-parse --abbrev-ref HEAD) != master ]]; then echo 1 > skip-deploy; fi
             [[ -e skip-deploy ]] || (set -u; echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc; set +u)
             [[ -e skip-deploy ]] || opam config exec make npm-prod-publish
 
