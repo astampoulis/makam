@@ -12,5 +12,5 @@ generated/*
 js/makam.js
 setup.data
 setup.log
-makam
 .makam-cache
+node_modules

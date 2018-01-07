@@ -9,18 +9,15 @@ open Termlangparse;;
 
 let version = Version.version;;
 
+let default_makam_cache_dir = ".makam-cache";;
 let makam_parser = MakamGrammar.parse_prologcmd ;;
 let print_now s = Printf.printf "%s%!" s ;;
 
 let _ =
-  (* Seed the input statehash with the hash of makam's binary.
+  (* Seed the input statehash with the hash of makam's source code.
      This way cached predicates get invalidated when there are changes
      to the implementation. *)
-  let binary = File.open_in ~mode:[] Sys.argv.(0) in
-  let contents = IO.read_all binary in
-  let _ = IO.close_in binary in
-  let binary_hash = Hashtbl.hash contents in
-  UChannel.input_statehash := binary_hash
+  UChannel.input_statehash := Hashtbl.hash Version.source_hash
 ;;
 
 let meta_print_exception : (exn -> unit) ref =
@@ -260,7 +257,7 @@ let run_tests = ref false;;
 let parse_options () =
   let parsr =
     OptParser.make
-      ~version:version
+      ~version:(version ^ " source-hash:" ^ Version.source_hash)
       ~prog:"makam"
       ~description:
       (String.concat
@@ -278,8 +275,23 @@ let parse_options () =
                         ~help:"run tests after loading files"
                         runTests
   in
+  let defaultCacheDir = StdOpt.store_const ~default:(Some default_makam_cache_dir) None in
+  let cacheSet =
+    StdOpt.str_callback ~metavar:"cachedir" (fun s -> Opt.set defaultCacheDir (Some s))
+  in
+  let _ = OptParser.add parsr ~short_name:'C' ~long_name:"cache-dir"
+                              ~help:("set the directory where cache files are written (default: ./" ^ default_makam_cache_dir ^ ")")
+                              cacheSet
+  in
+  let _ = OptParser.add parsr ~long_name:"no-cache"
+                              ~help:"disable result cache"
+                              defaultCacheDir
+  in
+
   let files = OptParser.parse_argv parsr in
   run_tests := Opt.get runTests;
+  global_set_cache_directory (Opt.get defaultCacheDir);
+
   files
 ;;
 

@@ -69,12 +69,12 @@ let from_string  ?(initloc={ description = "<string>" ; lineno = 1; charno = 1; 
       if UString.is_end !str off then raise IO.No_more_input
       else UString.looknext_unsafe !str off) } ;;
 
-let from_filename filename =
+let from_filename ?(statehash_update = true) filename =
   let input = File.open_in filename in
   let str   = IO.read_all input in
   let _     = IO.close_in input in
   let location = { description = filename ; lineno = 1 ; charno = 1; offset = 0 } in
-  { from_string ~initloc:location str with update_statehash = true }
+  { from_string ~initloc:location str with update_statehash = statehash_update }
 ;;
 
 let from_filename_buffered ?(buffersize = 1024) filename =

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+MAKAMDIR=$(dirname $(realpath $0))
+OCAMLRUNPARAM="l=100M,s=16M,i=2M,o=200" $MAKAMDIR/nativerepl.native -I $MAKAMDIR $*
