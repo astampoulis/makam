@@ -27,6 +27,7 @@
 - [x] add travis ci for building on a mac
 - [x] include mac binaries in npm package
 - [x] use curl instead of wget on circle
+- [x] [ci skip] test npm package lenient for OSX
 - [ ] test with a mac
 - [ ] start on the aws lambda stuff? or separate PR
 - [ ] publish 0.7.0 package to npm

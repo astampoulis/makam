@@ -86,11 +86,14 @@ check-version:
 prepare-npm-package: check-version build
 	./scripts/prepare-npm-package.sh
 
-npm-test-publish: check-version build
+prepare-test-npm-package: check-version build
 	bash -c "set -e; \
+	         export MACOS_BINARY_OPTIONAL=true; \
 	         export TEST_VERSION=\$$(./scripts/makam-version.sh npm-test-version); \
-	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION; \
-	         ./scripts/publish-npm-package.sh makam-\$$TEST_VERSION.tgz"
+	         ./scripts/prepare-npm-package.sh \$$TEST_VERSION"
+
+npm-test-publish: prepare-test-npm-package
+	./scripts/publish-npm-package.sh makam-\$$TEST_VERSION.tgz
 
 npm-prod-publish: prepare-npm-package
 	./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz

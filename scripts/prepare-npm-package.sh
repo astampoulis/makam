@@ -32,13 +32,17 @@ if ! ( [[ -e $TOPDIR/npm/makam-bin-darwin64 ]] &&
   rm -f $TOPDIR/npm/makam-bin-darwin64
   set +e
   echo Downloading makam binary for MacOS X.
-  curl --silent https://s3.amazonaws.com/makam-travis-artifacts/makam-mac-bin/makam-bin-darwin64-$SOURCEHASH -o $TOPDIR/npm/makam-bin-darwin64 ; RES=$?
+  curl --fail --silent https://s3.amazonaws.com/makam-travis-artifacts/makam-mac-bin/makam-bin-darwin64-$SOURCEHASH -o $TOPDIR/npm/makam-bin-darwin64 ; RES=$?
+  chmod +x $TOPDIR/npm/makam-bin-darwin64 || true
   set -e
-  chmod +x $TOPDIR/npm/makam-bin-darwin64
 
   if [[ $RES != 0 ]]; then
-    echo "Could not download the makam binary for MacOS X. Check the Travis CI build!"
-    exit $RES
+    if [[ ${MACOS_BINARY_OPTIONAL:-false} == "true" ]]; then
+      echo "MacOS X binary not ready yet, skipping..."
+    else
+      echo "Could not download the makam binary for MacOS X. Check the Travis CI build!"
+      exit $RES
+    fi
   fi
 
 fi

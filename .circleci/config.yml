@@ -45,8 +45,8 @@ jobs:
       - run: &prepare-npm-package
           name: Prepare npm package and install it
           command: |
-            [[ -e skip ]] || opam config exec make prepare-npm-package
-            [[ -e skip ]] || npm install makam-$(./scripts/makam-version.sh).tgz
+            [[ -e skip ]] || opam config exec make prepare-test-npm-package
+            [[ -e skip ]] || npm install makam-$(./scripts/makam-version.sh npm-test-version).tgz
 
       - run: &tests
           name: Run Tests
