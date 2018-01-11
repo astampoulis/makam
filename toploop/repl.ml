@@ -65,23 +65,23 @@ let get_full_state () =
   let doit _ x = !x in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9, a10) = "", "", "", "", "", "", "", "", "", "", "" in
+       a6, a7, a8, a9, a10, a11) = "", "", "", "", "", "", "", "", "", "", "", "" in
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
    doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
-   doit a10 last_query_successful)
+   doit a10 last_query_successful, doit a11 UChannel.input_statehash)
 ;;
 
 let set_full_state st =
   let doit a x = x := a in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9, a10) = st in
+       a6, a7, a8, a9, a10, a11) = st in
   ignore
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
    doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
-   doit a10 last_query_successful)
+   doit a10 last_query_successful, doit a11 UChannel.input_statehash)
 ;;
 
 let next_state_name =
@@ -106,6 +106,24 @@ let forget_to_state s =
   let state' = Dict.find s !statedict in
   set_full_state state'
 ;;
+
+let persist_state filename =
+  let content = Marshal.to_string (get_full_state()) [Marshal.Closures] in
+  try
+    let output = File.open_out filename in
+    let _ = IO.nwrite output content in
+    let _ = IO.close_out output in
+    ()
+  with _ -> ()
+;;
+
+let restore_state filename =
+  let input = File.open_in filename in
+  let st = Marshal.from_string (IO.read_all input) 0 in
+  let _ = IO.close_in input in
+  st
+;;
+
 
 (* The repl. *)
 
@@ -253,6 +271,8 @@ let load_init_files () =
 
 open BatOptParse;;
 let run_tests = ref false;;
+let init_state = ref None;;
+let persist_state_to = ref None;;
 
 let parse_options () =
   let parsr =
@@ -287,6 +307,20 @@ let parse_options () =
                               ~help:"disable result cache"
                               defaultCacheDir
   in
+  let initState =
+    StdOpt.str_callback ~metavar:"statefile" (fun s -> init_state := Some s)
+  in
+  let _ = OptParser.add parsr ~long_name:"init-state"
+                              ~help:"load initial state from file"
+                              initState
+  in
+  let persistStateTo =
+    StdOpt.str_callback ~metavar:"statefile" (fun s -> persist_state_to := Some s)
+  in
+  let _ = OptParser.add parsr ~long_name:"persist-state"
+                              ~help:"persist state to file upon exit"
+                              persistStateTo
+  in
 
   let files = OptParser.parse_argv parsr in
   run_tests := Opt.get runTests;
@@ -298,7 +332,7 @@ let parse_options () =
 let main () =
   let files = parse_options () in
   print_now ("\n\tMakam, version " ^ version ^ "\n\n");
-  load_init_files ();
+  if Option.is_some !init_state then restore_state (Option.get !init_state) else load_init_files ();
   store_state ();
   let doexit, files =
     match List.rev files with
@@ -314,6 +348,7 @@ let main () =
   print_now "\n";
   benchmark_results ();
   output_log ();
+  if Option.is_some !persist_state_to then persist_state (Option.get !persist_state_to);
   match !last_query_successful with
   | None | Some true -> ()
   | Some false -> exit 1
