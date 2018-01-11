@@ -1,0 +1,35 @@
+service: webservice
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  iamRoleStatements:
+    -  Effect: "Allow"
+       Action:
+         - "s3:ListBucket"
+       Resource:
+         Fn::Join:
+           - ""
+           - - "arn:aws:s3:::"
+             - Ref: ServerlessDeploymentBucket
+    -  Effect: "Allow"
+       Action:
+         - "s3:PutObject"
+       Resource:
+         Fn::Join:
+           - ""
+           - - "arn:aws:s3:::"
+             - Ref: ServerlessDeploymentBucket
+             - "/*"
+
+package:
+  include:
+    - package/
+
+functions:
+  makamQuery:
+    handler: handler.makamQuery
+    events:
+     - http:
+         path: makam/query
+         method: post

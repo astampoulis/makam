@@ -1,0 +1,5 @@
+# package directories
+package
+
+# Serverless directories
+.serverless

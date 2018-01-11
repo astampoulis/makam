@@ -1,5 +1,5 @@
 - [x] add persist/init full makam state as options
-- [ ] serverless aws lambda with a binary and an explicitly written JS
+- [x] first version of aws lambda with serverless
 - [ ] error messages per input block
 - [ ] s3-based caching
 - [ ] integrate makam-highlighting and anything needed within the repository

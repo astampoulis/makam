@@ -1,24 +1,8 @@
 const { spawn } = require("child_process");
-const path = require("path");
 const EventEmitter = require("events");
 const { Readable } = require("stream");
 
-const OCAMLRUNPARAM = "l=100M,s=16M,i=2M,o=200";
-
-const defaultArguments = [
-  "-I",
-  path.join(__dirname, ".."),
-  "-I",
-  path.join(__dirname, "..", "stdlib-cache")
-];
-
-const binaryName =
-  process.platform === "linux" && process.arch === "x64"
-    ? "makam-bin-linux64"
-    : process.platform === "darwin" ? "makam-bin-darwin64" : null;
-if (!binaryName) throw new Error(`Platform ${process.platform} not supported`);
-
-const binaryPath = path.join(__dirname, "..", binaryName);
+const { OCAMLRUNPARAM, defaultArguments, binaryPath } = require("./constants");
 
 const _run = (args = [], extraOptions = {}) => {
   return spawn(
