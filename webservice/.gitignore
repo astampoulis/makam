@@ -1,5 +1,5 @@
 # package directories
-package
+node_modules
 
 # Serverless directories
 .serverless

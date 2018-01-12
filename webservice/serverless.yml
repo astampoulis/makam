@@ -24,7 +24,8 @@ provider:
 
 package:
   include:
-    - package/
+    - node_modules/
+    - package.json
 
 functions:
   makamQuery:

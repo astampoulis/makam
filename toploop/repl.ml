@@ -108,7 +108,8 @@ let forget_to_state s =
 ;;
 
 let persist_state filename =
-  let content = Marshal.to_string (get_full_state()) [Marshal.Closures] in
+  let state = get_full_state() in
+  let content = Marshal.to_string state [Marshal.Closures] in
   try
     let output = File.open_out filename in
     let _ = IO.nwrite output content in
@@ -119,9 +120,9 @@ let persist_state filename =
 
 let restore_state filename =
   let input = File.open_in filename in
-  let st = Marshal.from_string (IO.read_all input) 0 in
+  let state = Marshal.from_string (IO.read_all input) 0 in
   let _ = IO.close_in input in
-  st
+  set_full_state state
 ;;
 
 

@@ -63,6 +63,7 @@ STDLIB_FILES=$(cd $TOPDIR; grep -E --only-matching "stdlib/[^\"]+" opam/files/ma
 
 (cd $TOPDIR/npm;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $PACKAGEVERSION;
+ rm -f $TOPDIR/makam-$PACKAGEVERSION.tgz;
  set +e; npm pack; RES=$?; set -e;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $BASEVERSION;
  mv makam-$PACKAGEVERSION.tgz $TOPDIR/;

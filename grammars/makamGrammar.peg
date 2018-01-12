@@ -404,6 +404,15 @@ batch_mode -> token("%batch-begin.") l:(epsilon << UChannel.loc _input >>)
               << Peg.parse_of_string ~initloc:l
                                      (!makam_toplevel_parser `Makam)
                                      (UString.to_string (UString.implode cs)) >>
+            / token("%batch-begin") id:token(ident) token(".")
+              cs:rep( (!"%batch-end." c:. << c >>) )
+              "%batch-end."
+              << let initloc = let open UChannel in
+                               { description = id; lineno = 1; charno = 1; offset = 0 }
+                 in
+                 Peg.parse_of_string ~initloc:initloc
+                                     (!makam_toplevel_parser `Makam)
+                                     (UString.to_string (UString.implode cs)) >>
 
 to_EOL -> repV( (![\n] .) ) "\n" << () >>
 

@@ -1,9 +1,10 @@
 - [x] add persist/init full makam state as options
 - [x] first version of aws lambda with serverless
-- [ ] error messages per input block
+- [x] lambda: fixes + support for persist/restore state
 - [ ] s3-based caching
+- [ ] error messages per input block
+- [ ] replies per query?
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
 - [ ] figure out whether we'll push or pull posts
-
