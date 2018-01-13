@@ -44,7 +44,7 @@ const _run = (args, inputBlocks) => {
 
   let input = "";
   inputBlocks.forEach((block, i) => {
-    input += `\n%batch-begin block${i}.\n${block}\n%batch-end.\n`;
+    input += `\n%block-begin block${i}.\n${block}\n%block-end.\n`;
   });
 
   const results = execSync(`${binaryPath} ${allArguments.join(" ")}`, {

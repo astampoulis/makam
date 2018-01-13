@@ -400,17 +400,17 @@ flag(p) -> p token("+") << true  >>
 cmdflushed -> c:prologcmd << flush IO.stdout >>
 toplevel   -> c:rep(cmdflushed) repV(white) << () >>
 
-batch_mode -> token("%batch-begin.") l:(epsilon << UChannel.loc _input >>)
-              cs:rep( (!"%batch-end." c:. << c >>) )
-              "%batch-end."
+batch_mode -> token("%block-begin.") l:(epsilon << UChannel.loc _input >>)
+              cs:rep( (!"%block-end." c:. << c >>) )
+              "%block-end."
               << Peg.parse_of_string ~initloc:l
                                      (!makam_toplevel_parser `Makam)
                                      (UString.to_string (UString.implode cs)) >>
-            / token("%batch-begin") id:token(ident) token(".")
-              cs:rep( (!"%batch-end." c:. << c >>) )
-              "%batch-end."
+            / token("%block-begin") id:token(ident) token(".")
+              cs:rep( (!"%block-end." c:. << c >>) )
+              "%block-end."
               << let initloc = let open UChannel in
-                               { description = id; lineno = 1; charno = 1; offset = 0 }
+                               { description = "block " ^ id; lineno = 1; charno = 1; offset = 0 }
                  in
                  Peg.parse_of_string ~initloc:initloc
                                      (!makam_toplevel_parser `Makam)

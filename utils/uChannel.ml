@@ -6,7 +6,7 @@ type realspan = { startloc : loc ; endloc : loc } ;;
 type span     = realspan option ;;
 
 
-let string_of_loc loc  = Printf.sprintf "file %s, line %d, character %d%!" loc.description loc.lineno loc.charno ;;
+let string_of_loc loc  = Printf.sprintf "%s, line %d, character %d%!" loc.description loc.lineno loc.charno ;;
 let string_of_span span : string =
   match span with
       None -> "<none>"
@@ -73,7 +73,7 @@ let from_filename ?(statehash_update = true) filename =
   let input = File.open_in filename in
   let str   = IO.read_all input in
   let _     = IO.close_in input in
-  let location = { description = filename ; lineno = 1 ; charno = 1; offset = 0 } in
+  let location = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 } in
   { from_string ~initloc:location str with update_statehash = statehash_update }
 ;;
 
@@ -82,7 +82,7 @@ let from_filename_buffered ?(buffersize = 1024) filename =
   let str   = ref (UString.mkempty 0 (buffersize*2)) in
   let reached_eof = ref false in
   { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
-    location = { description = filename ; lineno = 1 ; charno = 1; offset = 0 };
+    location = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 };
     update_statehash = true ;
     looknext = (fun off ->
       if UString.safe_offset !str off then UString.looknext_unsafe !str off

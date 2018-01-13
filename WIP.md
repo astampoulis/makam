@@ -4,6 +4,7 @@
 - [x] s3-based caching
 - [x] renamed serverless id and small fixes
 - [x] streamline logging, handling of errors, repl errors
+- [x] small fixes for uChannel.loc and block input
 - [ ] add tty and change query handling based on that
 - [ ] streamline across stdin, tty, files etc.
 - [ ] make sure that all works fine

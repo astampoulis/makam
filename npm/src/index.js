@@ -55,7 +55,7 @@ class MakamProcess {
     this._lastPromise = this._getResponsePromise();
     if (!this._processEnded) {
       this.makamProcess.stdin.write(
-        `%batch-begin.\n${input}\n%batch-end.\n`,
+        `%block-begin.\n${input}\n%block-end.\n`,
         "utf8"
       );
     }
