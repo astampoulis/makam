@@ -2,10 +2,10 @@
 - [x] first version of aws lambda with serverless
 - [x] lambda: fixes + support for persist/restore state
 - [x] s3-based caching
-- [ ] serverless id should be something other than webservice
+- [x] renamed serverless id and small fixes
 - [ ] error messages per input block
 - [ ] replies per query?
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
-- [ ] figure out whether we'll push or pull posts
+- [ ] figure out whether we'll push or pull posts to make sure there's no regressions

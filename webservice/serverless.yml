@@ -1,4 +1,4 @@
-service: webservice
+service: makam-webservice
 
 package:
   include:
@@ -25,26 +25,10 @@ resources:
 provider:
   name: aws
   runtime: nodejs6.10
+  memorySize: 1024
+  timeout: 30
+  versionFunctions: false
   iamRoleStatements:
-
-    -  Effect: "Allow"
-       Action:
-         - "s3:ListBucket"
-       Resource:
-         Fn::Join:
-           - ""
-           - - "arn:aws:s3:::"
-             - Ref: ServerlessDeploymentBucket
-    -  Effect: "Allow"
-       Action:
-         - "s3:PutObject"
-       Resource:
-         Fn::Join:
-           - ""
-           - - "arn:aws:s3:::"
-             - Ref: ServerlessDeploymentBucket
-             - "/*"
-
     - Effect: Allow
       Action:
         - "s3:PutObject"
@@ -78,4 +62,6 @@ plugins:
 custom:
   remover:
     prompt: true
-  cacheBucket: "makam-lambda-cache"
+  cacheBucket: "makam-webservice-cache"
+  deployBucket: "makam-webservice-deploy"
+  stage: ${opt:stage, 'dev'}

@@ -18,7 +18,7 @@ $TOPDIR/scripts/source-hash.sh update
  ./node_modules/.bin/sls deploy function --stage dev -f makamQuery)
 
 curl -X POST \
-  https://3ta0k0voh5.execute-api.us-east-1.amazonaws.com/dev/makam/query \
+  https://0l0h0ccxff.execute-api.us-east-1.amazonaws.com/dev/makam/query \
   -H 'content-type: application/json' \
   -d '{ "stateBlocks": [ "foo: prop.", "foo :- print_string \"hello\".", "foo ?" ], "query": "foo ?" }' | jq
 
