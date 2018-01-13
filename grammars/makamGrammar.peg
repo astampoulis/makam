@@ -324,7 +324,7 @@ prologcmd1 ->
                             (Benchmark.cumulative "total clauses"
                               (lazy(Termlangprolog.global_new_clause (t query).content))))
                          >>
-           / token("%") d:directive token(".") << (global_set_last_query None; d ) >>
+           / token("%") d:directive token(".") << (global_set_last_query None; d ()) >>
            / c:batch_mode << flush IO.stdout >>
            / repplusV(white)^ << () >>
 
@@ -352,44 +352,46 @@ clauseBM -> c:clause ;
 ident_or_str -> s:ident << s >> / s:str << s >>
 
 directive -> "use" repplus(white) s:token(ident_or_str)
-           << Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s >>
+           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s >>
            / "import" repplus(white) s:token(ident_or_str) token("as") m:token(ident)
-           << Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:m s >>
+           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:m s >>
            / "import" repplus(white) s:token(ident)
-           << Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:s s >>
+           << fun () -> Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) ~modul:s s >>
            / "extend" s:token(ident)
-           << Termlangcanon.global_enter_module s >>
+           << fun () -> Termlangcanon.global_enter_module s >>
            / "end"
-           << Termlangcanon.global_leave_module () >>
+           << fun () -> Termlangcanon.global_leave_module () >>
            / "open" s:token(ident)
-           << Termlangcanon.global_open_module s >>
+           << fun () -> Termlangcanon.global_open_module s >>
            / "directory" repplus(white) s:token(str)
-           << Termlangcanon.global_add_directory s >>
+           << fun () -> Termlangcanon.global_add_directory s >>
            / "typenorm" repplus(white) e:baseexpr
-           << global_typecheck_and_normalize (e.content) >>
+           << fun () -> global_typecheck_and_normalize (e.content) >>
            / "type" repplus(white) e:baseexpr
-           << global_typecheck (e.content) >>
+           << fun () -> global_typecheck (e.content) >>
            / "reset"
-           << global_reset () >>
+           << fun () -> global_reset () >>
            / "usenew" repplus(white) s:token(ident_or_str)
-             << global_reset () ;
-                                  Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s >>
+             << fun () -> begin
+                  global_reset () ;
+                  Termlangcanon.global_load_file (fun syntax -> Peg.parse_of_file (!makam_toplevel_parser syntax)) s
+                end >>
            / "curmodule"
-           << Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
+           << fun () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
            / "testsuite" repplus(white) s:token(ident)
-           << global_set_testsuite s >>
+           << fun () -> global_set_testsuite s >>
 
-          / b:flag("debug") << _DEBUG_DEMAND := b >>
-          / b:flag("debugfull") << _DEBUG := b >>
-          / b:flag("debugnames") << _DEBUG_NAMES := b >>
-          / b:flag("debugtypes") << _DEBUG_TYPES := b >>
-          / b:flag("debugstage") << Termlangrefl._DEBUG_STAGING := b >>
-          / b:flag("constraints") << _DEBUG_CONSTRAINTS := b >>
-          / b:flag("benchmark")  << _BENCHMARK := b >>
-          / b:flag("log")         << _LOGGING := b >>
-          / b:flag("only_typecheck") << _ONLY_TYPECHECK := b >>
-          / b:flag("trace") es:repplusSEP(baseexpr, ",") << List.iter (fun e -> global_trace b (e.content)) es >>
-          / "forget" s:token(cmdname)  << raise (Forget s) >>
+          / b:flag("debug") << fun () -> _DEBUG_DEMAND := b >>
+          / b:flag("debugfull") << fun () -> _DEBUG := b >>
+          / b:flag("debugnames") << fun () -> _DEBUG_NAMES := b >>
+          / b:flag("debugtypes") << fun () -> _DEBUG_TYPES := b >>
+          / b:flag("debugstage") << fun () -> Termlangrefl._DEBUG_STAGING := b >>
+          / b:flag("constraints") << fun () -> _DEBUG_CONSTRAINTS := b >>
+          / b:flag("benchmark")  << fun () -> _BENCHMARK := b >>
+          / b:flag("log")         << fun () -> _LOGGING := b >>
+          / b:flag("only_typecheck") << fun () -> _ONLY_TYPECHECK := b >>
+          / b:flag("trace") es:repplusSEP(baseexpr, ",") << fun () -> List.iter (fun e -> global_trace b (e.content)) es >>
+          / "forget" s:token(cmdname)  << fun () -> raise (Forget s) >>
 
 flag(p) -> p token("+") << true  >>
          / p token("-") << false >>

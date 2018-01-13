@@ -14,7 +14,7 @@
  proof-shell-strip-crs-from-input nil
  proof-script-fly-past-comments  t
 
- proof-shell-error-regexp        "^.*Exception:\\|^.*failure\\|^.*Error:\\|^.*Failure:\\|^.*Camlp4:\\|^In .*:\\|Unchaught OCaml-level exception.*\\.\\|^Parsing error at\\|^Error in staged code"
+ proof-shell-error-regexp        "^.*Exception:\\|^.*failure\\|^.*Error:\\|^.*Failure:\\|^.*Camlp4:\\|^Error in .*:\\|Unchaught OCaml-level exception.*\\.\\|^Parsing error at\\|^Error in staged code"
  proof-shell-interrupt-regexp        "^.*Interrupted."
  proof-shell-result-start            ""
  proof-shell-result-end              "#"

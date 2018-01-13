@@ -303,8 +303,16 @@ module ExtList =
   end
 
 
-let rec repeatmany n (f : unit -> 'a) = if n = 1 then f () else (let _ = f () in repeatmany (n-1) f)
+let rec repeatmany n (f : unit -> 'a) = if n = 1 then f () else (let _ = f () in repeatmany (n-1) f);;
 
+
+let log_error loc s =
+  Printf.printf "-- Error in %s:\n   %s\n\n%!" loc s
+;;
+
+let log_info loc type_s s =
+  Printf.printf "In %s: %s:\n%s\n\n%!" loc type_s s
+;;
 
 let time_eval e =
   let start_time = Sys.time () in

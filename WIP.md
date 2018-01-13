@@ -3,8 +3,14 @@
 - [x] lambda: fixes + support for persist/restore state
 - [x] s3-based caching
 - [x] renamed serverless id and small fixes
+- [x] streamline logging, handling of errors, repl errors
+- [ ] add tty and change query handling based on that
+- [ ] streamline across stdin, tty, files etc.
+- [ ] make sure that all works fine
+- [ ] change filename to file <...>, block to <block> etc. for loc
 - [ ] error messages per input block
 - [ ] replies per query?
+- [ ] more robust thing than splitting on hash sign
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)

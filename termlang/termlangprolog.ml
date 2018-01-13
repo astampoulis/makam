@@ -3460,28 +3460,27 @@ let prolog_handler e =
   try Lazy.force e
   with
   | UnknownPredicate(p) -> begin
-    Printf.printf "In %s:\n  The predicate in %a is not concrete.\n"
-      (UChannel.string_of_span p.loc)
-      Pattneut.alphaSanitizedPrint p;
+    Utils.log_error (UChannel.string_of_span p.loc)
+    (Printf.sprintf "The predicate in %a is not concrete."
+                    Pattneut.alphaSanitizedPrint p);
     raise PrologError
     end
   | MalformedClause(p) -> begin
-    Printf.printf "In %s:\n  The clause %a is malformed.\n"
-      (UChannel.string_of_span p.loc)
-      Pattneut.alphaSanitizedPrint p;
+    Utils.log_error (UChannel.string_of_span p.loc)
+    (Printf.sprintf "The clause %a is malformed."
+                    Pattneut.alphaSanitizedPrint p);
     raise PrologError
   end
   | MalformedClauseTypecase(p,t,t') -> begin
-    Printf.printf "In %s:\n  The clause conclusion %a specializes parametric type variables.\n  Expected type: %a\n  Actual type: %a\n"
-      (UChannel.string_of_span p.loc)
+    Utils.log_error (UChannel.string_of_span p.loc)
+    (Printf.sprintf "The clause conclusion %a specializes parametric type variables.\n   Expected type: %a\n   Actual type: %a"
       Pattneut.alphaSanitizedPrint p
-      Typ.print t Typ.print t';
+      Typ.print t Typ.print t');
     raise PrologError
   end
   | ClauseForBuiltin(p,s) -> begin
-    Printf.printf "In %s:\n  Cannot add new clause to builtin predicate %s.\n"
-      (UChannel.string_of_span p.loc)
-      s;
+    Utils.log_error (UChannel.string_of_span p.loc)
+    (Printf.sprintf "Cannot add new clause to builtin predicate %s." s);
     raise PrologError
   end
 ;;

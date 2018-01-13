@@ -129,66 +129,70 @@ let restore_state filename =
 (* The repl. *)
 
 
-exception ParsingError;;
+exception ErrorInFile;;
+
+let exception_handler (type a) (f: unit -> a) (recover: unit -> a) (recover_parse: unit -> a) =
+  let last_cmd_span () = UChannel.string_of_span !MakamGrammar.last_command_span in
+  try f ()
+  with
+  | Termlangcanon.FileNotFound(s, all) ->
+     (Utils.log_error (last_cmd_span ())
+     (Printf.sprintf "File %s not found (searched: %a)."
+                    s (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all)
+     ; recover())
+  | Termlangcanon.TypingError | Termlangprolog.PrologError ->
+     (recover())
+  | Termlangrefl.StagingError(code) ->
+     (Utils.log_error (UChannel.string_of_span code.loc)
+     "Error in staged code."
+     ; recover())
+  | Termlangprolog.ResetInModule m ->
+     (Utils.log_error (last_cmd_span ())
+     (Printf.sprintf "Module %s tried to reset the state." m)
+     ; recover())
+  | Termlangcanon.NotInModule ->
+     (Utils.log_error (last_cmd_span ())
+     "Stopping extension to module, but no module is open."
+     ; recover())
+  | MakamGrammar.NoTestSuite ->
+     (Utils.log_error (last_cmd_span ())
+     "Test suite has not been specified, use %testsuite directive."
+     ; recover())
+  | MakamGrammar.NoQueryToTest ->
+     (Utils.log_error (last_cmd_span ())
+     "Last command was not a query."
+     ; recover())
+  | MakamGrammar.Forget(s) ->
+     (forget_to_state s; recover())
+  | Peg.IncompleteParse(_, s) ->
+     (Utils.log_error s
+     "Parse error."
+     ; recover_parse())
+  | ErrorInFile -> recover ()
+(*
+  | e ->
+     raise e
+     !meta_print_exception e ;
+     flush IO.stdout;
+     restore_debug () ;
+     loop (UChannel.flush_to_furthest input)
+*)
+;;
 
 let _ =
   let prevparser = !MakamGrammar.makam_toplevel_parser in
   MakamGrammar.makam_toplevel_parser :=
     (fun syntax memo mode input ->
-      let res = prevparser syntax memo mode input in
-      match res, UChannel.reached_eof input with
-        Some(_, uc), false ->
-          print_now ("\nParsing error at " ^ (UChannel.string_of_loc (UChannel.loc uc)) ^ ".\n");
-          raise ParsingError
-      | _ -> res)
+      exception_handler (fun _ ->
+        let res = prevparser syntax memo mode input in
+        match res, UChannel.reached_eof input with
+          Some(_, uc), false ->
+            raise (Peg.IncompleteParse(input, (UChannel.string_of_loc (UChannel.loc uc))))
+        | _ -> res)
+        (fun _ -> raise ErrorInFile)
+        (fun _ -> raise ErrorInFile))
 ;;
 
-let use_files files =
-  String.concat "\n" (List.map (fun s -> "%use \"" ^ s ^ "\".") files)
-;;
-
-let exception_handler f last_cmd_span recover recover_break =
-  try f ()
-  with
-  | BatInnerIO.Input_closed -> ()
-  | Sys.Break ->
-     (print_now "\nInterrupted.\n"; recover_break ())
-  | Termlangcanon.FileNotFound(s, all) ->
-     (Printf.printf "In %s:\n  File %s not found (searched: %a).\n%!"
-                    (last_cmd_span ()) s
-                    (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all
-     ; recover())
-  | Termlangcanon.TypingError | Termlangprolog.PrologError | ParsingError ->
-     (recover())
-  | Termlangrefl.StagingError(code) ->
-     (Printf.printf "In %s:\n  Error in staged code.\n%!"
-                    (UChannel.string_of_span code.loc)
-     ; recover())
-  | Termlangprolog.ResetInModule m ->
-     (Printf.printf "In %s:\n  Module %s tried to reset the state.\n%!"
-                    (last_cmd_span ()) m; recover())
-  | Termlangcanon.NotInModule ->
-     (Printf.printf "In %s:\n  Stopping extension to module, but no module is open.\n%!"
-                    (last_cmd_span ()); recover())
-  | MakamGrammar.NoTestSuite ->
-     (Printf.printf "In %s:\n  Test suite has not been specified, use %%testsuite directive.\n%!"
-                    (last_cmd_span ()); recover())
-  | MakamGrammar.NoQueryToTest ->
-     (Printf.printf "In %s:\n  Last command was not a query.\n%!"
-                    (last_cmd_span ()); recover())
-  | MakamGrammar.Forget(s) ->
-     (forget_to_state s; recover())
-  | Peg.IncompleteParse(_, s) ->
-     (print_now ("\nParse error at " ^ s ^ ".\n"); recover())
-  | e ->
-     raise e
-     (*
-     !meta_print_exception e ;
-     flush IO.stdout;
-     restore_debug () ;
-     loop (UChannel.flush_to_furthest input)
-     *)
-;;
 
 let rec repl ?input () : unit =
   Sys.catch_break true;
@@ -205,9 +209,12 @@ let rec repl ?input () : unit =
   in
   let old_debug = ref false in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in
-  let last_cmd_span () = UChannel.string_of_span !MakamGrammar.last_command_span in
   let rec loop input : unit =
+
     let recover () =
+      loop (UChannel.flush_to_furthest input)
+    in
+    let skip_line_and_recover () =
       if not is_stdin then exit 1;
       let furthest = UChannel.flush_to_furthest input in
       let rec find_newline input =
@@ -218,30 +225,33 @@ let rec repl ?input () : unit =
       in
       find_newline furthest
     in
+
     if not (reached_eof input) then
     print_now prompt;
 
-    exception_handler (fun () ->
-    begin
-      old_debug := !Termlangcanon._DEBUG ;
+    (try
+      exception_handler (fun () ->
+      begin
+        old_debug := !Termlangcanon._DEBUG ;
 
-      let res = Peg.parse_of_uchannel makam_parser input in
+        let res = Peg.parse_of_uchannel makam_parser input in
 
-      let _ = IO.flush stdout in
+        let _ = IO.flush stdout in
 
-      if not (reached_eof input) then
-      match res with
-          Some(_, input') -> store_state (); loop input'
-        | _ when is_stdin ->
-           print_now
-             ("\nParse error at " ^
-                (input |> UChannel.loc |> UChannel.string_of_loc) ^ ".\n");
-           recover ()
-        | _ -> recover ()
-    end)
-    last_cmd_span
-    (fun () -> restore_debug (); loop (UChannel.flush_to_furthest input))
-    (fun () -> restore_debug () ; if is_stdin then repl () else loop (UChannel.flush_to_furthest input))
+        if not (reached_eof input) then
+        match res with
+          | Some(_, input') ->
+             store_state (); loop input'
+          | None ->
+             raise (Peg.IncompleteParse(input, (input |> UChannel.loc |> UChannel.string_of_loc)))
+      end)
+      (fun () -> restore_debug (); if is_stdin then recover ())
+      (fun () -> restore_debug (); if is_stdin then skip_line_and_recover ())
+     with
+     | BatInnerIO.Input_closed -> ()
+     | Sys.Break ->
+       (print_now "\nInterrupted.\n";
+        restore_debug (); if is_stdin then repl () else recover ()))
   in
   loop input
 ;;
@@ -260,12 +270,17 @@ let output_log () =
     (File.with_file_out "logprofile/log.csv" Benchmark.print_log)
 ;;
 
+let load_file_resolved s =
+  global_load_file_resolved (fun syntax -> Peg.parse_of_file (!MakamGrammar.makam_toplevel_parser syntax)) s
+;;
+
+let load_file s =
+  global_load_file (fun syntax -> Peg.parse_of_file (!MakamGrammar.makam_toplevel_parser syntax)) s
+;;
+
 let load_init_files () =
-  let loadfile s =
-    global_load_file_resolved (fun syntax -> Peg.parse_of_file (!MakamGrammar.makam_toplevel_parser syntax)) s
-  in
-  loadfile (global_resolve_filename "stdlib/init.makam") ;
-  if Sys.file_exists "init.makam" then loadfile "init.makam" ;
+  load_file "stdlib/init.makam" ;
+  if Sys.file_exists "init.makam" then load_file_resolved "init.makam" ;
   Termlangcanon.builtinstate := !globalstate ;
   Termlangprolog.builtinprologstate := !globalprologstate
 ;;
@@ -331,10 +346,8 @@ let parse_options () =
 ;;
 
 let main () =
+
   let files = parse_options () in
-  print_now ("\n\tMakam, version " ^ version ^ "\n\n");
-  if Option.is_some !init_state then restore_state (Option.get !init_state) else load_init_files ();
-  store_state ();
   let doexit, files =
     match List.rev files with
       [] -> false, files
@@ -342,15 +355,24 @@ let main () =
        false, List.rev tl
     | _ -> true, files
   in
-  repl ~input:(use_files files) ();
-  if !run_tests then repl ~input:"run_tests X ?\n" ();
 
-  if not doexit then repl ();
-  print_now "\n";
+  print_now ("\n\tMakam, version " ^ version ^ "\n\n");
+
+  let toplevel_error_happened = ref false in
+  let handle_error () = toplevel_error_happened := true in
+
+  exception_handler begin fun _ ->
+    if Option.is_some !init_state then restore_state (Option.get !init_state) else load_init_files ();
+    store_state ();
+    List.iter load_file files ;
+    if !run_tests then repl ~input:"run_tests X ?\n" ();
+    if not doexit then repl ()
+  end handle_error handle_error;
+
   benchmark_results ();
   output_log ();
   if Option.is_some !persist_state_to then persist_state (Option.get !persist_state_to);
-  match !last_query_successful with
-  | None | Some true -> ()
-  | Some false -> exit 1
+  match !toplevel_error_happened, !last_query_successful with
+  | false, None | false, Some true -> ()
+  | false, Some false | true, _ -> exit 1
 ;;
