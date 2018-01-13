@@ -13,6 +13,7 @@
     "serverless-s3-remover": "^0.4.1"
   },
   "dependencies": {
+    "aws-sdk": "^2.181.0",
     "object-hash": "^1.2.0"
   }
 }

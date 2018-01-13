@@ -1,7 +1,8 @@
 - [x] add persist/init full makam state as options
 - [x] first version of aws lambda with serverless
 - [x] lambda: fixes + support for persist/restore state
-- [ ] s3-based caching
+- [x] s3-based caching
+- [ ] serverless id should be something other than webservice
 - [ ] error messages per input block
 - [ ] replies per query?
 - [ ] integrate makam-highlighting and anything needed within the repository

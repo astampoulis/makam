@@ -1,9 +1,32 @@
 service: webservice
 
+package:
+  include:
+    - node_modules/
+    - package.json
+
+functions:
+  makamQuery:
+    handler: handler.makamQuery
+    events:
+     - http:
+         path: makam/query
+         method: post
+    environment:
+      MAKAM_CACHE_BUCKET: ${self:custom.cacheBucket}
+
+resources:
+  Resources:
+    S3CacheBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: "${self:custom.cacheBucket}"
+
 provider:
   name: aws
   runtime: nodejs6.10
   iamRoleStatements:
+
     -  Effect: "Allow"
        Action:
          - "s3:ListBucket"
@@ -22,15 +45,37 @@ provider:
              - Ref: ServerlessDeploymentBucket
              - "/*"
 
-package:
-  include:
-    - node_modules/
-    - package.json
+    - Effect: Allow
+      Action:
+        - "s3:PutObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: S3CacheBucket
+            - "/*"
+    - Effect: Allow
+      Action:
+        - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: S3CacheBucket
+            - "/*"
+    - Effect: Allow
+      Action:
+        - s3:ListBucket
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - Ref: S3CacheBucket
 
-functions:
-  makamQuery:
-    handler: handler.makamQuery
-    events:
-     - http:
-         path: makam/query
-         method: post
+plugins:
+  - serverless-s3-remover
+
+custom:
+  remover:
+    prompt: true
+  cacheBucket: "makam-lambda-cache"
