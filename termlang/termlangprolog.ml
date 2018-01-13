@@ -102,6 +102,7 @@ let _BENCHMARK      : bool ref = Benchmark.enabled ;;
 let _LOGGING        : bool ref = ref false ;;
 let _ONLY_TYPECHECK : bool ref = ref false ;;
 let last_query_successful : bool option ref = ref None ;;
+let is_interactive : bool ref = ref false ;;
 
 let metaindex     (_, idx, _, _) = idx ;;
 let metasubst     (_, _, subst, _) = subst ;;
@@ -3361,8 +3362,8 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
   (* TODO: meta handling is weird here, figure out proper way to do it *)
   let open RunCtx.Monad in
   perform
-    goal'     <-- intermlang (fun _ -> checkQuery goal) ;
-    newmetas  <-- intermlang (fun _ ->
+    goal' <-- intermlang (fun _ -> checkQuery goal) ;
+    newmetas <-- intermlang (fun _ ->
                                 let state = !termstate in
                                 let newmetas =
                                   increasing state.metas |>
@@ -3387,7 +3388,10 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
         newmetas
     in
     _ <-- mapM (uncurry nameUnify) nu ;
-    let _ = if print then Printf.printf "\n%a\n" Pattneut.alphaSanitizedPrint goal'' in
+    let _ =
+      if print && not !is_interactive then
+        Utils.log_info_header (UChannel.string_of_span goal.loc) "Query result"
+    in
 
     _     <-- ifte
                 (perform
@@ -3450,11 +3454,6 @@ let observe (type a) (type b) (sk : a -> b RunCtx.BaseMonad.m)
 ;;
 
 
-let impossibleGoal =
-  (lazy(RunCtx.BaseMonad.return (Printf.printf "Impossible.\n")))
-;;
-
-
 exception PrologError;;
 let prolog_handler e =
   try Lazy.force e
@@ -3511,7 +3510,7 @@ let global_new_clause clause =
 
 let global_query goal =
   let open RunCtx.Monad in
-  globalprolog_do (* ~failure:impossibleGoal *)
+  globalprolog_do
     (perform
        goal <-- intermlang goal ;
        ifte (queryGoal ~print:true goal) (fun _ -> return ()) (lazy(return ())))

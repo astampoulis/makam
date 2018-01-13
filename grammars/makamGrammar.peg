@@ -286,35 +286,35 @@ def       -> ids:repplusSEP(token(ident^), ",")  token(":") t:typ
 
 prologcmd1 ->
              token("`(") p:hyp token(")") token(".")
-             <<  (global_set_last_query None;
+             << fun () -> (global_set_last_query None;
                           if !_ONLY_TYPECHECK then
                              (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
                           else
                              (Benchmark.cumulative "total staged commands"
                                 (lazy(Termlangrefl.global_staged_command p.content)))) >>
 
-           / d:defBM token(".") <<  (
+           / d:defBM token(".") << fun () -> (
                 global_set_last_query None;
                 Benchmark.cumulative "total defs"
                 (lazy(List.iter (uncurry global_define) d))) >>
-           / c:clauseBM token(".") <<  (global_set_last_query None;
+           / c:clauseBM token(".") << fun () -> (global_set_last_query None;
                                                  if !_ONLY_TYPECHECK then
                                                   (Benchmark.cumulative "total clauses"
                                                     (lazy(global_typecheck_silent c.content)))
                                                  else
                                                   (Benchmark.cumulative "total clauses"
                                                     (lazy(Termlangprolog.global_new_clause c.content)))) >>
-           / p:hyp token("?") <<  (global_set_last_query (Some p);
+           / p:hyp token("?") << fun () -> (global_set_last_query (Some p);
                                             if !_ONLY_TYPECHECK then
                                              (Benchmark.cumulative "total queries"
                                                (lazy(global_typecheck_silent p.content)))
                                            else
                                              (Benchmark.cumulative "total queries"
                                               (lazy(Termlangprolog.global_query p.content)))) >>
-           / p:quoteline(hyp) token("?") <<  global_set_last_query (Some p) >>
+           / p:quoteline(hyp) token("?") << fun () -> global_set_last_query (Some p) >>
 
            / t:querytest
-             <<  ((if Option.is_none (!globalstate).last_query then raise NoQueryToTest);
+             <<  fun () -> ((if Option.is_none (!globalstate).last_query then raise NoQueryToTest);
                            let query = Option.get (!globalstate).last_query in
                            global_set_last_query None;
                            if !_ONLY_TYPECHECK then
@@ -324,14 +324,14 @@ prologcmd1 ->
                             (Benchmark.cumulative "total clauses"
                               (lazy(Termlangprolog.global_new_clause (t query).content))))
                          >>
-           / token("%") d:directive token(".") << (global_set_last_query None; d ()) >>
-           / c:batch_mode << flush IO.stdout >>
-           / repplusV(white)^ << () >>
+           / token("%") d:directive token(".") << fun () -> (global_set_last_query None; d ()) >>
+           / c:block_mode << fun () -> flush IO.stdout >>
+           / repplusV(white)^ << fun () -> () >>
 
 prologcmd  -> c:loced(prologcmd1)
               << (
                  last_command_span := c.span ;
-                 let p = c.content in
+                 let p = c.content () in
                  Benchmark.cumulative "total" (lazy(p))) >>
 
 prologcmdvoid ->
@@ -400,12 +400,14 @@ flag(p) -> p token("+") << true  >>
 cmdflushed -> c:prologcmd << flush IO.stdout >>
 toplevel   -> c:rep(cmdflushed) repV(white) << () >>
 
-batch_mode -> token("%block-begin.") l:(epsilon << UChannel.loc _input >>)
+block_mode -> token("%block-begin.")
+              startloc:(epsilon << UChannel.loc _input >>)
               cs:rep( (!"%block-end." c:. << c >>) )
               "%block-end."
-              << Peg.parse_of_string ~initloc:l
+              << Peg.parse_of_string ~initloc:startloc
                                      (!makam_toplevel_parser `Makam)
-                                     (UString.to_string (UString.implode cs)) >>
+                                     (UString.to_string (UString.implode cs))
+              >>
             / token("%block-begin") id:token(ident) token(".")
               cs:rep( (!"%block-end." c:. << c >>) )
               "%block-end."

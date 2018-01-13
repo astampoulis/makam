@@ -307,11 +307,18 @@ let rec repeatmany n (f : unit -> 'a) = if n = 1 then f () else (let _ = f () in
 
 
 let log_error loc s =
-  Printf.printf "-- Error in %s:\n   %s\n\n%!" loc s
+  Printf.printf "\n!! Error in %s:\n   %s\n\n%!" loc s
+;;
+
+let log_info_header loc type_s =
+  Printf.printf "\n-- %s in %s:\n" type_s loc
 ;;
 
 let log_info loc type_s s =
-  Printf.printf "In %s: %s:\n%s\n\n%!" loc type_s s
+  if s = "" then
+    (Printf.printf "\n-- %s in %s.\n\n%!" type_s loc)
+  else
+    (Printf.printf "\n-- %s in %s:\n%s\n\n%!" type_s loc s)
 ;;
 
 let time_eval e =

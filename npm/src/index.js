@@ -40,8 +40,8 @@ class MakamProcess {
     this.stdout.setEncoding("utf8");
     this.stdout.on("end", () => this.gotResponse.emit("end"));
     this.stdout.on("data", s => {
-      const lastOne = s.endsWith("# ");
-      this._currentResponse += lastOne ? s.replace(/# $/, "") : s;
+      const lastOne = s.endsWith("## Ready for input.\n");
+      this._currentResponse += lastOne ? s.replace("## Ready for input.\n", "") : s;
       if (lastOne) {
         this.gotResponse.emit("got_response", this._currentResponse);
         this._currentResponse = "";

@@ -183,29 +183,37 @@ let _ =
   let prevparser = !MakamGrammar.makam_toplevel_parser in
   MakamGrammar.makam_toplevel_parser :=
     (fun syntax memo mode input ->
+      let restore_interactivity = let value = !is_interactive in fun () -> is_interactive := value in
+      let _ = is_interactive := false in
       exception_handler (fun _ ->
         let res = prevparser syntax memo mode input in
         match res, UChannel.reached_eof input with
           Some(_, uc), false ->
             raise (Peg.IncompleteParse(input, (UChannel.string_of_loc (UChannel.loc uc))))
-        | _ -> res)
-        (fun _ -> raise ErrorInFile)
-        (fun _ -> raise ErrorInFile))
+        | _ -> restore_interactivity (); res)
+        (fun _ -> restore_interactivity (); raise ErrorInFile)
+        (fun _ -> restore_interactivity (); raise ErrorInFile))
 ;;
 
 
 let rec repl ?input () : unit =
   Sys.catch_break true;
-  let input, prompt, reached_eof, is_stdin =
+  let input, reached_eof, is_stdin =
     match input with
     | Some input ->
        let initloc =
          let open UChannel in
          { description = "<command-line>" ; lineno = 1; charno = 1; offset = 0 }
        in
-       UChannel.from_string ~initloc:initloc input, "", UChannel.at_eof, false
+       UChannel.from_string ~initloc:initloc input, UChannel.at_eof, false
     | None ->
-      UChannel.from_stdin (), "# ", UChannel.reached_eof, true
+      UChannel.from_stdin (), UChannel.reached_eof, true
+  in
+  let _ =
+    is_interactive := is_stdin && Unix.isatty Unix.stdin
+  in
+  let prompt =
+    if !is_interactive then "# " else "## Ready for input.\n"
   in
   let old_debug = ref false in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in
@@ -215,7 +223,6 @@ let rec repl ?input () : unit =
       loop (UChannel.flush_to_furthest input)
     in
     let skip_line_and_recover () =
-      if not is_stdin then exit 1;
       let furthest = UChannel.flush_to_furthest input in
       let rec find_newline input =
         match UChannel.get_one input with
@@ -226,7 +233,7 @@ let rec repl ?input () : unit =
       find_newline furthest
     in
 
-    if not (reached_eof input) then
+    if not (reached_eof input) then begin
     print_now prompt;
 
     (try
@@ -252,6 +259,7 @@ let rec repl ?input () : unit =
      | Sys.Break ->
        (print_now "\nInterrupted.\n";
         restore_debug (); if is_stdin then repl () else recover ()))
+    end
   in
   loop input
 ;;

@@ -52,7 +52,7 @@ const _run = (args, inputBlocks) => {
     input
   })
     .toString("utf8")
-    .split("# ");
+    .split("## Ready for input.\n");
 
   return results;
 };

@@ -14,9 +14,9 @@ let string_of_span span : string =
       begin
 	assert(locstart.description = locend.description);
 	if locstart.lineno = locend.lineno then
-	  Printf.sprintf "file %s, line %d, characters %d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
+	  Printf.sprintf "%s, line %d, characters %d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
 	else
-	  Printf.sprintf "file %s, line %d, character %d to line %d, character %d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
+	  Printf.sprintf "%s, line %d, character %d to line %d, character %d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
       end
 ;;
 
@@ -98,7 +98,7 @@ let from_filename_buffered ?(buffersize = 1024) filename =
 ;;
 
 
-let from_stream  ?(initloc={ description = "<toplevel>" ; lineno = 1; charno = 1; offset = 0}) s =
+let from_stream ?(initloc={ description = "<stream>" ; lineno = 1; charno = 1; offset = 0}) s =
   let str   = ref (UString.mkempty 0 1024) in
   let reached_eof = ref false in
   { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
@@ -115,7 +115,15 @@ let from_stream  ?(initloc={ description = "<toplevel>" ; lineno = 1; charno = 1
 	 with IO.No_more_input -> (reached_eof := true ; raise IO.No_more_input))) }
 ;;
 
-let from_stdin () = from_stream IO.stdin ;;
+let from_stdin () =
+  let initloc =
+    if Unix.isatty Unix.stdin then
+      { description = "<repl>" ; lineno = 1; charno = 1; offset = 0}
+    else
+      { description = "<stdin>" ; lineno = 1; charno = 1; offset = 0}
+  in
+  from_stream ~initloc:initloc IO.stdin
+;;
 
 let offset c = c.location.offset ;;
 let loc    c = c.location ;;

@@ -58,7 +58,7 @@ str E S
   when not(expansion.isconcrete E),
        locget E Loc,
        tostring Loc LocS,
-       string.concat ["\n-- Error in ", LocS, ":\n   Expansion is not concrete.\n\n"] S',
+       string.concat ["\n!! Error in ", LocS, ":\n   Expansion is not concrete.\n\n"] S',
        builtin.print_string S',
        failure.
 

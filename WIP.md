@@ -5,12 +5,9 @@
 - [x] renamed serverless id and small fixes
 - [x] streamline logging, handling of errors, repl errors
 - [x] small fixes for uChannel.loc and block input
-- [ ] add tty and change query handling based on that
-- [ ] streamline across stdin, tty, files etc.
-- [ ] make sure that all works fine
-- [ ] change filename to file <...>, block to <block> etc. for loc
-- [ ] error messages per input block
-- [ ] replies per query?
+- [x] add tty, change query handling, robust prompts
+- [ ] make sure that npm, lambda, and emacs work ok
+- [ ] tie error messages and query results to input block
 - [ ] more robust thing than splitting on hash sign
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it

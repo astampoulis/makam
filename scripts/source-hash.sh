@@ -19,7 +19,7 @@ elif [[ "$1" == "check-if-updated" ]]; then
   REAL_HASH=$(sourceHash)
   STORED_HASH=$(grep --only-matching -E 'source_hash = "([^"]*)"' $TOPDIR/toploop/version.ml | cut -d'"' -f2)
   if [[ $REAL_HASH != $STORED_HASH ]]; then
-    echo "Source hash needs to be updated."
+    echo "Source hash needs to be updated, do \`$0 update\`."
     exit 1
   fi
 
