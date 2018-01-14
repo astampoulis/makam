@@ -189,7 +189,7 @@ let _ =
         let res = prevparser syntax memo mode input in
         match res, UChannel.reached_eof input with
           Some(_, uc), false ->
-            raise (Peg.IncompleteParse(input, (UChannel.string_of_loc (UChannel.loc uc))))
+            raise (Peg.IncompleteParse(uc, (UChannel.string_of_loc (UChannel.loc uc))))
         | _ -> restore_interactivity (); res)
         (fun _ -> restore_interactivity (); raise ErrorInFile)
         (fun _ -> restore_interactivity (); raise ErrorInFile))

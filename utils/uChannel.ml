@@ -12,11 +12,11 @@ let string_of_span span : string =
       None -> "<none>"
     | Some({startloc = locstart ; endloc = locend }) ->
       begin
-	assert(locstart.description = locend.description);
-	if locstart.lineno = locend.lineno then
-	  Printf.sprintf "%s, line %d, characters %d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
-	else
-	  Printf.sprintf "%s, line %d, character %d to line %d, character %d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
+        assert(locstart.description = locend.description);
+        if locstart.lineno = locend.lineno then
+          Printf.sprintf "%s, line %d, characters %d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
+        else
+          Printf.sprintf "%s, line %d, character %d to line %d, character %d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
       end
 ;;
 
@@ -30,11 +30,11 @@ let loc_compare loc1 loc2 =
     *)
 ;;
 
-let span_end span = 
+let span_end span =
   Utils.option_do (fun { endloc = l } -> { startloc = l ; endloc = l }) span
 ;;
 
-let mk_span startloc endloc = 
+let mk_span startloc endloc =
   try
     if loc_compare startloc endloc <= 0 then
       Some { startloc = startloc ; endloc = endloc }
@@ -43,7 +43,7 @@ let mk_span startloc endloc =
   with _ -> None
 ;;
 
-let combine_span span1 span2 = 
+let combine_span span1 span2 =
   match span1, span2 with
     Some { startloc = startloc }, Some { endloc = endloc } -> mk_span startloc endloc
   | Some _, None -> span1
@@ -56,13 +56,17 @@ let combine_span span1 span2 =
 
 
 type t = { contents : UString.t ref ; location : loc ;
-	   current  : UString.bidx ; furthest : UString.bidx ref ; reached_eof : bool ref ;
-	   looknext : UString.bidx -> UChar.t * UString.bidx ;
+           current  : UString.bidx ;
+           furthest : UString.bidx ref ; furthest_loc : loc ref ;
+           reached_eof : bool ref ;
+           looknext : UString.bidx -> UChar.t * UString.bidx ;
            update_statehash : bool } ;;
 
 let from_string  ?(initloc={ description = "<string>" ; lineno = 1; charno = 1; offset = 0 }) string =
   let str = ref (UString.of_string string) in
-  { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = ref true ;
+  { contents = str ; current = 0 ;
+    furthest = ref 0 ; furthest_loc = ref initloc ;
+    reached_eof = ref true ;
     location = initloc ;
     update_statehash = false ;
     looknext = (fun off ->
@@ -81,19 +85,22 @@ let from_filename_buffered ?(buffersize = 1024) filename =
   let input = File.open_in filename in
   let str   = ref (UString.mkempty 0 (buffersize*2)) in
   let reached_eof = ref false in
-  { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
-    location = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 };
+  let initloc = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 } in
+  { contents = str ; current = 0 ;
+    furthest = ref 0 ; furthest_loc = ref initloc ;
+    reached_eof = reached_eof ;
+    location = initloc;
     update_statehash = true ;
     looknext = (fun off ->
       if UString.safe_offset !str off then UString.looknext_unsafe !str off
       else if !reached_eof then raise IO.No_more_input
       else
-	(try
-	   let newbytes = IO.nread input buffersize in
-	   str := UString.append_bytes !str newbytes ;
-	   if UString.safe_offset !str off then UString.looknext_unsafe !str off
-	   else raise (Invalid_argument ("UChannel.from_filename_buffered: invalid UTF8 encoding in " ^ filename))
-	 with IO.No_more_input -> (reached_eof := true ; IO.close_in input ; raise IO.No_more_input)))
+        (try
+           let newbytes = IO.nread input buffersize in
+           str := UString.append_bytes !str newbytes ;
+           if UString.safe_offset !str off then UString.looknext_unsafe !str off
+           else raise (Invalid_argument ("UChannel.from_filename_buffered: invalid UTF8 encoding in " ^ filename))
+         with IO.No_more_input -> (reached_eof := true ; IO.close_in input ; raise IO.No_more_input)))
   }
 ;;
 
@@ -101,18 +108,20 @@ let from_filename_buffered ?(buffersize = 1024) filename =
 let from_stream ?(initloc={ description = "<stream>" ; lineno = 1; charno = 1; offset = 0}) s =
   let str   = ref (UString.mkempty 0 1024) in
   let reached_eof = ref false in
-  { contents = str ; current = 0 ; furthest = ref 0 ; reached_eof = reached_eof ;
+  { contents = str ; current = 0 ;
+    furthest = ref 0 ; furthest_loc = ref initloc;
+    reached_eof = reached_eof ;
     location = initloc ;
     update_statehash = true ;
     looknext = (fun off ->
       if not (UString.is_end !str off) then UString.looknext_unsafe !str off
       else if !reached_eof then raise IO.No_more_input
       else
-	(try
-	   let u = Text.read_char s in
-	   str := UString.append_uchar !str u ;
-	   UString.looknext_unsafe !str off
-	 with IO.No_more_input -> (reached_eof := true ; raise IO.No_more_input))) }
+        (try
+           let u = Text.read_char s in
+           str := UString.append_uchar !str u ;
+           UString.looknext_unsafe !str off
+         with IO.No_more_input -> (reached_eof := true ; raise IO.No_more_input))) }
 ;;
 
 let from_stdin () =
@@ -147,7 +156,7 @@ let get_one c =
       if next > !(c.furthest) then (
         (if (c.update_statehash) then
           input_statehash := Hashtbl.hash (!input_statehash + ucode));
-        c.furthest := next
+        c.furthest := next; c.furthest_loc := newloc
       )
     in
     Some (u, { c with current = next ; location = newloc})
@@ -164,8 +173,5 @@ let map f c =
 ;;
 
 let flush_to_furthest uc =
-  { uc with current = !(uc.furthest) }
+  { uc with current = !(uc.furthest); location = !(uc.furthest_loc) }
 ;;
-
-
-
