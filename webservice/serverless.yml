@@ -13,14 +13,14 @@ functions:
          path: makam/query
          method: post
     environment:
-      MAKAM_CACHE_BUCKET: ${self:custom.cacheBucket}
+      MAKAM_CACHE_BUCKET: "${self:custom.cacheBucket}-${self:custom.stage}"
 
 resources:
   Resources:
     S3CacheBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: "${self:custom.cacheBucket}"
+        BucketName: "${self:custom.cacheBucket}-${self:custom.stage}"
 
 provider:
   name: aws

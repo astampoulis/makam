@@ -39,6 +39,68 @@ const _loadFromS3 = (filename, filepath) => {
     );
 };
 
+const _parseLocation = message => {
+  const sameLineRegexp = /line ([0-9]+), characters ([0-9]+)-([0-9]+)/m;
+  const spansLineRegexp = /line ([0-9]+), character ([0-9]+) to line ([0-9]+), character ([0-9]+)/m;
+  if (message.match(sameLineRegexp)) {
+    const [_, line, startChar, endChar] = message.match(sameLineRegexp);
+    return {
+      start: { line: parseInt(line) - 1, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(line) - 1, char: parseInt(endChar) - 1 }
+    };
+  } else if (message.match(spansLineRegexp)) {
+    const [_, startLine, startChar, endLine, endChar] = message.match(
+      spansLineRegexp
+    );
+    return {
+      start: { line: parseInt(startLine) - 1, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(endLine) - 1, char: parseInt(endChar) - 1 }
+    };
+  } else {
+    return null;
+  }
+};
+
+const _parseError = error => {
+  const errorRegexp = /^!! Error in block block[0-9]+, .*:$/m;
+  return {
+    message: error.replace(errorRegexp, "").trim(),
+    location: _parseLocation(error)
+  };
+};
+
+const _parseQueryResult = queryResult => {
+  const headerRegexp = /^line .+:$/m;
+  return {
+    message: queryResult.replace(headerRegexp, "").trim(),
+    location: _parseLocation(queryResult)
+  };
+};
+
+const _parseOutput = output => {
+  let processed = output;
+
+  const errorRegexp = /^!! Error in block block[0-9]+, .*$\n(.+\n)*\n/gm;
+  let errors = [];
+  if (processed.match(errorRegexp)) {
+    errors = processed.match(errorRegexp).map(_parseError);
+  }
+
+  processed = processed.replace(errorRegexp, "");
+  const queryResultRegexp = /^-- Query result in block block[0-9]+, /m;
+  let queryResults = processed.split(queryResultRegexp);
+  if (queryResults.length >= 1 && queryResults[0].trim() == "") {
+    queryResults = queryResults.slice(1);
+  }
+  queryResults = queryResults.map(_parseQueryResult);
+
+  return {
+    fullOutput: output,
+    errors,
+    queryResults
+  };
+};
+
 const _run = (args, inputBlocks) => {
   const allArguments = [].concat(defaultArguments, args);
 
@@ -47,14 +109,28 @@ const _run = (args, inputBlocks) => {
     input += `\n%block-begin block${i}.\n${block}\n%block-end.\n`;
   });
 
-  const results = execSync(`${binaryPath} ${allArguments.join(" ")}`, {
-    env: Object.assign({}, process.env, { OCAMLRUNPARAM }),
-    input
-  })
-    .toString("utf8")
-    .split("## Ready for input.\n");
+  let makamOutput;
+  let makamExitCode;
 
-  return results;
+  try {
+    makamOutput = execSync(`${binaryPath} ${allArguments.join(" ")}`, {
+      env: Object.assign({}, process.env, { OCAMLRUNPARAM }),
+      input
+    });
+    makamExitCode = 0;
+  } catch (e) {
+    makamOutput = e.stdout;
+    makamExitCode = e.status;
+  }
+
+  return {
+    exitCode: makamExitCode,
+    output: makamOutput
+      .toString("utf8")
+      .split("## Ready for input.\n")
+      .map(_parseOutput)
+      .slice(1)
+  };
 };
 
 const _suffixForInput = input => `${makamVersion}-${hash(input)}`;
@@ -84,7 +160,10 @@ const _runAndPersist = input => {
     _saveToS3(outputFilename, JSON.stringify(output))
   ])
     .then(_ => output)
-    .catch(_ => console.error(`could not persist state to s3`));
+    .catch(_ => {
+      console.error(`could not persist state to s3`);
+      return output;
+    });
 };
 
 const _cachedRun = input => {
@@ -113,7 +192,18 @@ const _runOnState = (stateInput, input) => {
 
 const _executeQuery = (stateBlocks, query, callback) => {
   _cachedRun(stateBlocks).then(stateBlocksOutput => {
-    let queryOutput = query ? _runOnState(stateBlocks, [query])[1] : "";
+    let defaultOutput = {
+      exitCode: 0,
+      output: [
+        {
+          fullOutput: "",
+          errors: [],
+          queryResults: []
+        }
+      ]
+    };
+
+    let queryOutput = query ? _runOnState(stateBlocks, [query]) : defaultOutput;
 
     const response = {
       statusCode: 200,

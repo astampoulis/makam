@@ -7,10 +7,9 @@
 - [x] small fixes for uChannel.loc and block input
 - [x] add tty, change query handling, robust prompts
 - [x] fix another issue with error handling
-- [ ] make sure that npm, lambda, and emacs work ok
-- [ ] in repl, when doing use for a non-existent file two times in a row, the file information is wrong
-- [ ] tie error messages and query results to input block
-- [ ] more robust thing than splitting on hash sign
+- [x] tie error messages and query results to input block
+- [ ] consider whether to consolidate into the js package
+- [ ] add deployment to prod and IAM role for CircleCI
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)

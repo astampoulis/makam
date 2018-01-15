@@ -74,8 +74,5 @@ eqv (expansion A) (expansion B) when not(expansion.isconcrete (expansion A)), ex
   string.concat B B',
   string.concat A B'.
 
-
-print_string X :-
-  if (dyn.eq X (S: string))
-  then (builtin.print_string S)
-  else (dyn.eq X (E: expansion), expansion.str E S, builtin.print_string S).
+print_string (X: string) :- builtin.print_string X.
+print_string (X: expansion) :- expansion.str X S, builtin.print_string S.

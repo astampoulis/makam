@@ -252,8 +252,8 @@ let rec repl ?input () : unit =
           | None ->
              raise (Peg.IncompleteParse(input, (input |> UChannel.loc |> UChannel.string_of_loc)))
       end)
-      (fun () -> restore_debug (); if is_stdin then recover ())
-      (fun () -> restore_debug (); if is_stdin then skip_line_and_recover ())
+      (fun () -> restore_debug (); if !is_interactive then recover () else (raise ErrorInFile))
+      (fun () -> restore_debug (); if !is_interactive then skip_line_and_recover () else (raise ErrorInFile))
      with
      | BatInnerIO.Input_closed -> ()
      | Sys.Break ->
