@@ -1,5 +1,5 @@
 [options]
-all=true
+all=false
 
 [ignore]
 .*/node_modules

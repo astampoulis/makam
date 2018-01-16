@@ -1,0 +1,109 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MakamProcess parses and returns the results 1`] = `
+Object {
+  "errors": Array [
+    Object {
+      "location": Object {
+        "end": Object {
+          "char": 10,
+          "line": 5,
+        },
+        "start": Object {
+          "char": 6,
+          "line": 5,
+        },
+      },
+      "message": "Variable test with type prop does not exist.",
+    },
+  ],
+  "fullOutput": "
+-- Query result in block block, line 5, characters 7-10:
+helloYes.
+
+
+!! Error in block block, line 6, characters 7-11:
+   Variable test with type prop does not exist.
+
+",
+  "queryResults": Array [
+    Object {
+      "location": Object {
+        "end": Object {
+          "char": 9,
+          "line": 4,
+        },
+        "start": Object {
+          "char": 6,
+          "line": 4,
+        },
+      },
+      "message": "helloYes.",
+    },
+  ],
+}
+`;
+
+exports[`runSync parses and returns the results 1`] = `
+Object {
+  "exitCode": 1,
+  "output": Array [
+    Object {
+      "errors": Array [],
+      "fullOutput": "",
+      "queryResults": Array [],
+    },
+    Object {
+      "errors": Array [],
+      "fullOutput": "",
+      "queryResults": Array [],
+    },
+    Object {
+      "errors": Array [],
+      "fullOutput": "
+-- Query result in block block2, line 2, characters 1-4:
+helloYes.
+
+",
+      "queryResults": Array [
+        Object {
+          "location": Object {
+            "end": Object {
+              "char": 3,
+              "line": 1,
+            },
+            "start": Object {
+              "char": 0,
+              "line": 1,
+            },
+          },
+          "message": "helloYes.",
+        },
+      ],
+    },
+    Object {
+      "errors": Array [
+        Object {
+          "location": Object {
+            "end": Object {
+              "char": 4,
+              "line": 1,
+            },
+            "start": Object {
+              "char": 0,
+              "line": 1,
+            },
+          },
+          "message": "Variable test with type prop does not exist.",
+        },
+      ],
+      "fullOutput": "
+!! Error in block block3, line 2, characters 1-5:
+   Variable test with type prop does not exist.
+
+",
+      "queryResults": Array [],
+    },
+  ],
+}
+`;

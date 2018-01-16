@@ -1,6 +1,6 @@
-const path = require("path");
+// @flow
 
-const OCAMLRUNPARAM = "l=100M,s=16M,i=2M,o=200";
+const path = require("path");
 
 const binaryName =
   process.platform === "linux" && process.arch === "x64"
@@ -16,7 +16,6 @@ const stdlibCachePath = path.join(__dirname, "..", "stdlib-cache");
 const defaultArguments = ["-I", stdlibPath, "-I", stdlibCachePath];
 
 module.exports = {
-  OCAMLRUNPARAM,
   defaultArguments,
   binaryPath,
   stdlibPath,

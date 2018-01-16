@@ -8,7 +8,7 @@
 - [x] add tty, change query handling, robust prompts
 - [x] fix another issue with error handling
 - [x] tie error messages and query results to input block
-- [ ] consider whether to consolidate into the js package
+- [x] consolidate into the npm package
 - [ ] add deployment to prod and IAM role for CircleCI
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
