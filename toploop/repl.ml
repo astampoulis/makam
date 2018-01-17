@@ -213,7 +213,7 @@ let rec repl ?input () : unit =
     is_interactive := is_stdin && Unix.isatty Unix.stdin
   in
   let prompt =
-    if !is_interactive then "# " else "## Ready for input.\n"
+    if !is_interactive then "# " else if is_stdin then "## Ready for input.\n" else ""
   in
   let old_debug = ref false in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in

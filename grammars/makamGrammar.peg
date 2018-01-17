@@ -328,7 +328,7 @@ prologcmd1 ->
            / c:block_mode << fun () -> flush IO.stdout >>
            / repplusV(white)^ << fun () -> () >>
 
-prologcmd  -> repV(white) c:loced(prologcmd1)
+prologcmd  -> c:loced(prologcmd1)
               << (
                  last_command_span := c.span ;
                  let p = c.content () in
