@@ -9,7 +9,8 @@
 - [x] fix another issue with error handling
 - [x] tie error messages and query results to input block
 - [x] consolidate into the npm package
-- [ ] add deployment to prod and IAM role for CircleCI
+- [x] add deployment to prod and IAM role for CircleCI
+- [ ] open/close for queries to be even more precise? and tie any messages to location, without removing them though.
 - [ ] integrate makam-highlighting and anything needed within the repository
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
