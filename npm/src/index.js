@@ -134,7 +134,6 @@ class MakamProcess {
   _getResponsePromise(): Promise<MakamResult> {
     return new Promise((resolve, reject) => {
       this.gotResponse.once("got_response", output => {
-        console.log("got response", output);
         return resolve(parseOutput(output));
       });
       this.gotResponse.once("end", () => {
