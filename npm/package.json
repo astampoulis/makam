@@ -1,11 +1,11 @@
 {
   "name": "makam",
-  "version": "0.7.0-pre2",
+  "version": "0.7.0-pre3",
   "description": "The Makam metalanguage -- a tool for rapid language prototyping",
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "flow-remove-types --all --out-dir lib/ src/",
+    "build": "flow-remove-types --ignore test.js --out-dir lib/ src/",
     "dev-makam": "yarn build && yarn makam",
     "makam": "node ./lib/repl.js"
   },
@@ -26,6 +26,7 @@
   "devDependencies": {
     "flow-bin": "^0.62.0",
     "flow-remove-types": "^1.2.3",
+    "jest": "^22.1.1",
     "prettier": "^1.9.2"
   },
   "author": {
@@ -45,5 +46,11 @@
     "cli",
     "binary",
     "bin"
-  ]
+  ],
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "\\.js$": "./remove_types.js"
+    }
+  }
 }

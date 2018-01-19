@@ -304,4 +304,22 @@ bind : testsuite. %testsuite bind.
 >> XName := "x",
 >> YName := "y".
 
+(* ------------------- structural *)
+
+structural : testsuite. %testsuite structural.
+
+change, change_ : [A] A -> A -> prop.
+change_ : [A] A -> A -> prop.
+
+change X Y <-
+  demand.case_otherwise (change_ X Y)
+                        (structural change X Y).
+
+change_ "a" "b".
+change_ X Y <- plus X 1 Y.
+
+>> change ("a", 15, (fun (x : string) => x), (fun (x : string) => 12)) Y ?
+>> Yes:
+>> Y := ("b", 16, (fun (x : string) => x), (fun (x : string) => 13)).
+
 %end.

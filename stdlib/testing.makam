@@ -36,7 +36,7 @@ run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   then (
     if (verbose_run_tests) then (
       tostring TestCase TestCaseS,
-      (log.level log.info -> log_info TestCase `Testcase:\n${TestCaseS}\n`)
+      log_info_do TestCase "Testcase" `${TestCaseS}`
     ) else success,
     if (once(clause.premise TestCase))
     then (run_test Suites (TestCase :: Successes) Failures (testcase X) TL)

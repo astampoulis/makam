@@ -6,6 +6,7 @@
 %use guard.
 
 %use list.
+%use dyn.
 %use string.
 
 %use logging.
@@ -13,7 +14,6 @@
 %use demand.
 %use testing.
 
-%use dyn.
 %use tuple.
 %use option.
 %use set.

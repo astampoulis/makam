@@ -65,6 +65,10 @@ jobs:
             [[ -e skip-deploy ]] || (set -u; echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc; set +u)
             [[ -e skip-deploy ]] || opam config exec make npm-prod-publish
 
+      - run: &deploy-lambda
+          name: Deploy Makam Lambda
+          command: |
+            [[ -e skip-deploy ]] || opam config exec make webservice-prod-deploy
 
 workflows:
   version: 2
