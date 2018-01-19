@@ -42,8 +42,6 @@ print_string X :- .print_string X.
 %end.
 
 print_string : [A]A -> prop.
-print_string (S : string) :- builtin.print_string S.
-
 
 expansion : type.
 expansion : list string -> expansion.
@@ -56,11 +54,12 @@ isconcrete E when not(refl.isunif E), eq E (expansion L), not(refl.isunif L) :-
 str : expansion -> string -> prop.
 str (expansion E) S when expansion.isconcrete (expansion E) :- string.concat E S.
 
-str (expansion E) S
-  when not(expansion.isconcrete (expansion E)),
+str E S
+  when not(expansion.isconcrete E),
        locget E Loc,
        tostring Loc LocS,
-       print_string `At ${LocS}, expansion is not concrete.\n`,
+       string.concat ["\n!! Error in ", LocS, ":\n   Expansion is not concrete.\n\n"] S',
+       builtin.print_string S',
        failure.
 
 %end.
@@ -75,6 +74,5 @@ eqv (expansion A) (expansion B) when not(expansion.isconcrete (expansion A)), ex
   string.concat B B',
   string.concat A B'.
 
-
-
-print_string (X : expansion) when expansion.str X S :- builtin.print_string S.
+print_string (X: string) :- builtin.print_string X.
+print_string (X: expansion) :- expansion.str X S, builtin.print_string S.

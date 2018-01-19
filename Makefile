@@ -98,6 +98,12 @@ npm-test-publish: prepare-test-npm-package
 npm-prod-publish: prepare-npm-package
 	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz"
 
+webservice-test-deploy:
+	bash -c "./scripts/webservice-deploy.sh"
+
+webservice-prod-deploy:
+	bash -c "./scripts/webservice-deploy.sh prod"
+
 # js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin

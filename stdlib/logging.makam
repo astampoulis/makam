@@ -8,25 +8,32 @@ info : level.
 level : level -> prop.
 %end.
 
-log_error, log_error_with_both_locs, log_warning, log_info : [A] A -> expansion -> prop.
+log_error, log_error_with_both_locs, log_warning, log_warning_do : [A] A -> expansion -> prop.
+log_info, log_info_do : [A] A -> string -> expansion -> prop.
 
 log_error Where Message :-
   locget Where Loc, tostring Loc LocS,
   expansion.str Message MessageS,
-  print_string `\n-- Error at ${LocS}: ${MessageS}\n`.
+  print_string `\n!! Error in ${LocS}:\n   ${MessageS}\n\n`.
 
 log_error_with_both_locs Where Message :-
   locget Where Loc, tostring Loc LocS,
   locget Message Loc', tostring Loc' LocS',
   expansion.str Message MessageS,
-  print_string `\n-- Error at ${LocS}, because of assertion at ${LocS'}: ${MessageS}\n`.
+  print_string `\n!! Error in ${LocS}:\n   (Assertion at ${LocS'})\n   ${MessageS}\n\n`.
 
-log_warning Where Message when log.level log.warn :-
+log_warning_do Where Message :-
   locget Where Loc, tostring Loc LocS,
   expansion.str Message MessageS,
-  print_string `\n-- Warning at ${LocS}: ${MessageS}\n`.
+  print_string `\n!! Warning in ${LocS}:\n   ${MessageS}\n\n`.
 
-log_info Where Message when (log.level log.warn; log.level log.info) :-
+log_warning Where Message when (log.level log.info; log.level log.warn) :-
+  log_warning_do Where Message.
+
+log_info_do Where InfoType Message :-
   locget Where Loc, tostring Loc LocS,
   expansion.str Message MessageS,
-  print_string `\n-- Info at ${LocS}: ${MessageS}\n`.
+  print_string `\n-- ${InfoType} in ${LocS}:\n   ${MessageS}\n\n`.
+
+log_info Where InfoType Message when log.level log.info :-
+  log_info_do Where InfoType Message.

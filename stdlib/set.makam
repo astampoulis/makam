@@ -43,4 +43,4 @@ to_list (cons HD SetTL) (cons HD ListTL) :-
 %end.
 
 eqv (nil : set A) nil.
-eqv (cons A B) C :- set.member C A B', set.remove_if_member B A B'', eqv B' B''.
+eqv (cons A B : set A) C :- set.member C A B', set.remove_if_member B A B'', eqv B' B''.
