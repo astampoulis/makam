@@ -258,7 +258,7 @@ let rec repl ?input () : unit =
      | BatInnerIO.Input_closed -> ()
      | Sys.Break ->
        (print_now "\nInterrupted.\n";
-        restore_debug (); if !is_interactive then repl ())
+        restore_debug (); if !is_interactive then repl ()))
     end
   in
   loop input
