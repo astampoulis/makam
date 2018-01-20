@@ -1,5 +1,5 @@
 - [x] makam codemirror mode
-- [ ] CORS for makam webservice
+- [x] CORS for makam webservice
 - [ ] fixes for makam
 - [ ] library for running and annotating things
 - [ ] components for running queries etc.

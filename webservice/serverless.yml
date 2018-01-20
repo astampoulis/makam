@@ -12,6 +12,16 @@ functions:
      - http:
          path: makam/query
          method: post
+         cors:
+           origin: '*'
+           headers:
+             - Content-Type
+             - X-Amz-Date
+             - Authorization
+             - X-Api-Key
+             - X-Amz-Security-Token
+             - X-Amz-User-Agent
+           allowCredentials: true
     environment:
       MAKAM_CACHE_BUCKET: "${self:custom.cacheBucket}-${self:custom.stage}"
 
