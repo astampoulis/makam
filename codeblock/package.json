@@ -1,0 +1,28 @@
+{
+  "name": "makam-codeblock",
+  "version": "1.0.0",
+  "description": "CodeMirror-based codeblock for Makam",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Antonis Stampoulis <antonis.stampoulis@gmail.com>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astampoulis/makam.git"
+  },
+  "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-preact": "^1.1.0",
+    "codemirror": "^5.33.0",
+    "es6-promise": "^4.2.2",
+    "flow-bin": "^0.63.1",
+    "isomorphic-fetch": "^2.2.1",
+    "preact": "^8.2.7",
+    "prettier": "^1.10.2",
+    "webpack": "^3.10.0"
+  }
+}
