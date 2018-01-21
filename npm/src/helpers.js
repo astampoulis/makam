@@ -26,14 +26,14 @@ const parseLocation = (message: string): ?Location => {
   if (sameMatch) {
     const [_, line, startChar, endChar] = sameMatch;
     return {
-      start: { line: parseInt(line) - 1, char: parseInt(startChar) - 1 },
-      end: { line: parseInt(line) - 1, char: parseInt(endChar) - 1 }
+      start: { line: parseInt(line) - 2, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(line) - 2, char: parseInt(endChar) - 1 }
     };
   } else if (spansMatch) {
     const [_, startLine, startChar, endLine, endChar] = spansMatch;
     return {
-      start: { line: parseInt(startLine) - 1, char: parseInt(startChar) - 1 },
-      end: { line: parseInt(endLine) - 1, char: parseInt(endChar) - 1 }
+      start: { line: parseInt(startLine) - 2, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(endLine) - 2, char: parseInt(endChar) - 1 }
     };
   } else {
     return null;

@@ -1,6 +1,6 @@
 - [x] makam codemirror mode
 - [x] CORS for makam webservice
-- [ ] fixes for makam
+- [x] fixes for makam
 - [ ] library for running and annotating things
 - [ ] components for running queries etc.
 - [ ] npm package with everything that's needed...
