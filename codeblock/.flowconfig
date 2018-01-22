@@ -1,5 +1,0 @@
-[options]
-all=false
-
-[ignore]
-.*/node_modules

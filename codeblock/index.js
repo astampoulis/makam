@@ -46,7 +46,7 @@ var run = input => {
             ch: err.location.start.char
           },
           { line: err.location.end.line, ch: err.location.end.char },
-          { css: "background-color: #f13" }
+          { css: "background-color: #fab", readOnly: false }
         );
         cm.addLineWidget(err.location.start.line, annotationNode(err.message));
       });

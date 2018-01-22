@@ -7,8 +7,7 @@
   <script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
   <script src="https://unpkg.com/codemirror/addon/mode/simple.js"></script>
   <script src="https://unpkg.com/codemirror/addon/runmode/runmode.js"></script>
-
-  <script src="makam/makam.js"></script>
+  <script src="../makam-codemirror.js"></script>
   <style>
     .CodeMirror {
       width: 100vw;
@@ -113,6 +112,6 @@ gentype T (pi TF') <-
       var cm = CodeMirror.fromTextArea(document.getElementById("makam"), { lineNumbers: true, mode: 'makam', readOnly: true });
       window.cm = cm;
   </script>
-  <script src="dist/bundle.js"></script>
+  <script src="../dist/bundle.js"></script>
 </body>
 </html>
