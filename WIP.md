@@ -2,6 +2,7 @@
 - [x] CORS for makam webservice
 - [x] fixes for makam
 - [x] WIP library for running and annotating things
+- [x] update to 0.7.0
 - [ ] actual library, cleanup, etc.
 - [ ] frontend components
 - [ ] npm package with everything that's needed...

@@ -22,7 +22,7 @@ function get_version() {
 }
 
 function code_changes_from_parent() {
-  git diff-tree -r --name-status $1..HEAD termlang toploop stdlib opam npm/src npm/package.json npm/yarn.lock | grep --invert-match "toploop/version.ml"
+  git diff-tree -r --name-status $1..HEAD termlang grammars toploop stdlib opam npm/src npm/package.json npm/yarn.lock | grep --invert-match "toploop/version.ml"
 }
 
 BASEVERSION=$(cat $TOPDIR/toploop/version.ml | get_version)
@@ -63,6 +63,7 @@ update)
   sed -i -r -e "s/^Version:     .*$/Version:     $NEWVERSION/" $TOPDIR/_oasis
   sed -i -r -e "s/^version: \"[^\"]+\"/version: \"$NEWVERSION\"/" $TOPDIR/opam/opam
   sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/npm/package.json
+  sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/codeblock/package.json
   sed -i -r -e "s/version = \"[^\"]+\"/version = \"$NEWVERSION\"/" $TOPDIR/js/index.html
 
   # Do the source hash update afterwards to make sure that the above gets incorporated

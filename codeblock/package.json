@@ -1,6 +1,6 @@
 {
   "name": "makam-codeblock",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "description": "CodeMirror-based codeblock for Makam",
   "main": "index.js",
   "scripts": {
