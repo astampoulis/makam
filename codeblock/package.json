@@ -8,6 +8,7 @@
     "build": "yarn webpack"
   },
   "files": [
+    "README.md",
     "dist/bundle.js",
     "makam-codemirror.js"
   ],
@@ -23,6 +24,7 @@
     "preact": "^8.2.7"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.1",
