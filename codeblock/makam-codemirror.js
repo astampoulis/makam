@@ -71,7 +71,7 @@
       { regex: /\s/, pop: true }
     ],
     type_in_definition: [
-      { regex: /(type|prop)\b/, token: "type strong" },
+      { regex: /(type|prop)\b/, token: "keyword" },
       { regex: /[a-z][a-zA-Z0-9_\']*/, token: "type" },
       { regex: /-\>/, token: "meta" },
       { regex: /[A-Z_][A-Za-z_\\'0-9]*/, token: "variable-2" }, //metavars
@@ -90,15 +90,15 @@
     ),
     freequote_brpp: [
       { regex: /\|\}/, token: "string strong", pop: true },
-      { regex: /.+/, token: "string" }
+      { regex: /([^\|]|\|[^\}])+/, token: "string" }
     ],
     freequote_brbr: [
       { regex: /\}\}/, token: "string strong", pop: true },
-      { regex: /.+/, token: "string" }
+      { regex: /([^\}]|\}[^\}])+/, token: "string" }
     ],
     freequote_br: [
       { regex: /\}/, token: "string strong", pop: true },
-      { regex: /.+/, token: "string" }
+      { regex: /([^\}])+/, token: "string" }
     ],
     comment: [
       // { regex: /\(\*/, token: "comment", push: "comment" },
