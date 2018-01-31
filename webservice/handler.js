@@ -92,8 +92,22 @@ const _runOnState = (stateInput, input) => {
   return makam.runSync(input, ["--init-state", stateFilename]);
 };
 
+const _createResponse = obj => {
+  return {
+    statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": true
+    },
+    body: JSON.stringify(obj)
+  };
+};
+
 const _executeQuery = (stateBlocks, query, callback) => {
   _cachedRun(stateBlocks).then(stateBlocksOutput => {
+    if (stateBlocksOutput.exitCode != 0) {
+      return callback(null, _createResponse({ stateBlocksOutput }));
+    }
     let defaultOutput = {
       exitCode: 0,
       output: [
@@ -107,19 +121,7 @@ const _executeQuery = (stateBlocks, query, callback) => {
 
     let queryOutput = query ? _runOnState(stateBlocks, [query]) : defaultOutput;
 
-    const response = {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin" : "*",
-        "Access-Control-Allow-Credentials" : true
-      },
-      body: JSON.stringify({
-        stateBlocksOutput,
-        queryOutput
-      })
-    };
-
-    callback(null, response);
+    callback(null, _createResponse({ stateBlocksOutput, queryOutput }));
   });
 };
 
