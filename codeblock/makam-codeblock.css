@@ -1,0 +1,80 @@
+.cm-makam-annotation {
+  width: 70%;
+  transition: transform 0.5s;
+  border: 1px solid black;
+  border-radius: 5px;
+  margin: 5px;
+  margin-left: 20px;
+  padding: 5px;
+  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+}
+
+.makam-error {
+  background: rgb(240,171,172);
+}
+
+.makam-query-result {
+  background: rgb(171,240,190);
+}
+
+.makam-button-container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: inline-block;
+}
+
+.makam-button {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  display: inline-block;
+  text-align: center;
+  font-family: sans;
+}
+
+.makam-button-icon svg {
+  fill: white;
+  width: 25px;
+  height: 25px;
+  margin: 12px 10px 10px 13px;
+}
+
+.makam-button .makam-button-icon {
+  transition: background 0.5s;
+  border-radius: 30px;
+  height: 50px;
+  width: 50px;
+  border: 3px solid white;
+  background-color: rgba(45,135,195,0.9);
+  color: white;
+  -webkit-box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  margin-left: 10px;
+}
+
+.makam-button:hover .makam-button-icon {
+  background-color: rgba(129,183,219,0.9);
+}
+
+.makam-button:hover .makam-button-icon:active {
+  transition: background 0.1s;
+  background-color: rgba(229,183,219,0.9);
+}
+
+.makam-button .makam-button-label {
+  text-align: center;
+  transition: opacity 0.5s;
+  margin-left: -20px;
+  opacity: 0;
+  padding: 2px;
+  background: rgb(53,58,51);
+  font-size: 10px;
+  color: white;
+  -webkit-box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
+  margin-bottom: 10px;
+}
+
+.makam-button:hover .makam-button-label {
+  opacity: 1.0;
+}

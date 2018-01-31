@@ -5,11 +5,15 @@
 - [x] update to 0.7.0
 - [x] fix npm location handling
 - [x] fix for codemirror mode
-- [ ] WIP continued a bit with web UI
-- [ ] actual library, cleanup, etc.
-- [ ] frontend components
-- [ ] npm package with everything that's needed...
+- [x] cleaned up codeblock into a proper library
+- [ ] webservice: handle empty stateBlock case nicely
+- [ ] webservice: query just returns a single output object instead of array
+- [ ] webservice: query is only run when stateblocks were fine
+- [ ] webservice: .output -> .result?
+- [ ] method that returns an element or a document that includes just a single query component (e.g. to use in online node eval)
+- [ ] codeblock -> webui?
+- [ ] maybe separate bundle with everything (and default setup)
+- [ ] npm package and deploy
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
 - [ ] figure out whether we'll push or pull posts to make sure there's no regressions
-

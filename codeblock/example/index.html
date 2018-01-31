@@ -8,31 +8,39 @@
   <script src="https://unpkg.com/codemirror/addon/mode/simple.js"></script>
   <script src="https://unpkg.com/codemirror/addon/runmode/runmode.js"></script>
   <script src="../makam-codemirror.js"></script>
+  <link rel="stylesheet" href="../makam-codeblock.css" />
   <style>
     .CodeMirror {
-      width: 100vw;
-      height: 100vh;
+      width: 90vw;
+      background: rgb(240,240,240);
+      height: auto;
     }
   </style>
 </head>
 
 <body>
-  <textarea id="makam">
-%use "utils".
-%use "extutils".
+<div style="height: 20vh !important;"></div>
+  <pre><code language="makam">print_string "hello\n" ?
+
+(* This file does not really work as-is, just used to test syntax highlighting out. *)
 
 systemf : testsuite.
 
 term : type.
 typ  : type.
+</code></pre>
+
+<div style="height: 20vh !important;"></div>
+  <pre><code language="makam:input">
 
 `( syntax_rules {{
 
-test -> <test>
+test -> &lt;test&gt;
+test -> test { lala }
 
 }} ).
 
-print_string `${X}\n` ?
+(eq X "hello", print_string `${X}\n`) ?
 
 lam : (term -> term) -> term .
 lam : typ -> (term -> term) -> term.
@@ -107,11 +115,7 @@ gentype T (pi TF') <-
   getunif T (T' : typ),
   absunif T (T' : typ) TF,
   (x:typ -> gentype (TF x) (TF' x)).
-  </textarea>
-  <script type="text/javascript">
-      var cm = CodeMirror.fromTextArea(document.getElementById("makam"), { lineNumbers: true, mode: 'makam', readOnly: true });
-      window.cm = cm;
-  </script>
+</code></pre>
   <script src="../dist/bundle.js"></script>
 </body>
 </html>

@@ -90,20 +90,28 @@
     ),
     freequote_brpp: [
       { regex: /\|\}/, token: "string strong", pop: true },
-      { regex: /([^\|]|\|[^\}])+/, token: "string" }
+      { regex: /[^\|]+/, token: "string" },
+      { regex: /\|/, token: "string" },
     ],
     freequote_brbr: [
       { regex: /\}\}/, token: "string strong", pop: true },
-      { regex: /([^\}]|\}[^\}])+/, token: "string" }
+      { regex: /[^\}]+/, token: "string" },
+      { regex: /\}/, token: "string" }
     ],
     freequote_br: [
       { regex: /\}/, token: "string strong", pop: true },
-      { regex: /([^\}])+/, token: "string" }
+      { regex: /[^\}]+/, token: "string" }
     ],
     comment: [
       // { regex: /\(\*/, token: "comment", push: "comment" },
       { regex: /.*\*\)/, token: "comment", pop: true },
       { regex: /.*/, token: "comment" }
+    ]
+  });
+
+  CodeMirror.defineSimpleMode("makam-query-results", {
+    start: [
+      { regex: /^(Yes(:|\.)|Impossible\.)/, mode: { spec: "makam" } }
     ]
   });
 });
