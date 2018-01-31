@@ -69,19 +69,32 @@ class MakamCodeblock {
   }
 
   clearAnnotations(options = { animation: true }) {
-    this.annotations.forEach(({ element, widget, marker }) => {
-      marker.clear();
-      if (options.animation) {
-        element.style.transform = "scale(0.0)";
-        element.addEventListener("transitionend", () => widget.clear(), {
-          capture: true,
-          once: true
-        });
-      } else {
-        widget.clear();
-      }
-    });
+    const promise = Promise.all(
+      this.annotations.map(({ element, widget, marker }) => {
+        marker.clear();
+        if (options.animation) {
+          return new Promise(resolve => {
+            element.style.transform = "scale(0.0)";
+            element.addEventListener(
+              "transitionend",
+              () => {
+                widget.clear();
+                resolve();
+              },
+              {
+                capture: true,
+                once: true
+              }
+            );
+          });
+        } else {
+          widget.clear();
+          return Promise.resolve();
+        }
+      })
+    );
     this.annotations = [];
+    return promise;
   }
 
   setEditable(value) {
@@ -116,7 +129,13 @@ var evalMakam = (url, stateBlocks, queryBlock) => {
       json.stateBlocksOutput.output.forEach((output, i) => {
         if (stateBlocks[i]) stateBlocks[i].addAnnotationsForResult(output);
       });
-      queryBlock.addAnnotationsForResult(json.queryOutput.output[0]);
+      if (
+        json.queryOutput &&
+        json.queryOutput.output &&
+        json.queryOutput.output[0]
+      ) {
+        queryBlock.addAnnotationsForResult(json.queryOutput.output[0]);
+      }
     })
     .catch(console.error);
 };
@@ -174,8 +193,11 @@ class LiterateWebUI {
   }
 
   reset(options = { animation: true }) {
-    this.stateBlocks.forEach(x => x.clearAnnotations(options));
-    this.queryBlock.clearAnnotations(options);
+    return Promise.all(
+      [].concat(this.stateBlocks.map(x => x.clearAnnotations(options)), [
+        this.queryBlock.clearAnnotations(options)
+      ])
+    );
   }
 
   focusOnQuery() {
@@ -194,8 +216,7 @@ class WebUIControls extends Component {
         <Button
           label="Edit query"
           onClick={() => {
-            webUI.reset();
-            webUI.focusOnQuery();
+            webUI.reset().then(() => webUI.focusOnQuery());
           }}
         >
           <EditIcon />

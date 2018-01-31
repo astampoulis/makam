@@ -7,7 +7,6 @@
 - [x] fix for codemirror mode
 - [x] cleaned up codeblock into a proper library
 - [ ] webservice: handle empty stateBlock case nicely
-- [ ] webservice: query just returns a single output object instead of array
 - [ ] webservice: query is only run when stateblocks were fine
 - [ ] webservice: .output -> .result?
 - [ ] method that returns an element or a document that includes just a single query component (e.g. to use in online node eval)
