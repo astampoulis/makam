@@ -70,6 +70,11 @@ jobs:
           command: |
             [[ -e skip-deploy ]] || opam config exec make webservice-prod-deploy
 
+      - run: &publish-webui-package
+          name: Publish Makam WebUI package
+          command: |
+            [[ -e skip-deploy ]] || opam config exec make webui-prod-publish
+
 workflows:
   version: 2
   test-and-deploy:

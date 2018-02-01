@@ -33,7 +33,7 @@ fi
 npm whoami >/dev/null
 
 if [[ $TEST_VERSION -eq 1 ]]; then
-  (cd $TOPDIR; echo npm publish --tag test makam-webui-$PACKAGEVERSION.tgz)
+  (cd $TOPDIR; npm publish --tag test makam-webui-$PACKAGEVERSION.tgz)
 else
-  (cd $TOPDIR; echo npm publish makam-webui-$PACKAGEVERSION.tgz)
+  (cd $TOPDIR; npm publish makam-webui-$PACKAGEVERSION.tgz)
 fi

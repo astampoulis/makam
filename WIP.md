@@ -8,9 +8,13 @@
 - [x] cleaned up codeblock into a proper library
 - [x] webservice: query is only run when stateblocks were fine
 - [x] rename makam-codeblock to makam-webui
-- [ ] method that returns an element or a document that includes just a single query component (e.g. to use in online node eval)
-- [ ] maybe separate bundle with everything (and default setup)
-- [ ] npm package and deploy
+- [x] npm package and deploy
+- [ ] fix cases where no elements exist, where no query element exists, etc.
+- [ ] styling fixes (maybe make the height etc. set everywhere?)
+- [ ] keyboard shortcut for eval and edit?
+- [ ] makam-hidden support
+- [ ] scroll to current line on eval (make this more robust)
+- [ ] also same thing for reset
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
 - [ ] figure out whether we'll push or pull posts to make sure there's no regressions
