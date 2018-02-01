@@ -8,7 +8,8 @@
   <script src="https://unpkg.com/codemirror/addon/mode/simple.js"></script>
   <script src="https://unpkg.com/codemirror/addon/runmode/runmode.js"></script>
   <script src="../makam-codemirror.js"></script>
-  <link rel="stylesheet" href="../makam-codeblock.css" />
+  <script src="../makam-webui.js"></script>
+  <link rel="stylesheet" href="../makam-webui.css" />
   <style>
     .CodeMirror {
       width: 90vw;
@@ -116,6 +117,13 @@ gentype T (pi TF') <-
   absunif T (T' : typ) TF,
   (x:typ -> gentype (TF x) (TF' x)).
 </code></pre>
-  <script src="../dist/bundle.js"></script>
+  <script type="text/javascript">
+const webUI = new LiterateWebUI({
+  viewportMargin: 100000000,
+  lineNumbers: true,
+  env: "dev"
+});
+webUI.initialize();
+</script>
 </body>
 </html>

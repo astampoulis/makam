@@ -7,7 +7,7 @@
 - [x] fix for codemirror mode
 - [x] cleaned up codeblock into a proper library
 - [x] webservice: query is only run when stateblocks were fine
-- [ ] codeblock -> webui?
+- [x] rename makam-codeblock to makam-webui
 - [ ] method that returns an element or a document that includes just a single query component (e.g. to use in online node eval)
 - [ ] maybe separate bundle with everything (and default setup)
 - [ ] npm package and deploy

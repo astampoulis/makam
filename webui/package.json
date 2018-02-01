@@ -1,15 +1,16 @@
 {
-  "name": "makam-codeblock",
+  "name": "makam-webui",
   "version": "0.7.0",
-  "description": "CodeMirror-based codeblock for Makam",
-  "main": "dist/bundle.js",
+  "description": "CodeMirror-based WebUI for Makam",
+  "main": "makam-webui.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "yarn webpack"
   },
   "files": [
     "README.md",
-    "dist/bundle.js",
+    "makam-webui.js",
+    "makam-webui.css",
     "makam-codemirror.js"
   ],
   "author": "Antonis Stampoulis <antonis.stampoulis@gmail.com>",

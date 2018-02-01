@@ -63,7 +63,7 @@ update)
   sed -i -r -e "s/^Version:     .*$/Version:     $NEWVERSION/" $TOPDIR/_oasis
   sed -i -r -e "s/^version: \"[^\"]+\"/version: \"$NEWVERSION\"/" $TOPDIR/opam/opam
   sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/npm/package.json
-  sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/codeblock/package.json
+  sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/webui/package.json
   sed -i -r -e "s/version = \"[^\"]+\"/version = \"$NEWVERSION\"/" $TOPDIR/js/index.html
 
   # Do the source hash update afterwards to make sure that the above gets incorporated

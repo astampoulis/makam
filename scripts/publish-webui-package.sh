@@ -20,20 +20,20 @@ else
   exit 1
 fi
 
-(cd $TOPDIR/codeblock; yarn install; yarn build)
+(cd $TOPDIR/webui; yarn install; yarn build)
 
-(cd $TOPDIR/codeblock;
+(cd $TOPDIR/webui;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $PACKAGEVERSION;
- rm -f $TOPDIR/makam-codeblock-$PACKAGEVERSION.tgz;
+ rm -f $TOPDIR/makam-webui-$PACKAGEVERSION.tgz;
  set +e; npm pack; RES=$?; set -e;
  [[ $UPDATE_VERSION -eq 1 ]] && npm version $BASEVERSION;
- mv makam-codeblock-$PACKAGEVERSION.tgz $TOPDIR/;
+ mv makam-webui-$PACKAGEVERSION.tgz $TOPDIR/;
  if [[ $RES -ne 0 ]]; then exit $RES; fi)
 
 npm whoami >/dev/null
 
 if [[ $TEST_VERSION -eq 1 ]]; then
-  (cd $TOPDIR; echo npm publish --tag test makam-codeblock-$PACKAGEVERSION.tgz)
+  (cd $TOPDIR; echo npm publish --tag test makam-webui-$PACKAGEVERSION.tgz)
 else
-  (cd $TOPDIR; echo npm publish makam-codeblock-$PACKAGEVERSION.tgz)
+  (cd $TOPDIR; echo npm publish makam-webui-$PACKAGEVERSION.tgz)
 fi

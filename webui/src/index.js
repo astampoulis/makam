@@ -140,7 +140,7 @@ var evalMakam = (url, stateBlocks, queryBlock) => {
     .catch(console.error);
 };
 
-class LiterateWebUI {
+export default class LiterateWebUI {
   constructor(options = { stateBlocksEditable: false, env: "prod" }) {
     this.stateBlocks = [];
     this.queryBlock = null;
@@ -273,9 +273,6 @@ class EditIcon extends Component {
   }
 }
 
-const webUI = new LiterateWebUI({
-  viewportMargin: 100000000,
-  lineNumbers: true,
-  env: "dev"
-});
-webUI.initialize();
+if (window) {
+  window.LiterateWebUI = LiterateWebUI;
+}
