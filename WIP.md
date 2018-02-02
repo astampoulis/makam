@@ -15,6 +15,8 @@
 - [x] fix to scroll
 - [x] bundle css, and some fixes
 - [x] fix case where queryblock is not around
+- [x] fix makam --run-tests
 - [ ] actual web page using it
+- [ ] check failure on travis and aws account in general
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
 - [ ] figure out whether we'll push or pull posts to make sure there's no regressions
