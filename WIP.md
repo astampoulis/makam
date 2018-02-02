@@ -10,10 +10,10 @@
 - [x] rename makam-codeblock to makam-webui
 - [x] npm package and deploy
 - [x] makam-hidden and makam-noeval support
+- [x] gutter indication of exitcode
 - [ ] auto-hide testcases?
-- [ ] gutter indication of exitcode?
 - [ ] scroll to current line on eval (make this more robust) and on reset
-- [ ] simplify webUI, it has gotten bad
+- [ ] simplify webUI code, it has gotten bad
 - [ ] actual web page using it
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
 - [ ] figure out whether we'll push or pull posts to make sure there's no regressions

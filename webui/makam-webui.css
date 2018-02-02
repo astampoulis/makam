@@ -15,12 +15,27 @@
 }
 
 .cm-makam-gutter-default {
-  background: transparent;
+  background: rgb(200,200,200);
+  width: 5px !important;
+}
+
+.language-makam .cm-makam-gutter-default {
+  background: rgb(129,183,219);
   width: 5px !important;
 }
 
 .cm-makam-gutter-noeval {
   background: rgb(200,200,200);
+  width: 5px !important;
+}
+
+.cm-makam-gutter-success {
+  background: rgb(171,240,190);
+  width: 5px !important;
+}
+
+.cm-makam-gutter-failure {
+  background: rgb(240,171,172);
   width: 5px !important;
 }
 

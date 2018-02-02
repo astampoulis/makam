@@ -54,6 +54,10 @@ class HiddenCodeblock {
     return;
   }
 
+  setGutter() {
+    return;
+  }
+
   clearAnnotations() {
     return Promise.resolve();
   }
@@ -72,6 +76,10 @@ class MakamCodeblock {
 
   value() {
     return this.codeMirror.getValue();
+  }
+
+  setGutter(gutterType) {
+    this.codeMirror.setOption("gutters", [`cm-makam-gutter-${gutterType}`]);
   }
 
   addAnnotation(text, location, className) {
@@ -94,6 +102,7 @@ class MakamCodeblock {
   }
 
   clearAnnotations(options = { animation: true }) {
+    this.setGutter("default");
     const promise = Promise.all(
       this.annotations.map(({ element, widget, marker }) => {
         marker.clear();
@@ -151,14 +160,26 @@ var evalMakam = (url, stateBlocks, queryBlock) => {
       return response.json();
     })
     .then(json => {
+      let lastResponseFrom = -1;
       json.stateBlocksOutput.output.forEach((output, i) => {
+        lastResponseFrom = i;
         if (stateBlocks[i]) stateBlocks[i].addAnnotationsForResult(output);
+      });
+      stateBlocks.forEach((stateBlock, i) => {
+        if (i < lastResponseFrom) stateBlock.setGutter("success");
+        else if (i == lastResponseFrom)
+          stateBlock.setGutter(
+            json.stateBlocksOutput.exitCode === 0 ? "success" : "failure"
+          );
       });
       if (
         json.queryOutput &&
         json.queryOutput.output &&
         json.queryOutput.output[0]
       ) {
+        queryBlock.setGutter(
+          json.queryOutput.exitCode === 0 ? "success" : "failure"
+        );
         queryBlock.addAnnotationsForResult(json.queryOutput.output[0]);
       }
     })
