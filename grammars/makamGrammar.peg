@@ -421,8 +421,10 @@ block_mode -> token("%block-begin.")
 to_EOL -> repV( (![\n] .) ) "\n" << () >>
 
 literate   -> c:rep(literate_line) << () >>
-literate_line -> "```makam\n" c:rep(literate_cmd) repV(white) at_start("```\n") << c >>
-               / !"```makam\n" to_EOL << [] >>
+literate_makam_start -> "```makam\n" << () >>
+                / "```makam-" !"noeval" repplusV(latin1letter) "\n" << () >>
+literate_line -> literate_makam_start c:rep(literate_cmd) repV(white) at_start("```\n") << c >>
+               / !literate_makam_start to_EOL << [] >>
 literate_cmd -> c:cmdflushed repV(white) << c >>
 at_start(p) -> &&( epsilon << fun _ -> let open UChannel in (loc _input).charno == 1 >> )
                c:p << c >>
@@ -538,10 +540,10 @@ latin1char -> &&( . << fun c -> try (ignore (UChar.char_of c); true) with | _ ->
 letterchar -> &&( .
                   << isLetterChar >> )
               a:. << a >>
+latin1letter -> &latin1char c:letterchar << c >>
 digitchar -> a:[0123456789]              << a >>
 num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> int_of_string >>
 eof -> !. ;
-
 
 (* whitespace *)
 comment -> "(*" repV(commentchar) "*)" ;
@@ -551,8 +553,6 @@ whiteNoComment -> &&( . << UString.is_whitespace >>) . ;
 whiteNoNewline -> ![\n] white ;
 
 
-(* identifiers must be latin-1 since they are copied verbatim into the generated OCaml AST as
-   OCaml identifiers *)
 identfstchar -> c:letterchar    << c >>
 identrstchar -> c:(letterchar / digitchar / [_']) << c >>
 identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>

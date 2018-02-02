@@ -14,7 +14,7 @@ var highlightText = (text, mode, theme) => {
   return (
     <pre style="white-space: pre-wrap;">
       <code
-        language="makam"
+        class="language-makam"
         class={`cm-s-${theme}`}
         ref={c => CodeMirror.runMode(text, mode, c)}
       />
@@ -26,17 +26,42 @@ var replaceCodeElement = (element, mode, options = {}) => {
   const allOptions = Object.assign(
     {},
     {
-      value: element.textContent,
+      value: element.textContent.trim(),
       readOnly: options.editable ? false : "nocursor",
       theme: "default",
-      mode
+      mode,
+      viewportMargin: Infinity,
+      gutters: ["cm-makam-gutter-default"]
     },
     options
   );
   return CodeMirror(cmElement => {
+    if (options.className) cmElement.classList.add(options.className);
     element.parentNode.replaceChild(cmElement, element);
   }, allOptions);
 };
+
+class HiddenCodeblock {
+  constructor(element) {
+    this.element = element;
+  }
+
+  value() {
+    return this.element.textContent.trim();
+  }
+
+  addAnnotationsForResult() {
+    return;
+  }
+
+  clearAnnotations() {
+    return Promise.resolve();
+  }
+
+  setEditable() {
+    return;
+  }
+}
 
 class MakamCodeblock {
   constructor(element, options = {}) {
@@ -151,45 +176,94 @@ export default class LiterateWebUI {
 
   initialize() {
     const stateBlocksOptions = Object.assign({}, this.options, {
-      editable: this.options.stateBlocksEditable
+      editable: this.options.stateBlocksEditable,
+      className: "language-makam"
     });
     const queryBlockOptions = Object.assign({}, this.options, {
-      editable: true
+      editable: true,
+      className: "language-makam-input"
     });
     document
-      .querySelectorAll("pre > code[language='makam']")
+      .querySelectorAll(
+        "pre > code.language-makam, pre > code.language-makam-hidden"
+      )
       .forEach(codeElement => {
-        this.stateBlocks.push(
-          new MakamCodeblock(codeElement.parentNode, stateBlocksOptions)
-        );
+        if (codeElement.classList.contains("language-makam-hidden")) {
+          this.stateBlocks.push(new HiddenCodeblock(codeElement.parentNode));
+        } else {
+          this.stateBlocks.push(
+            new MakamCodeblock(codeElement.parentNode, stateBlocksOptions)
+          );
+        }
       });
-    this.queryBlock = new MakamCodeblock(
-      document.querySelector("pre > code[language='makam:input']"),
-      queryBlockOptions
+    const queryBlockElement = document.querySelector(
+      "pre > code.language-makam-input"
     );
+    if (queryBlockElement) {
+      this.queryBlock = new MakamCodeblock(
+        queryBlockElement,
+        queryBlockOptions
+      );
+    }
     document
-      .querySelectorAll("pre > code:not([language^='makam'])")
+      .querySelectorAll(
+        "pre > code:not(.language-makam):not(.language-makam-input):not(.language-makam-hidden)"
+      )
       .forEach(codeElement => {
+        let mode, gutterObject;
+        if (codeElement.className == "language-makam-noeval") {
+          mode = "makam";
+          gutterObject = { gutters: ["cm-makam-gutter-noeval"] };
+        } else {
+          mode = codeElement.className.replace(/^language-/, "");
+          gutterObject = {};
+        }
         this.otherBlocks.push(
           replaceCodeElement(
             codeElement.parentNode,
-            codeElement.attributes.language,
-            this.options
+            mode,
+            Object.assign(
+              {},
+              this.options,
+              {
+                className: codeElement.className
+              },
+              gutterObject
+            )
           )
         );
       });
-    render(<WebUIControls />, document.body);
+    render(
+      <WebUIControls onEval={() => this.eval()} onEdit={() => this.edit()} />,
+      document.body
+    );
+    document.addEventListener("keyup", e => {
+      const event = e || window.event;
+      if (e.ctrlKey && e.key == "/") {
+        document.querySelector("#makam-edit").click();
+      } else if (e.ctrlKey && e.key == "Enter") {
+        document.querySelector("#makam-eval").click();
+      }
+    });
   }
 
   eval() {
     this.reset({ animation: false });
-    evalMakam(this.makamURL, this.stateBlocks, this.queryBlock);
-    let f = () => null;
-    f = () => {
-      this.reset();
-      this.queryBlock.codeMirror.off("change", f);
-    };
-    this.queryBlock.codeMirror.on("change", f);
+    return evalMakam(this.makamURL, this.stateBlocks, this.queryBlock).then(
+      () => {
+        let f = () => null;
+        f = () =>
+          this.queryBlock.codeMirror.operation(() => {
+            this.reset({ animation: false });
+            this.queryBlock.codeMirror.off("change", f);
+          });
+        this.queryBlock.codeMirror.on("change", f);
+      }
+    );
+  }
+
+  edit() {
+    return this.reset().then(() => this.focusOnQuery());
   }
 
   reset(options = { animation: true }) {
@@ -207,17 +281,24 @@ export default class LiterateWebUI {
 }
 
 class WebUIControls extends Component {
-  render() {
+  render(props, state) {
+    let evalIcon = state.evaluating ? <LoadingIcon /> : <PlayIcon />;
     return (
       <ButtonContainer>
-        <Button label="Evaluate code" onClick={() => webUI.eval()}>
-          <PlayIcon />
+        <Button
+          id="makam-eval"
+          label="Evaluate code (Ctrl-Enter)"
+          onClick={() => {
+            this.setState({ evaluating: true });
+            props.onEval().then(() => this.setState({ evaluating: false }));
+          }}
+        >
+          {evalIcon}
         </Button>
         <Button
-          label="Edit query"
-          onClick={() => {
-            webUI.reset().then(() => webUI.focusOnQuery());
-          }}
+          id="makam-edit"
+          label="Edit query (Ctrl-/)"
+          onClick={props.onEdit}
         >
           <EditIcon />
         </Button>
@@ -235,7 +316,7 @@ class ButtonContainer extends Component {
 class Button extends Component {
   render(props, state) {
     return (
-      <div class="makam-button" onClick={props.onClick}>
+      <div id={props.id} class="makam-button" onClick={props.onClick}>
         <div class="makam-button-label">{props.label}</div>
         <div class="makam-button-icon">{props.children}</div>
       </div>
@@ -273,6 +354,30 @@ class EditIcon extends Component {
   }
 }
 
+class LoadingIcon extends Component {
+  render() {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="100%"
+        height="100%"
+        viewBox="0 0 24 24"
+        class="rotating"
+      >
+        <path d="M12.979 3.055c4.508.489 8.021 4.306 8.021 8.945.001 2.698-1.194 5.113-3.075 6.763l-1.633-1.245c1.645-1.282 2.709-3.276 2.708-5.518 0-3.527-2.624-6.445-6.021-6.923v2.923l-5.25-4 5.25-4v3.055zm-1.979 15.865c-3.387-.486-6-3.401-6.001-6.92 0-2.237 1.061-4.228 2.697-5.509l-1.631-1.245c-1.876 1.65-3.066 4.061-3.065 6.754-.001 4.632 3.502 8.444 8 8.942v3.058l5.25-4-5.25-4v2.92z" />
+      </svg>
+    );
+  }
+}
+
+export const makamWebUIOnLoad = (options = {}) => {
+  document.addEventListener("DOMContentLoaded", function() {
+    const webUI = new LiterateWebUI(options);
+    webUI.initialize();
+  });
+};
+
 if (window) {
   window.LiterateWebUI = LiterateWebUI;
+  window.makamWebUIOnLoad = makamWebUIOnLoad;
 }

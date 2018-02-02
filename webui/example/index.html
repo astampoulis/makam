@@ -7,21 +7,30 @@
   <script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
   <script src="https://unpkg.com/codemirror/addon/mode/simple.js"></script>
   <script src="https://unpkg.com/codemirror/addon/runmode/runmode.js"></script>
+  <!--
+  <script src="https://unpkg.com/makam-webui/makam-codemirror.js"></script>
+  <script src="https://unpkg.com/makam-webui/makam-webui.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/makam-webui/makam-webui.css" />
+  -->
   <script src="../makam-codemirror.js"></script>
   <script src="../makam-webui.js"></script>
   <link rel="stylesheet" href="../makam-webui.css" />
+  <script type="text/javascript">
+    makamWebUIOnLoad({
+      lineNumbers: true,
+      env: "dev"
+    });
+  </script>
   <style>
     .CodeMirror {
       width: 90vw;
-      background: rgb(240,240,240);
-      height: auto;
     }
   </style>
 </head>
 
 <body>
 <div style="height: 120px !important;"></div>
-  <pre><code language="makam">print_string "hello\n" ?
+  <pre><code class="language-makam">print_string "hello\n" ?
 
 (* This file does not really work as-is, just used to test syntax highlighting out. *)
 
@@ -32,7 +41,10 @@ typ  : type.
 </code></pre>
 
 <div style="height: 120px !important;"></div>
-  <pre><code language="makam:input">
+<pre><code class="language-javascript">function(x) { return 5 + x; }</code></pre>
+
+<div style="height: 120px !important;"></div>
+  <pre><code class="language-makam-input">
 
 `( syntax_rules {{
 
@@ -117,13 +129,5 @@ gentype T (pi TF') <-
   absunif T (T' : typ) TF,
   (x:typ -> gentype (TF x) (TF' x)).
 </code></pre>
-  <script type="text/javascript">
-const webUI = new LiterateWebUI({
-  viewportMargin: 100000000,
-  lineNumbers: true,
-  env: "dev"
-});
-webUI.initialize();
-</script>
 </body>
 </html>
