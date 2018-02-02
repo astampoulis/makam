@@ -268,23 +268,60 @@ export default class LiterateWebUI {
     });
   }
 
-  eval() {
-    this.reset({ animation: false });
-    return evalMakam(this.makamURL, this.stateBlocks, this.queryBlock).then(
-      () => {
-        let f = () => null;
-        f = () =>
-          this.queryBlock.codeMirror.operation(() => {
-            this.reset({ animation: false });
-            this.queryBlock.codeMirror.off("change", f);
-          });
-        this.queryBlock.codeMirror.on("change", f);
+  keepQueryScroll(promise) {
+    if (!this.queryBlock) return promise();
+
+    const currentRect = this.queryBlock.codeMirror
+      .getWrapperElement()
+      .getBoundingClientRect();
+    const topVisible = currentRect.top >= 0;
+    const bottomVisible =
+      currentRect.bottom <=
+      (window.innerHeight || document.documentElement.clientHeight);
+    if (!topVisible && !bottomVisible) return promise();
+
+    const currentCursor = this.queryBlock.codeMirror.getCursor();
+    const currentPos = this.queryBlock.codeMirror.cursorCoords(
+      currentCursor,
+      "page"
+    ).top;
+    return promise().then(() => {
+      const newPos = this.queryBlock.codeMirror.cursorCoords(
+        currentCursor,
+        "page"
+      ).top;
+      let scrollAmount = newPos - currentPos;
+      if (topVisible && bottomVisible) {
+        const newRect = this.queryBlock.codeMirror
+          .getWrapperElement()
+          .getBoundingClientRect();
+        scrollAmount += newRect.bottom - currentRect.bottom;
       }
-    );
+      jump(scrollAmount, { duration: 100 });
+    });
+  }
+
+  eval() {
+    return this.keepQueryScroll(() => {
+      this.reset({ animation: false });
+      return evalMakam(this.makamURL, this.stateBlocks, this.queryBlock).then(
+        () => {
+          let f = () => null;
+          f = () =>
+            this.queryBlock.codeMirror.operation(() => {
+              this.reset({ animation: false });
+              this.queryBlock.codeMirror.off("change", f);
+            });
+          this.queryBlock.codeMirror.on("change", f);
+        }
+      );
+    });
   }
 
   edit() {
-    return this.reset().then(() => this.focusOnQuery());
+    return this.keepQueryScroll(() =>
+      this.reset().then(() => this.focusOnQuery())
+    );
   }
 
   reset(options = { animation: true }) {
@@ -296,8 +333,19 @@ export default class LiterateWebUI {
   }
 
   focusOnQuery() {
+    if (!this.queryBlock) return;
+
     this.queryBlock.codeMirror.focus();
-    jump(this.queryBlock.codeMirror.getWrapperElement(), { duration: 400 });
+
+    const currentRect = this.queryBlock.codeMirror
+      .getWrapperElement()
+      .getBoundingClientRect();
+    const topVisible = currentRect.top >= 0;
+    const bottomVisible =
+      currentRect.bottom <=
+      (window.innerHeight || document.documentElement.clientHeight);
+    if (!topVisible && !bottomVisible)
+      jump(this.queryBlock.codeMirror.getWrapperElement(), { duration: 400 });
   }
 }
 
