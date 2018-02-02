@@ -295,7 +295,8 @@ export default class LiterateWebUI {
         const newRect = this.queryBlock.codeMirror
           .getWrapperElement()
           .getBoundingClientRect();
-        scrollAmount += newRect.bottom - currentRect.bottom;
+        if (newRect.bottom > currentRect.bottom)
+          scrollAmount += newRect.bottom - currentRect.bottom;
       }
       jump(scrollAmount, { duration: 100 });
     });
