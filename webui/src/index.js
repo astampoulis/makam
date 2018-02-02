@@ -154,7 +154,7 @@ var evalMakam = (url, stateBlocks, queryBlock) => {
     },
     body: JSON.stringify({
       stateBlocks: stateBlocks.map(x => x.value()),
-      query: queryBlock.value()
+      query: queryBlock ? queryBlock.value() : null
     })
   })
     .then(response => {
@@ -255,13 +255,19 @@ export default class LiterateWebUI {
           )
         );
       });
+    const hasQueryBlock = this.queryBlock ? true : false;
+    if (this.stateBlocks.length == 0 && !hasQueryBlock) return;
     render(
-      <WebUIControls onEval={() => this.eval()} onEdit={() => this.edit()} />,
+      <WebUIControls
+        editEnabled={hasQueryBlock}
+        onEval={() => this.eval()}
+        onEdit={() => this.edit()}
+      />,
       document.body
     );
     document.addEventListener("keyup", e => {
       const event = e || window.event;
-      if (e.ctrlKey && e.key == "/") {
+      if (hasQueryBlock && e.ctrlKey && e.key == "/") {
         document.querySelector("#makam-edit").click();
       } else if (e.ctrlKey && e.key == "Enter") {
         document.querySelector("#makam-eval").click();
@@ -308,6 +314,7 @@ export default class LiterateWebUI {
       this.reset({ animation: false });
       return evalMakam(this.makamURL, this.stateBlocks, this.queryBlock).then(
         () => {
+          if (!this.queryBlock) return;
           let f = () => null;
           f = () =>
             this.queryBlock.codeMirror.operation(() => {
@@ -329,7 +336,9 @@ export default class LiterateWebUI {
   reset(options = { animation: true }) {
     return Promise.all(
       [].concat(this.stateBlocks.map(x => x.clearAnnotations(options)), [
-        this.queryBlock.clearAnnotations(options)
+        this.queryBlock
+          ? this.queryBlock.clearAnnotations(options)
+          : Promise.resolve()
       ])
     );
   }
@@ -354,6 +363,17 @@ export default class LiterateWebUI {
 class WebUIControls extends Component {
   render(props, state) {
     let evalIcon = state.evaluating ? <LoadingIcon /> : <PlayIcon />;
+    let editButton = props.editEnabled ? (
+      <Button
+        id="makam-edit"
+        label="Edit query (Ctrl-/)"
+        onClick={props.onEdit}
+      >
+        <EditIcon />
+      </Button>
+    ) : (
+      <div />
+    );
     return (
       <ButtonContainer>
         <Button
@@ -366,13 +386,7 @@ class WebUIControls extends Component {
         >
           {evalIcon}
         </Button>
-        <Button
-          id="makam-edit"
-          label="Edit query (Ctrl-/)"
-          onClick={props.onEdit}
-        >
-          <EditIcon />
-        </Button>
+        {editButton}
       </ButtonContainer>
     );
   }
