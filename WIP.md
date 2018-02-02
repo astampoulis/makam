@@ -16,6 +16,9 @@
 - [x] bundle css, and some fixes
 - [x] fix case where queryblock is not around
 - [x] fix makam --run-tests
+- [x] webservice: allow passing dependencies
+- [ ] webui: fetch dependencies and send them to webservice
+- [ ] webui: make sure that query results/errors from dependencies don't show up
 - [ ] actual web page using it
 - [ ] check failure on travis and aws account in general
 - [ ] figure out how to download .md's in the same directory (or list out dependencies)
