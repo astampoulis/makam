@@ -17,7 +17,7 @@
 - [x] fix case where queryblock is not around
 - [x] fix makam --run-tests
 - [x] webservice: allow passing dependencies
-- [ ] webui: fetch dependencies and send them to webservice
+- [x] webui: fetch dependencies and send them to webservice
 - [ ] webui: make sure that query results/errors from dependencies don't show up
 - [ ] actual web page using it
 - [ ] check failure on travis and aws account in general

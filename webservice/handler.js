@@ -53,7 +53,7 @@ const _saveDependencies = dependencies => {
   } catch (e) {}
   return Promise.all(
     dependencies.map(dependency => {
-      if (!dependency.filename.match(/^[a-zA-Z_\-\.0-9]+.(md|makam)$/))
+      if (!dependency.filename.match(/^[a-zA-Z_\-\.0-9]+\.(md|makam)$/))
         throw new Error("dependency " + dependency.filename + " not supported");
       return _promisify(cb =>
         fs.writeFile(

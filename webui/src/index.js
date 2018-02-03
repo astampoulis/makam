@@ -146,18 +146,21 @@ class MakamCodeblock {
   }
 }
 
-var evalMakam = (url, stateBlocks, queryBlock) => {
+var evalMakam = (url, dependencies, stateBlocks, queryBlock) => {
   return fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
+      dependencies,
       stateBlocks: stateBlocks.map(x => x.value()),
       query: queryBlock ? queryBlock.value() : null
     })
   })
     .then(response => {
+      if (response.status >= 400)
+        throw new Error("error with makam web service");
       return response.json();
     })
     .then(json => {
@@ -188,12 +191,20 @@ var evalMakam = (url, stateBlocks, queryBlock) => {
 };
 
 export default class LiterateWebUI {
-  constructor(options = { stateBlocksEditable: false, env: "prod" }) {
+  constructor(
+    options = {
+      stateBlocksEditable: false,
+      env: "prod",
+      urlOfDependency: filename => new URL(filename, document.baseURI).href
+    }
+  ) {
     this.stateBlocks = [];
     this.queryBlock = null;
     this.otherBlocks = [];
     this.options = options;
     this.makamURL = makamWebServiceURLs[options.env];
+    this.dependenciesPromise = null;
+    this.urlOfDependency = options.urlOfDependency;
   }
 
   initialize() {
@@ -257,6 +268,7 @@ export default class LiterateWebUI {
       });
     const hasQueryBlock = this.queryBlock ? true : false;
     if (this.stateBlocks.length == 0 && !hasQueryBlock) return;
+    this.dependenciesPromise = this.getDependencies();
     render(
       <WebUIControls
         editEnabled={hasQueryBlock}
@@ -273,6 +285,35 @@ export default class LiterateWebUI {
         document.querySelector("#makam-eval").click();
       }
     });
+  }
+
+  allMakamCode() {
+    return []
+      .concat(this.stateBlocks, [this.queryBlock])
+      .map(x => (x ? x.value() : ""))
+      .join("\n");
+  }
+
+  findDependencies() {
+    const code = this.allMakamCode();
+    const useRegexp = /%use "([a-zA-Z_\-\.0-9]+\.(?:md|makam))"/gm;
+    return code.match(useRegexp).map(e => e.replace(useRegexp, "$1"));
+  }
+
+  getDependencies() {
+    return Promise.all(
+      this.findDependencies().map(filename =>
+        fetch(this.urlOfDependency(filename))
+          .then(response => {
+            if (response.status >= 400)
+              throw new Error("could not download dependency " + filename);
+            return response.text();
+          })
+          .then(content => {
+            return { filename, content };
+          })
+      )
+    );
   }
 
   keepQueryScroll(promise) {
@@ -310,10 +351,15 @@ export default class LiterateWebUI {
   }
 
   eval() {
-    return this.keepQueryScroll(() => {
-      this.reset({ animation: false });
-      return evalMakam(this.makamURL, this.stateBlocks, this.queryBlock).then(
-        () => {
+    return this.dependenciesPromise.then(dependencies =>
+      this.keepQueryScroll(() => {
+        this.reset({ animation: false });
+        return evalMakam(
+          this.makamURL,
+          dependencies,
+          this.stateBlocks,
+          this.queryBlock
+        ).then(() => {
           if (!this.queryBlock) return;
           let f = () => null;
           f = () =>
@@ -322,9 +368,9 @@ export default class LiterateWebUI {
               this.queryBlock.codeMirror.off("change", f);
             });
           this.queryBlock.codeMirror.on("change", f);
-        }
-      );
-    });
+        });
+      })
+    );
   }
 
   edit() {
@@ -447,6 +493,7 @@ export const makamWebUIOnLoad = (options = {}) => {
   document.addEventListener("DOMContentLoaded", function() {
     const webUI = new LiterateWebUI(options);
     webUI.initialize();
+    window.webUI = webUI;
   });
 };
 
