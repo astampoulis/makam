@@ -21,7 +21,7 @@
 - [x] webui: queries/errors from deps are silent
 - [x] only deploy when there's a version change
 - [x] fix nested makam parsing
-- [ ] add makam.int_literal
+- [x] add makam.int_literal
 - [ ] webui: general box-shadow and small fix
 - [ ] actual web page using it/webhook to rebuild when changed
 
