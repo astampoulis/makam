@@ -19,4 +19,6 @@
 - [x] webservice: allow passing dependencies
 - [x] webui: fetch dependencies and send them to webservice
 - [x] webui: queries/errors from deps are silent
-- [ ] actual web page using it
+- [x] only deploy when there's a version change
+- [ ] actual web page using it/webhook to rebuild when changed
+

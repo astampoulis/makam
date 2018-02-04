@@ -13,6 +13,7 @@ $(basename $0)                     prints current Makam version
 $(basename $0) npm-test-version    prints version for test npm package
 $(basename $0) update <version>    updates to given version
 $(basename $0) check-if-updated    checks whether a version update is needed
+$(basename $0) has-update          checks whether an update happened in this branch/commit
 
 EOF
 }
@@ -104,5 +105,21 @@ EOF
   fi
 
   ;;
+
+has-update)
+
+  if [[ $(git rev-parse --abbrev-ref HEAD) == master ]]; then
+    PARENT=master^
+  else
+    PARENT=master
+  fi
+  PARENTCOMMIT=$(git rev-list --boundary HEAD...origin/$PARENT | grep "^-" | cut -c2- | head -n 1)
+  PARENTVERSION=$(git show $PARENTCOMMIT:toploop/version.ml | get_version)
+
+  if [[ $PARENTVERSION != $BASEVERSION ]]; then
+    echo true
+  else
+    echo false
+  fi
 
 esac
