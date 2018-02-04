@@ -297,7 +297,8 @@ export default class LiterateWebUI {
   findDependencies() {
     const code = this.allMakamCode();
     const useRegexp = /%use "([a-zA-Z_\-\.0-9]+\.(?:md|makam))"/gm;
-    return code.match(useRegexp).map(e => e.replace(useRegexp, "$1"));
+    const matches = code.match(useRegexp);
+    return matches ? matches.map(e => e.replace(useRegexp, "$1")) : [];
   }
 
   getDependencies() {
