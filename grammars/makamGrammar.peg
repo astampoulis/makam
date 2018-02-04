@@ -626,20 +626,26 @@ lparenthesized(p) ->  x:ltoken("(")^ p:p y:ltoken(")") << { content = p.content 
 
 <<
 
-makam_toplevel_parser :=
-  (fun syntax memocells resetmemo input ->
+let guard_nested_parser parsr =
+  (fun memocells resetmemo input ->
    let oldmemo = !_memotable in
    let oldlr   = LRHash.copy _lrinfo in
-   let res     =
-     match syntax with
-       `Makam -> parse_toplevel memocells resetmemo input
-     | `Markdown -> parse_literate memocells resetmemo input
+   let result  =
+     try
+       `Left(parsr memocells resetmemo input)
+     with exn -> `Right(exn)
    in
    _memotable := oldmemo ;
    LRHash.clear _lrinfo ;
    LRHash.iter (fun k v -> LRHash.add _lrinfo k v) oldlr ;
-   res)
+   match result with `Left(v) -> v | `Right(exn) -> raise exn)
 ;;
 
+makam_toplevel_parser :=
+  (fun syntax memocells resetmemo input ->
+     match syntax with
+       `Makam -> guard_nested_parser parse_toplevel memocells resetmemo input
+     | `Markdown -> guard_nested_parser parse_literate memocells resetmemo input)
+;;
 
 >>
