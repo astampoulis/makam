@@ -18,8 +18,5 @@
 - [x] fix makam --run-tests
 - [x] webservice: allow passing dependencies
 - [x] webui: fetch dependencies and send them to webservice
-- [ ] webui: make sure that query results/errors from dependencies don't show up
+- [x] webui: queries/errors from deps are silent
 - [ ] actual web page using it
-- [ ] check failure on travis and aws account in general
-- [ ] figure out how to download .md's in the same directory (or list out dependencies)
-- [ ] figure out whether we'll push or pull posts to make sure there's no regressions

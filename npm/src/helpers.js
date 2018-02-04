@@ -77,10 +77,9 @@ const parseOutput = (output: string): MakamResult => {
   processed = processed.replace(errorRegexp, "");
   const queryResultRegexp = /^-- Query result in block block[0-9]*, /m;
   let queryResults = processed.split(queryResultRegexp);
-  if (queryResults.length >= 1 && queryResults[0].trim() == "") {
-    queryResults = queryResults.slice(1);
+  if (queryResults.length >= 1) {
+    queryResults = queryResults.slice(1).map(parseQueryResult);
   }
-  queryResults = queryResults.map(parseQueryResult);
 
   return {
     fullOutput: output,
