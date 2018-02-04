@@ -11,7 +11,9 @@
   margin: 5px;
   margin-left: 20px;
   padding: 5px;
+  box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
   -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
 }
 
 .cm-makam-gutter-default {
@@ -81,7 +83,9 @@
   border: 3px solid white;
   background-color: rgba(45,135,195,0.9);
   color: white;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
   -webkit-box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  -moz-box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
   margin-left: 10px;
 }
 
@@ -103,7 +107,9 @@
   background: rgb(53,58,51);
   font-size: 10px;
   color: white;
+  box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
   -webkit-box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
+  -moz-box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
   margin-bottom: 10px;
 }
 
