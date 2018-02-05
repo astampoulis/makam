@@ -62,6 +62,7 @@ jobs:
           name: Prepare production npm package and publish it
           command: |
             if [[ -e skip || $(git rev-parse --abbrev-ref HEAD) != master ]]; then echo 1 > skip-deploy; fi
+            [[ -e skip-deploy ]] || if [[ $(./scripts/makam-version.sh has-update) == false ]]; then echo 1 > skip-deploy; fi
             [[ -e skip-deploy ]] || (set -u; echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc; set +u)
             [[ -e skip-deploy ]] || opam config exec make npm-prod-publish
 
@@ -69,6 +70,11 @@ jobs:
           name: Deploy Makam Lambda
           command: |
             [[ -e skip-deploy ]] || opam config exec make webservice-prod-deploy
+
+      - run: &publish-webui-package
+          name: Publish Makam WebUI package
+          command: |
+            [[ -e skip-deploy ]] || opam config exec make webui-prod-publish
 
 workflows:
   version: 2

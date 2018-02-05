@@ -1,0 +1,39 @@
+{
+  "name": "makam-webui",
+  "version": "0.7.0",
+  "description": "CodeMirror-based WebUI for Makam",
+  "main": "makam-webui.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "yarn webpack"
+  },
+  "files": [
+    "README.md",
+    "makam-webui.js",
+    "makam-codemirror.js"
+  ],
+  "author": "Antonis Stampoulis <antonis.stampoulis@gmail.com>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astampoulis/makam.git"
+  },
+  "dependencies": {
+    "es6-promise": "^4.2.2",
+    "isomorphic-fetch": "^2.2.1",
+    "jump.js": "^1.0.2",
+    "preact": "^8.2.7"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-preact": "^1.1.0",
+    "codemirror": "^5.33.0",
+    "css-loader": "^0.28.9",
+    "prettier": "^1.10.2",
+    "style-loader": "^0.20.1",
+    "webpack": "^3.10.0"
+  }
+}

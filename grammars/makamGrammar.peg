@@ -328,7 +328,7 @@ prologcmd1 ->
            / c:block_mode << fun () -> flush IO.stdout >>
            / repplusV(white)^ << fun () -> () >>
 
-prologcmd  -> c:loced(prologcmd1)
+prologcmd  -> ( repV(white) !white << () >> / epsilon << () >> ) c:loced(prologcmd1)
               << (
                  last_command_span := c.span ;
                  let p = c.content () in
@@ -421,8 +421,10 @@ block_mode -> token("%block-begin.")
 to_EOL -> repV( (![\n] .) ) "\n" << () >>
 
 literate   -> c:rep(literate_line) << () >>
-literate_line -> "```makam\n" c:rep(literate_cmd) repV(white) at_start("```\n") << c >>
-               / !"```makam\n" to_EOL << [] >>
+literate_makam_start -> "```makam\n" << () >>
+                / "```makam-" !"noeval" repplusV(latin1letter) "\n" << () >>
+literate_line -> literate_makam_start c:rep(literate_cmd) repV(white) at_start("```\n") << c >>
+               / !literate_makam_start to_EOL << [] >>
 literate_cmd -> c:cmdflushed repV(white) << c >>
 at_start(p) -> &&( epsilon << fun _ -> let open UChannel in (loc _input).charno == 1 >> )
                c:p << c >>
@@ -538,10 +540,10 @@ latin1char -> &&( . << fun c -> try (ignore (UChar.char_of c); true) with | _ ->
 letterchar -> &&( .
                   << isLetterChar >> )
               a:. << a >>
+latin1letter -> &latin1char c:letterchar << c >>
 digitchar -> a:[0123456789]              << a >>
 num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> int_of_string >>
 eof -> !. ;
-
 
 (* whitespace *)
 comment -> "(*" repV(commentchar) "*)" ;
@@ -551,8 +553,6 @@ whiteNoComment -> &&( . << UString.is_whitespace >>) . ;
 whiteNoNewline -> ![\n] white ;
 
 
-(* identifiers must be latin-1 since they are copied verbatim into the generated OCaml AST as
-   OCaml identifiers *)
 identfstchar -> c:letterchar    << c >>
 identrstchar -> c:(letterchar / digitchar / [_']) << c >>
 identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
@@ -626,20 +626,26 @@ lparenthesized(p) ->  x:ltoken("(")^ p:p y:ltoken(")") << { content = p.content 
 
 <<
 
-makam_toplevel_parser :=
-  (fun syntax memocells resetmemo input ->
+let guard_nested_parser parsr =
+  (fun memocells resetmemo input ->
    let oldmemo = !_memotable in
    let oldlr   = LRHash.copy _lrinfo in
-   let res     =
-     match syntax with
-       `Makam -> parse_toplevel memocells resetmemo input
-     | `Markdown -> parse_literate memocells resetmemo input
+   let result  =
+     try
+       `Left(parsr memocells resetmemo input)
+     with exn -> `Right(exn)
    in
    _memotable := oldmemo ;
    LRHash.clear _lrinfo ;
    LRHash.iter (fun k v -> LRHash.add _lrinfo k v) oldlr ;
-   res)
+   match result with `Left(v) -> v | `Right(exn) -> raise exn)
 ;;
 
+makam_toplevel_parser :=
+  (fun syntax memocells resetmemo input ->
+     match syntax with
+       `Makam -> guard_nested_parser parse_toplevel memocells resetmemo input
+     | `Markdown -> guard_nested_parser parse_literate memocells resetmemo input)
+;;
 
 >>

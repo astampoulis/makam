@@ -56,7 +56,7 @@ cp -f $TOPDIR/README.md $TOPDIR/npm/
 STDLIB_FILES=$(cd $TOPDIR; grep -E --only-matching "stdlib/[^\"]+" opam/files/makam.install | uniq)
 (cd $TOPDIR; rsync --del --archive --del --relative --verbose $STDLIB_FILES npm/)
 
-(cd $TOPDIR/npm; yarn install; yarn build; rm -rf node_modules; yarn install --prod)
+(cd $TOPDIR/npm; yarn install; yarn build)
 
 # Generate result cache for stdlib so that startup time is fast
 (cd $TOPDIR/npm; rm -rf stdlib-cache; echo "" | yarn makam --cache-dir=stdlib-cache)

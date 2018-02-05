@@ -62,6 +62,18 @@ rule string_literal_str (syntax (token (iso
         exact "\""] ) void))).
 peg.inline string_literal_str.
 
+(* int literals *)
+int_literal_char : syntax string.
+syntax.inline int_literal_char.
+syntax.rule int_literal_char (charclass "0123456789").
+
+int_literal_, int_literal : syntax int.
+syntax.rule int_literal_
+   (syntax.transform refl.fromstring
+              "(x) => parseInt(JSON.parse(x))"
+              (pfun res i => tostring i res)
+              [ syntax.captured (char_once_or_many int_literal_char) ]).
+syntax.rule int_literal (syntax.token int_literal_).
 
 (* antiquote *)
 

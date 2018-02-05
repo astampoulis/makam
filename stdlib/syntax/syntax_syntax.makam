@@ -155,4 +155,4 @@ syntax_rules : string -> cmd -> prop.
 syntax_rules RulesS (cmd_many Clauses) :-
   if (syntax.parse_opt syntax_syntax.syndef_many RulesS Rules)
   then map syntax_syntax.syntax_rule_clause Rules Clauses
-  else (log_error RuleS `parsing the syntax rules failed`, failure).
+  else (log_error RulesS `parsing the syntax rules failed`, failure).
