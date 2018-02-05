@@ -13,6 +13,7 @@ $(basename $0)                     prints current Makam version
 $(basename $0) npm-test-version    prints version for test npm package
 $(basename $0) update <version>    updates to given version
 $(basename $0) check-if-updated    checks whether a version update is needed
+$(basename $0) has-update          checks whether an update happened in this branch/commit
 
 EOF
 }
@@ -22,7 +23,7 @@ function get_version() {
 }
 
 function code_changes_from_parent() {
-  git diff-tree -r --name-status $1..HEAD termlang toploop stdlib opam npm/src npm/package.json npm/yarn.lock | grep --invert-match "toploop/version.ml"
+  git diff-tree -r --name-status $1..HEAD termlang grammars toploop stdlib opam npm/src npm/package.json npm/yarn.lock webservice webui | grep --invert-match "toploop/version.ml"
 }
 
 BASEVERSION=$(cat $TOPDIR/toploop/version.ml | get_version)
@@ -63,6 +64,7 @@ update)
   sed -i -r -e "s/^Version:     .*$/Version:     $NEWVERSION/" $TOPDIR/_oasis
   sed -i -r -e "s/^version: \"[^\"]+\"/version: \"$NEWVERSION\"/" $TOPDIR/opam/opam
   sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/npm/package.json
+  sed -i -r -e "s/\"version\": \"[^\"]+\"/\"version\": \"$NEWVERSION\"/" $TOPDIR/webui/package.json
   sed -i -r -e "s/version = \"[^\"]+\"/version = \"$NEWVERSION\"/" $TOPDIR/js/index.html
 
   # Do the source hash update afterwards to make sure that the above gets incorporated
@@ -103,5 +105,21 @@ EOF
   fi
 
   ;;
+
+has-update)
+
+  if [[ $(git rev-parse --abbrev-ref HEAD) == master ]]; then
+    PARENT=master^
+  else
+    PARENT=master
+  fi
+  PARENTCOMMIT=$(git rev-list --boundary HEAD...origin/$PARENT | grep "^-" | cut -c2- | head -n 1)
+  PARENTVERSION=$(git show $PARENTCOMMIT:toploop/version.ml | get_version)
+
+  if [[ $PARENTVERSION != $BASEVERSION ]]; then
+    echo true
+  else
+    echo false
+  fi
 
 esac

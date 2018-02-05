@@ -373,7 +373,7 @@ let main () =
     if Option.is_some !init_state then restore_state (Option.get !init_state) else load_init_files ();
     store_state ();
     List.iter load_file files ;
-    if !run_tests then repl ~input:"run_tests X ?\n" ();
+    if !run_tests then repl ~input:"run_tests X ?" ();
     if not doexit then repl ()
   end handle_error handle_error;
 

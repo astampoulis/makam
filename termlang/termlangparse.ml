@@ -46,7 +46,7 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
      s <-- _PtoString pstr ;
      let getExpr =
        try
-         Some(Peg.parse_of_string MakamGrammar.parse_lexpr s)
+         Some(Peg.parse_of_string (MakamGrammar.guard_nested_parser MakamGrammar.parse_lexpr) s)
        with _ ->
          None
      in

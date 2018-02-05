@@ -16,6 +16,14 @@ all : testsuite. %testsuite all.
 >> Yes:
 >> X := {"hello\"\n" }.
 
+>> syntax.parse_opt makam.int_literal "123" X ?
+>> Yes:
+>> X := 123.
+
+>> syntax.pretty makam.int_literal 123 X ?
+>> Yes:
+>> X := "123 ".
+
 term : type.
 lam : string -> term -> term.
 

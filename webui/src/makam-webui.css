@@ -1,0 +1,133 @@
+.CodeMirror {
+  background: rgb(240,240,240);
+  height: auto;
+}
+
+.cm-makam-annotation {
+  width: 70%;
+  transition: transform 0.5s;
+  border: 1px solid black;
+  border-radius: 5px;
+  margin: 5px;
+  margin-left: 20px;
+  padding: 5px;
+  box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+  -webkit-box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+  -moz-box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+}
+
+.cm-makam-gutter-default {
+  background: rgb(200,200,200);
+  width: 5px !important;
+}
+
+.language-makam .cm-makam-gutter-default,
+.language-makam-input .cm-makam-gutter-default {
+  background: rgb(129,183,219);
+  width: 5px !important;
+}
+
+.cm-makam-gutter-noeval {
+  background: rgb(200,200,200);
+  width: 5px !important;
+}
+
+.cm-makam-gutter-success {
+  background: rgb(171,240,190);
+  width: 5px !important;
+}
+
+.cm-makam-gutter-failure {
+  background: rgb(240,171,172);
+  width: 5px !important;
+}
+
+.makam-error {
+  background: rgb(240,171,172);
+}
+
+.makam-query-result {
+  background: rgb(171,240,190);
+}
+
+.makam-button-container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: inline-block;
+}
+
+.makam-button {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  display: inline-block;
+  text-align: center;
+  font-family: sans;
+}
+
+.makam-button-icon svg {
+  fill: white;
+  width: 25px;
+  height: 25px;
+  margin: 0 auto;
+  margin-top: 12px;
+}
+
+.makam-button .makam-button-icon {
+  transition: background 0.5s;
+  border-radius: 50%;
+  height: 50px;
+  width: 50px;
+  border: 3px solid white;
+  background-color: rgba(45,135,195,0.9);
+  color: white;
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  -webkit-box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  -moz-box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+  margin-left: 10px;
+}
+
+.makam-button:hover .makam-button-icon {
+  background-color: rgba(129,183,219,0.9);
+}
+
+.makam-button:hover .makam-button-icon:active {
+  transition: background 0.1s;
+  background-color: rgba(229,183,219,0.9);
+}
+
+.makam-button .makam-button-label {
+  text-align: center;
+  transition: opacity 0.5s;
+  margin-left: -100px;
+  opacity: 0;
+  padding: 2px;
+  background: rgb(53,58,51);
+  font-size: 10px;
+  color: white;
+  box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
+  -webkit-box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
+  -moz-box-shadow: 2px 2px 3px rgba(0,0,0,0.3);
+  margin-bottom: 10px;
+}
+
+.makam-button:hover .makam-button-label {
+  opacity: 1.0;
+}
+
+.language-makam-hidden {
+  display: none;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating {
+  animation-name: rotation;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+}

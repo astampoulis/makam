@@ -98,6 +98,12 @@ npm-test-publish: prepare-test-npm-package
 npm-prod-publish: prepare-npm-package
 	bash -c "./scripts/publish-npm-package.sh makam-\$$(./scripts/makam-version.sh).tgz"
 
+webui-test-publish:
+	bash -c "./scripts/publish-webui-package.sh"
+
+webui-prod-publish:
+	bash -c "./scripts/publish-webui-package.sh prod"
+
 webservice-test-deploy:
 	bash -c "./scripts/webservice-deploy.sh"
 

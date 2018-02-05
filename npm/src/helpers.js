@@ -19,21 +19,29 @@ export type MakamResult = {
 const parseLocation = (message: string): ?Location => {
   const sameLineRegexp = /line ([0-9]+), characters ([0-9]+)-([0-9]+)/m;
   const spansLineRegexp = /line ([0-9]+), character ([0-9]+) to line ([0-9]+), character ([0-9]+)/m;
+  const singleCharRegexp = /line ([0-9]+), character ([0-9]+)/m;
 
+  const singleMatch = message.match(singleCharRegexp);
   const sameMatch = message.match(sameLineRegexp);
   const spansMatch = message.match(spansLineRegexp);
 
   if (sameMatch) {
     const [_, line, startChar, endChar] = sameMatch;
     return {
-      start: { line: parseInt(line) - 1, char: parseInt(startChar) - 1 },
-      end: { line: parseInt(line) - 1, char: parseInt(endChar) - 1 }
+      start: { line: parseInt(line) - 2, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(line) - 2, char: parseInt(endChar) - 1 }
     };
   } else if (spansMatch) {
     const [_, startLine, startChar, endLine, endChar] = spansMatch;
     return {
-      start: { line: parseInt(startLine) - 1, char: parseInt(startChar) - 1 },
-      end: { line: parseInt(endLine) - 1, char: parseInt(endChar) - 1 }
+      start: { line: parseInt(startLine) - 2, char: parseInt(startChar) - 1 },
+      end: { line: parseInt(endLine) - 2, char: parseInt(endChar) - 1 }
+    };
+  } else if (singleMatch) {
+    const [_, line, char] = singleMatch;
+    return {
+      start: { line: parseInt(line) - 2, char: parseInt(char) - 1 },
+      end: { line: parseInt(line) - 2, char: parseInt(char) - 1 }
     };
   } else {
     return null;
@@ -69,10 +77,9 @@ const parseOutput = (output: string): MakamResult => {
   processed = processed.replace(errorRegexp, "");
   const queryResultRegexp = /^-- Query result in block block[0-9]*, /m;
   let queryResults = processed.split(queryResultRegexp);
-  if (queryResults.length >= 1 && queryResults[0].trim() == "") {
-    queryResults = queryResults.slice(1);
+  if (queryResults.length >= 1) {
+    queryResults = queryResults.slice(1).map(parseQueryResult);
   }
-  queryResults = queryResults.map(parseQueryResult);
 
   return {
     fullOutput: output,

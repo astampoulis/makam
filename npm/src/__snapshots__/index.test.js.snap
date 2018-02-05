@@ -7,11 +7,11 @@ Object {
       "location": Object {
         "end": Object {
           "char": 10,
-          "line": 5,
+          "line": 4,
         },
         "start": Object {
           "char": 6,
-          "line": 5,
+          "line": 4,
         },
       },
       "message": "Variable test with type prop does not exist.",
@@ -31,11 +31,11 @@ helloYes.
       "location": Object {
         "end": Object {
           "char": 9,
-          "line": 4,
+          "line": 3,
         },
         "start": Object {
           "char": 6,
-          "line": 4,
+          "line": 3,
         },
       },
       "message": "helloYes.",
@@ -70,11 +70,11 @@ helloYes.
           "location": Object {
             "end": Object {
               "char": 3,
-              "line": 1,
+              "line": 0,
             },
             "start": Object {
               "char": 0,
-              "line": 1,
+              "line": 0,
             },
           },
           "message": "helloYes.",
@@ -87,11 +87,11 @@ helloYes.
           "location": Object {
             "end": Object {
               "char": 4,
-              "line": 1,
+              "line": 0,
             },
             "start": Object {
               "char": 0,
-              "line": 1,
+              "line": 0,
             },
           },
           "message": "Variable test with type prop does not exist.",
