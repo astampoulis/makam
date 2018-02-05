@@ -190,6 +190,24 @@ var evalMakam = (url, dependencies, stateBlocks, queryBlock) => {
     .catch(console.error);
 };
 
+const _windowHeight = () =>
+  window.innerHeight || document.documentElement.clientHeight;
+
+const _insideWindow = pos => pos >= 0 && pos <= _windowHeight();
+
+const _isFullyIntoView = (offset, rect) =>
+  _insideWindow(offset + rect.top) && _insideWindow(offset + rect.bottom);
+
+const _getFullyIntoView = (offset, rect) => {
+  if (_insideWindow(offset + rect.top)) {
+    if (_insideWindow(offset + rect.bottom)) return offset;
+    else return rect.top;
+  } else if (_insideWindow(offset + rect.bottom)) {
+    if (_isFullyIntoView(rect.top, rect)) return rect.top;
+    else return offset;
+  } else return rect.top;
+};
+
 export default class LiterateWebUI {
   constructor(
     options = {
@@ -237,6 +255,11 @@ export default class LiterateWebUI {
         queryBlockElement,
         queryBlockOptions
       );
+      this.queryBlock.codeMirror.addKeyMap({
+        Esc: () => {
+          document.activeElement.blur();
+        }
+      });
     }
     document
       .querySelectorAll(
@@ -317,16 +340,19 @@ export default class LiterateWebUI {
     );
   }
 
-  keepQueryScroll(promise) {
-    if (!this.queryBlock) return promise();
-
+  queryBlockVisible() {
     const currentRect = this.queryBlock.codeMirror
       .getWrapperElement()
       .getBoundingClientRect();
-    const topVisible = currentRect.top >= 0;
-    const bottomVisible =
-      currentRect.bottom <=
-      (window.innerHeight || document.documentElement.clientHeight);
+    const topVisible = _insideWindow(currentRect.top);
+    const bottomVisible = _insideWindow(currentRect.bottom);
+    return { topVisible, bottomVisible, currentRect };
+  }
+
+  keepQueryScroll(promise) {
+    if (!this.queryBlock) return promise();
+
+    const { topVisible, bottomVisible } = this.queryBlockVisible();
     if (!topVisible && !bottomVisible) return promise();
 
     const currentCursor = this.queryBlock.codeMirror.getCursor();
@@ -340,13 +366,10 @@ export default class LiterateWebUI {
         "page"
       ).top;
       let scrollAmount = newPos - currentPos;
-      if (topVisible && bottomVisible) {
-        const newRect = this.queryBlock.codeMirror
-          .getWrapperElement()
-          .getBoundingClientRect();
-        if (newRect.bottom > currentRect.bottom)
-          scrollAmount += newRect.bottom - currentRect.bottom;
-      }
+      const newRect = this.queryBlock.codeMirror
+        .getWrapperElement()
+        .getBoundingClientRect();
+      scrollAmount = _getFullyIntoView(scrollAmount, newRect);
       jump(scrollAmount, { duration: 100 });
     });
   }
@@ -393,17 +416,9 @@ export default class LiterateWebUI {
   focusOnQuery() {
     if (!this.queryBlock) return;
 
+    const { topVisible, bottomVisible, currentRect } = this.queryBlockVisible();
+    jump(_getFullyIntoView(0, currentRect), { duration: 400 });
     this.queryBlock.codeMirror.focus();
-
-    const currentRect = this.queryBlock.codeMirror
-      .getWrapperElement()
-      .getBoundingClientRect();
-    const topVisible = currentRect.top >= 0;
-    const bottomVisible =
-      currentRect.bottom <=
-      (window.innerHeight || document.documentElement.clientHeight);
-    if (!topVisible && !bottomVisible)
-      jump(this.queryBlock.codeMirror.getWrapperElement(), { duration: 400 });
   }
 }
 
@@ -494,7 +509,6 @@ export const makamWebUIOnLoad = (options = {}) => {
   document.addEventListener("DOMContentLoaded", function() {
     const webUI = new LiterateWebUI(options);
     webUI.initialize();
-    window.webUI = webUI;
   });
 };
 
