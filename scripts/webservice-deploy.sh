@@ -31,7 +31,6 @@ elif [[ ${1:x} == "prod" ]]; then
 
 elif [[ ${1:-x} == "x" ]]; then
 
-  DO_BUILD=1
   PACKAGE_VERSION=$(cd $TOPDIR; ./scripts/makam-version.sh npm-test-version)
 
 else

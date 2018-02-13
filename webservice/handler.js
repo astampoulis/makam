@@ -20,21 +20,6 @@ const _saveToS3 = (filename, content) => {
     .promise();
 };
 
-const _loadFromS3 = (filename, filepath) => {
-  return s3
-    .getObject({
-      Bucket: process.env.MAKAM_CACHE_BUCKET,
-      Key: `v${makamVersion}/${filename}.gz`
-    })
-    .promise()
-    .then(result =>
-      result
-        .createReadStream()
-        .pipe(zlib.createGunzip())
-        .pipe(filepath)
-    );
-};
-
 const _promisify = f => {
   return new Promise((resolve, reject) => {
     f((error, result) => {
@@ -45,6 +30,17 @@ const _promisify = f => {
       }
     });
   });
+};
+
+const _loadFromS3 = (filename, filepath) => {
+  return s3
+    .getObject({
+      Bucket: process.env.MAKAM_CACHE_BUCKET,
+      Key: `v${makamVersion}/${filename}.gz`
+    })
+    .promise()
+    .then(gzData => _promisify(cb => zlib.gunzip(gzData.Body, cb)))
+    .then(data => _promisify(cb => fs.writeFile(filepath, data, cb)));
 };
 
 const _saveDependencies = dependencies => {

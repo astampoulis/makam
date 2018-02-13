@@ -6,7 +6,7 @@ set -o pipefail
 TOPDIR=$(git rev-parse --show-toplevel)
 
 function sourceHash() {
-  SOURCE_FILES=$(cd $TOPDIR; git ls-files | grep -E "((^opam)|(\.(ml|ml4|peg)$))" | grep -E --invert-match "(setup|version)\.ml$")
+  SOURCE_FILES=$(cd $TOPDIR; git ls-files | grep -E "\.(ml|ml4|peg)$" | grep -E --invert-match "(setup|version)\.ml$")
   (cd $TOPDIR; find $SOURCE_FILES -print0 | xargs -0 shasum | sort | shasum | cut -f 1 -d' ')
 }
 

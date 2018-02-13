@@ -582,6 +582,10 @@ eyes@0.1.x:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/eyes/-/eyes-0.1.8.tgz#62cf120234c683785d902348a800ef3e0cc20bc0"
 
+fast-levenshtein@^2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
+
 fd-slicer@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/fd-slicer/-/fd-slicer-1.0.1.tgz#8b5bcbd9ec327c5041bf9ab023fd6750f1177e65"
@@ -1455,9 +1459,9 @@ serverless-s3-remover@^0.4.1:
     chalk "^2.1.0"
     prompt "^1.0.0"
 
-serverless@^1.25.0:
-  version "1.25.0"
-  resolved "https://registry.yarnpkg.com/serverless/-/serverless-1.25.0.tgz#23922d6514fcd9217d2740a52ba17c696734fb23"
+serverless@^1.26.0:
+  version "1.26.0"
+  resolved "https://registry.yarnpkg.com/serverless/-/serverless-1.26.0.tgz#cd46345a25d9fdd6c7a9c1da95251de39053ddae"
   dependencies:
     "@serverless/fdk" "^0.5.1"
     apollo-client "^1.9.2"
@@ -1468,6 +1472,7 @@ serverless@^1.25.0:
     chalk "^2.0.0"
     ci-info "^1.1.1"
     download "^5.0.2"
+    fast-levenshtein "^2.0.6"
     filesize "^3.3.0"
     fs-extra "^0.26.7"
     get-stdin "^5.0.1"
