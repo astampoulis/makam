@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    docker:
+    docker: &base-image
       - image: ocaml/opam:ubuntu-16.04_ocaml-4.04.2
     environment:
       - TERM: "xterm"
@@ -75,9 +75,24 @@ jobs:
           name: Publish Makam WebUI package
           command: |
             [[ -e skip-deploy ]] || opam config exec make webui-prod-publish
+  check-other-repos:
+    docker: *base-image
+    steps:
+      - run:
+          name: Force CircleCI build of website-source
+          command: |
+            echo ${CIRCLECI_TOKEN_WEBSITE_SOURCE};
+            curl -u ${CIRCLECI_TOKEN_WEBSITE_SOURCE}: \
+              -d build_parameters[CIRCLE_JOB]=test \
+              https://circleci.com/api/v1.1/project/github/astampoulis/website-source/tree/master
 
 workflows:
   version: 2
   test-and-deploy:
     jobs:
       - build
+      - check-other-repos:
+          filters:
+            branches:
+              only:
+                - master

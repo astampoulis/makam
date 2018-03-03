@@ -423,9 +423,18 @@ to_EOL -> repV( (![\n] .) ) "\n" << () >>
 literate   -> c:rep(literate_line) << () >>
 literate_makam_start -> "```makam\n" << () >>
                 / "```makam-" !"noeval" repplusV(latin1letter) "\n" << () >>
-literate_line -> literate_makam_start c:rep(literate_cmd) repV(white) at_start("```\n") << c >>
-               / !literate_makam_start to_EOL << [] >>
-literate_cmd -> c:cmdflushed repV(white) << c >>
+literate_makam_end -> at_start("```\n") << () >>
+
+literate_line -> literate_makam_start
+                 startloc:(epsilon << UChannel.loc _input >>)
+                 cs:rep( (!literate_makam_end c:. << c >>) )
+                 literate_makam_end
+                 << Peg.parse_of_string ~initloc:startloc
+                                        (!makam_toplevel_parser `Makam)
+                                        (UString.to_string (UString.implode cs))
+                 >>
+               / !literate_makam_start to_EOL << () >>
+
 at_start(p) -> &&( epsilon << fun _ -> let open UChannel in (loc _input).charno == 1 >> )
                c:p << c >>
 

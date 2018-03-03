@@ -1,2 +1,2 @@
-let version = "0.7.1" ;;
-let source_hash = "ab5b2b2d664254ef108e8a5da9f0fad842172786";;
+let version = "0.7.2" ;;
+let source_hash = "2312d98d03b75c9a2b587f01fb5968fbd159f301";;
