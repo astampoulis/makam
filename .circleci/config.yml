@@ -81,7 +81,6 @@ jobs:
       - run:
           name: Force CircleCI build of website-source
           command: |
-            echo ${CIRCLECI_TOKEN_WEBSITE_SOURCE};
             curl -u ${CIRCLECI_TOKEN_WEBSITE_SOURCE}: \
               -d build_parameters[CIRCLE_JOB]=test \
               https://circleci.com/api/v1.1/project/github/astampoulis/website-source/tree/master
