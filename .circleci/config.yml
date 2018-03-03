@@ -92,6 +92,8 @@ workflows:
     jobs:
       - build
       - check-other-repos:
+          requires:
+            - build
           filters:
             branches:
               only:
