@@ -23,4 +23,9 @@ testcase makam_core :- eq { test other markers > } " test other markers > ".
 testcase makam_core :- eq { test other markers { } " test other markers { ".
 testcase makam_core :- eq {{ test other markers } }} " test other markers } ".
 
+(* Tests for pfun *)
+
+testcase makam_core :- ((pfun [X] X => eq X 1) 1).
+testcase makam_core :- eq X 2, ((pfun [X Y] (X, Y) => eq X 1) (1, 3)).
+testcase makam_core :- (x:string -> ((pfun y [X] => eq X x) 1)).
 
