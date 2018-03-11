@@ -121,5 +121,10 @@ has-update)
   else
     echo false
   fi
+  ;;
+
+*)
+  usage
+  exit 1
 
 esac

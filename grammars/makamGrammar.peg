@@ -208,10 +208,15 @@ annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >>
 
 typ  -> t:ltyp << t.content >>
 
-ltyp  -> s:ltoken("[") adhoc:repWHITE(token(ident)) e:ltoken("]") t:lmonotyp
-        << let adhoc = { content = adhoc ; span = s ---> e } in
-           autospan_bin _tForallAdhoc adhoc t >>
-      / t:lmonotyp << t >>
+adhoc -> s:ltoken("[") a:repWHITE(token(ident)) e:ltoken("]")
+         << let a = { content = a ; span = s ---> e } in
+            autospan_bin _tForallAdhoc a >>
+       / epsilon << fun x -> x >>
+
+ltyp  -> a:adhoc t:lmonotyp << a t >>
+       / a:adhoc ts:repplusWHITE(typebinding) token("->") t:lmonotyp
+         << let base = List.fold_right (autospan_bin _tArrow) (List.flatten ts) t in
+            a base >>
 
 lmonotyp -> t:multtyp^ token("->") e:lmonotyp     << autospan_bin _tArrow t e >>
           / t:multtyp^                            << t >>
@@ -300,6 +305,9 @@ newvar   -> id:ltoken(ident^) token(":") t:basetyp token("->") << { content = (i
 (* commands *)
 def       -> ids:repplusSEP(token(ident^), ",")  token(":") t:typ
              << List.map (fun x -> x, t) ids >>
+
+typebinding -> token("(") ids:repplusWHITE(ltoken(identnamed)) token(":") t:lmonotyp token(")")
+           << List.map (fun _ -> t) ids >>
 
 (* base/profiling versions *)
 
