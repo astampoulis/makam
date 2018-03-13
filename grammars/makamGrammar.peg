@@ -111,6 +111,14 @@ let enclosed_flip s =
     ) |> UString.of_string
   in
   s |> UString.explode |> List.map flip_char |> List.rev |> List.map UString.to_string |> String.concat "" |> UString.of_string;;
+
+let current_metas = ref [];;
+
+let mkNewmetas s bindings body =
+  let bindings = match bindings with hd :: tl -> { hd with span = s ---> hd } :: tl | _ -> bindings in
+  List.fold_right
+    (fun binding body -> mkTm "newmeta" [ autospan_bin mkLamO binding body ])
+    bindings body
 >>
 
 (* term language *)
@@ -130,10 +138,13 @@ lexpr -> fn:lkeyword("fun") bindings:repplusWHITE(binding) token("=>") body:lexp
 
        / fn:lkeyword("pfun")
          bindings:repWHITE(binding)
-         introMetas:newmetas
+         resetMetas:( epsilon << current_metas := [] >> )
+         s:loced(epsilon)
          destructurings:repWHITE(baseexpr)
+         newvars:( epsilon << List.map (fun x -> { x with content = (x.content, None) }) (List.rev !current_metas) >> )
          token("=>") body:prop
-        << let destructBindings =
+        << let introMetas = mkNewmetas s newvars in
+           let destructBindings =
              List.mapi (fun i destr -> { content = ("~destruct" ^ (string_of_int i), None); span = destr.span }) destructurings
            in
            let destructVars =
@@ -164,7 +175,11 @@ namepref -> "^n" / "ⁿ" ;
 
 baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
           / id:ltoken(("_" x:ident << "_" ^ x >> / "_" << "_" >>))
-            << autospan_un mkCapturingVar id >>
+            << current_metas := id :: !current_metas ;
+               autospan_un mkCapturingVar id >>
+          / id:ltoken(metaident)
+            << current_metas := id :: !current_metas ;
+               autospan_un mkVar id >>
           / id:ltoken(identnamed)  << autospan_un mkVar id >>
           / x:ltoken( ( namepref id:ident << id >>) ) << autospan_un mkNameVar x >>
           / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>
@@ -263,12 +278,7 @@ prop     -> bf:newmetas ps:repplusSEP(hyp, ",") endspan:loced(epsilon)
                bf p >>
 
 newmetas -> s:ltoken("[") bindings:repplusWHITE(binding) token("]")
-            << fun body ->
-                 let bindings = List.flatten bindings in
-                 let bindings = match bindings with hd :: tl -> { hd with span = s ---> hd } :: tl | _ -> bindings in
-                 List.fold_right
-                   (fun binding body -> mkTm "newmeta" [ autospan_bin mkLamO binding body ])
-                   bindings body >>
+            << mkNewmetas s (List.flatten bindings) >>
           / epsilon << fun x -> x >>
 
 hyp      -> token(keyword("if")) ifh:hyp1 token(keyword("then")) thenh:hyp1 token(keyword("else")) elseh:hyp
@@ -594,6 +604,11 @@ identrstchar -> c:(letterchar / digitchar / [_']) << c >>
 identaux     -> c:identfstchar cs:rep(identrstchar) << UString.implode (c :: cs) |> UString.to_string >>
 ident        -> &&( identaux^ << fun x -> not (StringSet.mem x _KEYWORDS) >> ) id:identaux^ << id >>
 keyword(p)   -> &&( identaux^ << fun x -> StringSet.mem x _KEYWORDS >>) x:p << x >>
+
+metaidentfstchar -> &&( letterchar << UString.is_uppercase >> )
+                    c:letterchar   << c >>
+metaident        -> c:metaidentfstchar cs:rep(identrstchar)
+                   << UString.implode (c :: cs) |> UString.to_string >>
 
 cmdnamefstchar -> &latin1char c:letterchar    << c >>
 cmdnamerstchar -> &latin1char c:(letterchar / digitchar / [_'-]) << c >>
