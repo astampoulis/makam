@@ -322,4 +322,9 @@ change_ X Y <- plus X 1 Y.
 >> Yes:
 >> Y := ("b", 16, (fun (x : string) => x), (fun (x : string) => 13)).
 
+(* -------------------- forall *)
+
+forall : testsuite.
+testcase forall :- eq X @eq, instantiate X X', X' 1 1, instantiate X X'', X'' "foo" "foo".
+
 %end.

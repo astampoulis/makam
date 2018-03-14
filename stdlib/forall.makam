@@ -1,0 +1,10 @@
+forall : type -> type -> type.
+
+mkforall : A -> forall B C.
+instantiate : [C] forall A B -> C -> prop.
+
+instantiate (mkforall Term) Term' :-
+  dyn.poly Term Term'.
+
+apply : forall A B -> X -> Y -> prop.
+apply P X Y :- instantiate P P', P' X Y.
