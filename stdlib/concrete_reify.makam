@@ -1,0 +1,84 @@
+concretereif : type.
+
+%extend concretereif.
+
+unifvar : string -> list concretereif -> concretereif.
+term : string -> list concretereif -> concretereif.
+const : A -> concretereif.
+lambda : string -> concretereif -> concretereif.
+
+convert_list_to_string : map string dyn -> list concretereif -> map string dyn -> string -> prop.
+convert_to_string : map string dyn -> concretereif -> map string dyn -> string -> prop.
+
+convert_list_to_string Unifs [] Unifs "".
+convert_list_to_string Unifs (HD :: TL) Unifs'' S' :-
+  convert_to_string Unifs HD Unifs' HD_S,
+  convert_list_to_string Unifs' TL Unifs'' TL_S,
+  expansion.str `${HD_S} ${TL_S}` S'.
+
+convert_to_string Unifs (unifvar C_X C_Args) Unifs'' S' :-
+  convert_list_to_string Unifs C_Args Unifs' S,
+  if (map.elem Unifs C_X) then (eq Unifs' Unifs'') else (eq Unifs'' ((C_X, dyn X) :: Unifs')),
+  expansion.str `(reified_unif_${C_X} ${S})` S'.
+convert_to_string Unifs (term C_Hd C_Args) Unifs' S' :-
+  convert_list_to_string Unifs C_Args Unifs' S,
+  expansion.str `(${C_Hd} ${S})` S'.
+convert_to_string Unifs (const S) Unifs S' :-
+  tostring S S'.
+convert_to_string Unifs (lambda X Body) Unifs' S' :-
+  convert_to_string Unifs Body Unifs' S,
+  expansion.str `(fun ${X} => ${S})` S'.
+
+(* this is gross, but that's the only way to make sure that we preserve the
+   same constant overloading behavior as normal Makam *)
+
+add_unifs : map string dyn -> string -> string -> prop.
+add_unifs [] S S.
+add_unifs ((C_X, _) :: Unifs') S S'' :-
+  add_unifs Unifs' S S',
+  expansion.str `(fun reified_unif_${C_X} => ${S'})` S''.
+
+apply_unifs : [A B] map string dyn -> A -> B -> prop.
+apply_unifs [] Y Y.
+apply_unifs ((_, dyn X) :: Unifs') Y Y' :-
+  apply_unifs Unifs' (Y X) Y'.
+
+reflect : map string dyn -> concretereif -> map string dyn -> A -> prop.
+reflect Unifs X Unifs' (Y: A) :-
+  refl.typstring Y A_S,
+  convert_to_string Unifs X Unifs' S,
+  expansion.str `(${S}: ${A_S})` S',
+  add_unifs Unifs' S' S'',
+  refl.fromstring S'' Y_F,
+  apply_unifs Unifs' Y_F Y.
+
+reflect : concretereif -> A -> prop.
+reflect X Y :- reflect [] X _ Y.
+
+reify : [A] A -> concretereif -> prop.
+reify_head : [A] A -> string -> prop.
+last_reify_head : int -> prop.
+
+last_reify_head 0.
+
+reify (X: A) (unifvar C_X ReifArgs) when refl.decomposeunif X I ArgsDyn :-
+  dyn.to_args ArgsDyn Args,
+  args.map_to_list @reify Args ReifArgs,
+  tostring I X_Idx,
+  expansion.str `ReifUnif_${X_Idx}` C_X.
+
+reify (X: A) (term HeadS ReifArgs) when not(refl.isconst X), refl.headargs X Head ArgsDyn :-
+  dyn.to_args ArgsDyn Args,
+  args.map_to_list @reify Args ReifArgs,
+  if (reify_head Head HeadS) then success else tostring_qualified Head HeadS.
+
+reify X (lambda Var ReifBody) when refl.isfun X :-
+  once(last_reify_head I),
+  plus I 1 I',
+  tostring I X_idx,
+  expansion.str `reif_var_${X_idx}` Var,
+  (x:A -> reify_head x Var -> last_reify_head I' -> reify (X x) ReifBody).
+
+reify X (const X) when refl.isconst X.
+
+%end.

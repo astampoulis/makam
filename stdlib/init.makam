@@ -33,6 +33,7 @@
 
 %use morerefl.
 %use reify.
+%use concrete_reify.
 
 %use vars.
 

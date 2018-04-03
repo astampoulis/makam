@@ -250,6 +250,7 @@ apptyp -> x:loced(typconstr)
 typconstr -> id:ltoken(tident) args:repWHITE(basetyp) << id, args >>
 
 basetyp -> id:ltoken(tident)  << autospan_un (_tVar ~args:[]) id >>
+         / id:ltoken(("_" x:tident << "_" ^ x >>)) << autospan_un (_tVar ~args:[]) id >>
          / id:lkeyword("type")   << { content = { _tType with loc = id.span } ; span = id.span } >>
          / t:lparenthesized(lmonotyp)   << t >>
 

@@ -564,6 +564,7 @@ let addTPoly name loc =
 let validTPolyName s =
   let us = s |> UString.of_string in
   (not (UString.is_empty us)) && (UString.gethd us |> UString.is_uppercase)
+  || (String.starts_with s "_")
 ;;
 
 let findTPoly name loc () =
@@ -706,7 +707,7 @@ let findMeta loc ?(makeNameMeta = false) s =
   let state = !termstate in
   try  Dict.find s state.name_to_meta
   with Not_found ->
-    if not (makeNameMeta || validTPolyName s || s ="_" || String.starts_with s "_") then
+    if not (makeNameMeta || validTPolyName s || s ="_") then
       raise (Not_found);
     let newmeta = state.metas in
     let tp      = if makeNameMeta then !(builtinStringType) else newTMeta loc in

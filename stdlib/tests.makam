@@ -286,6 +286,33 @@ let_in : term -> (term -> term) -> term.
 >> Yes:
 >> X := "world".
 
+(* ------------------- concrete reify *)
+
+concretereif : testsuite. %testsuite concretereif.
+
+>> concretereif.reflect (concretereif.lambda "x" (concretereif.term "cons" [concretereif.term "x" [], concretereif.term "cons" [concretereif.unifvar "X" [], concretereif.term "cons" [ concretereif.const "foo", concretereif.term "cons" [concretereif.unifvar "X" [], concretereif.term "nil" [] ]]]])) W ?
+>> Yes:
+>> W := (fun x => [x, X, "foo", X]).
+
+>> (concretereif.reflect [] (concretereif.unifvar "X" []) _Unifs (W: string), concretereif.reflect _Unifs (concretereif.unifvar "X" []) _Unifs' W2) ?
+>> Yes:
+>> W := X,
+>> W2 := X.
+
+>> (concretereif.reflect [] (concretereif.unifvar "X" []) _Unifs (W: string), concretereif.reflect [] (concretereif.unifvar "X" []) _Unifs' (W2: string)) ?
+>> Yes:
+>> W := X,
+>> W2 := Y.
+
+>> concretereif.reify (fun x => [x, "foo"]) Z ?
+>> Yes:
+>> Z := concretereif.lambda "reif_var_0" (concretereif.term "cons" (cons (concretereif.term "reif_var_0" nil) (cons (concretereif.term "cons" (cons (concretereif.const "foo") (cons (concretereif.term "nil" nil) nil))) nil))).
+
+>> (concretereif.reify (fun x => [x, X, "foo", X]) _Z, concretereif.reflect _Z Y) ?
+>> Yes:
+>> Y := fun x => [x, X', "foo", X'],
+>> X := X.
+
 (* ------------------- dependent bind *)
 
 vbindmany : testsuite. %testsuite vbindmany.
