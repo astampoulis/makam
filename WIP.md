@@ -1,3 +1,3 @@
 - [x] add concrete.reflect and concrete.reify
-- [ ] syntax of syntax parses into concrete AST
+- [x] syntax of syntax parses into concrete AST
 - [ ] new syntax of syntax
