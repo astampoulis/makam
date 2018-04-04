@@ -72,6 +72,10 @@ reify (X: A) (term HeadS ReifArgs) when not(refl.isconst X), refl.headargs X Hea
   args.map_to_list @reify Args ReifArgs,
   if (reify_head Head HeadS) then success else tostring_qualified Head HeadS.
 
+(* handle full eta-expansion case of constant specially *)
+reify X (term HeadS []) when refl.isfun X, args.applyfull X Args X_Body, refl.headargs X_Body Head _, eq X Head :-
+  if (reify_head Head HeadS) then success else tostring_qualified Head HeadS.
+
 reify X (lambda Var ReifBody) when refl.isfun X :-
   once(last_reify_head I),
   plus I 1 I',

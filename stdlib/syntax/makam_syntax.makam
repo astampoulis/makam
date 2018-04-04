@@ -77,81 +77,29 @@ syntax.rule int_literal_
 `(syntax.def_js int_literal (syntax.token int_literal_)).
 
 
-(* antiquote *)
-
-antiquote : peg string -> peg A.
-peg.inline (antiquote _).
-peg.rule (antiquote P) (transform refl.fromstring "JSON.parse" [ peg.captured P ]).
-
 (* makam terms *)
 
-term : int -> pretty A.
-term_str : int -> peg string.
-term_args_str : peg string.
+term : int -> syntax concretereif.
+term_args : syntax (list concretereif).
 
-term : syntax A.
-syntax.rule term (iso (antiquote (term_str 0)) (term 0)).
+syntax.rule (term 0)
+            (syntax.apply concretereif.lambda
+            [ token_id ident "fun", syntax.captured ident, token "=>", syntax.captured (term 0) ]).
+syntax.rule (term 0) (term 1).
+syntax.rule (term 1)
+            (syntax.apply concretereif.term
+            [ syntax.captured ident, syntax.captured term_args ]).
+syntax.rule (term 1) (term 2).
+syntax.rule (term 2) (syntax.apply (fun id => concretereif.term id []) [ syntax.captured ident ]).
+syntax.rule (term 2) (syntax.apply concretereif.const [ syntax.captured string_literal ]).
+syntax.rule (term 2) (syntax.apply concretereif.const [ syntax.captured int_literal ]).
+syntax.rule (term 2) (syntax.apply (fun x => x) [ token "(", syntax.captured (term 0), token ")" ]).
 
-(* makam terms: parsing *)
+syntax.rule term_args (syntax.apply cons [ syntax.captured (term 2), syntax.captured term_args ]).
+syntax.rule term_args (syntax.apply nil []).
 
-peg.rule (term_str 0) (string_transform
-            (fun binder body => `(fun ${binder} => ${body})`)
-            [ syntax (token_id ident "fun"), peg.captured (syntax ident), syntax (token "=>"), peg.captured (term_str 0) ]).
-peg.rule (term_str 0) (term_str 1).
-peg.rule (term_str 1) (string_transform
-            (fun hd args => `(${hd} ${args})`)
-            [ peg.captured (term_str 2), peg.captured term_args_str ]).
-peg.rule (term_str 1) (term_str 2).
-peg.rule (term_str 2) (syntax ident).
-peg.rule (term_str 2) (string_literal_str).
-peg.rule (term_str 2) (apply (fun x => x) [ syntax (token "("), peg.captured (term_str 0), syntax (token ")") ]).
-
-peg.rule term_args_str (string_transform
-            (fun hd tl => `${hd} ${tl}`)
-            [ peg.captured (term_str 2), peg.captured term_args_str ]).
-peg.rule term_args_str (apply "" []).
-
-
-(* makam terms: printing *)
-
-lambda : pretty (A -> B).
-pretty.builtin lambda.
-
-string_of_head, string_of_var : [A] A -> string -> prop.
-string_of_head X Y :- if (string_of_var X Y) then success else tostring_qualified X Y.
-
-lambda_depth : fluid int.
-`( fluid.set lambda_depth 0 ).
-
-pretty.pretty lambda (F: A -> B) Res :-
-  not(refl.isbasehead F),
-  fluid.get lambda_depth N,
-  tostring N NS,
-  expansion.str `anon${NS}` X_S,
-  fluid.inc lambda_depth {prop|
-    (x:A -> string_of_var x X_S -> (
-      if (pretty.pretty (term 0) (F x) (some R))
-      then (expansion.str `fun ${X_S} => ${R}` R', eq Res (some R'))
-      else eq Res none)) |}.
-
-pretty.rule (term 0) lambda.
-pretty.rule (term 0) (term 1).
-
-term_arg : pretty A.
-pretty.rule term_arg (unapply dyn [ pretty.captured (term 2) ]).
-pretty.rule (term 1)
-     (untransform
-            (pfun hd args input => refl.headargs input hd args)
-            [ pretty.captured (term 2), pretty.captured (many term_arg) ]).
-pretty.rule (term 1) (term 2).
-
-pretty.rule (term 2)
-     (untransform (pfun str x => string_of_head x str)
-       [ pretty.captured (syntax ident) ]).
-pretty.rule (term 2) (syntax string_literal).
-pretty.rule (term 2)
-            (unapply (fun x => x) [ syntax (token "("), pretty.captured (term 0), syntax (token ")") ]).
-
+term : syntax concretereif.
+`( syntax.def_js term (term 0) ).
 
 (* makam types *)
 

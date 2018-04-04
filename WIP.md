@@ -1,3 +1,4 @@
 - [x] add concrete.reflect and concrete.reify
-- [x] syntax of syntax parses into concrete AST
+- [x] syntax of makam and syntax parses into concrete AST
+- [ ] forget about consignored/conscaptured and magic
 - [ ] new syntax of syntax
