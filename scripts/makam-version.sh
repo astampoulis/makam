@@ -23,7 +23,7 @@ function get_version() {
 }
 
 function code_changes_from_parent() {
-  git diff-tree -r --name-status $1..HEAD termlang grammars toploop stdlib opam npm/src npm/package.json npm/yarn.lock webservice webui | grep --invert-match "toploop/version.ml"
+  git diff-tree -r --name-status $1..HEAD termlang grammars toploop stdlib opam npm/src npm/package.json npm/yarn.lock webservice/*.js webui | grep --invert-match "toploop/version.ml"
 }
 
 BASEVERSION=$(cat $TOPDIR/toploop/version.ml | get_version)
