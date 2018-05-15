@@ -147,61 +147,46 @@ let calculate_grow_size available needed old_len =
 
 ;;
 
-
 type bidx = int ;;
 
-let grow_start ((s, bstart, bend, algn) as x) needed = 
-
-  let old_len = String.length (BatUTF8.to_string_unsafe s) in
-  let howmuch = calculate_grow_size (BatUTF8.ByteIndex.to_int bstart) needed old_len in
-  let bstart' = BatUTF8.ByteIndex.to_int bstart in
-  let bend'   = BatUTF8.ByteIndex.to_int bend in
-  if howmuch > 0 then begin
-    let new_s = String.create (String.length (BatUTF8.to_string_unsafe s) + howmuch) in
+let prepend_bytes ((s, bstart, bend, algn) as x) bytes =
+  if bytes = "" then x
+  else begin
+    let needed = String.length bytes in
+    let old_len = String.length (BatUTF8.to_string_unsafe s) in
+    let howmuch = calculate_grow_size (BatUTF8.ByteIndex.to_int bstart) needed old_len in
+    let bstart' = BatUTF8.ByteIndex.to_int bstart in
+    let bend'   = BatUTF8.ByteIndex.to_int bend in
     let s' = BatUTF8.to_string_unsafe s in
-    String.blit s' bstart' new_s (bstart'+howmuch) (bend' - bstart') ;
+    let new_s =
+      let buf = Bytes.create (String.length s' + howmuch) in
+      String.blit bytes 0 buf (bstart' - needed) needed;
+      String.blit s' bstart' buf (bstart'+howmuch) (bend' - bstart') ;
+      (* unsafe_to_string: we can safely transfer unique ownership of 'buf' here *)
+      Bytes.unsafe_to_string buf in
     (BatUTF8.of_string_unsafe new_s,
-     BatUTF8.ByteIndex.of_int_unsafe (bstart'+howmuch), BatUTF8.ByteIndex.of_int_unsafe (bend'+howmuch),
+     BatUTF8.ByteIndex.of_int_unsafe (bstart'+howmuch),
+     BatUTF8.ByteIndex.of_int_unsafe (bend'+howmuch),
      algn)
-  end else x ;;
+  end ;;
 
-let grow_end  ((s, bstart, bend, algn) as x) needed =
-  
-  let old_len = String.length (BatUTF8.to_string_unsafe s) in
-  let howmuch = calculate_grow_size (old_len - BatUTF8.ByteIndex.to_int bend) needed old_len in
-  let bstart' = BatUTF8.ByteIndex.to_int bstart in
-  let bend'   = BatUTF8.ByteIndex.to_int bend in
-  if howmuch > 0 then begin
-    let new_s = String.create (String.length (BatUTF8.to_string_unsafe s) + howmuch) in
+let append_bytes  ((s, bstart, bend, algn) as x) bytes =
+  if bytes = "" then x
+  else begin
+    let needed = String.length bytes in
+    let old_len = String.length (BatUTF8.to_string_unsafe s) in
+    let howmuch = calculate_grow_size (old_len - BatUTF8.ByteIndex.to_int bend) needed old_len in
+    let bstart' = BatUTF8.ByteIndex.to_int bstart in
+    let bend'   = BatUTF8.ByteIndex.to_int bend in
     let s' = BatUTF8.to_string_unsafe s in
-    String.blit s' bstart' new_s bstart' (bend' - bstart') ;
+    let new_s =
+      let buf = Bytes.create (String.length s' + howmuch) in
+      String.blit s' bstart' buf bstart' (bend' - bstart') ;
+      String.blit bytes 0 buf bend' needed;
+      (* unsafe_to_string: we can safely transfer unique ownership of 'buf' here *)
+      Bytes.unsafe_to_string buf in
     (BatUTF8.of_string_unsafe new_s, bstart, bend, algn)
-  end else x ;;
-
-let append_bytes s bytes =
-  
-  let n = String.length bytes in
-  let s' = grow_end s n in
-  let (x, bstart, bend, _) = s' in
-  let x' = BatUTF8.to_string_unsafe x in
-  let bend' = BatUTF8.ByteIndex.to_int bend in
-  String.blit bytes 0 x' bend' n ;
-  (BatUTF8.of_string_unsafe x', bstart, BatUTF8.ByteIndex.of_int_unsafe (bend' + n), false)
-
-;;
-
-
-let prepend_bytes s bytes =
-
-  let n = String.length bytes in
-  let s' = grow_start s n in
-  let (x, bstart, bend, _) = s' in
-  let x' = BatUTF8.to_string_unsafe x in
-  let bstart' = BatUTF8.ByteIndex.to_int bstart in
-  String.blit bytes 0 x' (bstart' - n) n ;
-  (BatUTF8.of_string_unsafe x', BatUTF8.ByteIndex.of_int_unsafe (bstart' - n), bend, false)
-
-;;  
+    end ;;
 
 let append_uchar ((_,_,_,algn) as s) u =
   if not algn then failwith "appending to unaligned ustring"
@@ -219,7 +204,7 @@ let prepend_uchar ((_,_,_,algn) as s) u =
 
 
 let mkempty bstart bend =
-  BatUTF8.of_string_unsafe (String.create (bstart+bend)),
+  BatUTF8.of_string_unsafe (String.make (bstart+bend) '\000'),
   BatUTF8.ByteIndex.of_int_unsafe bstart,
   BatUTF8.ByteIndex.of_int_unsafe bstart,
   true
