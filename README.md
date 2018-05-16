@@ -87,7 +87,7 @@ add `$(pwd)/node_modules/.bin` to your path.)
 #### TL;DR
 
 - [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
-- `opam switch 4.06.1`
+- `opam switch 4.06.0`
 - `eval $(opam config env)`
 - [Node.js 8.x](https://nodejs.org/en/download/)
 - `opam pin add makam . --no-action`
@@ -106,8 +106,8 @@ available at:
 
 <http://opam.ocaml.org/doc/Quick_Install.html>
 
-We have been testing using the OCaml 4.06.1 configuration, which you can switch
-to with `opam switch 4.06.1` after you have installed OPAM. Make sure you have
+We have been testing using the OCaml 4.06.0 configuration, which you can switch
+to with `opam switch 4.06.0` after you have installed OPAM. Make sure you have
 also loaded the needed environment variables with `eval $(opam config env)`.
 
 Makam also depends on Node.js, which is used for optimized parser

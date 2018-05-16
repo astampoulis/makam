@@ -8,7 +8,7 @@ homepage: "http://astampoulis.github.io/"
 dev-repo: "https://github.com/astampoulis/makam.git"
 bug-reports: "https://github.com/astampoulis/makam/issues"
 available: [
-  "ocaml-version" >= "4.06.1"
+  "ocaml-version" >= "4.06.0"
 ]
 substs: [ "makam" ]
 build: [
