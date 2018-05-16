@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker: &base-image
-      - image: ocaml/opam:ubuntu-16.04_ocaml-4.04.2
+      - image: ocaml/opam:ubuntu-16.04_ocaml-4.06.1
     environment:
       - TERM: "xterm"
     steps:
