@@ -14,6 +14,7 @@
     { regex: /[1-9][0-9]*/, token: "number" },
     { regex: /\{[a-z]+\|/, token: "string strong", push: "freequote_brpp" },
     { regex: /\{\{/, token: "string strong", push: "freequote_brbr" },
+    { regex: /\<\</, token: "string strong", push: "freequote_abab" },
     { regex: /\{/, token: "string strong", push: "freequote_br" },
     { regex: /\%[a-z]+/, token: "builtin" },
     comment,
@@ -94,6 +95,11 @@
       { regex: /\}\}/, token: "string strong", pop: true },
       { regex: /[^\}]+/, token: "string" },
       { regex: /\}/, token: "string" }
+    ],
+    freequote_abab: [
+      { regex: /\>\>/, token: "string strong", pop: true },
+      { regex: /[^\>]+/, token: "string" },
+      { regex: /\>/, token: "string" }
     ],
     freequote_br: [
       { regex: /\}/, token: "string strong", pop: true },
