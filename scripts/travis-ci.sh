@@ -25,7 +25,7 @@ fi
 
 # Install OPAM and OCaml
 
-brew install opam --without-ocaml
+brew install opam
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
