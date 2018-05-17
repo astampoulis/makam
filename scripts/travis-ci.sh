@@ -27,8 +27,8 @@ fi
 
 brew install opam
 
-if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
-  (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
+if [ $OCAML_BIN_EXISTS == "yes" ]; then
+  (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz);
 else
   echo hello
   which opam
