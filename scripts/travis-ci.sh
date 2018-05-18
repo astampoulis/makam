@@ -25,15 +25,12 @@ fi
 
 # Install OPAM and OCaml
 
-export OPAMYES=1
-export OCAML_FULL_VERSION=$OPAM_SWITCH
-
 brew install opam || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
-  (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz);
+  (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
 else
-  opam init --comp="$OPAM_SWITCH"
+  opam init --yes --comp="$OPAM_SWITCH"
   mkdir -p travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"
   (export MAIN_DIR=$(pwd); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam)
 fi

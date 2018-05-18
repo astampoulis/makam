@@ -1,11 +1,12 @@
 os: osx
 
 language: node_js
+sudo: required
 node_js: 8
 env:
-  - OPAM_SWITCH=4.06.0
+  - OCAML_VERSION=4.06
 
-install: true
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
 
 script: ./scripts/travis-ci.sh
 
