@@ -165,7 +165,7 @@ let prepend_bytes ((s, bstart, bend, algn) as x) bytes =
       (* unsafe_to_string: we can safely transfer unique ownership of 'buf' here *)
       Bytes.unsafe_to_string buf in
     (BatUTF8.of_string_unsafe new_s,
-     BatUTF8.ByteIndex.of_int_unsafe (bstart'+howmuch),
+     BatUTF8.ByteIndex.of_int_unsafe (bstart'+howmuch-needed),
      BatUTF8.ByteIndex.of_int_unsafe (bend'+howmuch),
      algn)
   end ;;
@@ -185,7 +185,7 @@ let append_bytes  ((s, bstart, bend, algn) as x) bytes =
       String.blit bytes 0 buf bend' needed;
       (* unsafe_to_string: we can safely transfer unique ownership of 'buf' here *)
       Bytes.unsafe_to_string buf in
-    (BatUTF8.of_string_unsafe new_s, bstart, bend, algn)
+    (BatUTF8.of_string_unsafe new_s, bstart, BatUTF8.ByteIndex.of_int_unsafe (bend' + needed), algn)
     end ;;
 
 let append_uchar ((_,_,_,algn) as s) u =
