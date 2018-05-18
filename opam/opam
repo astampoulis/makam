@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "makam"
-version: "0.7.6"
+version: "0.7.7"
 maintainer: "Antonis Stampoulis <antonis.stampoulis@gmail.com>"
 authors: [ "Antonis Stampoulis <antonis.stampoulis@gmail.com>" ]
 license: "GPL-3"
@@ -8,7 +8,7 @@ homepage: "http://astampoulis.github.io/"
 dev-repo: "https://github.com/astampoulis/makam.git"
 bug-reports: "https://github.com/astampoulis/makam/issues"
 available: [
-  "ocaml-version" >= "4.04.2"
+  "ocaml-version" >= "4.06.0"
 ]
 substs: [ "makam" ]
 build: [
@@ -22,6 +22,9 @@ depends: [
   "mtime"
   "uucp"
   "pa_monad_custom"
-  "js_of_ocaml" {< "3.0"}
+  "js_of_ocaml"
+  "js_of_ocaml-ocamlbuild"
+  "js_of_ocaml-camlp4"
+  "js_of_ocaml-compiler"
   "camlp4"
 ]
