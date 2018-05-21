@@ -48,12 +48,12 @@ that includes a pre-compiled Makam binary.
 
   In Ubuntu/Debian Linux:
 
-    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+        curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+        sudo apt-get install -y nodejs
 
   In MacOS X:
 
-    brew install node
+        brew install node
 
   Windows are not supported through this method at this time, as there
   is no pre-compiled binary for this platform in the Node.js package.
@@ -61,21 +61,21 @@ that includes a pre-compiled Makam binary.
 
 - Install the `makam` npm package globally (you might need `sudo`):
 
-    npm install -g makam
+        npm install -g makam
 
 - Clone the Makam repository to have examples locally:
 
-    git clone https://github.com/astampoulis/makam.git
-    cd makam
+        git clone https://github.com/astampoulis/makam.git
+        cd makam
 
 - Use `makam` to run the REPL:
 
-    makam
+        makam
 
 - If you `git pull` a newer version of the repository, make
   sure to also update your Makam installation with:
 
-    npm install -g makam
+        npm install -g makam
 
 (Alternatively, instead of installing Makam globally, you can install
 Makam under `./node_modules` with `npm install makam`, in which case
