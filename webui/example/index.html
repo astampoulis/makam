@@ -10,6 +10,24 @@
   <script src="../makam-webui-bundle.js"></script>
   <script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
 
+  <!-- instead of using the bundle above (which includes CodeMirror and CSS dependencies), you can also use the individual files: -->
+  <!--
+  <script src="https://unpkg.com/codemirror/lib/codemirror.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/codemirror/lib/codemirror.css" />
+  <script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
+  <script src="https://unpkg.com/codemirror/addon/mode/simple.js"></script>
+  <script src="https://unpkg.com/codemirror/addon/runmode/runmode.js"></script>
+  <script src="https://unpkg.com/makam-webui/makam-codemirror.js"></script>
+  <script src="https://unpkg.com/makam-webui/makam-webui.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/makam-webui/makam-webui.css" />
+  <script type="text/javascript">
+    makamWebUIOnLoad({
+      lineNumbers: true,
+      env: "dev"
+    });
+  </script>
+  -->
+
   <style>.CodeMirror { width: 90vw; }</style>
 
 </head>
