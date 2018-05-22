@@ -189,6 +189,10 @@ pretty : [A] syntax A -> A -> string -> prop.
 pretty Syntax Input Result :-
   pretty.pretty (pretty.syntax Syntax) Input (some Result).
 
+run : [A] syntax A -> string -> A -> prop.
+run Stx Str Tm :-
+  if (refl.isunif Str) then syntax.pretty Stx Tm Str else syntax.parse_opt Stx Str Tm.
+
 def_toplevel_js : syntax A -> cmd -> prop.
 def_toplevel_js S (cmd_many [ Parser_Cmd,
                               cmd_newclause IsoCast ]) :-
