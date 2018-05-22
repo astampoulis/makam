@@ -216,6 +216,7 @@ export default class LiterateWebUI {
       urlOfDependency: filename => new URL(filename, document.baseURI).href
     }
   ) {
+    console.log(options);
     this.stateBlocks = [];
     this.queryBlock = null;
     this.otherBlocks = [];
@@ -505,7 +506,7 @@ class LoadingIcon extends Component {
   }
 }
 
-export const makamWebUIOnLoad = (options = {}) => {
+export const makamWebUIOnLoad = (options) => {
   document.addEventListener("DOMContentLoaded", function() {
     const webUI = new LiterateWebUI(options);
     webUI.initialize();

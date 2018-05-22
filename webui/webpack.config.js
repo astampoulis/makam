@@ -1,10 +1,13 @@
 const path = require("path");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: {
+    webui: "./src/webui.js",
+    "webui-bundle": "./src/webui-bundle.js"
+  },
   output: {
     path: __dirname,
-    filename: "makam-webui.js"
+    filename: "makam-[name].js"
   },
   module: {
     rules: [
