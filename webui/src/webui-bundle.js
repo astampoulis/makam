@@ -6,7 +6,6 @@ import RunMode from "codemirror/addon/runmode/runmode";
 import MakamMode from "../makam-codemirror";
 
 import * as WebUI from "./webui";
-import css1 from "codemirror/lib/codemirror.css";
-import css2 from "./makam-webui.css";
+import "./style-bundle.scss";
 
 WebUI.makamWebUIOnLoad(window.makamWebUIOptions);
