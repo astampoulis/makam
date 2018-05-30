@@ -1,8 +1,8 @@
 {
   "name": "makam-webui",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "description": "CodeMirror-based WebUI for Makam",
-  "main": "makam-webui.js",
+  "main": "makam-webui-bundle.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "yarn webpack"
@@ -10,6 +10,7 @@
   "files": [
     "README.md",
     "makam-webui.js",
+    "makam-webui-bundle.js",
     "makam-codemirror.js"
   ],
   "author": "Antonis Stampoulis <antonis.stampoulis@gmail.com>",
@@ -26,14 +27,17 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.1",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-preact": "^1.1.0",
     "codemirror": "^5.33.0",
     "css-loader": "^0.28.9",
+    "node-sass": "^4.9.0",
     "prettier": "^1.10.2",
+    "sass-loader": "^7.0.1",
     "style-loader": "^0.20.1",
-    "webpack": "^3.10.0"
+    "webpack": "^4.10.1",
+    "webpack-cli": "^2.1.4"
   }
 }
