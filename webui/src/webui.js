@@ -209,13 +209,16 @@ const _getFullyIntoView = (offset, rect) => {
 };
 
 export default class LiterateWebUI {
-  constructor(
-    options = {
-      stateBlocksEditable: false,
-      env: "prod",
-      urlOfDependency: filename => new URL(filename, document.baseURI).href
-    }
-  ) {
+  constructor(options) {
+    options = Object.assign(
+      {},
+      {
+        stateBlocksEditable: false,
+        env: "prod",
+        urlOfDependency: filename => new URL(filename, document.baseURI).href
+      },
+      options
+    );
     this.stateBlocks = [];
     this.queryBlock = null;
     this.otherBlocks = [];
@@ -240,6 +243,7 @@ export default class LiterateWebUI {
       )
       .forEach(codeElement => {
         if (codeElement.classList.contains("language-makam-hidden")) {
+          codeElement.parentNode.classList.add("language-makam-hidden");
           this.stateBlocks.push(new HiddenCodeblock(codeElement.parentNode));
         } else {
           this.stateBlocks.push(

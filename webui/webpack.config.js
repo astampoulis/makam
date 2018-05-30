@@ -1,10 +1,14 @@
 const path = require("path");
 
 module.exports = {
-  entry: "./src/index.js",
+  mode: "development",
+  entry: {
+    webui: "./src/webui.js",
+    "webui-bundle": "./src/webui-bundle.js"
+  },
   output: {
     path: __dirname,
-    filename: "makam-webui.js"
+    filename: "makam-[name].js"
   },
   module: {
     rules: [
@@ -16,8 +20,8 @@ module.exports = {
         }
       },
       {
-        test: /\.css$/,
-        use: ["style-loader", "css-loader"]
+        test: /\.s?css$/,
+        use: ["style-loader", "css-loader", "sass-loader"]
       }
     ]
   },
