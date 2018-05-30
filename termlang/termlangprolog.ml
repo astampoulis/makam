@@ -492,7 +492,7 @@ let reapplyApps (pf : expr) (pargs : expr list) (tapps : unit typinfo list) =
 ;;
 
 
-let alphaSanitizeMany ?(bound=[]) (es : expr list) : expr list =
+let alphaSanitizeMany ?(bound=[]) ?(existing=[]) (es : expr list) : expr list =
   let fixname bound n =
     match n with
       `Concrete(s) -> s
@@ -500,6 +500,9 @@ let alphaSanitizeMany ?(bound=[]) (es : expr list) : expr list =
     | `Anon -> "x_" ^ (List.length bound |> string_of_int)
   in
   let metas : string IMap.t Dict.t ref = ref Dict.empty in
+  let _ =
+    List.iter (fun (s, i) -> metas := Dict.add s (IMap.singleton i s) !metas) existing
+  in
   let meta_get s i =
     if String.starts_with s "_" then s else
     let curmetas = !metas in
@@ -920,9 +923,9 @@ struct
     ExprU.print_full ~qualified_names:true ~debug:false oc e
   ;;
 
-  let alphaSanitizedPrintMany ps =
+  let alphaSanitizedPrintMany ?(existing=[]) ps =
     let es = List.map (P.pattToExpr (!globalstate).fvars) ps in
-    let es = alphaSanitizeMany es in
+    let es = alphaSanitizeMany ~existing:existing es in
     let es = List.map exprAsExprU es in
     List.map (fun e -> let strout = IO.output_string () in
                        ExprU.print ~debug:false strout e;
@@ -3407,15 +3410,16 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
     state <-- getstate ;
     metas <-- mapM (fun (i, s, t) -> perform
                                         p <-- getMeta s t i ;
-                                        return (s, p)) newmetas ;
+                                        return ((s, i), p)) newmetas ;
 
     constraints <-- if print then getOpenConstraints () else return [] ;
 
     let dotOrColon = if List.is_empty metas then "." else ":" in
     let _ = if print then
 
-      let names, metas = List.split metas in
-      let metas' = Pattcanon.alphaSanitizedPrintMany metas in
+      let names_indices, metas = List.split metas in
+      let names, _ = List.split names_indices in
+      let metas' = Pattcanon.alphaSanitizedPrintMany ~existing:names_indices metas in
       let combined = List.combine names metas' in
 
       let constraints' = Pattcanon.alphaSanitizedPrintMany constraints in
@@ -3438,7 +3442,7 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
 
       constraintsOrNot
     in
-    return metas
+    return (List.map (function ((s, i), p) -> (s, p)) metas)
 
 ;;
 
