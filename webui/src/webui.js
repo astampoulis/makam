@@ -223,7 +223,7 @@ export default class LiterateWebUI {
     this.queryBlock = null;
     this.otherBlocks = [];
     this.options = options;
-    this.makamURL = makamWebServiceURLs[options.env];
+    this.makamURL = options.makamLambdaURL || makamWebServiceURLs[options.env];
     this.dependenciesPromise = null;
     this.urlOfDependency = options.urlOfDependency;
   }
