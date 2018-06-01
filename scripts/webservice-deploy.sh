@@ -7,15 +7,21 @@ PROD_BASE_URL=https://hwtoumy97e.execute-api.us-east-1.amazonaws.com/prod
 
 function usage {
   cat <<EOF
-Usage: $0 [prod]
+Usage: $0 [prod|<stage>]
 
-$(basename $0)       -- Update test npm package, deploy webservice to dev and test
-$(basename $0) prod  -- Deploy webservice to prod
+$(basename $0)         -- Update test npm package, deploy webservice to dev and test
+$(basename $0) prod    -- Deploy webservice to prod
+$(basename $0) <stage> -- Deploy
 
 EOF
 }
 
 TOPDIR=$(git rev-parse --show-toplevel)
+
+if [[ ${1:-x} == "--help" ]]; then
+  usage
+  exit 0
+fi
 
 if [[ ${PACKAGE_VERSION:-x} != "x" ]]; then
 
@@ -25,17 +31,17 @@ if [[ ${PACKAGE_VERSION:-x} != "x" ]]; then
   fi
   DO_BUILD=0
 
-elif [[ ${1:x} == "prod" ]]; then
-
-  PACKAGE_VERSION=$(cd $TOPDIR; ./scripts/makam-version.sh)
-
 elif [[ ${1:-x} == "x" ]]; then
 
   PACKAGE_VERSION=$(cd $TOPDIR; ./scripts/makam-version.sh npm-test-version)
 
+elif [[ ${1:-x} == "prod" ]]; then
+
+  PACKAGE_VERSION=$(cd $TOPDIR; ./scripts/makam-version.sh)
+
 else
 
-  usage
+  echo "A Makam package version needs to be specified to deploy to stage $1 through the environment variable PACKAGE_VERSION"
   exit 1
 
 fi
@@ -49,8 +55,7 @@ elif [[ ${1:-x} == "x" ]]; then
   BASE_URL=$TEST_BASE_URL
   STAGE=dev
 else
-  usage
-  exit 1
+  STAGE=$1
 fi
 
 [[ $DO_BUILD -eq 1 ]] && (cd $TOPDIR; ./scripts/source-hash.sh update; make prepare-test-npm-package)
