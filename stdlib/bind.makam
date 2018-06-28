@@ -35,8 +35,8 @@ openmany_aux (bind S X_Body :: Rest) X S P :-
   eq (X_Body X) Body,
   openmany_aux Rest X S (pfun x t => (nameofvar x S -> P x (Body :: t))).
 
-openmany (Binds: bindone.hlist A B) P :-
-  (x:A -> openmany_aux Binds x S P).
+openmany (Binds: bindone.hlist A B) P when eq Binds (HD :: TL) :-
+  newvar HD (pfun X => openmany_aux Binds X S P).
 
 open : bindone A B -> (A -> B -> prop) -> prop.
 open F P <- openmany [F] (pfun X [Body] => P X Body).
