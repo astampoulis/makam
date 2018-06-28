@@ -368,3 +368,34 @@ typechecker S Sig :- isocast S (P: program), wfprogram P Sig.
 (main) : ( int -> int , tree ) -> tree end }}.
 
 ```
+
+## Coverage checker
+
+```makam
+
+type_decorator, type_decorator_aux : [A]A -> A -> prop.
+
+type_decorator X Y :-
+  structural type_decorator X X',
+  demand.case_otherwise (type_decorator_aux X' Y)
+                        (eq X' Y).
+
+typedexpr : expr -> typ -> expr.
+type_decorator_aux (X: expr) (typedexpr X T).
+
+typeof (typedexpr E T') T :- print E, print T, print T', typeof E T, debugfull(print T), debugfull(print T'), eq T T'.
+
+typer : program -> program -> prop.
+typer P P' :-
+  type_decorator P P',
+  trace (typeof : patt -> X) (trace (typeof : expr -> Y) (wfprogram P' _)).
+
+(isocast {{
+  data list = `nil of () | `cons of int * list ;
+  fun f => f(f(4))
+}} (_P: program), typer _P P') ?
+
+```
+
+## The actual experiment
+
