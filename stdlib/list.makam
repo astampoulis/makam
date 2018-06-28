@@ -122,3 +122,7 @@ zip (HD1 :: TL1) (HD2 :: TL2) (HD3 :: TL3) (HD4 :: TL4) ((HD1, HD2, HD3, HD4) ::
 zip : list A -> list B -> list (A * B) -> prop.
 zip [] [] [].
 zip (HD1 :: TL1) (HD2 :: TL2) ((HD1, HD2) :: TL) <- zip TL1 TL2 TL.
+
+snoc : list A -> A -> list A -> prop.
+snoc [] Y [Y].
+snoc (X :: XS) Y (X :: XS_Y) :- snoc XS Y XS_Y.
