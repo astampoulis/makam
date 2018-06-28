@@ -244,7 +244,7 @@ concrete.resolve_conversion
 
 >> (syntax.run program_concrete {{ let x = () in match x { (a, b) => a } }} _X, concrete.resolve _X Y) ?
 >> Yes:
->> Y := main (let (etuple nil) (bindone "x" (fun anon10331_0 => match anon10331_0 (cons (branch (tuple (ptuple (cons pvar (cons pvar nil))) (bindnext "a" (fun anon10316_1 => bindnext "b" (fun anon9147_2 => bindend anon10316_1))))) nil)))).
+>> Y := main (let (etuple nil) (bind "x" (fun anon10331_0 => match anon10331_0 (cons (branch (tuple (ptuple (cons pvar (cons pvar nil))) (bind "a" (fun anon10316_1 => bind "b" (fun anon9147_2 => body anon10316_1))))) nil)))).
 
 >> (isocast {{
  data tree = `leaf of () | `node of tree * int * tree ;
@@ -326,7 +326,7 @@ wfprogram (main E) (smain T) :- typeof E T.
 wfprogram (data (datadef D)) (sdata (datadef D')) :-
   bindone.openmany [D, D'] (pfun T [(ConstrTS, CS_Rest), (ConstrTS', CS_Rest')] =>
     eq ConstrTS ConstrTS',
-    bindmany.open CS_Rest CS_Rest' (pfun Constrs Body TSig =>
+    bindmany.openmany [CS_Rest, CS_Rest'] (pfun Constrs [Body, TSig] =>
       (datadef_all_constructors T Constrs ->
       assume_many (datadef_constructor T) Constrs ConstrTS (
         wfprogram Body TSig)))).
@@ -340,7 +340,7 @@ typechecker S Sig :- isocast S (P: program), wfprogram P Sig.
  `leaf()
 }} X ?
 >> Yes:
->> X := sdata (datadef (bindone "tree" (fun anon10972_0 => tuple (cons (product nil) (cons (product (cons anon10972_0 (cons tint (cons anon10972_0 nil)))) nil)) (bindnext "leaf" (fun anon10316_1 => bindnext "node" (fun anon10324_2 => bindend (smain anon10972_0))))))).
+>> X := sdata (datadef (bind "tree" (fun anon10972_0 => tuple (cons (product nil) (cons (product (cons anon10972_0 (cons tint (cons anon10972_0 nil)))) nil)) (bind "leaf" (fun anon10316_1 => bind "node" (fun anon10324_2 => body (smain anon10972_0))))))).
 
 >> typechecker {{
  data tree = `leaf of () | `node of tree * int * tree ;
@@ -352,7 +352,7 @@ typechecker S Sig :- isocast S (P: program), wfprogram P Sig.
    in map
 }} Y ?
 >> Yes:
->> Y := sdata (datadef (bindone "tree" (fun anon54076_0 => tuple (cons (product nil) (cons (product (cons anon54076_0 (cons tint (cons anon54076_0 nil)))) nil)) (bindnext "leaf" (fun anon43328_1 => bindnext "node" (fun anon43336_2 => bindend (smain (arrowmany (cons (arrowmany (cons tint nil) tint) (cons anon54076_0 nil)) anon54076_0)))))))).
+>> Y := sdata (datadef (bind "tree" (fun anon54076_0 => tuple (cons (product nil) (cons (product (cons anon54076_0 (cons tint (cons anon54076_0 nil)))) nil)) (bind "leaf" (fun anon43328_1 => bind "node" (fun anon43336_2 => body (smain (arrowmany (cons (arrowmany (cons tint nil) tint) (cons anon54076_0 nil)) anon54076_0)))))))).
 
 >> (typechecker {{
  data tree = `leaf of () | `node of tree * int * tree ;
@@ -392,7 +392,12 @@ typer P P' :-
 
 (isocast {{
   data list = `nil of () | `cons of int * list ;
-  fun f => f(f(4))
+   letrec map = fun f list =>
+     match list {
+       `nil() => `nil()
+     | `cons(hd, tl) => `cons(f(hd), map(f, tl))
+     }
+   in map
 }} (_P: program), typer _P P') ?
 
 ```
