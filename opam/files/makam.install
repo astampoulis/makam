@@ -20,6 +20,7 @@ share: [
   "stdlib/generic.makam" {"stdlib/generic.makam"}
   "stdlib/guard.makam" {"stdlib/guard.makam"}
   "stdlib/heterogeneous.makam" {"stdlib/heterogeneous.makam"}
+  "stdlib/hlist.makam" {"stdlib/hlist.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
   "stdlib/iso.makam" {"stdlib/iso.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}

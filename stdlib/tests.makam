@@ -289,7 +289,7 @@ let_in : term -> (term -> term) -> term.
 
 bind : testsuite. %testsuite bind.
 
->> dyn.eq (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body x))) (_: bind string (string * string * unit) string) ?
+>> dyn.eq (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body x))) (_: bind string (t_cons string (t_cons string t_nil)) string) ?
 >> Yes.
 
 >> bind.open (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?

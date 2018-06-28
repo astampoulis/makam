@@ -10,6 +10,8 @@
 %use forall.
 %use string.
 
+%use hlist.
+
 %use logging.
 
 %use demand.

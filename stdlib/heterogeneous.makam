@@ -18,16 +18,12 @@ from_args [] [].
 from_args (HD :: TL) (dyn HD :: TL') :- from_args TL TL'.
 %end.
 
-hlist : type -> type.
-nil : hlist unit.
-cons : A -> hlist B -> hlist (A * B).
-
 bind : type -> type -> type -> type.
 
 %extend bind.
 
-body : BodyType -> bind VarType unit BodyType.
-binder : string -> (VarType -> bind VarType AllVars BodyType) -> bind VarType (VarType * AllVars) BodyType.
+body : BodyType -> bind VarType t_nil BodyType.
+binder : string -> (VarType -> bind VarType AllVars BodyType) -> bind VarType (t_cons VarType AllVars) BodyType.
 
 open : [AllVars] bind VarType AllVars BodyType -> (hlist AllVars -> BodyType -> prop) -> prop.
 apply : [AllVars] bind VarType AllVars BodyType -> hlist AllVars -> BodyType -> prop.
