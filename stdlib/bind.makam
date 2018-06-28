@@ -8,10 +8,19 @@ bindone : type -> type -> type.
 bindone : string -> (A -> B) -> bindone A B.
 
 %extend bindone.
+(* list for multiple bindone's *)
+hlist : type -> type -> type.
+%end.
+
+nil : bindone.hlist A t_nil.
+cons : bindone A B -> bindone.hlist A C -> bindone.hlist A (t_cons B C).
+
+%extend bindone.
 
 newvar : bindone A B -> (A -> prop) -> prop.
 varname : bindone A B -> string -> prop.
 apply : bindone A B -> A -> B -> prop.
+openmany : [B] bindone.hlist A B -> (A -> .hlist B -> prop) -> prop.
 
 newvar (bindone Name (F : A -> B)) (P : A -> prop) <-
   (x:A -> nameofvar x Name -> P x).
@@ -20,49 +29,17 @@ apply (bindone _ F) X (F X).
 
 varname (bindone S _) S.
 
-match_binders : bindone A B -> bindone A' B' -> prop.
-match_binders (bindone S _) (bindone S _).
+openmany_aux : [B] bindone.hlist A B -> A -> string -> (A -> .hlist B -> prop) -> prop.
+openmany_aux [] X _ P :- P X [].
+openmany_aux (bindone S X_Body :: Rest) X S P :-
+  eq (X_Body X) Body,
+  openmany_aux Rest X S (pfun x t => (nameofvar x S -> P x (Body :: t))).
 
-open_aux : [PropType] A -> list dyn -> PropType -> prop.
-open_aux Var [] P <- P.
-open_aux Var (dyn B :: TL) P <-
-  apply B Var X,
-  open_aux Var TL (P X).
-
-opendyn : [PropType] list dyn -> PropType -> prop.
-opendyn ES P <-
-  eq ES (dyn HD :: _),
-  dyn.iter (match_binders HD) ES,
-  newvar HD (fun x => open_aux x ES (P x)).
-
-opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
-opendyn_nomatch ES P <-
-  eq ES (dyn HD :: _),
-  newvar HD (fun x => open_aux x ES (P x)).
-
-open : bindone A B -> bindone A C -> (A -> B -> C -> prop) -> prop.
-open X1 X2 P <-
-  opendyn [dyn X1, dyn X2] P.
-
-open : bindone A B -> bindone A C -> bindone A D -> (A -> B -> C -> D -> prop) -> prop.
-open X1 X2 X3 P <-
-  opendyn [dyn X1, dyn X2, dyn X3] P.
+openmany (Binds: bindone.hlist A B) P :-
+  (x:A -> openmany_aux Binds x S P).
 
 open : bindone A B -> (A -> B -> prop) -> prop.
-open X1 P <-
-  opendyn [dyn X1] P.
-
-open_nomatch : bindone A B -> bindone A C -> (A -> B -> C -> prop) -> prop.
-open_nomatch X1 X2 P <-
-  opendyn_nomatch [dyn X1, dyn X2] P.
-
-open_nomatch : bindone A B -> bindone A C -> bindone A D -> (A -> B -> C -> D -> prop) -> prop.
-open_nomatch X1 X2 X3 P <-
-  opendyn_nomatch [dyn X1, dyn X2, dyn X3] P.
-
-open_nomatch : bindone A B -> (A -> B -> prop) -> prop.
-open_nomatch X1 P <-
-  opendyn_nomatch [dyn X1] P.
+open F P <- openmany [F] (pfun X [Body] => P X Body).
 
 %end.
 

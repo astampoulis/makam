@@ -117,9 +117,9 @@ typeof (lam E) (tarrow T1 T2) <-
 typeof (app E1 E2) T2 <-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
-typeof (lamt E) (tpi K TF) <-
-  bindone.open E TF (pfun a e t =>
-    (kindofg a K -> typeof e t)
+typeof (lamt A_E) (tpi K A_T) <-
+  bindone.openmany [A_E, A_T] (pfun a [E, T] =>
+    (kindofg a K -> typeof E T)
   ).
 
 typeof (appt E T) T' <-
