@@ -14,7 +14,8 @@ name : namespace A -> string -> name A.
 lambda : name A -> B -> (A -> B).
 var : name A -> A.
 bindone : name A -> B -> bindone A B.
-bindnext : name A -> bindmany A B -> bindmany A B.
+bindnext_c : name A -> bindmany A B -> bindmany A B.
+bindmany : list (name A) -> B -> bindmany A B.
 
 resolve_name : [A] name A -> A -> prop.
 handle_unresolved_name : [A] name A -> A -> prop.
@@ -51,13 +52,13 @@ resolve_, resolve_aux, resolve_conversion : [A]A -> A -> prop.
 resolve (concrete X) Y :- resolve_ X Y.
 isocast_def (iso.bidi concrete.resolve).
 
-resolve_ X Y when refl.isunif X :-
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y),
-  demand.case_otherwise (resolve_conversion X X') (eq X X').
-
 resolve_ X Y when not(refl.isunif X) :-
   demand.case_otherwise (resolve_conversion X X') (eq X X'),
   demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y).
+
+resolve_ X Y when refl.isunif X :-
+  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y),
+  demand.case_otherwise (resolve_conversion X X') (eq X X').
 
 resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
   (x:A ->
@@ -79,9 +80,12 @@ resolve_aux (bindone (name Namespace ID) Body) (bindone ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
 
-resolve_aux (bindnext (name Namespace ID) Body) (bindnext ID' Body') :-
+resolve_aux (bindnext_c (name Namespace ID) Body) (bindnext ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
+
+resolve_conversion (bindmany [] Body) (bindend Body).
+resolve_conversion (bindmany (X :: XS) Body) (bindnext_c X (bindmany XS Body)).
 
 (* list of names and concrete.binders (standing for bind.binder and bind.body) *)
 

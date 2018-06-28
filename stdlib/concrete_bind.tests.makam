@@ -83,13 +83,13 @@ concrete.handle_unresolved_name (concrete.name termvars ID) (globalvar ID).
 >> Yes:
 >> X := concrete.var (concrete.name termvars "some_global_var").
 
->> concrete.resolve_ (letrec (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend [stringconst "a", stringconst "b"]))) (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend (stringconst "body"))))) X ?
+>> concrete.resolve_ (letrec (concrete.bindmany [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.bindmany [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body"))) X ?
 >> Yes:
 >> X := (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))).
 
 >> concrete.resolve_ X (letrec (bindnext "a" (fun a => bindnext "b" (fun b => bindend ([stringconst "a", stringconst "b"])))) (bindnext "a" (fun a => bindnext "b" (fun b => bindend (stringconst "body"))))) ?
 >> Yes:
->> X := letrec (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend [stringconst "a", stringconst "b"]))) (concrete.bindnext (concrete.name termvars "a") (concrete.bindnext (concrete.name termvars "b") (bindend (stringconst "body")))).
+>> X := letrec (concrete.bindmany [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.bindmany [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body")).
 
 >> (concrete.pattern_mode -> concrete.resolve_ (letin (stringconst "a") (concrete.bindone (concrete.name termvars "x") (concrete.var (concrete.name termvars "x")))) X) ?
 >> Yes:
