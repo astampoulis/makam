@@ -133,17 +133,17 @@ to_string (tforall T1 T2) S <-
 *)
 
 testcase poplmark_tests <-
-  typeof (lamt ttop (bindone "X" (fun X =>
-          lamt X (bindone "S" (fun S =>
-          lamt X (bindone "Z" (fun Z =>
-          lam (tarrow X S) (bindone "s" (fun s =>
-          lam Z            (bindone "z" (fun z =>
+  typeof (lamt ttop (bind "X" (fun X =>
+          lamt X (bind "S" (fun S =>
+          lamt X (bind "Z" (fun Z =>
+          lam (tarrow X S) (bind "s" (fun s =>
+          lam Z            (bind "z" (fun z =>
           app s z))))))))))) T,
  typ.to_string T "∀X<:⊤.∀S<:X.∀Z<:X.((X → S) → (Z → S))",
  (eq_nounif T
-        (tforall ttop (bindone "X" (fun aX =>
-         tforall aX    (bindone "S" (fun aS =>
-         tforall aX    (bindone "Z" (fun aZ =>
+        (tforall ttop (bind "X" (fun aX =>
+         tforall aX    (bind "S" (fun aS =>
+         tforall aX    (bind "Z" (fun aZ =>
          (tarrow (tarrow aX aS) (tarrow aZ aS)))))))))).
 
 

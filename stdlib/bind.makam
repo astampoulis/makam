@@ -5,7 +5,7 @@ infoofvar : V -> T -> prop.
 (* Includes a string that represents the concrete name of the variable *)
 
 bindone : type -> type -> type.
-bindone : string -> (A -> B) -> bindone A B.
+bind : string -> (A -> B) -> bindone A B.
 
 %extend bindone.
 (* list for multiple bindone's *)
@@ -22,16 +22,16 @@ varname : bindone A B -> string -> prop.
 apply : bindone A B -> A -> B -> prop.
 openmany : [B] bindone.hlist A B -> (A -> .hlist B -> prop) -> prop.
 
-newvar (bindone Name (F : A -> B)) (P : A -> prop) <-
+newvar (bind Name (F : A -> B)) (P : A -> prop) <-
   (x:A -> nameofvar x Name -> P x).
 
-apply (bindone _ F) X (F X).
+apply (bind _ F) X (F X).
 
-varname (bindone S _) S.
+varname (bind S _) S.
 
 openmany_aux : [B] bindone.hlist A B -> A -> string -> (A -> .hlist B -> prop) -> prop.
 openmany_aux [] X _ P :- P X [].
-openmany_aux (bindone S X_Body :: Rest) X S P :-
+openmany_aux (bind S X_Body :: Rest) X S P :-
   eq (X_Body X) Body,
   openmany_aux Rest X S (pfun x t => (nameofvar x S -> P x (Body :: t))).
 
@@ -47,74 +47,49 @@ open F P <- openmany [F] (pfun X [Body] => P X Body).
 (* Bindmany: bind a number of A's into a B *)
 
 bindmany : type -> type -> type.
-bindend  : B -> bindmany A B.
-bindnext : string -> (A -> bindmany A B) -> bindmany A B.
+bind : string -> (A -> bindmany A B) -> bindmany A B.
+body : B -> bindmany A B.
+
+%extend bindmany.
+(* list for multiple bindmany's *)
+hlist : type -> type -> type.
+%end.
+
+nil : bindmany.hlist A t_nil.
+cons : bindmany A B -> bindmany.hlist A C -> bindmany.hlist A (t_cons B C).
 
 %extend bindmany.
 
 newvars : bindmany A B -> (list A -> prop) -> prop.
-apply : bindmany A B -> list A -> B -> prop.
 varnames : bindmany A B -> list string -> prop.
-
-newvars_aux : bindmany A B -> list A -> (list A -> prop) -> prop.
-newvars_aux (bindend _) Vars P <- reverse Vars Vars', P Vars'.
-newvars_aux (bindnext S Rest) Vars P <-
-  bindone.open (bindone S Rest) (fun x bindrest => newvars_aux bindrest (x :: Vars) P).
-newvars B P <- newvars_aux B [] P.
-
-apply (bindend X) [] X.
-apply (bindnext _ F) (HD :: TL) Res <- apply (F HD) TL Res.
-
+apply : bindmany A B -> list A -> B -> prop.
 applysome : bindmany A B -> list A -> bindmany A B -> prop.
-applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
-applysome X nil X.
+openmany : [B] bindmany.hlist A B -> (list A -> .hlist B -> prop) -> prop.
 
-varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
+newvars (body _) P :- P [].
+newvars (bind Name (F : A -> B)) (P : list A -> prop) <-
+  (x:A -> nameofvar x Name -> newvars (F x) (pfun l => P (x :: l))).
 
-match_binders : bindmany A B -> bindmany A' B' -> prop.
-match_binders (bindend  _) (bindend _).
-match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
+apply (body Body) [] Body.
+apply (bind _ F) (HD :: TL) Result :- apply (F HD) TL Result.
 
+applysome (bind _ F) (HD :: TL) Result :- applysome (F HD) TL Result.
+applysome X [] X.
 
-open_aux : [PropType] list A -> list dyn -> PropType -> prop.
-open_aux Vars [] P <- P.
-open_aux Vars (dyn B :: TL) P <-
-  apply B Vars X,
-  open_aux Vars TL (P X).
+varnames XS_Body Names :-
+  newvars XS_Body (pfun XS => map nameofvar XS Names).
 
-opendyn : [PropType] list dyn -> PropType -> prop.
-opendyn ES P <-
-  eq ES (dyn HD :: _),
-  dyn.iter (match_binders HD) ES,
-  newvars HD (fun xs => open_aux xs ES (P xs)).
+openmany_aux : [B] bindmany.hlist A B -> list A -> list string -> (list A -> .hlist B -> prop) -> prop.
+openmany_aux [] XS _ P :- P XS [].
+openmany_aux (XS_HD :: TL) XS Names P :-
+  varnames XS_HD Names,
+  apply XS_HD XS HD,
+  openmany_aux TL XS Names (pfun xs TL_open => P xs (HD :: TL_open)).
 
-opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
-opendyn_nomatch ES P <-
-  eq ES (dyn HD :: _),
-  newvars HD (fun xs => open_aux xs ES (P xs)).
-
-open : bindmany A B -> bindmany A C -> (list A -> B -> C -> prop) -> prop.
-open X1 X2 P <-
-  opendyn [dyn X1, dyn X2] P.
-
-open : bindmany A B -> bindmany A C -> bindmany A D -> (list A -> B -> C -> D -> prop) -> prop.
-open X1 X2 X3 P <-
-  opendyn [dyn X1, dyn X2, dyn X3] P.
+openmany (Binds: bindmany.hlist A B) P when eq Binds (HD :: TL) :-
+  newvars HD (pfun XS => openmany_aux Binds XS Names P).
 
 open : bindmany A B -> (list A -> B -> prop) -> prop.
-open X1 P <-
-  opendyn [dyn X1] P.
-
-open_nomatch : bindmany A B -> bindmany A C -> (list A -> B -> C -> prop) -> prop.
-open_nomatch X1 X2 P <-
-  opendyn_nomatch [dyn X1, dyn X2] P.
-
-open_nomatch : bindmany A B -> bindmany A C -> bindmany A D -> (list A -> B -> C -> D -> prop) -> prop.
-open_nomatch X1 X2 X3 P <-
-  opendyn_nomatch [dyn X1, dyn X2, dyn X3] P.
-
-open_nomatch : bindmany A B -> (list A -> B -> prop) -> prop.
-open_nomatch X1 P <-
-  opendyn_nomatch [dyn X1] P.
+open F P <- openmany [F] (pfun XS [Body] => P XS Body).
 
 %end.

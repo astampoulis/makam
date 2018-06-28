@@ -347,14 +347,14 @@ sigitem_new_assumptions : sigitem -> list prop -> prop.
 typdef_new_assumptions  : string -> list knd -> typdef -> list prop -> prop.
 
 sigof (strlet Name E)
-      (sigval Name T') <- typeof (let E (bindone _ (fun y => y))) T, eqv T T'.
+      (sigval Name T') <- typeof (let E (bind _ (fun y => y))) T, eqv T T'.
 
 sigof (strlet_ E)
-      (sigmany [])     <- typeof (let E (bindone _ (fun y => y))) T.
+      (sigmany [])     <- typeof (let E (bind _ (fun y => y))) T.
 
 sigof (strletrec ES)
       (sigmany Vals) <-
-  bindmany.open ES ESE' (pfun xs es ese' => eq ese' (es, tuple xs)),
+  bindmany.openmany [ES, ESE'] (pfun xs [ES, ESE'] => eq ESE' (ES, tuple xs)),
   bindmany.varnames ES Names,
   typeof (letrec ESE') (tprod TS),
   map (fun n t => eq (sigval n t)) Names TS Vals.
@@ -461,11 +461,11 @@ typeof (stringconst S) (tbase "string" []).
 `( ocamldo (strtypesingle "unit" [] (typdef_variant [ ( "Unit", csdefunit ) ])) ).
 `( ocamldo (strtypesingle "list" [ktype] (typdef_variant
      [ ( "Nil", csdefunit ),
-       ( "Cons", csdef (typconstr (bindnext "a" (fun a => bindend (tprod [ a, tbase "list" [a] ])))) ) ])) ).
+       ( "Cons", csdef (typconstr (bind "a" (fun a => body (tprod [ a, tbase "list" [a] ])))) ) ])) ).
 `( ocamldo (strtypesingle "bool" [] (typdef_variant
      [ ( "True", csdefunit ),
        ( "False", csdefunit ) ])) ).
 
 `( ocamldo (strtypesingle "option" [ktype] (typdef_variant
      [ ( "None", csdefunit ),
-       ( "Some", csdef (typconstr (bindnext "a" (fun a => bindend a))) ) ])) ).
+       ( "Some", csdef (typconstr (bind "a" (fun a => body a))) ) ])) ).

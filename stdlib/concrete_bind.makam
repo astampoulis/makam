@@ -14,7 +14,9 @@ name : namespace A -> string -> name A.
 lambda : name A -> B -> (A -> B).
 var : name A -> A.
 bindone : name A -> B -> bindone A B.
-bindnext_c : name A -> bindmany A B -> bindmany A B.
+%extend bindmany.
+bind_c : name A -> bindmany A B -> bindmany A B.
+%end.
 bindmany : list (name A) -> B -> bindmany A B.
 
 resolve_name : [A] name A -> A -> prop.
@@ -76,16 +78,16 @@ resolve_aux (var (name Namespace ID)) X
   then success
   else handle_unresolved_name (name Namespace ID) X.
 
-resolve_aux (bindone (name Namespace ID) Body) (bindone ID' Body') :-
+resolve_aux (concrete.bindone (name Namespace ID) Body) (bind ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
 
-resolve_aux (bindnext_c (name Namespace ID) Body) (bindnext ID' Body') :-
+resolve_aux (bindmany.bind_c (name Namespace ID) Body) (bind ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
 
-resolve_conversion (bindmany [] Body) (bindend Body).
-resolve_conversion (bindmany (X :: XS) Body) (bindnext_c X (bindmany XS Body)).
+resolve_conversion (bindmany [] Body) (body Body).
+resolve_conversion (bindmany (X :: XS) Body) (bindmany.bind_c X (bindmany XS Body)).
 
 (* list of names and concrete.binders (standing for bind.binder and bind.body) *)
 
