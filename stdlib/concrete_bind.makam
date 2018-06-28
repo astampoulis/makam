@@ -119,4 +119,16 @@ resolve_aux Result (Bind: bind VarType AllVars BodyType) when not(refl.isunif Bi
     eq Result (binders [] Body')
   ).
 
+(* TODO: still experimental *)
+names_of : [BodyType] namespace Type -> BodyType -> list (name Type) -> prop.
+names_of_aux : [BodyType] namespace Type -> list (name Type) -> BodyType -> list (name Type) -> prop.
+
+names_of_aux Namespace L (name Namespace X) (name Namespace X :: L).
+names_of_aux Namespace L Body L' when not(dyn.eq Body (name Namespace X)) :-
+  generic.fold (names_of_aux Namespace) L Body L'.
+
+names_of Namespace Body Names' :-
+  names_of_aux Namespace [] Body Names,
+  reverse Names Names'.
+
 %end.
