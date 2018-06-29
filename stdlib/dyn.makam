@@ -14,6 +14,15 @@ polybvar : [A B] A -> B -> prop.
 map_poly : list dyn -> list dyn -> prop.
 
 poly E E' when polybvar E E'.
+
+(* TODO: fix this use of `isnvar`, which is broken. look at morerefl for an alternate implementation that works.
+   The rule should really be:
+
+dyn.poly E E' when morerefl.isnvar E, not(dyn.polybvar E _) <-
+  dyn.eq E E'.
+
+*)
+
 poly E E' when refl.isbaseterm E, refl.isnvar E, not(polybvar E _) <-
   dyn.eq E E'.
 poly E E' when refl.isbaseterm E, refl.isfvar E <-
