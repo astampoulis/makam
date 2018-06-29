@@ -369,26 +369,66 @@ typechecker S Sig :- isocast S (P: program), wfprogram P Sig.
 
 ```
 
-## Coverage checker
+## Annotation framework
+
+First, this is an experimental implementation of *annotation*: it
+allows us to annotate each node of a certain type `BaseType` with
+extra information of type `AnnotationType`.  This way we can add, for
+example, a type `T` alongside each expression node `E` in our
+language.  By a careful addition to our typing predicate, the types
+that get figured out during typing can be stored as `T`, therefore
+allowing us to design (independent) phases that depend on typing.
+
+This is similar to this common trick in compiler design:
+```
+data expr' = App of expr * expr
+           | BinOp of binop * expr * expr
+           | ...
+and expr = expr' * type
+...
+```
+
+The nice thing about this is:
+- the conversion from a tree without annotated nodes to one that is fully
+  annotated (albeit with empty information), does not require any boilerplate.
+  This is thanks to `structural` recursion.
+- the changes needed to our typing procedure are minimal
+
+This is still experimental, and has no tests, so not making this part of the stdlib just yet.
 
 ```makam
+annotated : type -> type -> type -> type.
+annotated : RootType -> annotated BaseType Annotation RootType.
 
-type_decorator, type_decorator_aux : [A]A -> A -> prop.
+annotation : BaseType -> Annotation -> BaseType.
 
-type_decorator X Y :-
-  structural type_decorator X X',
-  demand.case_otherwise (type_decorator_aux X' Y)
+annotator : [A]A -> annotated BaseType Annotation A -> prop.
+annotator_aux, annotator_cases : [A](BaseType * Annotation) -> A -> A -> prop.
+
+annotator (X: RootType) (annotated Y: annotated BaseType Annotation RootType) :-
+  annotator_aux (_: (BaseType * Annotation)) X Y.
+
+annotator_aux TypeProxy X Y :-
+  structural (annotator_aux TypeProxy) X X',
+  demand.case_otherwise ((annotator_cases TypeProxy) X' Y)
                         (eq X' Y).
 
-typedexpr : expr -> typ -> expr.
-type_decorator_aux (X: expr) (typedexpr X T).
+annotator_cases (TypeProxy: BaseType * AnnotationType) (X: BaseType) (annotation X (A: AnnotationType)).
 
-typeof (typedexpr E T') T :- print E, print T, print T', typeof E T, debugfull(print T), debugfull(print T'), eq T T'.
 
-typer : program -> program -> prop.
-typer P P' :-
-  type_decorator P P',
-  trace (typeof : patt -> X) (trace (typeof : expr -> Y) (wfprogram P' _)).
+deannotator : [A]annotated BaseType Annotation A -> A -> prop.
+deannotator_aux, deannotator_cases : [A](BaseType * Annotation) -> A -> A -> prop.
+
+deannotator (annotated Y: annotated BaseType Annotation RootType) (X: RootType) :-
+  deannotator_aux (_: (BaseType * Annotation)) X Y.
+
+deannotator_aux TypeProxy X Y :-
+  demand.case_otherwise ((annotator_cases TypeProxy) Y' Y)
+                        (eq Y' Y),
+  structural (deannotator_aux TypeProxy) X Y'.
+
+isocast_def (iso.iso annotator deannotator).
+```
 
 (isocast {{
   data list = `nil of () | `cons of int * list ;
