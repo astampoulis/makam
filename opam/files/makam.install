@@ -15,6 +15,7 @@ share: [
   "stdlib/demand.makam" {"stdlib/demand.makam"}
   "stdlib/dyn.makam" {"stdlib/dyn.makam"}
   "stdlib/eqv.makam" {"stdlib/eqv.makam"}
+  "stdlib/fix_builtins.makam" {"stdlib/fix_builtins.makam"}
   "stdlib/fluid.makam" {"stdlib/fluid.makam"}
   "stdlib/forall.makam" {"stdlib/forall.makam"}
   "stdlib/generic.makam" {"stdlib/generic.makam"}
