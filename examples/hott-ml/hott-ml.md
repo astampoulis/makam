@@ -308,16 +308,13 @@ typeof (pconstr C P) T VS VS' :-
 >> XS := fun a b => [a, b].
 
 %extend datadef.
-open : datadef T -> (typ -> list typ -> list constructor -> T -> prop) -> prop.
+open : datadef T -> (T -> prop) -> prop.
 open (datadef X) P :-
   bindone.open X (pfun Typ (ConstrTS, CS_Rest) =>
     bindmany.open CS_Rest (pfun CS Rest =>
-      P Typ ConstrTS CS Rest)).
-
-apply : datadef T -> typ -> list typ -> list constructor -> T -> prop.
-apply (datadef X) T ConstrTS Constrs Body :-
-  bindone.apply X T (ConstrTS, CS_Body),
-  bindmany.apply CS_Body Constrs Body.
+      (datadef_all_constructors Typ CS ->
+       assume_many (datadef_constructor Typ) CS ConstrTS
+         (P Rest)))).
 %end.
 
 wfprogram : program -> sig -> prop.
@@ -430,7 +427,19 @@ deannotator_aux TypeProxy X Y :-
 isocast_def (iso.iso annotator deannotator).
 ```
 
-(isocast {{
+## Coverage checker
+
+We will write a coverage checker for patterns. It depends on type information
+for the branches in our program, so this is an opportunity to use the annotator above.
+
+```makam
+wfprogram : annotated branch typ program -> sig -> prop.
+
+wfprogram (annotated AnnotatedProgram) Sig :- wfprogram AnnotatedProgram Sig.
+
+typeofbranch T T' (annotation Branch T) :- typeofbranch T T' Branch.
+
+>> (isocast {{
   data list = `nil of () | `cons of int * list ;
    letrec map = fun f list =>
      match list {
@@ -438,9 +447,177 @@ isocast_def (iso.iso annotator deannotator).
      | `cons(hd, tl) => `cons(f(hd), map(f, tl))
      }
    in map
-}} (_P: program), typer _P P') ?
+}} (P: program), isocast P (A: annotated expr typ program), isocast A (P': program), eq_nounif P P') ?
+>> Yes.
 
+typechecker : string -> annotated branch typ program -> prop.
+typechecker PString P' :-
+  isocast PString P', wfprogram P' _.
+
+>> typechecker {{
+  data list = `nil of () | `cons of int * list ;
+   letrec map = fun f list =>
+     match list {
+       `nil() => `nil()
+     | `cons(hd, tl) => `cons(f(hd), map(f, tl))
+     }
+   in map
+}} P ?
+>> Yes:
+>> P := annotated (data (datadef (bind "list" (fun anon46039_0 => tuple (cons (product nil) (cons (product (cons tint (cons anon46039_0 nil))) nil)) (bind "nil" (fun anon44958_1 => bind "cons" (fun anon44805_2 => body (main (letrec (bind "map" (fun anon44701_3 => tuple (lam (bind "f" (fun anon44453_4 => bind "list" (fun anon44108_5 => body (match anon44108_5 (cons (annotation (branch (tuple (pconstr anon44958_1 (ptuple nil)) (body (constr anon44958_1 (etuple nil))))) anon46039_0) (cons (annotation (branch (tuple (pconstr anon44805_2 (ptuple (cons pvar (cons pvar nil)))) (bind "hd" (fun anon44005_6 => bind "tl" (fun anon43463_7 => body (constr anon44805_2 (etuple (cons (app anon44453_4 (cons anon44005_6 nil)) (cons (app anon44701_3 (cons anon44453_4 (cons anon43463_7 nil))) nil))))))))) anon46039_0) nil))))))) anon44701_3))))))))))).
 ```
 
-## The actual experiment
+Rough draft:
 
+```
+p ::= x | c p | (p1, ..., pN)
+t ::= int | datatype(all: (cI : tI), yes: (cJ), no: (cK)) | (t1, ... tN)
+
+judgement |- [p(1), ..., p(R)] covers t
+
+----
+|- [ x ] covers t
+
+
+|- for i in [1..N] : [ p(1)i, p(2)i, ... ] covers (ti)
+----
+|- [ (p(1)1, ... p(1)N), (p(2)1, ..., p(2)N), ... ] covers (t1, ... tN)
+
+----
+|- [] covers datatype(all: (cI: tI), yes: ([]), no: (cI))
+
+
+c* not in cK
+rest ~= ( c* p2, ..., c* pA ) ++ rest'
+|- (p1, p2, ..., pA) covers t*
+|- rest' covers datatype(all: ..., yes: cJ, no: (cK + {c*})
+---
+|- ( c* p1 :: rest ) covers datatype(all: ( {c*: t*} + (cI: tI)), yes: ( {c*} + cJ), no: (cK))
+```
+
+TODO: Move this to stdlib:
+
+```makam
+%extend set.
+from_list : list A -> set A -> prop.
+from_list nil nil.
+from_list (HD :: ListTL) Result :-
+  from_list ListTL SetTL,
+  ccons HD SetTL Result.
+%end.
+```
+
+```makam
+datatype : (T: typ) (Yes: set constructor) (No: set constructor) -> typ.
+
+enrich_types, enrich_types_cases : [A]A -> A -> prop.
+
+enrich_types X Y :-
+  demand.case_otherwise (enrich_types_cases X Y) (structural enrich_types X Y).
+
+enrich_types_cases T (datatype T Yes [])
+  when not(refl.isunif T), datadef_all_constructors T Constrs :-
+  set.from_list Constrs Yes.
+```
+
+```makam
+transpose_ptuple : (Patterns: list patt) (PatternsT: list (list patt)) -> prop.
+transpose_ptuple [] [ [] ].
+transpose_ptuple [ptuple PS] Result :-
+  map (pfun P => eq [P]) PS Result.
+transpose_ptuple (ptuple PS :: Rest) Result :-
+  transpose_ptuple Rest RestT,
+  map (pfun P1 PRest => eq (cons P1 PRest)) PS RestT Result.
+transpose_ptuple (P :: Rest) Result when not(eq P (ptuple PS)) :-
+  transpose_ptuple Rest RestT,
+  map (pfun PRest => eq (cons P PRest)) RestT Result.
+
+split_out_pconstr : (C: constructor) (Patterns: list patt)
+                    (PattsForC: list patt) (OtherPatts: list patt) ->
+                    prop.
+
+split_out_pconstr C [] [] [].
+split_out_pconstr C (pconstr C P :: Rest) (P :: PattsForC) OtherPatts :-
+  split_out_pconstr C Rest PattsForC OtherPatts.
+split_out_pconstr C (P :: Rest) PattsForC (P :: OtherPatts)
+    when not(eq P (pconstr C _)) :-
+  split_out_pconstr C Rest PattsForC OtherPatts.
+
+covers, covers_ : (Patterns: list patt) (EnrichedTyp: typ) -> prop.
+
+covers Patts Typ :-
+  once(
+  demand.case_otherwise (covers_ Patts Typ)
+    (pfun => tostring Patts PattsS,
+     tostring Typ TypS,
+     log_error Patts `failed to prove coverage for patterns ${PattsS} at type ${TypS}`, failure)).
+
+covers_ [pvar] T.
+covers_ (pvar :: Rest) T :- covers Rest T.
+
+covers_ Patterns (product TS) :-
+  transpose_ptuple Patterns PatternsT,
+  map covers PatternsT TS.
+
+covers_ [] (datatype T [] No) :-
+  datadef_all_constructors T Constrs,
+  set.from_list Constrs ConstrSet,
+  eqv ConstrSet No.
+
+covers_ [] (datatype T Yes No) :-
+  tostring Yes YesS, tostring T TS,
+  log_error T `missing cases for constructors ${YesS} at type ${TS}`, failure.
+
+covers_ (pconstr C P :: Rest) (datatype T Yes No)
+    when not(set.member No C _), set.member Yes C Yes' :-
+  split_out_pconstr C Rest PS Rest',
+  datadef_constructor T C T_arg,
+  enrich_types T_arg T_arg',
+  covers (P :: PS) T_arg',
+  covers Rest' (datatype T Yes' (C :: No)).
+```
+
+```makam
+coverage_checker, coverage_checker_cases: [A] A -> prop.
+coverage_checker_real : expr -> prop.
+coverage_checker: A -> A -> prop.
+
+coverage_checker X :-
+  coverage_checker X X.
+
+coverage_checker X X :-
+  demand.case_otherwise (coverage_checker_cases X)
+                        (structural coverage_checker X X).
+
+coverage_checker_cases (X: datadef T) :-
+  datadef.open X (pfun Body => coverage_checker Body).
+
+coverage_checker_cases (match E Branches) :-
+  coverage_checker_real (match E Branches).
+
+coverage_checker_real (match E []) :-
+  log_error E `cannot handle empty pattern matches yet`, failure.
+
+coverage_checker_real (match E (annotation (branch (Patt, _)) T :: AnnotatedBranches)) :-
+  map (pfun (annotation (branch (P, Body)) Typ) P' => eq P P') AnnotatedBranches (Patts: list patt),
+  enrich_types T T',
+  covers (Patt :: Patts) T'.
+
+typechecker : string -> annotated branch typ program -> prop.
+typechecker PString P' :-
+  isocast PString P', wfprogram P' _, coverage_checker P'.
+
+typechecker {{
+  data list = `nil of () | `cons of int * list ;
+   letrec map = fun f list =>
+     match list {
+       `nil() => `nil()
+     | `cons(hd, `cons(hd2, tl)) => `cons(f(hd), map(f, tl))
+     | `cons(hd, `nil()) => `cons(f(hd), `nil())
+     }
+   in map
+}} P ?
+```
+  
+
+## The actual experiment
