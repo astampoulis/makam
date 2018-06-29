@@ -3,14 +3,14 @@
 %use eqv.
 %use clause.
 %use typ.
-%use guard.
 
 %use list.
 %use dyn.
 %use forall.
 %use string.
-
 %use hlist.
+
+%use guard.
 
 %use logging.
 
