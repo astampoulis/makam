@@ -118,19 +118,19 @@ pretty.builtin lambda.
 string_of_head, string_of_var : [A] A -> string -> prop.
 string_of_head X Y :- if (string_of_var X Y) then success else tostring_qualified X Y.
 
-lambda_depth : int -> prop.
-lambda_depth 0.
+lambda_depth : fluid int.
+`( fluid.set lambda_depth 0 ).
 
 pretty.pretty lambda (F: A -> B) Res :-
   not(refl.isbasehead F),
-  (x:A ->
-    (once(lambda_depth N),
-     tostring N NS,
-     expansion.str `anon${NS}` X_S,
-     plus N 1 N',
-     (lambda_depth N' ->
-      string_of_var x X_S ->
-      if (pretty.pretty (term 0) (F x) (some R)) then (expansion.str `fun ${X_S} => ${R}` R', eq Res (some R')) else eq Res none))).
+  fluid.get lambda_depth N,
+  tostring N NS,
+  expansion.str `anon${NS}` X_S,
+  fluid.inc lambda_depth {prop|
+    (x:A -> string_of_var x X_S -> (
+      if (pretty.pretty (term 0) (F x) (some R))
+      then (expansion.str `fun ${X_S} => ${R}` R', eq Res (some R'))
+      else eq Res none)) |}.
 
 pretty.rule (term 0) lambda.
 pretty.rule (term 0) (term 1).

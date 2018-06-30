@@ -19,13 +19,24 @@ bind_c : name A -> bindmany A B -> bindmany A B.
 %end.
 bindmany : list (name A) -> B -> bindmany A B.
 
-resolve_name : [A] name A -> A -> prop.
+var_of_name : name A -> fluid A.
+name_of_var : A -> name A -> prop.
+
+associate_name_and_var : name A -> A -> prop -> prop.
+associate_name_and_var Name Var P :-
+  fluid.set (var_of_name Name) Var (pfun => (name_of_var Var Name -> P)).
+
+resolve_name_or_var : name A -> A -> prop.
+resolve_name_or_var Name Var when not(refl.isunif Var) :-
+  name_of_var Var Name.
+resolve_name_or_var Name Var when refl.isunif Var :-
+  fluid.get (var_of_name Name) Var.
+
 handle_unresolved_name : [A] name A -> A -> prop.
 pattern_mode : prop.
 
-vars_in_context, vars_in_context_store : [A] namespace A -> list (A * string) -> prop.
-vars_in_context_store Namespace [].
-vars_in_context Namespace Vars :- once(vars_in_context_store Namespace Vars).
+vars_in_context : namespace A -> fluid (list (A * string)).
+`( fluid.set (vars_in_context Namespace) [] ).
 
 pick_name_prefix, pick_name_prefix_userdef : [A] namespace A -> string -> prop.
 pick_name_prefix Namespace ID :-
@@ -37,8 +48,8 @@ pick_name Namespace ID when not(refl.isunif ID).
 pick_name Namespace ID when refl.isunif ID :-
   unless (pick_name_userdef Namespace ID)
          {prop|
-          vars_in_context Namespace Vars,
-          length Vars L, tostring L L_S,
+          fluid.get (vars_in_context Namespace) Vars,
+          length Vars L, plus L 1 L', tostring L' L_S,
           pick_name_prefix Namespace Prefix,
           expansion.str `${Prefix}${L_S}` ID |}.
 
@@ -63,18 +74,19 @@ resolve_ X Y when refl.isunif X :-
   demand.case_otherwise (resolve_conversion X X') (eq X X').
 
 resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
-  (x:A ->
-   resolve_name (name Namespace ID) x ->
-   (pick_namespace x Namespace,
-    vars_in_context Namespace Vars,
-    (vars_in_context_store Namespace ((x, ID) :: Vars) ->
-      (pick_name Namespace ID,
-       resolve_ Body (F x))))).
+  (x:A -> (
+   pick_namespace x Namespace,
+   pick_name Namespace ID,
+   fluid.modify (vars_in_context Namespace) (append [(x, ID)])
+     (associate_name_and_var (name Namespace ID) x
+        (resolve_ Body (F x))))).
 
 resolve_aux (var (name Namespace ID)) X
-    when pick_namespace X Namespace, either (once(resolve_name (name Namespace ID) X)) (handle_unresolved_name (name Namespace ID) X) :-
+    when pick_namespace X Namespace,
+         either (resolve_name_or_var (name Namespace ID) X)
+                (handle_unresolved_name (name Namespace ID) X) :-
   pick_namespace X Namespace,
-  if (once(resolve_name (name Namespace ID) X))
+  if (resolve_name_or_var (name Namespace ID) X)
   then success
   else handle_unresolved_name (name Namespace ID) X.
 

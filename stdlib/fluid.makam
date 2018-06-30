@@ -2,16 +2,20 @@ fluid : type -> type.
 
 %extend fluid.
 
-new : A -> (fluid A -> prop) -> prop.
+current_value : fluid A.
+
 get : fluid A -> A -> prop.
+set : fluid A -> A -> cmd -> prop.
 set : fluid A -> A -> prop -> prop.
 modify : fluid A -> (A -> A -> prop) -> prop -> prop.
+inc : fluid int -> prop -> prop.
 
-current_value : fluid A -> A -> prop.
+current_value : [A] fluid A -> A -> prop.
 
-new (Init : A) Pred <- (x:(fluid A) -> current_value x Init -> Pred x).
-get X Value <- once(current_value X Value).
+get X Value <- demand.most_recent (current_value X Value'), eq Value Value'.
+set X Value (cmd_newclause (clause (current_value X Value) success)).
 set X Value Pred <- (current_value X Value -> Pred).
 modify X Modify Pred <- get X CurrentValue, Modify CurrentValue NewValue, set X NewValue Pred.
+inc X Pred <- modify X (plus 1) Pred.
 
 %end.

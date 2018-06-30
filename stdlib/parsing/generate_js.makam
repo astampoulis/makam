@@ -70,17 +70,17 @@ gen_parse_js void Dict Dict "null".
 
 quote_parse_res_js : [A]A -> string -> prop.
 
-latest_parse_res_js : int -> prop.
-latest_parse_res_js 0.
+parse_res_counter : fluid int.
+`( fluid.set parse_res_counter 0 ).
 
 gen_parse_js (bind (P : peg A) (F : A -> peg B)) Dict Dict'' Result :-
   gen_parse_js P Dict Dict' Code,
-  once(latest_parse_res_js I),
+  fluid.get parse_res_counter I,
   tostring I IS,
-  plus I 1 I',
   expansion.str `result_${IS}` Name,
-  (a:A -> quote_parse_res_js a Name -> latest_parse_res_js I' ->
-   gen_parse_js (F a) Dict' Dict'' Code'),
+  fluid.inc parse_res_counter {prop|
+    (a:A -> quote_parse_res_js a Name ->
+      (gen_parse_js (F a) Dict' Dict'' Code')) |},
   expansion.str
   `(yield* (function*() {
      const keepOffset = offset;
@@ -202,9 +202,9 @@ quote_term_js (reified.nvar P Args) Result :-
   quote_paren_term_js HeadS ArgsS Result.
 
 quote_var_js : [A]A -> string -> prop.
-latest_quote_var_js : int -> prop.
 
-latest_quote_var_js 0.
+quote_var_counter : fluid int.
+`( fluid.set quote_var_counter 0 ).
 
 quote_term_js (reified.bvar X Args) Result :-
   quote_var_js X Var,
@@ -212,17 +212,17 @@ quote_term_js (reified.bvar X Args) Result :-
   quote_paren_term_js Var ArgsS Result.
 
 quote_term_js (reified.lambda (F : A -> B)) Result :-
-  once(latest_quote_var_js I),
+  fluid.get quote_var_counter I,
   tostring I VarI,
   expansion.str `x_${VarI}` Var,
-  plus I 1 I',
-  (x:A -> quote_var_js x Var -> latest_quote_var_js I' ->
-    (quote_term_js (F x) Body,
+  fluid.inc quote_var_counter {prop|
+  (x:A -> quote_var_js x Var -> (
+     quote_term_js (F x) Body,
      (* TODO: investigate if it's better to add this always. *)
      if (refl.monotyp x, refl.typstring x Typ) then
        expansion.str `(${Var}: ${Typ})` Binder
      else
-       eq Var Binder)),
+       eq Var Binder)) |},
   expansion.str `(fun ${Binder} => ${Body})` Result.
 
 (* TODO: decide if and how unification variables will be supported. *)

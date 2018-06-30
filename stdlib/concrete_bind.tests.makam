@@ -150,11 +150,11 @@ recdef  -> fun id => fun tm => tuple (concrete.name termvars id) tm
 
 `( syntax.def_toplevel_js term_concrete ).
 
->> (isocast {{ λw.Λa.let x = ("foo" : a) in let y = "bar" in w }} (_X: term), isocast _X QQ) ?
+>> (isocast {{ λw.Λa.let x = ("foo" : a) in let y = "bar" in w }} (_X: term), isocast _X (QQ: string)) ?
 >> Yes:
 >> QQ := {λ x1 . Λ α1 . let x = ( "foo" : α1 ) in let y = "bar" in x1 }.
 
->> (isocast {{ letrec x = y and y = x in x }} (_X: term), isocast _X QQ) ?
+>> (isocast {{ letrec x = y and y = x in x }} (_X: term), isocast _X (QQ: string)) ?
 >> Yes:
 >> QQ := {letrec x = y and y = x in x }.
 
