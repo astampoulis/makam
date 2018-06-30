@@ -40,6 +40,6 @@ eqv (reified_unif X) (reified_unif Y) when refl.sameunif X Y.
 
 unifvars Root Result <-
   unifvars_aux [] Root Result',
-  map (apply reified_unif) Result' Result'',
+  map (pfun x => eq (reified_unif x)) Result' Result'',
   unique Result'' Result''',
-  map (apply reified_unif) Result Result'''.
+  map (pfun x => eq (reified_unif x)) Result Result'''.
