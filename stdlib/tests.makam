@@ -327,4 +327,38 @@ change_ X Y <- plus X 1 Y.
 forall : testsuite.
 testcase forall :- eq X @eq, instantiate X X', X' 1 1, instantiate X X'', X'' "foo" "foo".
 
+(* -------------------- refl.isbasehead and friends *)
+>> refl.isbasehead tuple ?
+>> Yes.
+
+>> refl.isbasehead (tuple 1) ?
+>> Impossible.
+
+>> refl.isbasehead (tuple 1 2) ?
+>> Impossible.
+
+>> refl.isbasehead (tuple X) ?
+>> Impossible.
+
+>> refl.isbasehead unit ?
+>> Yes.
+
+>> refl.isbaseterm tuple ?
+>> Impossible.
+
+>> refl.isbaseterm (tuple 1) ?
+>> Impossible.
+
+>> refl.isbaseterm (tuple 1 2) ?
+>> Yes.
+
+>> refl.isfun tuple ?
+>> Yes.
+
+>> refl.isfun (tuple 1) ?
+>> Yes.
+
+>> refl.isfun (tuple 1 2) ?
+>> Impossible.
+
 %end.

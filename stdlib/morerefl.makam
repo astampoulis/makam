@@ -30,6 +30,34 @@ absunif Root (Unif : A) Res <-
 
 %end.
 
+(* checks if a term is an unapplied constant/head symbol, such as a free variable.
+   This is similar to refl.isbaseterm, but in that case, the constant has to be fully applied
+   (otherwise it's a function). It works by comparing the eta-expansion of the term to the
+   term itself.
+
+   So:
+
+    refl.isbasehead tuple ~> True
+    refl.isbasehead (tuple 1) ~> False
+    refl.isbasehead (tuple 1 2) ~> False
+
+    refl.isbaseterm tuple ~> False
+    refl.isbasehead (tuple 1) ~> False
+    refl.isbasehead (tuple 1 2) ~> False
+
+    refl.isfun tuple ~> True
+    refl.isfun (tuple 1) ~> True
+    refl.isfun (tuple 1 2) ~> False
+
+*)
+
+isbasehead : [A]A -> prop.
+isbasehead (F: T) :-
+  args.applyfull F Args F_Body,
+  (* comparing the type of the head to the type of the initial term is enough:
+     only in the case where the head is completely unapplied will the types match. *)
+  refl.headargs F_Body (F_HD: T) _.
+
 %end.
 
 

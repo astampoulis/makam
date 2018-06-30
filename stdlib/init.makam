@@ -11,12 +11,12 @@
 %use forall.
 %use string.
 %use hlist.
+%use args.
 
 %use guard.
+%use demand.
 
 %use logging.
-
-%use demand.
 %use testing.
 
 %use tuple.

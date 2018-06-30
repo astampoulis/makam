@@ -6,6 +6,7 @@ bin: [
   "makam"
 ]
 share: [
+  "stdlib/args.makam" {"stdlib/args.makam"}
   "stdlib/basic_predicates.makam" {"stdlib/basic_predicates.makam"}
   "stdlib/bind.makam" {"stdlib/bind.makam"}
   "stdlib/cache.makam" {"stdlib/cache.makam"}
