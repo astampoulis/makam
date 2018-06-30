@@ -12,6 +12,10 @@
 %use string.
 %use hlist.
 %use args.
+%use tuple.
+%use option.
+%use set.
+%use map.
 
 %use guard.
 %use demand.
@@ -19,10 +23,6 @@
 %use logging.
 %use testing.
 
-%use tuple.
-%use option.
-%use set.
-%use map.
 %use fluid.
 %use iso.
 
