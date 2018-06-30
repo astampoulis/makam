@@ -324,10 +324,13 @@ change_ X Y <- plus X 1 Y.
 
 (* -------------------- forall *)
 
-forall : testsuite.
+forall : testsuite. %testsuite forall.
 testcase forall :- eq X @eq, instantiate X X', X' 1 1, instantiate X X'', X'' "foo" "foo".
 
 (* -------------------- refl.isbasehead and friends *)
+
+refl : testsuite. %testsuite refl.
+
 >> refl.isbasehead tuple ?
 >> Yes.
 
@@ -360,5 +363,59 @@ testcase forall :- eq X @eq, instantiate X X', X' 1 1, instantiate X X'', X'' "f
 
 >> refl.isfun (tuple 1 2) ?
 >> Impossible.
+
+(* -------------------- demand.case_otherwise *)
+
+demand : testsuite. %testsuite demand.
+
+foo : [A]A -> prop.
+foo X :- eq X "foo".
+foo "bar".
+foo Y :- eq Y 42.
+foo Z when dyn.eq Z [1, 2].
+foo [3, 4].
+
+>> demand.case_otherwise (foo "foo") failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo "bar") failure ?
+>> Impossible.
+
+>> demand.case_otherwise (foo (X : int)) failure ?
+>> Yes:
+>> X := 42.
+
+>> (demand.case_otherwise (foo (X: A)) failure, dyn.eq X "foo") ?
+>> Yes.
+
+>> demand.case_otherwise (foo [1, 2]) failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo [3, 4]) failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo (1, 2)) success ?
+>> Yes.
+
+>> ((foo (1, 2) -> demand.case_otherwise (foo X) failure), dyn.eq X (1, 2)) ?
+>> Yes.
+
+>> ((foo (1, 2) -> foo (3, 4) -> demand.case_otherwise (foo X) failure), dyn.eq X (3, 4)) ?
+>> Yes.
+
+(* -------------------- demand.most_recent *)
+
+>> (demand.most_recent (foo X), dyn.eq X [3, 4]) ?
+>> Yes.
+
+>> demand.most_recent (foo (X: string)) ?
+>> Yes:
+>> X := "bar".
+
+>> ((foo "one" -> demand.most_recent (foo X)), dyn.eq X "one") ?
+>> Yes.
+
+>> ((foo "one" -> foo "two" -> demand.most_recent (foo X)), dyn.eq X "two") ?
+>> Yes.
 
 %end.

@@ -135,9 +135,7 @@ get_peg_definition : [A] peg A -> peg A -> prop.
 get_external_peg_definition : [A] peg A -> string -> prop.
 
 get_peg_definition P Res when not(builtin P) :-
-  refl.assume_get_applicable (rule P _) Rules0,
-  refl.rules_get_applicable (rule P _) Rules1,
-  append Rules0 Rules1 Rules,
+  refl.rules_get_applicable (rule P _) Rules,
   (* TODO: we were not checking the right thing here. We basically want to make
      sure that we're not left with any uninstantiated metavariables I think. *)
   map (pfun def res => [Guard Goal Def]
@@ -148,9 +146,7 @@ get_peg_definition P Res when not(builtin P) :-
   eq Res (choices Defs).
 
 get_external_peg_definition P Res when not(builtin P) :-
-  refl.assume_get_applicable (extern_def P _) Rules0,
-  refl.rules_get_applicable (extern_def P _) Rules1,
-  append Rules0 Rules1 Rules,
+  refl.rules_get_applicable (extern_def P _) Rules,
   if (eq Rules [Rule]) then
     success
   else
