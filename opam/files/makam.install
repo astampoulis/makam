@@ -9,7 +9,7 @@ share: [
   "stdlib/args.makam" {"stdlib/args.makam"}
   "stdlib/basic_predicates.makam" {"stdlib/basic_predicates.makam"}
   "stdlib/bind.makam" {"stdlib/bind.makam"}
-  "stdlib/cache.makam" {"stdlib/cache.makam"}
+  "stdlib/caching.makam" {"stdlib/caching.makam"}
   "stdlib/clause.makam" {"stdlib/clause.makam"}
   "stdlib/concrete_bind.makam" {"stdlib/concrete_bind.makam"}
   "stdlib/connectives.makam" {"stdlib/connectives.makam"}

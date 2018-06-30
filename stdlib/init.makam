@@ -22,13 +22,16 @@
 
 %use logging.
 %use testing.
+%use caching.
 
 %use fluid.
 %use iso.
 
-%use bind.
+(* --- *)
 
 %use generic.
+
+%use bind.
 
 %use morerefl.
 %use heterogeneous.
@@ -36,7 +39,6 @@
 
 %use vars.
 
-%use cache.
 %use concrete_bind.
 
 %extend peg.
