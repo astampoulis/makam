@@ -32,7 +32,7 @@ structural : [B] (A -> A -> prop) -> B -> B -> prop.
 
 (* defer if both input and output are uninstantiated metavariables *)
 structural Rec (X : A) (Y : A) when refl.isunif X, refl.isunif Y <-
-  guardmany (X, Y) (dyn.call Rec X Y).
+  guardmany [X, Y] (dyn.call Rec X Y).
 
 (* deal with built-in types *)
 structural Rec X X when refl.isconst X.

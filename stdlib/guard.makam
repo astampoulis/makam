@@ -1,13 +1,11 @@
-guardmany : TupleType -> prop -> prop.
+guardmany : hlist A -> prop -> prop.
 
-guardmany_aux : [TupleType] TupleType -> unit -> prop -> prop.
+guardmany_aux : [A] hlist A -> unit -> prop -> prop.
 
-guardmany_aux X Trigger P when not(typ.eq X (_ : A * B)) <-
-  removableguard Trigger X {prop| P, eq Trigger unit |}.
+guardmany_aux [Last] Trigger P :-
+  removableguard Trigger Last {prop| P, eq Trigger unit |}.
 
-guardmany_aux (HD, TL) Trigger P <-
+guardmany_aux (HD :: TL) Trigger P :-
   guardmany_aux HD Trigger P, guardmany_aux TL Trigger P.
 
-guardmany XS P <- guardmany_aux XS Trigger P.
-
-  
+guardmany XS P :- guardmany_aux XS Trigger P.
