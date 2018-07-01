@@ -9,6 +9,7 @@
 %use forall.
 
 %use list.
+%use vector.
 %use hlist.
 %use args.
 %use string.
@@ -30,15 +31,12 @@
 
 %use generic.
 
-%use bind.
-
 %use morerefl.
-%use heterogeneous.
 %use reify.
 
-(* --- *)
 %use vars.
 
+%use bind.
 %use concrete_bind.
 
 %extend peg.

@@ -118,7 +118,8 @@ typeof (app E1 E2) T2 <-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
 typeof (lamt A_E) (tpi K A_T) <-
-  bindone.openmany [A_E, A_T] (pfun a [E, T] =>
+  bindone.pair A_E A_T A_ET,
+  bindone.open A_ET (pfun a (E, T) =>
     (kindofg a K -> typeof E T)
   ).
 
@@ -354,7 +355,8 @@ sigof (strlet_ E)
 
 sigof (strletrec ES)
       (sigmany Vals) <-
-  bindmany.openmany [ES, ESE'] (pfun xs [ES, ESE'] => eq ESE' (ES, tuple xs)),
+  bindmany.pair ES ESE' Both,
+  bindmany.open Both (pfun xs (ES, ESE') => eq ESE' (ES, tuple xs)),
   bindmany.varnames ES Names,
   typeof (letrec ESE') (tprod TS),
   map (fun n t => eq (sigval n t)) Names TS Vals.

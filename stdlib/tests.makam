@@ -287,20 +287,20 @@ let_in : term -> (term -> term) -> term.
 
 (* ------------------- dependent bind *)
 
-bind : testsuite. %testsuite bind.
+vbindmany : testsuite. %testsuite vbindmany.
 
->> dyn.eq (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body x))) (_: bind string (t_cons string (t_cons string t_nil)) string) ?
+>> dyn.eq (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body x))) (_: vbindmany string (succ (succ zero)) string) ?
 >> Yes.
 
->> bind.open (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?
+>> vbindmany.open (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?
 
->> bind.apply (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) ["a","b"] X ?
+>> vbindmany.apply (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body `${x}${y}`))) ["a","b"] X ?
 >> Yes:
 >> X := `${"a"}${"b"}`.
 
->> bind.pair (bind.binder "x" (fun (x: string) => bind.binder YName (fun (y: string) => bind.body 1))) (bind.binder XName (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body "foo"))) X ?
+>> vbindmany.pair (vbindmany.bind "x" (fun (x: string) => vbindmany.bind YName (fun (y: string) => vbindmany.body 1))) (vbindmany.bind XName (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body "foo"))) X ?
 >> Yes:
->> X := bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body (1, "foo"))),
+>> X := vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body (1, "foo"))),
 >> XName := "x",
 >> YName := "y".
 

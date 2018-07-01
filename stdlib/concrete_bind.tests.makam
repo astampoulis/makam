@@ -11,13 +11,13 @@ tfunction : (typ -> term) -> term.
 ascribe : term -> typ -> term.
 letin : term -> bindone term term -> term.
 letrec : bindmany term (list term) -> bindmany term term -> term.
-letrec_dep : bind term A (list term) -> bind term A term -> term.
+letrec_dep : vbindmany term N (list term) -> vbindmany term N term -> term.
 globalvar : string -> term.
 
 letrec_dep_concrete : list (concrete.name term * term) -> term -> term.
 concrete.resolve_conversion
     (letrec_dep_concrete NamesDefs Body)
-    (letrec_dep (concrete.binders Names Defs) (concrete.binders Names Body)) :-
+    (letrec_dep (concrete.vbindmany Names Defs) (concrete.vbindmany Names Body)) :-
   zip Names Defs NamesDefs.
 
 termvars : concrete.namespace term.
@@ -95,19 +95,19 @@ concrete.handle_unresolved_name (concrete.name termvars ID) (globalvar ID).
 >> Yes:
 >> X := letin (stringconst "a") (bind ID' (fun x => x)).
 
->> concrete.resolve_ (letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body"))) X ?
+>> concrete.resolve_ (letrec_dep (concrete.vbindmany [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.vbindmany [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body"))) X ?
 >> Yes:
->> X := (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))).
+>> X := (letrec_dep (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body ([stringconst "a", stringconst "b"])))) (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body (stringconst "body"))))).
 
->> (concrete.pattern_mode -> concrete.resolve_ (letrec_dep (concrete.binders [concrete.name termvars "a"] [stringconst "a"]) (concrete.binders [concrete.name termvars "a"] (stringconst "body"))) X) ?
+>> (concrete.pattern_mode -> concrete.resolve_ (letrec_dep (concrete.vbindmany [concrete.name termvars "a"] [stringconst "a"]) (concrete.vbindmany [concrete.name termvars "a"] (stringconst "body"))) X) ?
 >> Yes:
->> X := letrec_dep (bind.binder ID (fun a => bind.body (cons (stringconst "a") nil))) (bind.binder ID' (fun a => bind.body (stringconst "body"))).
+>> X := letrec_dep (vbindmany.bind ID (fun a => vbindmany.body (cons (stringconst "a") nil))) (vbindmany.bind ID' (fun a => vbindmany.body (stringconst "body"))).
 
->> (concrete.resolve_conversion (letrec_dep _A _B) (letrec_dep _A _B) -> concrete.resolve_ X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body")))))) ?
+>> (concrete.resolve_conversion (letrec_dep _A _B) (letrec_dep _A _B) -> concrete.resolve_ X (letrec_dep (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body ([stringconst "a", stringconst "b"])))) (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body (stringconst "body")))))) ?
 >> Yes:
->> X := letrec_dep (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.binders [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body")).
+>> X := letrec_dep (concrete.vbindmany [concrete.name termvars "a", concrete.name termvars "b"] [stringconst "a", stringconst "b"]) (concrete.vbindmany [concrete.name termvars "a", concrete.name termvars "b"] (stringconst "body")).
 
->> concrete.resolve_ X (letrec_dep (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body ([stringconst "a", stringconst "b"])))) (bind.binder "a" (fun a => bind.binder "b" (fun b => bind.body (stringconst "body"))))) ?
+>> concrete.resolve_ X (letrec_dep (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body ([stringconst "a", stringconst "b"])))) (vbindmany.bind "a" (fun a => vbindmany.bind "b" (fun b => vbindmany.body (stringconst "body"))))) ?
 >> Yes:
 >> X := letrec_dep_concrete [(concrete.name termvars "a", stringconst "a"), (concrete.name termvars "b", stringconst "b")] (stringconst "body").
 

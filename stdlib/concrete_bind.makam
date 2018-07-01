@@ -101,39 +101,39 @@ resolve_aux (bindmany.bind_c (name Namespace ID) Body) (bind ID' Body') :-
 resolve_conversion (bindmany [] Body) (body Body).
 resolve_conversion (bindmany (X :: XS) Body) (bindmany.bind_c X (bindmany XS Body)).
 
-(* list of names and concrete.binders (standing for bind.binder and bind.body) *)
+(* list of names and concrete.vbindmany (standing for vbindmany.bind and vbindmany.body) *)
 
 names : type -> type -> type.
 
 nil : names Type unit.
 cons : name Type -> names Type A -> names Type (Type * A).
 
-binders : list (name Type) -> BodyType -> bind Type NamesType BodyType.
+vbindmany : list (name Type) -> BodyType -> vbindmany Type N BodyType.
 
-resolve_aux (binders ((name Namespace ID) :: Rest) Body) Result when refl.isunif Result :-
-  eq Result (bind.binder ID' Body'),
+resolve_aux (vbindmany ((name Namespace ID) :: Rest) Body) Result when refl.isunif Result :-
+  eq Result (vbindmany.bind ID' Body'),
   if (pattern_mode) then success else eq ID ID',
-  resolve_ (lambda (name Namespace ID) (binders Rest Body)) Body'.
+  resolve_ (lambda (name Namespace ID) (vbindmany Rest Body)) Body'.
 
-resolve_aux (binders [] Body) Result when refl.isunif Result :-
-  eq Result (bind.body Body'),
+resolve_aux (vbindmany [] Body) Result when refl.isunif Result :-
+  eq Result (vbindmany.body Body'),
   resolve_ Body Body'.
 
-resolve_aux Result (Bind: bind VarType AllVars BodyType) when not(refl.isunif Bind) :-
-  if (dyn.eq Bind (bind.binder ID' Rest))
+resolve_aux Result (Bind: vbindmany VarType N BodyType) when not(refl.isunif Bind) :-
+  if (dyn.eq Bind (vbindmany.bind ID' Rest))
   then (
     if (pattern_mode, refl.isunif ID') then success else eq ID ID',
     eq Name (name Namespace ID),
-    resolve_ (lambda Name (binders Names Body)) Rest,
-    eq Result (binders (Name :: Names) Body)
+    resolve_ (lambda Name (vbindmany Names Body)) Rest,
+    eq Result (vbindmany (Name :: Names) Body)
   )
   else (
-    dyn.eq Bind (bind.body Body),
+    dyn.eq Bind (vbindmany.body Body),
     resolve_ Body' Body,
-    eq Result (binders [] Body')
+    eq Result (vbindmany [] Body')
   ).
 
-(* TODO: still experimental *)
+(* TODO: still experimental, no tests *)
 names_of : [BodyType] namespace Type -> BodyType -> list (name Type) -> prop.
 names_of_aux : [BodyType] namespace Type -> list (name Type) -> BodyType -> list (name Type) -> prop.
 
