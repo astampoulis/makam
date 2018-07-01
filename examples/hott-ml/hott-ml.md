@@ -321,9 +321,11 @@ wfprogram : program -> sig -> prop.
 wfprogram (main E) (smain T) :- typeof E T.
 
 wfprogram (data (datadef D)) (sdata (datadef D')) :-
-  bindone.openmany [D, D'] (pfun T [(ConstrTS, CS_Rest), (ConstrTS', CS_Rest')] =>
+  bindone.pair D D' DS,
+  bindone.open DS (pfun T ((ConstrTS, CS_Rest), (ConstrTS', CS_Rest')) => [CS_BodyTSig]
     eq ConstrTS ConstrTS',
-    bindmany.openmany [CS_Rest, CS_Rest'] (pfun Constrs [Body, TSig] =>
+    bindmany.pair CS_Rest CS_Rest' CS_BodyTSig,
+    bindmany.open CS_BodyTSig (pfun Constrs (Body, TSig) =>
       (datadef_all_constructors T Constrs ->
       assume_many (datadef_constructor T) Constrs ConstrTS (
         wfprogram Body TSig)))).
@@ -406,7 +408,7 @@ annotator (X: RootType) (annotated Y: annotated BaseType Annotation RootType) :-
   annotator_aux (_: (BaseType * Annotation)) X Y.
 
 annotator_aux TypeProxy X Y :-
-  structural (annotator_aux TypeProxy) X X',
+  structural @(annotator_aux TypeProxy) X X',
   demand.case_otherwise ((annotator_cases TypeProxy) X' Y)
                         (eq X' Y).
 
@@ -422,7 +424,7 @@ deannotator (annotated Y: annotated BaseType Annotation RootType) (X: RootType) 
 deannotator_aux TypeProxy X Y :-
   demand.case_otherwise ((annotator_cases TypeProxy) Y' Y)
                         (eq Y' Y),
-  structural (deannotator_aux TypeProxy) X Y'.
+  structural @(deannotator_aux TypeProxy) X Y'.
 
 isocast_def (iso.iso annotator deannotator).
 ```
@@ -513,7 +515,7 @@ datatype : (T: typ) (Yes: set constructor) (No: set constructor) -> typ.
 enrich_types, enrich_types_cases : [A]A -> A -> prop.
 
 enrich_types X Y :-
-  demand.case_otherwise (enrich_types_cases X Y) (structural enrich_types X Y).
+  demand.case_otherwise (enrich_types_cases X Y) (structural @enrich_types X Y).
 
 enrich_types_cases T (datatype T Yes [])
   when not(refl.isunif T), datadef_all_constructors T Constrs :-
@@ -587,7 +589,7 @@ coverage_checker X :-
 
 coverage_checker X X :-
   demand.case_otherwise (coverage_checker_cases X)
-                        (structural coverage_checker X X).
+                        (structural @coverage_checker X X).
 
 coverage_checker_cases (X: datadef T) :-
   datadef.open X (pfun Body => coverage_checker Body).
