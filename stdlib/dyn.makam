@@ -7,19 +7,11 @@ dyn : A -> dyn.
 
 %extend dyn.
 
-%extend private.
-call_dyn : forall Z (A -> B -> prop) -> dyn -> dyn -> prop.
-call_dyn P (dyn X) (dyn Y) <- forall.call P X Y.
+call : forall Z (A -> B -> prop) -> dyn -> dyn -> prop.
+call P (dyn X) (dyn Y) <- forall.call P X Y.
 
-call_dyn : forall Z (A -> B -> C -> prop) -> dyn -> dyn -> dyn -> prop.
-call_dyn P (dyn X) (dyn Y) (dyn Z) <- forall.call P X Y Z.
-%end.
-
-map : forall Z (A -> B -> prop) -> list dyn -> list dyn -> prop.
-map P L L' <- .map (private.call_dyn P) L L'.
-
-foldl : forall Z (B -> A -> B -> prop) -> B -> list dyn -> B -> prop.
-foldl P X L X' <- .foldl (private.call_dyn P) (dyn X) L (dyn X').
+call : forall Z (A -> B -> C -> prop) -> dyn -> dyn -> dyn -> prop.
+call P (dyn X) (dyn Y) (dyn Z) <- forall.call P X Y Z.
 
 to_args : [A B] list dyn -> args A B -> prop.
 to_args [] [].
