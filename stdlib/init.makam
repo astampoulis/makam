@@ -3,36 +3,40 @@
 %use eqv.
 %use clause.
 %use typ.
-%use guard.
+
+%use fix_builtins.
+
+%use forall.
 
 %use list.
-%use dyn.
-%use forall.
+%use vector.
+%use hlist.
+%use args.
 %use string.
-
-%use logging.
-
-%use demand.
-%use testing.
-
 %use tuple.
 %use option.
 %use set.
 %use map.
+%use dyn.
+
+%use guard.
+%use demand.
+
+%use logging.
+%use testing.
+%use caching.
+
 %use fluid.
 %use iso.
-
-%use bind.
 
 %use generic.
 
 %use morerefl.
-%use heterogeneous.
 %use reify.
 
 %use vars.
 
-%use cache.
+%use bind.
 %use concrete_bind.
 
 %extend peg.

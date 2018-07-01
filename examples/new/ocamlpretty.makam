@@ -14,12 +14,13 @@ gracewithnames X Y <-
   gracewithnames 0 X Y.
 
 gracewithnames N X Y <-
-  demand.case_otherwise (gracewithnames_ N X Y) (structural (gracewithnames N) X Y).
+  demand.case_otherwise (gracewithnames_ N X Y) (structural @(gracewithnames N) X Y).
 
 gracewithnames_ N (X : bindone typ A) Y when bindone.varname X S, refl.isunif S <-
   tostring N Suffix, string.append "a" Suffix S,
   plus N 1 N',
-  bindone.open X Y (fun x body body' => gracewithnames N' body body').
+  bindone.pair X Y Both,
+  bindone.open Both (pfun x (Body, Body') => gracewithnames N' Body Body').
 
 
 listdo : list (A -> prop) -> list A -> prop.

@@ -2946,13 +2946,12 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
 
         let cgoalidx, cgoal, ccond, cpremise, c' = getInfoFromUnchasedClause_mutable c' in
 
-        let cg', indebug', trace' = debugTraceEnter cgoalidx cgoal in
-
-        trace := trace' ;
-        indebug := indebug' ;
-
         pattUnifyFull_mutable newgoal cgoal ;
         ignore(List.map (uncurry nameUnify_mutable) nu) ;
+
+        let cg', indebug', trace' = debugTraceEnter cgoalidx cgoal in
+        trace := trace' ;
+        indebug := indebug' ;
 
         true, ccond, Some cpremise, Some cg'
 

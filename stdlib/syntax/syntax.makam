@@ -148,9 +148,7 @@ to_pretty (transform Forward Forward_js Backward SyntaxArgs) (pretty.untransform
    them accordingly. *)
 
 to_peg S P when not(builtin S), rule S _ :-
-  refl.assume_get_applicable (rule S _) Rules0,
-  refl.rules_get_applicable (rule S _) Rules1,
-  append Rules0 Rules1 Rules,
+  refl.rules_get_applicable (rule S _) Rules,
   map (pfun rul def => [Def Guard]
     (clause.get_goal rul (rule S Def),
      clause.get_guard rul Guard,
@@ -160,9 +158,7 @@ to_peg S P when not(builtin S), rule S _ :-
   if (inline S) then (to_peg (choices Defs) P)
   else (eq P (peg.syntax (choices Defs))).
 to_pretty S P when not(builtin S), rule S _ :-
-  refl.assume_get_applicable (rule S _) Rules0,
-  refl.rules_get_applicable (rule S _) Rules1,
-  append Rules0 Rules1 Rules,
+  refl.rules_get_applicable (rule S _) Rules,
   map (pfun rul def => [Def Guard]
     (clause.get_goal rul (rule S Def),
      clause.get_guard rul Guard,

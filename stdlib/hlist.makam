@@ -1,0 +1,5 @@
+t_nil : type. t_cons : type -> type -> type.
+
+hlist : type -> type.
+nil : hlist t_nil.
+cons : A -> hlist B -> hlist (t_cons A B).

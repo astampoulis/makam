@@ -1,27 +1,9 @@
-(* TODO: isnvar is broken for lambdas, investigate. this is a stopgap *)
-%extend builtin.
-%extend refl.
-isnvar : [A]A -> prop.
-isnvar X :- .refl.isnvar X.
-%end.
-%end.
-
-
 %extend refl.
 
 sameunif : A -> A -> prop.
 sameunif X Y <-
   refl.isunif X, refl.isunif Y,
   refl.decomposeunif X I _, refl.decomposeunif Y I _.
-
-islambdaunif : [A]A -> prop.
-islambdaunif X :-
-  if (refl.isunif X) then
-    success
-  else (dyn.eq X (Z : A -> B), (x:A -> islambdaunif (Z x))).
-
-isnvar : [A]A -> prop.
-isnvar X when newnmeta (pfun x => (eq x X, not(refl.islambdaunif x))).
 
 %extend userdef.
 
@@ -30,7 +12,10 @@ getunif : [A B] A -> B -> prop.
 
 getunif_aux, getunif_ : [A B] option B -> A -> option B -> prop.
 
-getunif_aux X Y Z <- demand.case_otherwise (getunif_ X Y Z) (generic.fold getunif_aux X Y Z).
+getunif_aux X Y Z <-
+  demand.case_otherwise
+    (getunif_ X Y Z)
+    (generic.fold @getunif_aux X Y Z).
 getunif_ (some Res) _ (some Res).
 getunif_ _ X (some X) when refl.isunif X.
 
@@ -41,12 +26,43 @@ absunif_aux, absunif_ : [A B] B -> B -> A -> A -> prop.
 
 absunif_ Unif Replace Root Replace when refl.sameunif Root Unif.
 absunif_ Unif Replace Root Root when refl.isunif Root.
-absunif_aux Unif Replace Root Result <- demand.case_otherwise (absunif_ Unif Replace Root Result) (structural (absunif_aux Unif Replace) Root Result).
+absunif_aux Unif Replace Root Result <-
+  demand.case_otherwise
+    (absunif_ Unif Replace Root Result)
+    (structural @(absunif_aux Unif Replace) Root Result).
 
 absunif Root (Unif : A) Res <-
   (x:A -> absunif_aux Unif x Root (Res x)).
 
 %end.
+
+(* checks if a term is an unapplied constant/head symbol, such as a free variable.
+   This is similar to refl.isbaseterm, but in that case, the constant has to be fully applied
+   (otherwise it's a function). It works by comparing the eta-expansion of the term to the
+   term itself.
+
+   So:
+
+    refl.isbasehead tuple ~> True
+    refl.isbasehead (tuple 1) ~> False
+    refl.isbasehead (tuple 1 2) ~> False
+
+    refl.isbaseterm tuple ~> False
+    refl.isbasehead (tuple 1) ~> False
+    refl.isbasehead (tuple 1 2) ~> False
+
+    refl.isfun tuple ~> True
+    refl.isfun (tuple 1) ~> True
+    refl.isfun (tuple 1 2) ~> False
+
+*)
+
+isbasehead : [A]A -> prop.
+isbasehead (F: T) :-
+  args.applyfull F Args F_Body,
+  (* comparing the type of the head to the type of the initial term is enough:
+     only in the case where the head is completely unapplied will the types match. *)
+  refl.headargs F_Body (F_HD: T) _.
 
 %end.
 

@@ -287,20 +287,20 @@ let_in : term -> (term -> term) -> term.
 
 (* ------------------- dependent bind *)
 
-bind : testsuite. %testsuite bind.
+vbindmany : testsuite. %testsuite vbindmany.
 
->> dyn.eq (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body x))) (_: bind string (string * string * unit) string) ?
+>> dyn.eq (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body x))) (_: vbindmany string (succ (succ zero)) string) ?
 >> Yes.
 
->> bind.open (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?
+>> vbindmany.open (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body `${x}${y}`))) (pfun x_y body => ([A B] eq x_y [A, B], eq body `${A}${B}`)) ?
 
->> bind.apply (bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body `${x}${y}`))) ["a","b"] X ?
+>> vbindmany.apply (vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body `${x}${y}`))) ["a","b"] X ?
 >> Yes:
 >> X := `${"a"}${"b"}`.
 
->> bind.pair (bind.binder "x" (fun (x: string) => bind.binder YName (fun (y: string) => bind.body 1))) (bind.binder XName (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body "foo"))) X ?
+>> vbindmany.pair (vbindmany.bind "x" (fun (x: string) => vbindmany.bind YName (fun (y: string) => vbindmany.body 1))) (vbindmany.bind XName (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body "foo"))) X ?
 >> Yes:
->> X := bind.binder "x" (fun (x: string) => bind.binder "y" (fun (y: string) => bind.body (1, "foo"))),
+>> X := vbindmany.bind "x" (fun (x: string) => vbindmany.bind "y" (fun (y: string) => vbindmany.body (1, "foo"))),
 >> XName := "x",
 >> YName := "y".
 
@@ -313,7 +313,7 @@ change_ : [A] A -> A -> prop.
 
 change X Y <-
   demand.case_otherwise (change_ X Y)
-                        (structural change X Y).
+                        (structural @change X Y).
 
 change_ "a" "b".
 change_ X Y <- plus X 1 Y.
@@ -324,7 +324,98 @@ change_ X Y <- plus X 1 Y.
 
 (* -------------------- forall *)
 
-forall : testsuite.
+forall : testsuite. %testsuite forall.
 testcase forall :- eq X @eq, instantiate X X', X' 1 1, instantiate X X'', X'' "foo" "foo".
+
+(* -------------------- refl.isbasehead and friends *)
+
+refl : testsuite. %testsuite refl.
+
+>> refl.isbasehead tuple ?
+>> Yes.
+
+>> refl.isbasehead (tuple 1) ?
+>> Impossible.
+
+>> refl.isbasehead (tuple 1 2) ?
+>> Impossible.
+
+>> refl.isbasehead (tuple X) ?
+>> Impossible.
+
+>> refl.isbasehead unit ?
+>> Yes.
+
+>> refl.isbaseterm tuple ?
+>> Impossible.
+
+>> refl.isbaseterm (tuple 1) ?
+>> Impossible.
+
+>> refl.isbaseterm (tuple 1 2) ?
+>> Yes.
+
+>> refl.isfun tuple ?
+>> Yes.
+
+>> refl.isfun (tuple 1) ?
+>> Yes.
+
+>> refl.isfun (tuple 1 2) ?
+>> Impossible.
+
+(* -------------------- demand.case_otherwise *)
+
+demand : testsuite. %testsuite demand.
+
+foo : [A]A -> prop.
+foo X :- eq X "foo".
+foo "bar".
+foo Y :- eq Y 42.
+foo Z when dyn.eq Z [1, 2].
+foo [3, 4].
+
+>> demand.case_otherwise (foo "foo") failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo "bar") failure ?
+>> Impossible.
+
+>> demand.case_otherwise (foo (X : int)) failure ?
+>> Yes:
+>> X := 42.
+
+>> (demand.case_otherwise (foo (X: A)) failure, dyn.eq X "foo") ?
+>> Yes.
+
+>> demand.case_otherwise (foo [1, 2]) failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo [3, 4]) failure ?
+>> Yes.
+
+>> demand.case_otherwise (foo (1, 2)) success ?
+>> Yes.
+
+>> ((foo (1, 2) -> demand.case_otherwise (foo X) failure), dyn.eq X (1, 2)) ?
+>> Yes.
+
+>> ((foo (1, 2) -> foo (3, 4) -> demand.case_otherwise (foo X) failure), dyn.eq X (3, 4)) ?
+>> Yes.
+
+(* -------------------- demand.most_recent *)
+
+>> (demand.most_recent (foo X), dyn.eq X [3, 4]) ?
+>> Yes.
+
+>> demand.most_recent (foo (X: string)) ?
+>> Yes:
+>> X := "bar".
+
+>> ((foo "one" -> demand.most_recent (foo X)), dyn.eq X "one") ?
+>> Yes.
+
+>> ((foo "one" -> foo "two" -> demand.most_recent (foo X)), dyn.eq X "two") ?
+>> Yes.
 
 %end.

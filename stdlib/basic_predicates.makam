@@ -5,14 +5,8 @@ eq X X.
 unify : A -> A -> prop.
 unify X X.
 
-apply : (A1 -> A2 -> B) -> A1 -> A2 -> B -> prop.
-apply F X1 X2 (F X1 X2).
-
-apply : (A1 -> A2 -> A3 -> B) -> A1 -> A2 -> A3 -> B -> prop.
-apply F X1 X2 X3 (F X1 X2 X3).
-
-apply : (A1 -> A2 -> A3 -> A4 -> B) -> A1 -> A2 -> A3 -> A4 -> B -> prop.
-apply F X1 X2 X3 X4 (F X1 X2 X3 X4).
-
-apply : (A -> B) -> A -> B -> prop.
-apply F X (F X).
+%extend dyn.
+(* A version of `eq` that delays type unification of the terms until runtime *)
+eq : [B] A -> B -> prop.
+eq X X.
+%end.

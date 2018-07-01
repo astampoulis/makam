@@ -55,7 +55,7 @@ peg.rule (ppegrule) (bind (symbol ident) (fun id =>
                                             eq x (bind hd Tl)))))))))))).
 
 convert, convert_aux : [A]A -> A -> prop.
-convert X Y :- demand.case_otherwise (convert_aux X Y) (structural convert X Y).
+convert X Y :- demand.case_otherwise (convert_aux X Y) (structural @convert X Y).
 convert_aux ((concat (L: list string)): string) S :- string.concat L S.
 
 peg.rule (ppeg) (bind (many (seq (symbol (exact ("/"))) ppegrule)) (fun l =>

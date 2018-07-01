@@ -106,9 +106,7 @@ pretty (choices (HD :: TL)) Term Res :-
 get_pretty_definition : pretty A -> pretty A -> prop.
 
 get_pretty_definition P Res when not(builtin P) :-
-  refl.assume_get_applicable (rule P P') Rules0,
-  refl.rules_get_applicable (rule P P') Rules1,
-  append Rules0 Rules1 Rules,
+  refl.rules_get_applicable (rule P P') Rules,
   map (pfun def res => [Def Loc LocS Guard]
     (clause.get_goal def (rule P Def),
      clause.get_guard def Guard,

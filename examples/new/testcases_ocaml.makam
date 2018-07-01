@@ -4,6 +4,6 @@
 ocaml_test_suite : testsuite.
 
 testcase ocaml_test_suite <-
-  typeof (let (lam (bindone "x" (fun x => x))) (bindone "id" (fun id => id))) X,
+  typeof (let (lam (bind "x" (fun x => x))) (bind "id" (fun id => id))) X,
   gracewithnames X X',
-  eq_nounif X' (tpi ktype (bindone "a0" (fun a => tarrow a a))).
+  eq_nounif X' (tpi ktype (bind "a0" (fun a => tarrow a a))).

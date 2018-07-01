@@ -1,18 +1,3 @@
 option : type -> type.
 none : option A.
 some : A -> option A.
-
-%extend option.
-map : (A -> B -> prop) -> option A -> option B -> prop.
-map P (some X) (some Y) <- P X Y.
-map P none none.
-
-issome : option A -> prop.
-issome (some _).
-
-isnone : option A -> prop.
-isnone none.
-
-get : option A -> A -> prop.
-get (some X) X.
-%end.

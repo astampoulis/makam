@@ -14,15 +14,29 @@ name : namespace A -> string -> name A.
 lambda : name A -> B -> (A -> B).
 var : name A -> A.
 bindone : name A -> B -> bindone A B.
-bindnext : name A -> bindmany A B -> bindmany A B.
+%extend bindmany.
+bind_c : name A -> bindmany A B -> bindmany A B.
+%end.
+bindmany : list (name A) -> B -> bindmany A B.
 
-resolve_name : [A] name A -> A -> prop.
+var_of_name : name A -> fluid A.
+name_of_var : A -> name A -> prop.
+
+associate_name_and_var : name A -> A -> prop -> prop.
+associate_name_and_var Name Var P :-
+  fluid.set (var_of_name Name) Var (pfun => (name_of_var Var Name -> P)).
+
+resolve_name_or_var : name A -> A -> prop.
+resolve_name_or_var Name Var when not(refl.isunif Var) :-
+  name_of_var Var Name.
+resolve_name_or_var Name Var when refl.isunif Var :-
+  fluid.get (var_of_name Name) Var.
+
 handle_unresolved_name : [A] name A -> A -> prop.
 pattern_mode : prop.
 
-vars_in_context, vars_in_context_store : [A] namespace A -> list (A * string) -> prop.
-vars_in_context_store Namespace [].
-vars_in_context Namespace Vars :- once(vars_in_context_store Namespace Vars).
+vars_in_context : namespace A -> fluid (list (A * string)).
+`( fluid.set (vars_in_context Namespace) [] ).
 
 pick_name_prefix, pick_name_prefix_userdef : [A] namespace A -> string -> prop.
 pick_name_prefix Namespace ID :-
@@ -34,8 +48,8 @@ pick_name Namespace ID when not(refl.isunif ID).
 pick_name Namespace ID when refl.isunif ID :-
   unless (pick_name_userdef Namespace ID)
          {prop|
-          vars_in_context Namespace Vars,
-          length Vars L, tostring L L_S,
+          fluid.get (vars_in_context Namespace) Vars,
+          length Vars L, plus L 1 L', tostring L' L_S,
           pick_name_prefix Namespace Prefix,
           expansion.str `${Prefix}${L_S}` ID |}.
 
@@ -51,68 +65,84 @@ resolve_, resolve_aux, resolve_conversion : [A]A -> A -> prop.
 resolve (concrete X) Y :- resolve_ X Y.
 isocast_def (iso.bidi concrete.resolve).
 
-resolve_ X Y when refl.isunif X :-
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y),
-  demand.case_otherwise (resolve_conversion X X') (eq X X').
-
 resolve_ X Y when not(refl.isunif X) :-
   demand.case_otherwise (resolve_conversion X X') (eq X X'),
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y).
+  demand.case_otherwise (resolve_aux X' Y) (structural @resolve_ X' Y).
+
+resolve_ X Y when refl.isunif X :-
+  demand.case_otherwise (resolve_aux X' Y) (structural @resolve_ X' Y),
+  demand.case_otherwise (resolve_conversion X X') (eq X X').
 
 resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
-  (x:A ->
-   resolve_name (name Namespace ID) x ->
-   (pick_namespace x Namespace,
-    vars_in_context Namespace Vars,
-    (vars_in_context_store Namespace ((x, ID) :: Vars) ->
-      (pick_name Namespace ID,
-       resolve_ Body (F x))))).
+  (x:A -> (
+   pick_namespace x Namespace,
+   pick_name Namespace ID,
+   fluid.modify (vars_in_context Namespace) (append [(x, ID)])
+     (associate_name_and_var (name Namespace ID) x
+        (resolve_ Body (F x))))).
 
 resolve_aux (var (name Namespace ID)) X
-    when pick_namespace X Namespace, either (once(resolve_name (name Namespace ID) X)) (handle_unresolved_name (name Namespace ID) X) :-
+    when pick_namespace X Namespace,
+         either (resolve_name_or_var (name Namespace ID) X)
+                (handle_unresolved_name (name Namespace ID) X) :-
   pick_namespace X Namespace,
-  if (once(resolve_name (name Namespace ID) X))
+  if (resolve_name_or_var (name Namespace ID) X)
   then success
   else handle_unresolved_name (name Namespace ID) X.
 
-resolve_aux (bindone (name Namespace ID) Body) (bindone ID' Body') :-
+resolve_aux (concrete.bindone (name Namespace ID) Body) (bind ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
 
-resolve_aux (bindnext (name Namespace ID) Body) (bindnext ID' Body') :-
+resolve_aux (bindmany.bind_c (name Namespace ID) Body) (bind ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',
   resolve_ (lambda (name Namespace ID) Body) Body'.
 
-(* list of names and concrete.binders (standing for bind.binder and bind.body) *)
+resolve_conversion (bindmany [] Body) (body Body).
+resolve_conversion (bindmany (X :: XS) Body) (bindmany.bind_c X (bindmany XS Body)).
+
+(* list of names and concrete.vbindmany (standing for vbindmany.bind and vbindmany.body) *)
 
 names : type -> type -> type.
 
 nil : names Type unit.
 cons : name Type -> names Type A -> names Type (Type * A).
 
-binders : list (name Type) -> BodyType -> bind Type NamesType BodyType.
+vbindmany : list (name Type) -> BodyType -> vbindmany Type N BodyType.
 
-resolve_aux (binders ((name Namespace ID) :: Rest) Body) Result when refl.isunif Result :-
-  eq Result (bind.binder ID' Body'),
+resolve_aux (vbindmany ((name Namespace ID) :: Rest) Body) Result when refl.isunif Result :-
+  eq Result (vbindmany.bind ID' Body'),
   if (pattern_mode) then success else eq ID ID',
-  resolve_ (lambda (name Namespace ID) (binders Rest Body)) Body'.
+  resolve_ (lambda (name Namespace ID) (vbindmany Rest Body)) Body'.
 
-resolve_aux (binders [] Body) Result when refl.isunif Result :-
-  eq Result (bind.body Body'),
+resolve_aux (vbindmany [] Body) Result when refl.isunif Result :-
+  eq Result (vbindmany.body Body'),
   resolve_ Body Body'.
 
-resolve_aux Result (Bind: bind VarType AllVars BodyType) when not(refl.isunif Bind) :-
-  if (dyn.eq Bind (bind.binder ID' Rest))
+resolve_aux Result (Bind: vbindmany VarType N BodyType) when not(refl.isunif Bind) :-
+  if (dyn.eq Bind (vbindmany.bind ID' Rest))
   then (
     if (pattern_mode, refl.isunif ID') then success else eq ID ID',
     eq Name (name Namespace ID),
-    resolve_ (lambda Name (binders Names Body)) Rest,
-    eq Result (binders (Name :: Names) Body)
+    resolve_ (lambda Name (vbindmany Names Body)) Rest,
+    eq Result (vbindmany (Name :: Names) Body)
   )
   else (
-    dyn.eq Bind (bind.body Body),
+    dyn.eq Bind (vbindmany.body Body),
     resolve_ Body' Body,
-    eq Result (binders [] Body')
+    eq Result (vbindmany [] Body')
   ).
+
+(* TODO: still experimental, no tests *)
+names_of : [BodyType] namespace Type -> BodyType -> list (name Type) -> prop.
+names_of_aux : [BodyType] namespace Type -> list (name Type) -> BodyType -> list (name Type) -> prop.
+
+names_of_aux Namespace L (name Namespace X) (name Namespace X :: L).
+names_of_aux Namespace L Body L' when not(dyn.eq Body (name Namespace X)) :-
+  generic.fold @(names_of_aux Namespace) L Body L'.
+
+names_of Namespace Body Names' :-
+  names_of_aux Namespace [] Body Names,
+  reverse Names Names'.
 
 %end.

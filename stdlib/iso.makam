@@ -13,8 +13,12 @@ compose : isos A B -> iso A B.
 
 forward : [A B] iso A B -> A -> B -> prop.
 backward : [A B] iso A B -> B -> A -> prop.
+run : [A B] iso A B -> A -> B -> prop.
 
 %end.
+
+iso.run Iso A B when refl.isunif B :- iso.forward Iso A B.
+iso.run Iso A B when refl.isunif A :- iso.backward Iso A B.
 
 iso.forward (iso.iso Forward Backward) A B :- Forward A B.
 iso.backward (iso.iso Forward Backward) B A :- Backward B A.

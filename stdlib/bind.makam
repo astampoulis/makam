@@ -5,64 +5,25 @@ infoofvar : V -> T -> prop.
 (* Includes a string that represents the concrete name of the variable *)
 
 bindone : type -> type -> type.
-bindone : string -> (A -> B) -> bindone A B.
+bind : string -> (A -> B) -> bindone A B.
 
 %extend bindone.
 
-newvar : bindone A B -> (A -> prop) -> prop.
 varname : bindone A B -> string -> prop.
-apply : bindone A B -> A -> B -> prop.
-
-newvar (bindone Name (F : A -> B)) (P : A -> prop) <-
-  (x:A -> nameofvar x Name -> P x).
-
-apply (bindone _ F) X (F X).
-
-varname (bindone S _) S.
-
-match_binders : bindone A B -> bindone A' B' -> prop.
-match_binders (bindone S _) (bindone S _).
-
-open_aux : [PropType] A -> list dyn -> PropType -> prop.
-open_aux Var [] P <- P.
-open_aux Var (dyn B :: TL) P <-
-  apply B Var X,
-  open_aux Var TL (P X).
-
-opendyn : [PropType] list dyn -> PropType -> prop.
-opendyn ES P <-
-  eq ES (dyn HD :: _),
-  dyn.iter (match_binders HD) ES,
-  newvar HD (fun x => open_aux x ES (P x)).
-
-opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
-opendyn_nomatch ES P <-
-  eq ES (dyn HD :: _),
-  newvar HD (fun x => open_aux x ES (P x)).
-
-open : bindone A B -> bindone A C -> (A -> B -> C -> prop) -> prop.
-open X1 X2 P <-
-  opendyn [dyn X1, dyn X2] P.
-
-open : bindone A B -> bindone A C -> bindone A D -> (A -> B -> C -> D -> prop) -> prop.
-open X1 X2 X3 P <-
-  opendyn [dyn X1, dyn X2, dyn X3] P.
 
 open : bindone A B -> (A -> B -> prop) -> prop.
-open X1 P <-
-  opendyn [dyn X1] P.
+apply : bindone A B -> A -> B -> prop.
+pair : bindone A B -> bindone A C -> bindone A (B * C) -> prop.
 
-open_nomatch : bindone A B -> bindone A C -> (A -> B -> C -> prop) -> prop.
-open_nomatch X1 X2 P <-
-  opendyn_nomatch [dyn X1, dyn X2] P.
+open (bind Name (F : A -> B)) (P : A -> B -> prop) <-
+  (x:A -> nameofvar x Name -> P x (F x)).
 
-open_nomatch : bindone A B -> bindone A C -> bindone A D -> (A -> B -> C -> D -> prop) -> prop.
-open_nomatch X1 X2 X3 P <-
-  opendyn_nomatch [dyn X1, dyn X2, dyn X3] P.
+apply (bind _ F) X (F X).
 
-open_nomatch : bindone A B -> (A -> B -> prop) -> prop.
-open_nomatch X1 P <-
-  opendyn_nomatch [dyn X1] P.
+varname (bind S _) S.
+
+pair (bind Name F) (bind Name F') (bind Name F'') :-
+  (x:A -> eq (F'' x) (F x, F' x)).
 
 %end.
 
@@ -70,154 +31,64 @@ open_nomatch X1 P <-
 (* Bindmany: bind a number of A's into a B *)
 
 bindmany : type -> type -> type.
-bindend  : B -> bindmany A B.
-bindnext : string -> (A -> bindmany A B) -> bindmany A B.
+bind : string -> (A -> bindmany A B) -> bindmany A B.
+body : B -> bindmany A B.
 
 %extend bindmany.
 
-newvars : bindmany A B -> (list A -> prop) -> prop.
-apply : bindmany A B -> list A -> B -> prop.
 varnames : bindmany A B -> list string -> prop.
 
-newvars_aux : bindmany A B -> list A -> (list A -> prop) -> prop.
-newvars_aux (bindend _) Vars P <- reverse Vars Vars', P Vars'.
-newvars_aux (bindnext S Rest) Vars P <-
-  bindone.open (bindone S Rest) (fun x bindrest => newvars_aux bindrest (x :: Vars) P).
-newvars B P <- newvars_aux B [] P.
-
-apply (bindend X) [] X.
-apply (bindnext _ F) (HD :: TL) Res <- apply (F HD) TL Res.
-
-applysome : bindmany A B -> list A -> bindmany A B -> prop.
-applysome (bindnext _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
-applysome X nil X.
-
-varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
-
-match_binders : bindmany A B -> bindmany A' B' -> prop.
-match_binders (bindend  _) (bindend _).
-match_binders (bindnext S F) (bindnext S F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
-
-
-open_aux : [PropType] list A -> list dyn -> PropType -> prop.
-open_aux Vars [] P <- P.
-open_aux Vars (dyn B :: TL) P <-
-  apply B Vars X,
-  open_aux Vars TL (P X).
-
-opendyn : [PropType] list dyn -> PropType -> prop.
-opendyn ES P <-
-  eq ES (dyn HD :: _),
-  dyn.iter (match_binders HD) ES,
-  newvars HD (fun xs => open_aux xs ES (P xs)).
-
-opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
-opendyn_nomatch ES P <-
-  eq ES (dyn HD :: _),
-  newvars HD (fun xs => open_aux xs ES (P xs)).
-
-open : bindmany A B -> bindmany A C -> (list A -> B -> C -> prop) -> prop.
-open X1 X2 P <-
-  opendyn [dyn X1, dyn X2] P.
-
-open : bindmany A B -> bindmany A C -> bindmany A D -> (list A -> B -> C -> D -> prop) -> prop.
-open X1 X2 X3 P <-
-  opendyn [dyn X1, dyn X2, dyn X3] P.
-
 open : bindmany A B -> (list A -> B -> prop) -> prop.
-open X1 P <-
-  opendyn [dyn X1] P.
+apply : bindmany A B -> list A -> B -> prop.
+applysome : bindmany A B -> list A -> bindmany A B -> prop.
+pair : bindmany A B -> bindmany A C -> bindmany A (B * C) -> prop.
 
-open_nomatch : bindmany A B -> bindmany A C -> (list A -> B -> C -> prop) -> prop.
-open_nomatch X1 X2 P <-
-  opendyn_nomatch [dyn X1, dyn X2] P.
+open (body Body) P :- P [] Body.
+open (bind Name (F : A -> bindmany A B)) (P : list A -> B -> prop) <-
+  (x:A -> nameofvar x Name -> open (F x) (pfun l => P (x :: l))).
 
-open_nomatch : bindmany A B -> bindmany A C -> bindmany A D -> (list A -> B -> C -> D -> prop) -> prop.
-open_nomatch X1 X2 X3 P <-
-  opendyn_nomatch [dyn X1, dyn X2, dyn X3] P.
+apply (body Body) [] Body.
+apply (bind _ F) (HD :: TL) Result :- apply (F HD) TL Result.
 
-open_nomatch : bindmany A B -> (list A -> B -> prop) -> prop.
-open_nomatch X1 P <-
-  opendyn_nomatch [dyn X1] P.
+applysome (bind _ F) (HD :: TL) Result :- applysome (F HD) TL Result.
+applysome X [] X.
 
-%end.
+varnames XS_Body Names :-
+  open XS_Body (pfun XS Body => map nameofvar XS Names).
 
-
-(* Telescope: bind a number of A's into B, with an additional term of type C at each
-   binding that can use previously-bound variables. Useful for modelling the context in
-   dependently-typed languages. *)
-
-telescope : type -> type -> type -> type.
-telend   : B -> telescope V T B.
-telnext  : string -> V -> (V -> telescope V T B) -> telescope V T B.
-
-%extend telescope.
-
-newvars : telescope V T B -> (list V -> prop) -> prop.
-apply : telescope V T B -> list V -> B -> prop.
-varnames : telescope V T B -> list string -> prop.
-varinfos : telescope V T B -> list T -> prop.
-
-newvars_aux : telescope V T B -> list V -> (list V -> prop) -> prop.
-newvars_aux (telend _) Vars P <- reverse Vars Vars', P Vars'.
-newvars_aux (telnext S T Rest) Vars P <-
-  bindone.open (bindone S Rest) (pfun x bindrest => (infoofvar x T -> newvars_aux bindrest (x :: Vars) P) ).
-newvars B P <- newvars_aux B [] P.
-
-apply (telend X) [] X.
-apply (telnext _ _ F) (HD :: TL) Res <- apply (F HD) TL Res.
-
-applysome : telescope V T B -> list V -> telescope V T B -> prop.
-applysome (telnext _ _ F) (HD :: TL) Res <- applysome (F HD) TL Res.
-applysome X nil X.
-
-varnames B Names <- newvars B (fun xs => map nameofvar xs Names).
-varinfos B Names <- newvars B (fun xs => map infoofvar xs Names).
-
-match_binders : telescope V T A -> telescope V' T' A' -> prop.
-match_binders (telend  _) (telend _).
-match_binders (telnext S _ F) (telnext S _ F') <- (x:A -> x':A' -> match_binders (F x) (F' x')).
-
-open_aux : [PropType] list A -> list dyn -> PropType -> prop.
-open_aux Vars [] P <- P.
-open_aux Vars (dyn HD :: TL) P <-
-  apply HD Vars X,
-  open_aux Vars TL (P X).
-
-opendyn : [PropType] list dyn -> PropType -> prop.
-opendyn ES P <-
-  eq ES (dyn HD :: _),
-  dyn.iter (match_binders HD) ES,
-  newvars HD (fun xs => open_aux xs ES (P xs)).
-
-opendyn_nomatch : [PropType] list dyn -> PropType -> prop.
-opendyn_nomatch ES P <-
-  eq ES (dyn HD :: _),
-  newvars HD (fun x => open_aux x ES (P x)).
-
-open : telescope V T1 B -> telescope V T2 C -> (list V -> B -> C -> prop) -> prop.
-open X1 X2 P <-
-  opendyn [dyn X1, dyn X2] P.
-
-open : telescope V T1 B -> telescope V T2 C -> telescope V T3 D -> (list V -> B -> C -> D -> prop) -> prop.
-open X1 X2 X3 P <-
-  opendyn [dyn X1, dyn X2, dyn X3] P.
-
-open : telescope V T1 B -> (list V -> B -> prop) -> prop.
-open X1 P <-
-  opendyn [dyn X1] P.
-
-open_nomatch : telescope V T1 B -> telescope V T2 C -> (list V -> B -> C -> prop) -> prop.
-open_nomatch X1 X2 P <-
-  opendyn_nomatch [dyn X1, dyn X2] P.
-
-open_nomatch : telescope V T1 B -> telescope V T2 C -> telescope V T3 D -> (list V -> B -> C -> D -> prop) -> prop.
-open_nomatch X1 X2 X3 P <-
-  opendyn_nomatch [dyn X1, dyn X2, dyn X3] P.
-
-open_nomatch : telescope V T1 B -> (list V -> B -> prop) -> prop.
-open_nomatch X1 P <-
-  opendyn_nomatch [dyn X1] P.
+pair (body Body) (body Body') (body (Body, Body')).
+pair (bind Name F) (bind Name F') (bind Name F'') :-
+  (x:A -> pair (F x) (F' x) (F'' x)).
 
 %end.
 
+
+(* VBindmany: GADT version of bindmany, analogous to list vs. vector *)
+
+vbindmany : type -> type -> type -> type.
+
+%extend vbindmany.
+
+body : BodyType -> vbindmany VarType zero BodyType.
+bind : string -> (VarType -> vbindmany VarType N BodyType) -> vbindmany VarType (succ N) BodyType.
+
+varnames : [N] vbindmany VarType N BodyType -> vector string N -> prop.
+open : [N] vbindmany VarType N BodyType -> (vector VarType N -> BodyType -> prop) -> prop.
+apply : [N] vbindmany VarType N BodyType -> vector VarType N -> BodyType -> prop.
+pair : [N] vbindmany VarType N BodyType -> vbindmany VarType N BodyType' -> vbindmany VarType N (BodyType * BodyType') -> prop.
+
+open (bind ID (F: VarType -> A)) P :-
+  (x:VarType -> nameofvar x ID -> open (F x) (pfun vars body => P (x :: vars) body)).
+open (body Body) P :- P [] Body.
+
+apply (bind _ F) (HD :: TL) Result :- apply (F HD) TL Result.
+apply (body Body) [] Body.
+
+varnames XS_Body Names :-
+  open XS_Body (pfun XS Body => vector.map nameofvar XS Names).
+
+pair (bind ID (F : VarType -> A)) (bind ID F') (bind ID F'') :-
+  (x:VarType -> pair (F x) (F' x) (F'' x)).
+pair (body Body1) (body Body2) (body (Body1, Body2)).
+
+%end.

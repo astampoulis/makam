@@ -5,9 +5,9 @@ ocaml : testsuite. %testsuite ocaml.
 (* examples *)
 
 >> (typeof (let
-           (lam (bindone "f" (fun f => lam (bindone "g" (fun g => lam (bindone "x" (fun x =>
+           (lam (bind "f" (fun f => lam (bind "g" (fun g => lam (bind "x" (fun x =>
             app f (app g x))))))))
-           (bindone "compose" (fun compose => compose))) _X, ocaml.show_type _X S) ?
+           (bind "compose" (fun compose => compose))) _X, ocaml.show_type _X S) ?
 
 >> Yes:
 >> S := "(forall a0.(forall a1.(forall a2.((a2 => a0) => ((a1 => a2) => (a1 => a0))))))".
@@ -15,8 +15,8 @@ ocaml : testsuite. %testsuite ocaml.
 
 
 >> (typeof (letrec
-          (bindnext "compose" (fun compose => bindend ([
-             (lam (bindone "f" (fun f => lam (bindone "g" (fun g => lam (bindone "x" (fun x =>
+          (bind "compose" (fun compose => body ([
+             (lam (bind "f" (fun f => lam (bind "g" (fun g => lam (bind "x" (fun x =>
               app f (app g x))))))))
            ], compose)))) _X, ocaml.show_type _X S) ?
 
@@ -26,15 +26,15 @@ ocaml : testsuite. %testsuite ocaml.
 
 
 >> (typeof (letrec
-             (bindnext "append" (fun
-             append => bindend ([
-               lam (bindone "x" (fun x => lam (bindone "y" (fun y =>
+             (bind "append" (fun
+             append => body ([
+               lam (bind "x" (fun x => lam (bind "y" (fun y =>
                match x
-                 [ bindnext "hd" (fun hd => bindnext "tl" (fun tl => bindend
+                 [ bind "hd" (fun hd => bind "tl" (fun tl => body
                    (pconstr "Cons" (ptuple [ pvar hd, pvar tl ]),
                     constr "Cons" (tuple [ hd, app (app append tl) y ])))),
 
-                   bindend
+                   body
                    (pconstrun "Nil", y) ])))) ],
               append)))) _Y, ocaml.show_type _Y S) ?
 
@@ -45,49 +45,49 @@ ocaml : testsuite. %testsuite ocaml.
 
 >> sigof (strmany
            [ strletrec
-             (bindnext "append" (fun append => bindend [
-             lam (bindone "x" (fun x => lam (bindone "y" (fun y =>
+             (bind "append" (fun append => body [
+             lam (bind "x" (fun x => lam (bind "y" (fun y =>
              match x
-               [ bindnext "hd" (fun hd => bindnext "tl" (fun tl => bindend
+               [ bind "hd" (fun hd => bind "tl" (fun tl => body
                   ( pconstr "Cons" (ptuple [pvar hd, pvar tl]),
                     constr "Cons" (tuple [hd, app (app append tl) y])))),
-                 bindend
+                 body
                   ( pconstrun "Nil",
                     y ) ])))) ])),
              strlet "g" (named "append") ]) S ?
 
 >> Yes:
->> S := sigmany (cons (sigmany (cons (sigval "append" (tpi ktype (bindone AName (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil))))))) nil)) (cons (sigval "g" (tpi ktype (bindone AName (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil))))))) nil)).
+>> S := sigmany (cons (sigmany (cons (sigval "append" (tpi ktype (bind AName (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil))))))) nil)) (cons (sigval "g" (tpi ktype (bind AName (fun a => tarrow (tbase "list" (cons a nil)) (tarrow (tbase "list" (cons a nil)) (tbase "list" (cons a nil))))))) nil)).
 
 
 
 >> sigof (strmany
           [strtypesingle "tree" [ktype] (typdef_variant
              [ ("Leaf", csdefunit),
-               ("Node", csdef (typconstr (bindnext "a" (fun a => bindend (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
+               ("Node", csdef (typconstr (bind "a" (fun a => body (tprod [tbase "tree" [a], a, tbase "tree" [a]]))))) ]),
            strlet "isempty"
-             (lam (bindone "t" (fun t => match t
-                [ bindnext "top" (fun top => bindend
+             (lam (bind "t" (fun t => match t
+                [ bind "top" (fun top => body
                      ( pconstr "Node" (ptuple [pwild, pvar top, pwild]),
                        top ))] ))) ]) S ?
 >> Yes:
->> S := sigmany (cons (sigtype (cons "tree" nil) (cons (cons ktype nil) nil) (cons (typdef_variant (cons (tuple "Leaf" csdefunit) (cons (tuple "Node" (csdef (typconstr (bindnext "a" (fun a => bindend (tprod (cons (tbase "tree" (cons a nil)) (cons a (cons (tbase "tree" (cons a nil)) nil))))))))) nil))) nil)) (cons (sigval "isempty" (tpi ktype (bindone AName (fun a => tarrow (tbase "tree" (cons a nil)) a)))) nil)).
+>> S := sigmany (cons (sigtype (cons "tree" nil) (cons (cons ktype nil) nil) (cons (typdef_variant (cons (tuple "Leaf" csdefunit) (cons (tuple "Node" (csdef (typconstr (bind "a" (fun a => body (tprod (cons (tbase "tree" (cons a nil)) (cons a (cons (tbase "tree" (cons a nil)) nil))))))))) nil))) nil)) (cons (sigval "isempty" (tpi ktype (bind AName (fun a => tarrow (tbase "tree" (cons a nil)) a)))) nil)).
 
 
 
 >> sigof (strmany
            [ strtypesingle "test1" [ktype, ktype] (typdef_eq
-              (typconstr (bindnext "a" (fun a => bindnext "b" (fun b => bindend (
+              (typconstr (bind "a" (fun a => bind "b" (fun b => body (
                      tprod [ tbase "list" [a],
                              tbase "list" [ tbase "list" [ tprod [b, a] ] ] ])))))),
              strtypesingle "test2" [ktype] (typdef_eq
-              (typconstr (bindnext "a" (fun a => bindend (
+              (typconstr (bind "a" (fun a => body (
                      tbase "test1" [a, a]))))),
-             strlet "f" (lam (bindone "x" (fun x => ascribe x (tbase "test2" [tbase "unit" []])))),
+             strlet "f" (lam (bind "x" (fun x => ascribe x (tbase "test2" [tbase "unit" []])))),
              strlet "g" (app (named "f")
                             (tuple [ construn "Nil",
                                     constr "Cons" (tuple [ (constr "Cons" (tuple [tuple [construn "Unit", construn "Unit"], construn "Nil"])) ,
                                                            constr "Cons" (tuple [construn "Nil", construn "Nil"])])])) ]) S ?
 
 >> Yes:
->> S := sigmany (cons (sigtype (cons "test1" nil) (cons (cons ktype (cons ktype nil)) nil) (cons (typdef_eq (typconstr (bindnext "a" (fun a => bindnext "b" (fun b => bindend (tprod (cons (tbase "list" (cons a nil)) (cons (tbase "list" (cons (tbase "list" (cons (tprod (cons b (cons a nil))) nil)) nil)) nil)))))))) nil)) (cons (sigtype (cons "test2" nil) (cons (cons ktype nil) nil) (cons (typdef_eq (typconstr (bindnext "a" (fun a => bindend (tbase "test1" (cons a (cons a nil))))))) nil)) (cons (sigval "f" (tarrow (tbase "test2" (cons (tbase "unit" nil) nil)) (tbase "test2" (cons (tbase "unit" nil) nil)))) (cons (sigval "g" (tbase "test2" (cons (tbase "unit" nil) nil))) nil)))).
+>> S := sigmany (cons (sigtype (cons "test1" nil) (cons (cons ktype (cons ktype nil)) nil) (cons (typdef_eq (typconstr (bind "a" (fun a => bind "b" (fun b => body (tprod (cons (tbase "list" (cons a nil)) (cons (tbase "list" (cons (tbase "list" (cons (tprod (cons b (cons a nil))) nil)) nil)) nil)))))))) nil)) (cons (sigtype (cons "test2" nil) (cons (cons ktype nil) nil) (cons (typdef_eq (typconstr (bind "a" (fun a => body (tbase "test1" (cons a (cons a nil))))))) nil)) (cons (sigval "f" (tarrow (tbase "test2" (cons (tbase "unit" nil) nil)) (tbase "test2" (cons (tbase "unit" nil) nil)))) (cons (sigval "g" (tbase "test2" (cons (tbase "unit" nil) nil))) nil)))).

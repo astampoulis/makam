@@ -3,9 +3,7 @@
 aux_demand : (prop -> list clause -> prop) -> prop -> prop.
 aux_demand ClauseDemand Goal <-
   refl.headargs Goal Pred _,
-  refl.rules_get Goal GlobalRules,
-  refl.assume_get Pred LocalRules,
-  append GlobalRules LocalRules AllRules,
+  refl.rules_get Goal AllRules,
   ClauseDemand Goal AllRules.
 
 or : prop -> prop.
@@ -23,5 +21,15 @@ case_otherwise Goal Otherwise <-
     (clause.demand_case Goal [] <- Otherwise) ->
     aux_demand clause.demand_case Goal
   ).
+
+most_recent : prop -> prop.
+most_recent Goal
+    when refl.assume_get_applicable Goal (MostRecent :: _) :-
+  clause.demand Goal MostRecent.
+
+most_recent Goal
+    when refl.assume_get_applicable Goal [] :-
+  refl.rules_get_applicable Goal GlobalRules,
+  list.last GlobalRules MostRecent, clause.demand Goal MostRecent.
 
 %end.

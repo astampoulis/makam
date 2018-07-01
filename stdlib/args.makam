@@ -1,0 +1,20 @@
+args : type -> type -> type.
+nil : args A A.
+cons : A -> args B C -> args (A -> B) C.
+
+%extend args.
+apply : [A] A -> args A B -> B -> prop.
+apply X [] X.
+apply X (HD :: TL) X' :- apply (X HD) TL X'.
+
+(* Apply all arguments, saturating the given function.
+
+   When the argument list is not specified, this will repeatedly apply
+   arguments, generating new unification variables, for the full arity
+   of the functional argument. *)
+
+applyfull : [A] A -> args A B -> B -> prop.
+applyfull (X: A -> B) (HD :: TL) Res :- applyfull (X HD) TL Res.
+applyfull X [] X when not(typ.eq X (_ : A -> B)).
+%end.
+
