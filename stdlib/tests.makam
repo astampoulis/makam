@@ -418,4 +418,24 @@ foo [3, 4].
 >> ((foo "one" -> foo "two" -> demand.most_recent (foo X)), dyn.eq X "two") ?
 >> Yes.
 
+(* -------------------- guardmany *)
+
+guard : testsuite. %testsuite guard.
+
+foo : int -> int -> (string * string) -> prop.
+foo X Y ("x", W) when eq_nounif X 1.
+foo X Y (W, "y") when eq_nounif Y 1.
+
+>> (guardmany [X, Y] (foo X Y Z), eq X 1) ?
+>> Yes:
+>> Z := ("x", W).
+
+>> (guardmany [X, Y] (foo X Y Z), eq Y 1) ?
+>> Yes:
+>> Z := (W, "y").
+
+>> (guardmany [X, Y] (foo X Y Z), eq X 1, eq Y 1) ?
+>> Yes:
+>> Z := ("x", W).
+
 %end.
