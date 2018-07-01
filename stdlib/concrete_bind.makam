@@ -67,10 +67,10 @@ isocast_def (iso.bidi concrete.resolve).
 
 resolve_ X Y when not(refl.isunif X) :-
   demand.case_otherwise (resolve_conversion X X') (eq X X'),
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y).
+  demand.case_otherwise (resolve_aux X' Y) (structural @resolve_ X' Y).
 
 resolve_ X Y when refl.isunif X :-
-  demand.case_otherwise (resolve_aux X' Y) (structural resolve_ X' Y),
+  demand.case_otherwise (resolve_aux X' Y) (structural @resolve_ X' Y),
   demand.case_otherwise (resolve_conversion X X') (eq X X').
 
 resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
@@ -139,7 +139,7 @@ names_of_aux : [BodyType] namespace Type -> list (name Type) -> BodyType -> list
 
 names_of_aux Namespace L (name Namespace X) (name Namespace X :: L).
 names_of_aux Namespace L Body L' when not(dyn.eq Body (name Namespace X)) :-
-  generic.fold (names_of_aux Namespace) L Body L'.
+  generic.fold @(names_of_aux Namespace) L Body L'.
 
 names_of Namespace Body Names' :-
   names_of_aux Namespace [] Body Names,

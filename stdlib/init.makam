@@ -6,16 +6,17 @@
 
 %use fix_builtins.
 
-%use list.
-%use dyn.
 %use forall.
-%use string.
+
+%use list.
 %use hlist.
 %use args.
+%use string.
 %use tuple.
 %use option.
 %use set.
 %use map.
+%use dyn.
 
 %use guard.
 %use demand.
@@ -27,8 +28,6 @@
 %use fluid.
 %use iso.
 
-(* --- *)
-
 %use generic.
 
 %use bind.
@@ -37,6 +36,7 @@
 %use heterogeneous.
 %use reify.
 
+(* --- *)
 %use vars.
 
 %use concrete_bind.

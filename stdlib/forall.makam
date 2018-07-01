@@ -1,10 +1,48 @@
 forall : type -> type -> type.
 
 mkforall : A -> forall B C.
+
+%extend forall_private.
+
+(* Magic: fake rank-N polymorphism by duplicating all heads found, therefore
+   generating new polymorphic variables for them. *)
+poly : [A B] A -> B -> prop.
+polybvar : [A B] A -> B -> prop.
+polyargs : list dyn -> list dyn -> prop.
+
+poly E E' when polybvar E E'.
+
+poly E E' when refl.isnvar E, not(polybvar E _) <-
+  dyn.eq E E'.
+poly E E' when refl.isbaseterm E, refl.isfvar E <-
+  refl.headargs E HD ARGS,
+  refl.duphead HD HD',
+  polyargs ARGS ARGS',
+  refl.headargs E' HD' ARGS'.
+poly C C when refl.isconst C.
+poly X X when refl.isunif X.
+poly F F' when refl.isfun F <-
+  (x:A -> x':A' -> polybvar x x' -> poly (F x) (F' x')).
+
+polyargs [] [].
+polyargs (dyn HD :: TL) (dyn HD' :: TL') <- poly HD HD', polyargs TL TL'.
+
+%end.
+
+
+(* now for the real versions *)
+
 instantiate : [C] forall A B -> C -> prop.
 
 instantiate (mkforall Term) Term' :-
-  dyn.poly Term Term'.
+  forall_private.poly Term Term'.
 
-apply : forall A B -> X -> Y -> prop.
-apply P X Y :- instantiate P P', P' X Y.
+%extend forall.
+
+call : forall A (A1 -> A2 -> A3 -> prop) -> X1 -> X2 -> X3 -> prop.
+call P X1 X2 X3 :- instantiate P P', P' X1 X2 X3.
+
+call : forall A (A1 -> A2 -> prop) -> X1 -> X2 -> prop.
+call P X1 X2 :- instantiate P P', P' X1 X2.
+
+%end.

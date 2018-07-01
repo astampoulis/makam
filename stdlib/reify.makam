@@ -6,10 +6,10 @@ cons : reified A -> reified_args B C -> reified_args (A -> B) C.
 
 %extend reified_args.
 map : [A B C C' D]
-      (reified A -> reified B -> prop) ->
+      forall (A * B) (reified A -> reified B -> prop) ->
       reified_args C D -> reified_args C' D -> prop.
 map P [] [].
-map P (HD :: TL) (HD' :: TL') :- dyn.call P HD HD', map P TL TL'.
+map P (HD :: TL) (HD' :: TL') :- forall.call P HD HD', map P TL TL'.
 %end.
 
 
@@ -181,13 +181,13 @@ pattern_match A B :- reify A AR, reify B BR, pmatch_aux AR BR.
 pmatch_aux (reified.unifvar _ _ _ L) R :- reflect R R', eq L R'.
 
 pmatch_aux (reified.term Head Args) (reified.term Head Args') :-
-  reified_args.map pmatch_aux Args Args'.
+  reified_args.map @pmatch_aux Args Args'.
 
 pmatch_aux (reified.bvar Head Args) (reified.bvar Head Args') :-
-  reified_args.map pmatch_aux Args Args'.
+  reified_args.map @pmatch_aux Args Args'.
 
 pmatch_aux (reified.nvar Head Args) (reified.nvar Head Args') :-
-  reified_args.map pmatch_aux Args Args'.
+  reified_args.map @pmatch_aux Args Args'.
 
 pmatch_aux (reified.const Const) (reified.const Const).
 

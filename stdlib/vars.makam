@@ -6,7 +6,7 @@ freevars_dontadd : A -> prop.
 
 freevars_aux Acc Root Result <-
   demand.case_otherwise (freevars_aux_ Acc Root Result)
-                        (generic.fold freevars_aux Acc Root Result).
+                        (generic.fold @freevars_aux Acc Root Result).
 
 freevars_aux_ Acc X Result when refl.headargs X V Args, refl.isnvar V, not(freevars_dontadd V) <-
   freevars_aux (V :: Acc) Args Result.
@@ -25,7 +25,7 @@ unifvars_aux_ : [A] list B -> A -> list B -> prop.
 
 unifvars_aux Acc Root Result <-
   demand.case_otherwise (unifvars_aux_ Acc Root Result)
-                        (generic.fold unifvars_aux Acc Root Result).
+                        (generic.fold @unifvars_aux Acc Root Result).
 
 unifvars_aux_ (Acc : list A) (X : A) Result when refl.isunif X <-
   refl.decomposeunif X _ Args, unifvars_aux (X :: Acc) Args Result.

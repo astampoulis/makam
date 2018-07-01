@@ -313,7 +313,7 @@ change_ : [A] A -> A -> prop.
 
 change X Y <-
   demand.case_otherwise (change_ X Y)
-                        (structural change X Y).
+                        (structural @change X Y).
 
 change_ "a" "b".
 change_ X Y <- plus X 1 Y.

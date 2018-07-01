@@ -4,3 +4,9 @@ eq X X.
 (* an alias for `eq` *)
 unify : A -> A -> prop.
 unify X X.
+
+%extend dyn.
+(* A version of `eq` that delays type unification of the terms until runtime *)
+eq : [B] A -> B -> prop.
+eq X X.
+%end.

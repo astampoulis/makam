@@ -183,9 +183,9 @@ open (open_end A) P :- P [] A.
 open (open_next (FA : peg HD -> peg_list_open TL A)) P :-
   (x:(peg HD) -> open (FA x) (pfun ps a => P (x :: ps) a)).
 
-assume_many : [AS] (peg X -> peg X -> prop) -> peg_list AS -> peg_list AS -> prop -> prop.
+assume_many : [AS] forall X (peg X -> peg X -> prop) -> peg_list AS -> peg_list AS -> prop -> prop.
 assume_many P [] [] K :- K.
-assume_many P (A :: AS) (B :: BS) K :- dyn.poly P P', (P' A B -> assume_many P AS BS K).
+assume_many P (A :: AS) (B :: BS) K :- instantiate P P', (P' A B -> assume_many P AS BS K).
 %end.
 
 letrec : (peg_list_open AS (peg_list AS * peg A)) -> peg A.
@@ -193,4 +193,4 @@ builtin (letrec _).
 
 parse (letrec DefsBody : peg A) Input (Result: option (A * string))  :-
   peg_list.open DefsBody (pfun ps defsBody => [Defs Body]
-    (eq defsBody (Defs, Body), peg_list.assume_many rule ps Defs (parse Body Input Result))).
+    (eq defsBody (Defs, Body), peg_list.assume_many @rule ps Defs (parse Body Input Result))).

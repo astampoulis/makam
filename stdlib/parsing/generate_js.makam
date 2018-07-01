@@ -243,7 +243,7 @@ gather_used_results, gather_used_results_aux : [A] set string -> A -> set string
 
 gather_used_results S R S' :-
   demand.case_otherwise (gather_used_results_aux S R S')
-                        (generic.fold gather_used_results S R S').
+                        (generic.fold @gather_used_results S R S').
 
 gather_used_results_aux S X S' when refl.isnvar X, quote_parse_res_js X PRes :-
   set.ccons PRes S S'.
@@ -490,16 +490,16 @@ parse_opt P Input Result :-
 %extend peg_list.
 mapi_aux : [AS](int -> A -> prop) -> int -> peg_list AS -> list A -> prop.
 mapi : [AS](int -> A -> prop) -> peg_list AS -> list A -> prop.
-assume_many : [AS](peg A -> B -> prop) -> peg_list AS -> list B -> prop -> prop.
+assume_many : [AS]forall A (peg A -> B -> prop) -> peg_list AS -> list B -> prop -> prop.
 
 mapi_aux P I [] [].
 mapi_aux P I (HD :: TL) (HD' :: TL') :-
-  dyn.poly P P', P' I HD', plus I 1 I', mapi_aux P I' TL TL'.
+  P I HD', plus I 1 I', mapi_aux P I' TL TL'.
 
 mapi P X Y :- mapi_aux P 0 X Y.
 
 assume_many P [] [] Q :- Q.
-assume_many P (HD :: TL) (HD' :: TL') Q :- dyn.poly P P', (P' HD HD' -> assume_many P TL TL' Q).
+assume_many P (HD :: TL) (HD' :: TL') Q :- instantiate P P', (P' HD HD' -> assume_many P TL TL' Q).
 %end.
 
 gen_parse_js (letrec DefsBody) Dict Dict' Code :-
@@ -509,6 +509,6 @@ gen_parse_js (letrec DefsBody) Dict Dict' Code :-
     peg_list.mapi (pfun i res => [I0S IS]
       (tostring I0 I0S, tostring i IS,
        expansion.str `~rec_${I0S}_${IS}` res)) Defs Keys,
-    peg_list.assume_many rule ps Defs (
-      peg_list.assume_many key_of_var ps Keys (
+    peg_list.assume_many @rule ps Defs (
+      peg_list.assume_many @key_of_var ps Keys (
         gen_parse_js Body Dict Dict' Code))).

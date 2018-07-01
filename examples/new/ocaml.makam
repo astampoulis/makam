@@ -101,7 +101,7 @@ nf_ (tbase TypConstr TypArgs) T <-
   typapply Def TypArgs T0,
   nf T0 T.
 nf_ X Y when (refl.isbaseterm X, not(eq X (tbase _ _))) <-
-  structural nf X Y.
+  structural @nf X Y.
 
 
 (* term typing *)
