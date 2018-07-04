@@ -39,10 +39,10 @@ instantiate (mkforall Term) Term' :-
 
 %extend forall.
 
-call : forall A (A1 -> A2 -> A3 -> prop) -> X1 -> X2 -> X3 -> prop.
-call P X1 X2 X3 :- instantiate P P', P' X1 X2 X3.
+apply : forall A (A1 -> A2 -> A3 -> prop) -> X1 -> X2 -> X3 -> prop.
+apply P X1 X2 X3 :- instantiate P P', P' X1 X2 X3.
 
-call : forall A (A1 -> A2 -> prop) -> X1 -> X2 -> prop.
-call P X1 X2 :- instantiate P P', P' X1 X2.
+apply : forall A (A1 -> A2 -> prop) -> X1 -> X2 -> prop.
+apply P X1 X2 :- instantiate P P', P' X1 X2.
 
 %end.
