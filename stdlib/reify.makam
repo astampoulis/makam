@@ -9,7 +9,7 @@ map : [A B C C' D]
       forall (A * B) (reified A -> reified B -> prop) ->
       reified_args C D -> reified_args C' D -> prop.
 map P [] [].
-map P (HD :: TL) (HD' :: TL') :- forall.call P HD HD', map P TL TL'.
+map P (HD :: TL) (HD' :: TL') :- forall.apply P HD HD', map P TL TL'.
 %end.
 
 

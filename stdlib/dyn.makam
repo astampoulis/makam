@@ -8,10 +8,10 @@ dyn : A -> dyn.
 %extend dyn.
 
 call : forall Z (A -> B -> prop) -> dyn -> dyn -> prop.
-call P (dyn X) (dyn Y) <- forall.call P X Y.
+call P (dyn X) (dyn Y) <- forall.apply P X Y.
 
 call : forall Z (A -> B -> C -> prop) -> dyn -> dyn -> dyn -> prop.
-call P (dyn X) (dyn Y) (dyn Z) <- forall.call P X Y Z.
+call P (dyn X) (dyn Y) (dyn Z) <- forall.apply P X Y Z.
 
 to_args : [A B] list dyn -> args A B -> prop.
 to_args [] [].

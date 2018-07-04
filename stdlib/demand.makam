@@ -3,7 +3,7 @@
 aux_demand : (prop -> list clause -> prop) -> prop -> prop.
 aux_demand ClauseDemand Goal <-
   refl.headargs Goal Pred _,
-  refl.rules_get Goal AllRules,
+  refl.rules_get_applicable Goal AllRules,
   ClauseDemand Goal AllRules.
 
 or : prop -> prop.
