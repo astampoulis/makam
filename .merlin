@@ -1,3 +1,6 @@
-S .
-B _build
+S parsing
+S termlang
+S toploop
+S utils
+B _build/*
 PKG batteries uucp mtime js_of_ocaml camlp4

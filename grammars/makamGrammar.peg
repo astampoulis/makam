@@ -590,7 +590,7 @@ letterchar -> &&( .
               a:. << a >>
 latin1letter -> &latin1char c:letterchar << c >>
 digitchar -> a:[0123456789]              << a >>
-num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> int_of_string >>
+num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> Big_int.of_string >>
 eof -> !. ;
 
 (* whitespace *)
