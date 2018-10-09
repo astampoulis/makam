@@ -1,0 +1,114 @@
+tests : testsuite. %testsuite tests.
+
+term : type.
+
+num : int -> term.
+if0 : term -> term -> term -> term.
+binop : (int -> int -> int -> prop) -> term -> term -> term.
+
+demand : [Prop] (Prop -> prop) -> Prop -> prop.
+xand : [Prop] list Prop -> Prop.
+xnot : [Prop] Prop -> Prop.
+unif : [A Prop] A -> A -> Prop.
+lift : [Prop] prop -> Prop.
+
+value : type.
+num : int -> value.
+
+evalprop : type.
+eval : term -> value -> evalprop.
+
+demand Demand (eval (num N) (num N)) :- Demand(lift success).
+
+demand Demand (eval (if0 E1 E2 E3) V2) :-
+  Demand {prop| xand [
+    eval E1 V1,
+    unif V1 (num 0),
+    eval E2 V2
+  ] |}.
+
+demand Demand (eval (if0 E1 E2 E3) V3) :-
+  Demand {prop| xand
+    [eval E1 V1,
+    xnot(unif V1 (num 0)),
+    eval E3 V3]
+  |}.
+
+demand Demand (eval (binop F E1 E2) V) :-
+  Demand {prop| xand [
+    eval E1 V1,
+    eval E2 V2,
+    unif V1 (num N1),
+    unif V2 (num N2),
+    lift (F N1 N2 N3),
+    unif V (num N3)
+  ] |}.
+
+run : map string value -> evalprop -> prop.
+
+run Env (xand []).
+run Env (xand (P :: PS)) :- run Env P, run Env (xand PS).
+run Env (xnot P) :- not(run Env P).
+run Env (unif X Y) :- eq X Y.
+run Env (lift P) :- P.
+run Env P' :- demand (run Env) P'.
+
+run [] (eval (if0 (num 0) (num 5) (num 6)) V) ?
+>> Yes:
+>> V := num 5.
+
+run [] (eval (binop plus (num 5) (num 6)) V) ?
+>> Yes:
+>> V := num 11.
+
+lookup : string -> value -> evalprop.
+run Env (lookup X V) :- map.find Env X V.
+
+var : string -> term.
+demand Demand (eval (var X) V) :-
+  Demand {prop| xand [
+    lookup X V
+  ] |}.
+
+run [("x", num 15)] (eval (binop plus (var "x") (num 6)) V) ?
+>> Yes:
+>> V := num 21.
+
+ask_env : map string value -> evalprop.
+run Env (ask_env Env).
+
+with_env : map string value -> evalprop -> evalprop.
+run Env (with_env Env' P) :- run Env' P.
+
+app : term -> term -> term.
+lam : string -> term -> term.
+clos : term -> map string value -> value.
+
+demand Demand (eval (app E1 E2) V) :-
+  Demand {prop| xand [
+    eval E1 (clos (lam X E) Env),
+    eval E2 V2,
+    with_env ((X, V2) :: Env) (eval E V)
+  ] |}.
+
+demand Demand (eval (lam X E) (clos (lam X E) Env)) :-
+  Demand {prop| xand [
+    ask_env Env
+  ] |}.
+
+let : string -> term -> term -> term.
+demand Demand (eval (let X E E') V) :-
+  Demand (eval (app (lam X E') E) V).
+
+run [] (eval (app (lam "x" (binop plus (var "x") (var "x"))) (num 10)) V) ?
+>> Yes:
+>> V := num 20.
+
+run [] (eval
+  (let "mult2" (lam "x" (binop plus (var "x") (var "x")))
+   (let "x" (num 10)
+   (app (var "mult2") (app (var "mult2") (var "x"))))) V) ?
+>> Yes:
+>> V := num 40.
+
+run_tests X ?
