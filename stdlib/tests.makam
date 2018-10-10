@@ -438,4 +438,69 @@ foo X Y (W, "y") when eq_nounif Y 1.
 >> Yes:
 >> Z := ("x", W).
 
+(* -------------------- hlist *)
+
+hlist : testsuite. %testsuite hlist.
+
+>> (hlist.from_dynlist [dyn 1, dyn "foo"] _X, dyn.eq _X ([1, "foo"]: hlist Z)) ?
+>> Yes.
+
+>> (hlist.from_dynlist (X: list dyn) [1, "foo"]) ?
+>> Yes:
+>> X := [dyn 1, dyn "foo"].
+
+>> (hlist.filter @(eq 1) [1, 2, "foo", 1] _X, dyn.eq _X ([1, 1]: hlist Z)) ?
+>> Yes.
+
+>> (hlist.filter @(pfun x => (dyn.eq x 1; dyn.eq x "foo")) [1, 2, "foo", 3] _X, dyn.eq _X ([1, "foo"]: hlist Z)) ?
+>> Yes.
+
+foo : [A B] A -> B -> prop.
+foo 1 "one".
+foo "two" 2.
+foo X X.
+
+>> hlist.map @foo [1, 2, "one", "two", "bar"] X ?
+>> Yes:
+>> X := ["one", 2, "one", 2, "bar"].
+
+>> hlist.map_uniform @tostring [1, "foo"] X ?
+>> Yes:
+>> X := ["1", "\"foo\""].
+
+(* -------------------- typ *)
+
+typhacks : testsuite. %testsuite typhacks.
+
+>> typ.final_matches (_: int) (_: int) ?
+>> Yes.
+
+>> typ.final_matches (_: int) (_: string) ?
+>> Impossible.
+
+>> typ.final_matches (_: int) (_: int -> int) ?
+>> Yes.
+
+>> typ.final_matches (_: int) (_: int -> string) ?
+>> Impossible.
+
+>> typ.final_matches (_: A) (_: int -> B) ?
+>> Yes.
+
+>> typ.final_matches (_: A) (_: int -> int) ?
+>> Impossible.
+
+>> typ.final_matches (_: int) (_: A -> int) ?
+>> Yes.
+
+>> typ.final_matches (_: int) (_: A -> B) ?
+>> Impossible.
+
+>> typ.final_matches (_: list A) (_: int -> string -> list int) ?
+>> Yes.
+
+>> hlist.filter @(typ.final_matches (_: list A)) [cons 1, cons "foo"] X ?
+>> Yes:
+>> X := [cons 1, cons "foo"].
+
 %end.

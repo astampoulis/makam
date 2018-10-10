@@ -7,5 +7,22 @@ eq (X : A) (Y : A).
 isunif : A -> prop.
 isunif X <- not(not(eq X (_ : string))), not(not(eq X (_ : int))).
 
+final_matches : [Type] FinalType -> Type -> prop.
+final_matches (_: FinalType) (_: Type) when not(typ.isunif (_: Type)) :-
+  if (typ.eq (_: Type) (_: A -> B))
+  then (final_matches (_: FinalType) (_: B))
+  else (not(typ.isunif (_: FinalType)),
+        refl.typstring (_: FinalType) FinalTypeS,
+
+        (* this is a gross hack. to treat FinalType as a pattern, we need to avoid unifying any unification type variables
+           it contains to anything else. by printing and parsing we generate fresh ones...
+           look at the tests for an example of where this could be used. *)
+        string.append "(_: " FinalTypeS S1,
+        string.append S1 ")" S,
+        refl.fromstring S (_: FinalType'),
+
+        typ.eq (_: FinalType') (_: Type)).
+
+final_matches (_: FinalType) (_: Type) when typ.isunif (_: Type), typ.isunif (_: FinalType).
 
 %end.

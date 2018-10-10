@@ -3,3 +3,27 @@ t_nil : type. t_cons : type -> type -> type.
 hlist : type -> type.
 nil : hlist t_nil.
 cons : A -> hlist B -> hlist (t_cons A B).
+
+%extend hlist.
+from_dynlist : [T] list dyn -> hlist T -> prop.
+from_dynlist [] nil.
+from_dynlist (dyn HD :: TL) (HD :: TL') :- from_dynlist TL TL'.
+
+filter : [T T'] forall A (A -> prop) -> hlist T -> hlist T' -> prop.
+filter Pred [] [].
+filter Pred (HD :: TL) (HD :: TL') :-
+  forall.apply Pred HD, filter Pred TL TL'.
+filter Pred (HD :: TL) TL' :-
+  not(forall.apply Pred HD), filter Pred TL TL'.
+
+map : [T T'] forall (A * B) (A -> B -> prop) -> hlist T -> hlist T' -> prop.
+map P [] [].
+map P (HD :: TL) (HD' :: TL') :-
+  forall.apply P HD HD', map P TL TL'.
+
+map_uniform : [T T'] forall A (A -> Result -> prop) -> hlist T -> list Result -> prop.
+map_uniform P [] [].
+map_uniform P (HD :: TL) (HD' :: TL') :-
+  forall.apply P HD HD', map_uniform P TL TL'.
+
+%end.
