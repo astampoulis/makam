@@ -63,3 +63,14 @@ constructor_definitions S (cmd_many Cmds) :-
 
 %end.
 
+%extend refl.
+
+print_constructors_of : A -> prop.
+print_constructors_of (_: Type) :-
+  refl.allconstants ConstantsDyn,
+  hlist.from_dynlist ConstantsDyn Constants,
+  hlist.filter @(typ.final_matches (_: Type)) Constants Relevant,
+  hlist.map_uniform @(fun x => isocast (constructor_syntax.constructor_def_of x)) Relevant (DefStrings: list string),
+  map (pfun x => print_string x, print_string "\n") DefStrings.
+
+%end.
