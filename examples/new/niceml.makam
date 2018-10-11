@@ -1,0 +1,270 @@
+expr : type.
+typ : type.
+
+etuple : list expr -> expr.
+
+letrec : bindone expr (expr * expr) -> expr.
+let : expr -> bindone expr expr -> expr.
+lam : bindmany expr expr -> expr.
+app : expr -> list expr -> expr.
+
+patt : type.
+branch : type.
+branch : patt * bindmany expr expr -> branch.
+match : expr -> list branch -> expr.
+
+ptuple : list patt -> patt.
+pvar : patt.
+
+program : type.
+main : expr -> program.
+
+constructor : type.
+
+datadef : type -> type.
+datadef : bindone typ (list typ * bindmany constructor T) -> datadef T.
+data : datadef program -> program.
+
+constr : constructor -> expr -> expr.
+pconstr : constructor -> patt -> patt.
+
+product : list typ -> typ.
+arrowmany : list typ -> typ -> typ.
+eint : int -> expr.
+tint : typ.
+
+sig : type.
+smain : typ -> sig.
+sdata : datadef sig -> sig.
+
+expr, baseexpr : syntax expr.
+patt : syntax patt.
+typ : syntax typ.
+constructor : syntax constructor.
+branch : syntax branch.
+id : syntax (concrete.name expr).
+def : syntax (concrete.name expr * expr).
+program : syntax program.
+program_concrete : syntax (concrete program).
+
+%open syntax.
+
+exprvar : concrete.namespace expr.
+
+clet : (concrete.name expr * expr) -> expr -> expr.
+cletrec : (concrete.name expr * expr) -> expr -> expr.
+cpvar : concrete.name expr -> patt.
+cbranch : patt -> expr -> branch.
+
+`( syntax_rules {{
+
+program_concrete -> concrete { <program> }
+
+expr -> etuple nil
+        { "()" }
+      / (fun hd => fun tl => etuple (cons hd tl))
+        { "(" <expr> "," <list_sep (token ",") expr> ")" }
+      / match
+        { "match" <expr> "{" <list_sep (token "|") branch> "}" }
+      / cletrec
+        { "let" "rec" <def> "in" <expr> }
+      / clet
+        { "let" <def> "in" <expr> }
+      / (fun ids => fun body => lam (concrete.bindmany ids body))
+        { "fun" <once_or_many id> "=>" <expr> }
+      / app
+        { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
+      / { <baseexpr> }
+
+baseexpr ->
+        concrete.var
+        { <id> }
+      / { "(" <expr> ")" }
+
+patt -> ptuple nil
+        { "()" }
+      / (fun hd => fun tl => ptuple (cons hd tl))
+        { "(" <patt> "," <list_sep (token ",") patt> ")" }
+      / cpvar
+        { <id> }
+
+def -> tuple
+        { <id> "=" <expr> }
+
+id -> concrete.name exprvar
+        { <makam.ident> }
+
+branch -> cbranch
+        { <patt> "=>" <expr> }
+
+}} ).
+
+constrvar : concrete.namespace constructor.
+typvar : concrete.namespace typ.
+
+cdatadef : concrete.name typ -> list (concrete.name constructor * typ) -> program -> datadef program.
+cdatadef_sig : concrete.name typ -> list (concrete.name constructor * typ) -> sig -> datadef sig.
+
+datadef : syntax (datadef program).
+datadef_sig : syntax (datadef sig).
+constrdef : syntax (concrete.name constructor * typ).
+typ, prodtyp, basetyp : syntax typ.
+typid : syntax (concrete.name typ).
+constrid : syntax (concrete.name constructor).
+
+sig : syntax sig.
+sig_concrete : syntax (concrete sig).
+
+`( syntax_rules {{
+
+datadef -> cdatadef
+           { "data" <typid> "=" <list_sep (token "|") constrdef> ";" (optunit ws_newline) <program> }
+
+datadef_sig -> cdatadef_sig
+           { "data" <typid> "=" <list_sep (token "|") constrdef> ";" (optunit ws_newline) <sig> }
+
+constrdef -> tuple
+           { <constrid> "of" <typ> }
+
+typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> "->" <typ> }
+     / arrowmany { "(" <list_sep (token ",") typ> ")" "->" <typ> }
+     / prodtyp ;
+
+prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> "*" <list_sep_plus (token "*") basetyp> }
+     / basetyp ;
+
+basetyp -> tint { "int" }
+         / concrete.var { <typid> }
+         / product nil { "()" }
+         / { "(" <typ> ")" }
+
+typid -> concrete.name typvar { <makam.ident> }
+
+constrid -> concrete.name constrvar { "`" <makam.ident> }
+
+program -> data { <datadef> } / main { <expr> }
+
+expr -> (fun c => fun e => constr (concrete.var c) e)
+        { <constrid> <expr> }
+      / eint
+        { <makam.int_literal> }
+
+patt -> (fun c => fun p => pconstr (concrete.var c) p)
+        { <constrid> <patt> }
+
+sig -> sdata { <datadef_sig> } / smain { "(main)" ":" <typ> }
+
+sig_concrete -> concrete { "sig" <sig> "end" }
+}}).
+
+`( syntax.def_toplevel_js sig_concrete ).
+`( syntax.def_toplevel_js program_concrete ).
+
+concrete.pick_namespace_userdef (_: expr) exprvar.
+concrete.pick_namespace_userdef (_: constructor) constrvar.
+concrete.pick_namespace_userdef (_: typ) typvar.
+
+concrete.resolve_conversion
+    (clet (Name, Def) Body)
+    (let Def (concrete.bindone Name Body)).
+
+concrete.resolve_conversion
+    (cletrec (Name, Def) Body)
+    (letrec (concrete.bindone Name (Def, Body))).
+
+concrete.resolve_conversion (cpvar N) pvar.
+
+(* TODO: this destroys bidirectionality, so need an inverse too *)
+concrete.resolve_conversion
+    (cbranch P E)
+    (branch (P', concrete.bindmany Names E)) when refl.isunif P' :-
+  concrete.names_of exprvar P Names,
+  concrete.resolve (concrete P) P'.
+
+concrete.resolve_conversion
+    (cbranch P E)
+    (branch (P', concrete.bindmany Names E)) when refl.isunif P :-
+  concrete.resolve (concrete P) P',
+  concrete.names_of exprvar P Names.
+
+concrete.resolve_conversion
+    (cdatadef Typ Constrs Body)
+    (datadef (concrete.bindone Typ (Typs, (concrete.bindmany Names Body)))) :-
+  zip Names Typs Constrs.
+
+concrete.resolve_conversion
+    (cdatadef_sig Typ Constrs Body)
+    (datadef (concrete.bindone Typ (Typs, (concrete.bindmany Names Body)))) :-
+  zip Names Typs Constrs.
+
+typeof : expr -> typ -> prop.
+typeof : patt -> typ -> list typ -> list typ -> prop.
+
+typeof (etuple ES) (product TS) :-
+  map typeof ES TS.
+
+typeof (lam XS_Body) (arrowmany TS T) :-
+  bindmany.open XS_Body (pfun XS Body => assume_many typeof XS TS (typeof Body T)).
+
+typeof (app E ES) T :-
+  typeof E (arrowmany TS T), map typeof ES TS.
+
+typeof (let E X_Body) T' :-
+  typeof E T,
+  bindone.open X_Body (pfun X Body => (typeof X T -> typeof Body T')).
+
+typeof (letrec X_DefBody) T' :-
+  bindone.open X_DefBody (pfun X (Def, Body) => (typeof X T -> (typeof Def T, typeof Body T'))).
+
+typeofbranch : typ -> typ -> branch -> prop.
+typeofbranch T T' (branch (P, XS_Body)) :-
+  typeof P T [] TS,
+  bindmany.open XS_Body (pfun XS Body => assume_many typeof XS TS (typeof Body T')).
+typeof (match E Branches) T' :- typeof E T, map (typeofbranch T T') Branches.
+
+typeof pvar T VS VS' :- snoc VS T VS'.
+typeof (ptuple []) (product []) VS VS.
+typeof (ptuple (P :: PS)) (product (T :: TS)) VS VS'' :-
+  typeof P T VS VS',
+  typeof (ptuple PS) (product TS) VS' VS''.
+
+typeof (eint N) tint.
+
+datadef_constructor : typ -> constructor -> typ -> prop.
+datadef_all_constructors : typ -> list constructor -> prop.
+
+typeof (constr C E) T :-
+  datadef_constructor T C T_Arg,
+  typeof E T_Arg.
+
+typeof (pconstr C P) T VS VS' :-
+  datadef_constructor T C T_Arg,
+  typeof P T_Arg VS VS'.
+
+%extend datadef.
+open : datadef T -> (T -> prop) -> prop.
+open (datadef X) P :-
+  bindone.open X (pfun Typ (ConstrTS, CS_Rest) =>
+    bindmany.open CS_Rest (pfun CS Rest =>
+      (datadef_all_constructors Typ CS ->
+       assume_many (datadef_constructor Typ) CS ConstrTS
+         (P Rest)))).
+%end.
+
+wfprogram : program -> sig -> prop.
+wfprogram (main E) (smain T) :- typeof E T.
+
+wfprogram (data (datadef D)) (sdata (datadef D')) :-
+  bindone.pair D D' DS,
+  bindone.open DS (pfun T ((ConstrTS, CS_Rest), (ConstrTS', CS_Rest')) => [CS_BodyTSig]
+    eq ConstrTS ConstrTS',
+    bindmany.pair CS_Rest CS_Rest' CS_BodyTSig,
+    bindmany.open CS_BodyTSig (pfun Constrs (Body, TSig) =>
+      (datadef_all_constructors T Constrs ->
+      assume_many (datadef_constructor T) Constrs ConstrTS (
+        wfprogram Body TSig)))).
+
+typechecker : string -> sig -> prop.
+
+typechecker S Sig :- isocast S (P: program), wfprogram P Sig.
+
