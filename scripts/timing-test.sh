@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TIMING_DEADLINE="100.0"
-NOCACHE_REFERENCE="182.0"
+TIMING_DEADLINE="70.0"
+NOCACHE_REFERENCE="120.0"
 
 set -eux
 set -o pipefail
