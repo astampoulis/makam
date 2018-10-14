@@ -1,0 +1,7 @@
+%use "ast".
+%use "syntax".
+%use "typing".
+
+
+typechecker : string -> string -> prop.
+typechecker S S' :- isocast S (P: program), wfprogram P T, isocast T (S': string).

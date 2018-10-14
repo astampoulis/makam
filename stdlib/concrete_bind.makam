@@ -33,6 +33,7 @@ resolve_name_or_var Name Var when refl.isunif Var :-
   fluid.get (var_of_name Name) Var.
 
 handle_unresolved_name : [A] name A -> A -> prop.
+reverse_unresolved_var : [A] A -> A -> prop.
 pattern_mode : prop.
 
 vars_in_context : namespace A -> fluid (list (A * string)).
@@ -82,13 +83,18 @@ resolve_aux (lambda (name Namespace ID) Body) (F: A -> B) :-
         (resolve_ Body (F x))))).
 
 resolve_aux (var (name Namespace ID)) X
-    when pick_namespace X Namespace,
+    when not(refl.isunif ID),
+         eq Var (var (name Namespace ID)),
          either (resolve_name_or_var (name Namespace ID) X)
-                (handle_unresolved_name (name Namespace ID) X) :-
-  pick_namespace X Namespace,
-  if (resolve_name_or_var (name Namespace ID) X)
-  then success
-  else handle_unresolved_name (name Namespace ID) X.
+                (handle_unresolved_name (name Namespace ID) X).
+
+(* since unresolved variables can result in any kind of term, because of handle_unresolved_name,
+   we need a way to reverse those *)
+resolve_aux (var (name Namespace ID)) X
+   when refl.isunif ID,
+        pick_namespace X Namespace,
+        either (handle_unresolved_name (name Namespace ID) X)
+               (resolve_name_or_var (name Namespace ID) X).
 
 resolve_aux (concrete.bindone (name Namespace ID) Body) (bind ID' Body') :-
   if (pattern_mode, refl.isunif ID') then success else eq ID ID',

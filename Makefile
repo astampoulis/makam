@@ -62,7 +62,7 @@ big/testocaml \
 big/testveriml \
 big/testurweb \
 big/testf2tal \
-new/niceml.tests
+tinyml/tests
 
 MAKAM ?= ./makam
 

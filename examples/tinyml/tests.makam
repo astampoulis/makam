@@ -1,0 +1,48 @@
+%use "init".
+tinyml : testsuite. %testsuite tinyml.
+
+>> syntax.run program_concrete {{ let x = () in x }} X ?
+>> Yes:
+>> X := concrete (program nil (clet (tuple (concrete.name exprvar "x") (etuple nil)) (concrete.var (concrete.name exprvar "x")))).
+
+>> syntax.run program_concrete {{ let x = () in match x { (a, b) => a } }} X ?
+>> Yes:
+>> X := concrete (program nil (clet (tuple (concrete.name exprvar "x") (etuple nil)) (match (concrete.var (concrete.name exprvar "x")) (cons (cbranch (ptuple (cons (cpvar (concrete.name exprvar "a")) (cons (cpvar (concrete.name exprvar "b")) nil))) (concrete.var (concrete.name exprvar "a"))) nil)))).
+
+>> (syntax.run program_concrete {{ let x = () in match x { (a, b) => a } }} _X, concrete.resolve _X Y) ?
+>> Yes:
+>> Y := program nil (let (etuple nil) (bind "x" (fun x => match x (cons (branch (tuple (ptuple (cons pvar (cons pvar nil))) (bind "a" (fun a => bind "b" (fun b => body a))))) nil)))).
+
+>> (isocast {{
+ data tree = Leaf of () | Node of tree * int * tree ;
+ letrec map = fun f tree =>
+   match tree {
+     Leaf() => Leaf()
+   | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
+   }
+ in map
+ }} (_X: concrete program), concrete.resolve _X _Y, concrete.resolve _Z _Y, eq_nounif _Z _X) ?
+>> Yes.
+
+>> (a:typ -> b:typ -> typeof (ptuple [pvar, pvar]) (product [a, b]) [] #XS) ?
+>> Yes:
+>> XS := fun a b => [a, b].
+
+>> (isocast {{
+ data tree = Leaf of () | Node of tree * int * tree ;
+ Leaf()
+}} P, wfprogram P T, isocast T (S: string)) ?
+>> Yes:
+>> S := "tree ".
+
+>> typechecker {{
+ data tree = Leaf of () | Node of tree * int * tree ;
+   letrec map = fun f tree =>
+     match tree {
+       Leaf() => Leaf()
+     | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
+     }
+   in map
+}} S ?
+>> Yes:
+>> S := "( int -> int , tree ) -> tree ".

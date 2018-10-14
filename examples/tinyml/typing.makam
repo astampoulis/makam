@@ -1,0 +1,69 @@
+typeof : expr -> typ -> prop.
+typeof : patt -> typ -> list typ -> list typ -> prop.
+
+typeof (etuple ES) (product TS) :-
+  map typeof ES TS.
+
+typeof (lam XS_Body) (arrowmany TS T) :-
+  bindmany.open XS_Body (pfun XS Body => assume_many typeof XS TS (typeof Body T)).
+
+typeof (app E ES) T :-
+  typeof E (arrowmany TS T), map typeof ES TS.
+
+typeof (let E X_Body) T' :-
+  typeof E T,
+  bindone.open X_Body (pfun X Body => (typeof X T -> typeof Body T')).
+
+typeof (letrec X_DefBody) T' :-
+  bindone.open X_DefBody (pfun X (Def, Body) => (typeof X T -> (typeof Def T, typeof Body T'))).
+
+typeofbranch : typ -> typ -> branch -> prop.
+typeofbranch T T' (branch (P, XS_Body)) :-
+  typeof P T [] TS,
+  bindmany.open XS_Body (pfun XS Body => assume_many typeof XS TS (typeof Body T')).
+typeof (match E Branches) T' :- typeof E T, map (typeofbranch T T') Branches.
+
+typeof pvar T VS VS' :- snoc VS T VS'.
+typeof (ptuple []) (product []) VS VS.
+typeof (ptuple (P :: PS)) (product (T :: TS)) VS VS'' :-
+  typeof P T VS VS',
+  typeof (ptuple PS) (product TS) VS' VS''.
+
+typeof (eint N) (tbase "int").
+
+datadef_constructor : typ -> constructor -> typ -> prop.
+datadef_all_constructors : typ -> list (constructor * typ) -> prop.
+
+typeof (constr C E) T :-
+  datadef_constructor T C T_Arg,
+  typeof E T_Arg.
+
+typeof (pconstr C P) T VS VS' :-
+  datadef_constructor T C T_Arg,
+  typeof P T_Arg VS VS'.
+
+wftyp : typ -> prop.
+
+wftyp (tbase "int").
+wftyp (arrowmany TS T) :- map wftyp TS, wftyp T.
+wftyp (product TS) :- map wftyp TS.
+
+wftoplevel : list topleveldef -> prop -> prop.
+
+wftoplevel [] P :- P.
+wftoplevel (letdef X E :: Rest) P :-
+  typeof E T,
+  (typeof (named X) T -> wftoplevel Rest P).
+wftoplevel (datadef Typ ConstrTyps :: Rest) P :-
+  (wftyp (tbase Typ) ->
+    map (pfun (C, T) => wftyp T) ConstrTyps),
+  map (pfun (C, T_Arg) Q => eq Q (datadef_constructor (tbase Typ) C T_Arg))
+    ConstrTyps ConstructorAssumptions,
+  (wftyp (tbase Typ) ->
+   datadef_all_constructors (tbase Typ) ConstrTyps ->
+   assume_many ConstructorAssumptions
+     (wftoplevel Rest P)).
+    
+wfprogram : program -> typ -> prop.
+wfprogram (program Defs E) T :-
+  wftoplevel Defs (typeof E T).
