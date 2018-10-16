@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TIMING_DEADLINE="80.0"
-NOCACHE_REFERENCE="150.0"
+TIMING_DEADLINE="85.0"
+NOCACHE_REFERENCE="140.0"
 
 set -eux
 set -o pipefail
@@ -22,5 +22,5 @@ CACHE_TIME=$(tail -n 1 cache_time)
 rm nocache_time cache_time
 
 ( eval $(node -e "console.log(($CACHE_TIME / $NOCACHE_TIME) < 0.75 ? true : false)") ) &&
-( eval $(node -e "console.log($CACHE_TIME < $TIMING_DEADLINE * ($NOCACHE_TIME / $NOCACHE_REFERENCE) ? true : false)") ) ||
+( eval $(node -e "console.log($CACHE_TIME < $TIMING_DEADLINE * Math.max(0.95, ($NOCACHE_TIME / $NOCACHE_REFERENCE)) ? true : false)") ) ||
 (echo "Timing regression: cached stuff got slower"; exit 1)
