@@ -61,7 +61,8 @@ small/systemf \
 big/testocaml \
 big/testveriml \
 big/testurweb \
-big/testf2tal
+big/testf2tal \
+tinyml/tests
 
 MAKAM ?= ./makam
 
