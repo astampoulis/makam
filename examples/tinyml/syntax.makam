@@ -1,4 +1,4 @@
-expr, baseexpr : syntax expr.
+expr, baseexpr, exprC : syntax expr.
 patt : syntax patt.
 typ : syntax typ.
 constrid : syntax constructor.
@@ -15,7 +15,6 @@ clet : (concrete.name expr * expr) -> expr -> expr.
 cletrec : (concrete.name expr * expr) -> expr -> expr.
 cpvar : concrete.name expr -> patt.
 cbranch : patt -> expr -> branch.
-
 
 `( syntax_rules {{
 
@@ -66,6 +65,8 @@ branch -> cbranch
 
 }} ).
 
+`( syntax.def_js exprC expr ).
+
 concrete.pick_namespace_userdef (_: expr) exprvar.
 concrete.pick_namespace_userdef (_: typ) typvar.
 
@@ -102,26 +103,26 @@ program_concrete : syntax (concrete program).
 
 topleveldef, topleveldef_ : syntax topleveldef.
 constrdef : syntax (constructor * typ).
-typ, prodtyp, basetyp : syntax typ.
+typC, typ, prodtyp, basetyp : syntax typ.
 typid : syntax (concrete.name typ).
 typ_concrete : syntax (concrete typ).
 
 `( syntax_rules {{
 
 program_concrete -> concrete { <program_> }
-typ_concrete -> concrete { <typ> }
+typ_concrete -> concrete { <typC> }
 
-program_ -> program { <many topleveldef_> <expr> }
+program_ -> program { <many topleveldef_> <exprC> }
 
 topleveldef_ -> { <topleveldef> ";" (optunit ws_newline) }
 
 topleveldef -> datadef
                { "data" <makam.ident> "=" <list_sep (token "|") constrdef> }
              / letdef
-               { "let" <makam.ident> "=" <expr> }
+               { "let" <makam.ident> "=" <exprC> }
 
 constrdef -> tuple
-           { <constrid> "of" <typ> }
+           { <constrid> "of" <typC> }
 
 typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> "->" <typ> }
      / arrowmany { "(" <list_sep (token ",") typ> ")" "->" <typ> }
@@ -138,5 +139,10 @@ typid -> concrete.name typvar { <makam.ident> }
 
 }}).
 
+`( syntax.def_js typC typ ).
 `( syntax.def_toplevel_js typ_concrete ).
 `( syntax.def_toplevel_js program_concrete ).
+
+isocast_def (Iso: iso typ string) :-
+  eq Iso (iso.compose [ iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
+  isocast_find unit (PrettyIso: iso (concrete typ) string).

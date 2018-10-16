@@ -31,7 +31,7 @@ tinyml : testsuite. %testsuite tinyml.
 >> (isocast {{
  data tree = Leaf of () | Node of tree * int * tree ;
  Leaf()
-}} P, wfprogram P T, isocast T (S: string)) ?
+}} _P, wfprogram _P _T, isocast _T (S: string)) ?
 >> Yes:
 >> S := "tree ".
 
