@@ -203,31 +203,32 @@ pattern_match : testsuite. %testsuite pattern_match.
 >> E1 := freevar "a",
 >> E2 := freevar "b".
 
+(* We have to rename unification variables if we want to make sure that they have not been unified with a concrete term. *)
 >> pattern_match (app E1 E2) (app A B) ?
 >> Yes:
->> A := A,
->> B := B,
->> E1 := A,
->> E2 := B.
+>> A := Z,
+>> B := Q,
+>> E1 := Z,
+>> E2 := Q.
 
 >> pattern_match (app E1 E2) A ?
 >> Impossible.
 
 >> pattern_match (app E E) (app X1 X2) ?
 >> Yes:
->> E := E,
->> X1 := E,
->> X2 := E.
+>> E := Z,
+>> X1 := Z,
+>> X2 := Z.
 
 >> pattern_match (app (lam F) E) (app X1 X2) ?
 >> Impossible.
 
 >> pattern_match (app (lam F) E) (app (lam G) X2) ?
 >> Yes:
->> F := F,
->> E := E,
->> G := F,
->> X2 := E.
+>> F := F',
+>> E := E',
+>> G := F',
+>> X2 := E'.
 
 let_in : term -> (term -> term) -> term.
 

@@ -105,4 +105,17 @@ rule (term 2) (group [ exact "(", captured (term 0), exact ")" ]).
 >> X := "λx.x (λz.z) (z (λx.x))",
 >> Y := lam "x" (app (var "x") (cons (lam "z" (app (var "z") nil)) (cons (app (var "z") (cons (lam "x" (app (var "x") nil)) nil)) nil))).
 
+(* test that caching specific parsers to be used as external parsers works ok *)
+
+identC : syntax string.
+useIdent : syntax string.
+
+`( def_js identC ident ).
+
+rule useIdent identC.
+
+>> (eq X X, once {prop| ((syntax.to_peg ident P when refl.isunif X :- eq X "foo", syntax.to_peg ident P) -> def_toplevel_js useIdent _Cmd) |}) ?
+>> Yes:
+>> X := _.
+
 %end.

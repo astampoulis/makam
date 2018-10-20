@@ -147,7 +147,9 @@ to_pretty (transform Forward Forward_js Backward SyntaxArgs) (pretty.untransform
    Now for user defined combinators, we got to gather up rules and convert
    them accordingly. *)
 
-to_peg S P when not(builtin S), rule S _ :-
+to_peg S (peg.syntax S) when not(builtin S), peg.external (peg.syntax S).
+
+to_peg S P when not(builtin S), not(peg.external (peg.syntax S)) :-
   refl.rules_get_applicable (rule S _) Rules,
   map (pfun rul def => [Def Guard]
     (clause.get_goal rul (rule S Def),
@@ -157,7 +159,7 @@ to_peg S P when not(builtin S), rule S _ :-
   ) Rules Defs,
   if (inline S) then (to_peg (choices Defs) P)
   else (eq P (peg.syntax (choices Defs))).
-to_pretty S P when not(builtin S), rule S _ :-
+to_pretty S P when not(builtin S) :-
   refl.rules_get_applicable (rule S _) Rules,
   map (pfun rul def => [Def Guard]
     (clause.get_goal rul (rule S Def),
@@ -168,7 +170,7 @@ to_pretty S P when not(builtin S), rule S _ :-
   if (inline S) then (to_pretty (choices Defs) P)
   else (eq P (pretty.syntax (choices Defs))).
 
-peg.rule (peg.syntax Syn) Peg :- to_peg Syn Peg.
+peg.rule (peg.syntax Syn) Peg when not(peg.external (peg.syntax Syn)) :- to_peg Syn Peg.
 pretty.rule (pretty.syntax Syn) Pretty :- to_pretty Syn Pretty.
 
 peg.inline (peg.syntax Syn) when inline Syn.

@@ -1,0 +1,36 @@
+expr : type.
+typ : type.
+
+etuple : list expr -> expr.
+letrec : bindone expr (expr * expr) -> expr.
+let : expr -> bindone expr expr -> expr.
+lam : bindmany expr expr -> expr.
+app : expr -> list expr -> expr.
+
+patt : type.
+branch : type.
+branch : patt * bindmany expr expr -> branch.
+match : expr -> list branch -> expr.
+
+ptuple : list patt -> patt.
+pvar : patt.
+
+constructor : type.
+constructor : string -> constructor.
+
+constr : constructor -> expr -> expr.
+pconstr : constructor -> patt -> patt.
+
+eint : int -> expr.
+named : string -> expr.
+
+program : type.
+topleveldef : type.
+program : list topleveldef -> expr -> program.
+
+letdef : string -> expr -> topleveldef.
+datadef : string -> list (constructor * typ) -> topleveldef.
+
+product : list typ -> typ.
+arrowmany : list typ -> typ -> typ.
+tbase : string -> typ.

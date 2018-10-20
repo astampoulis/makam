@@ -1,0 +1,148 @@
+expr, baseexpr, exprC : syntax expr.
+patt : syntax patt.
+typ : syntax typ.
+constrid : syntax constructor.
+branch : syntax branch.
+id : syntax (concrete.name expr).
+def : syntax (concrete.name expr * expr).
+
+%open syntax.
+
+exprvar : concrete.namespace expr.
+typvar : concrete.namespace typ.
+
+clet : (concrete.name expr * expr) -> expr -> expr.
+cletrec : (concrete.name expr * expr) -> expr -> expr.
+cpvar : concrete.name expr -> patt.
+cbranch : patt -> expr -> branch.
+
+`( syntax_rules {{
+
+expr -> etuple nil
+        { "()" }
+      / (fun hd => fun tl => etuple (cons hd tl))
+        { "(" <expr> "," <list_sep (token ",") expr> ")" }
+      / match
+        { "match" <expr> "{" <list_sep (token "|") branch> "}" }
+      / cletrec
+        { "let" "rec" <def> "in" <expr> }
+      / clet
+        { "let" <def> "in" <expr> }
+      / (fun ids => fun body => lam (concrete.bindmany ids body))
+        { "fun" <once_or_many id> "=>" <expr> }
+      / app
+        { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
+      / constr
+        { <constrid> <expr> }
+      / eint
+        { <makam.int_literal> }
+      / { <baseexpr> }
+
+baseexpr ->
+        concrete.var
+        { <id> }
+      / { "(" <expr> ")" }
+
+patt -> ptuple nil
+        { "()" }
+      / (fun hd => fun tl => ptuple (cons hd tl))
+        { "(" <patt> "," <list_sep (token ",") patt> ")" }
+      / cpvar
+        { <id> }
+      / pconstr
+        { <constrid> <patt> }
+
+def -> tuple
+        { <id> "=" <expr> }
+
+id -> concrete.name exprvar
+        { <makam.ident> }
+
+constrid -> constructor { <charcons (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ") makam.ident_> }
+
+branch -> cbranch
+        { <patt> "=>" <expr> }
+
+}} ).
+
+`( syntax.def_js exprC expr ).
+
+concrete.pick_namespace_userdef (_: expr) exprvar.
+concrete.pick_namespace_userdef (_: typ) typvar.
+
+concrete.handle_unresolved_name (concrete.name exprvar ID) (named ID).
+concrete.handle_unresolved_name (concrete.name typvar ID) (tbase ID).
+
+concrete.resolve_conversion
+    (clet (Name, Def) Body)
+    (let Def (concrete.bindone Name Body)).
+
+concrete.resolve_conversion
+    (cletrec (Name, Def) Body)
+    (letrec (concrete.bindone Name (Def, Body))).
+
+concrete.resolve_conversion (cpvar N) pvar.
+
+concrete.resolve_conversion
+    (cbranch P E)
+    (branch (P', concrete.bindmany Names E)) when refl.isunif P' :-
+  concrete.names_of exprvar P Names,
+  concrete.resolve (concrete P) P'.
+
+concrete.resolve_conversion
+    (cbranch P E)
+    (branch (P', concrete.bindmany Names E)) when refl.isunif P :-
+  concrete.resolve (concrete P) P',
+  concrete.names_of exprvar P Names.
+
+
+(* ---- moving on to programs ---- *)
+
+program_ : syntax program.
+program_concrete : syntax (concrete program).
+
+topleveldef, topleveldef_ : syntax topleveldef.
+constrdef : syntax (constructor * typ).
+typC, typ, prodtyp, basetyp : syntax typ.
+typid : syntax (concrete.name typ).
+typ_concrete : syntax (concrete typ).
+
+`( syntax_rules {{
+
+program_concrete -> concrete { <program_> }
+typ_concrete -> concrete { <typC> }
+
+program_ -> program { <many topleveldef_> <exprC> }
+
+topleveldef_ -> { <topleveldef> ";" (optunit ws_newline) }
+
+topleveldef -> datadef
+               { "data" <makam.ident> "=" <list_sep (token "|") constrdef> }
+             / letdef
+               { "let" <makam.ident> "=" <exprC> }
+
+constrdef -> tuple
+           { <constrid> "of" <typC> }
+
+typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> "->" <typ> }
+     / arrowmany { "(" <list_sep (token ",") typ> ")" "->" <typ> }
+     / prodtyp ;
+
+prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> "*" <list_sep_plus (token "*") basetyp> }
+     / basetyp ;
+
+basetyp -> concrete.var { <typid > }
+         / product nil { "()" }
+         / { "(" <typ> ")" }
+
+typid -> concrete.name typvar { <makam.ident> }
+
+}}).
+
+`( syntax.def_js typC typ ).
+`( syntax.def_toplevel_js typ_concrete ).
+`( syntax.def_toplevel_js program_concrete ).
+
+isocast_def (Iso: iso typ string) :-
+  eq Iso (iso.compose [ iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
+  isocast_find unit (PrettyIso: iso (concrete typ) string).

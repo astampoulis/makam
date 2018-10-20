@@ -15,7 +15,7 @@ syntax.rule ident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGH
 syntax.rule baseident (charcons ident_first (charmany ident_rest)).
 syntax.rule ident_ (string_join baseident "." ident_).
 syntax.rule ident_ baseident.
-syntax.rule ident (token ident_).
+`( syntax.def_js ident (token ident_) ).
 
 unifident_first, unifident_rest, unifident, unifident_ : syntax string.
 syntax.inline unifident. syntax.inline unifident_. syntax.inline unifident_first. syntax.inline unifident_rest.
@@ -23,7 +23,7 @@ syntax.inline unifident. syntax.inline unifident_. syntax.inline unifident_first
 syntax.rule unifident_first (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ_").
 syntax.rule unifident_rest (charclass "abcdefghijklmnopqrstuvwxyz_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ").
 syntax.rule unifident_ (charcons unifident_first (charmany unifident_rest)).
-syntax.rule unifident (token unifident_).
+`( syntax.def_js unifident (token unifident_) ).
 
 (* string literals *)
 
@@ -73,7 +73,9 @@ syntax.rule int_literal_
               "(x) => parseInt(JSON.parse(x))"
               (pfun res i => tostring i res)
               [ syntax.captured (char_once_or_many int_literal_char) ]).
-syntax.rule int_literal (syntax.token int_literal_).
+
+`(syntax.def_js int_literal (syntax.token int_literal_)).
+
 
 (* antiquote *)
 
