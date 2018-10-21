@@ -46,3 +46,16 @@ tinyml : testsuite. %testsuite tinyml.
 }} S ?
 >> Yes:
 >> S := "( int → int , tree ) → tree ".
+
+>> typechecker {{
+
+letrec factorial = (n) =>
+  match (n == 0) {
+    True() => 1
+  | False() => n * (factorial(n-1))
+  }
+in (factorial, (factorial(5)) > 10)
+
+}} S ?
+>> Yes:
+>> S := "( int → int ) × bool ".

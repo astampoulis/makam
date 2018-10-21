@@ -5,6 +5,7 @@ constrid : syntax constructor.
 branch : syntax branch.
 id : syntax (concrete.name expr).
 def : syntax (concrete.name expr * expr).
+binop, binopC : syntax binop.
 
 %open syntax.
 
@@ -18,12 +19,29 @@ cbranch : patt -> expr -> branch.
 
 token_ARROW : syntax unit.
 token_FATARROW : syntax unit.
+token_PROD : syntax unit.
 
-syntax.rule token_ARROW (token "→").
-syntax.rule token_ARROW (token "->").
+`( syntax_rules {{
 
-syntax.rule token_FATARROW (token "⇒").
-syntax.rule token_FATARROW (token "=>").
+token_ARROW -> { <token "→"> } / { <token "->"> }
+token_FATARROW -> { <token "⇒"> } / { <token "=>"> }
+token_PROD -> { <token "×"> } / { <token "*"> }
+
+binop ->
+        (fun u => binop_add) { <token "+"> }
+      / (fun u => binop_sub) { <token "-"> }
+      / (fun u => binop_mul) { <token "*"> }
+      / (fun u => binop_le) { <token "<="> }
+      / (fun u => binop_ge) { <token ">="> }
+      / (fun u => binop_eq) { <token "=="> }
+      / (fun u => binop_ne) { <token "!="> }
+      / (fun u => binop_ne) { <token "<>"> }
+      / (fun u => binop_lt) { <token "<"> }
+      / (fun u => binop_gt) { <token ">"> }
+
+}} ).
+
+`( syntax.def_js binopC binop ).
 
 `( syntax_rules {{
 
@@ -36,20 +54,22 @@ expr -> etuple nil
       / match
         { "match" <expr> "{" <list_sep (token "|") branch> "}" }
       / cletrec
-        { "let" "rec" <def> "in" <expr> }
+        { "letrec" <def> "in" <expr> }
       / clet
         { "let" <def> "in" <expr> }
       / app
         { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
       / constr
         { <constrid> <expr> }
-      / eint
-        { <makam.int_literal> }
+      / ebinop
+        { <baseexpr> <binopC> <baseexpr> }
       / { <baseexpr> }
 
 baseexpr ->
         concrete.var
         { <id> }
+      / eint
+        { <makam.int_literal> }
       / { "(" <expr> ")" }
 
 patt -> ptuple nil
@@ -137,7 +157,7 @@ typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> token_ARROW <
      / arrowmany { "(" <list_sep (token ",") typ> ")" token_ARROW <typ> }
      / prodtyp ;
 
-prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> "*" <list_sep_plus (token "*") basetyp> }
+prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> token_PROD <list_sep_plus token_PROD basetyp> }
      / basetyp ;
 
 basetyp -> concrete.var { <typid> }
