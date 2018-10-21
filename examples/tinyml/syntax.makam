@@ -1,5 +1,6 @@
 expr, baseexpr, exprC : syntax expr.
-patt : syntax patt.
+constr_args : syntax expr.
+patt, pattC : syntax patt.
 typ : syntax typ.
 constrid : syntax constructor.
 branch : syntax branch.
@@ -45,6 +46,8 @@ binop ->
 
 `( syntax_rules {{
 
+constr_args -> { <expr> } / (fun u => etuple nil) { <optunit ws_empty> }
+
 expr -> etuple nil
         { "()" }
       / (fun ids => fun body => lam (concrete.bindmany ids body))
@@ -60,7 +63,7 @@ expr -> etuple nil
       / app
         { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
       / constr
-        { <constrid> <expr> }
+        { <constrid> <constr_args> }
       / ebinop
         { <baseexpr> <binopC> <baseexpr> }
       / { <baseexpr> }
@@ -80,6 +83,8 @@ patt -> ptuple nil
         { <id> }
       / pconstr
         { <constrid> <patt> }
+      / (fun c => pconstr c (ptuple nil))
+        { <constrid> }
 
 def -> tuple
         { <id> "=" <expr> }
@@ -90,10 +95,11 @@ id -> concrete.name exprvar
 constrid -> constructor { <charcons (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ") makam.ident_> }
 
 branch -> cbranch
-        { <patt> token_FATARROW <expr> }
+        { <pattC> token_FATARROW <expr> }
 
 }} ).
 
+`( syntax.def_js pattC patt ).
 `( syntax.def_js exprC expr ).
 
 concrete.pick_namespace_userdef (_: expr) exprvar.
@@ -152,6 +158,8 @@ topleveldef -> datadef
 
 constrdef -> tuple
            { <constrid> "of" <typC> }
+           / (fun c => tuple c (product nil))
+           { <constrid> }
 
 typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> token_ARROW <typ> }
      / arrowmany { "(" <list_sep (token ",") typ> ")" token_ARROW <typ> }

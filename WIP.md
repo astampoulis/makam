@@ -1,5 +1,5 @@
 - [x] add binop
-- [ ] better syntax for constructors
+- [x] better syntax for constructors
 - [ ] integrate and check slides
 - [ ] actually do slides
 - [ ] add interpreter
