@@ -1,6 +1,6 @@
 {
   "name": "makam-webui",
-  "version": "0.7.14",
+  "version": "0.7.14-talkhacks",
   "description": "CodeMirror-based WebUI for Makam",
   "main": "makam-webui-bundle.js",
   "scripts": {
