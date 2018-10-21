@@ -17,7 +17,7 @@ cpvar : concrete.name expr -> patt.
 cbranch : patt -> expr -> branch.
 
 token_ARROW : syntax unit.
-token_FATARROW : syntax unif.
+token_FATARROW : syntax unit.
 
 syntax.rule token_ARROW (token "→").
 syntax.rule token_ARROW (token "->").
@@ -152,6 +152,36 @@ typid -> concrete.name typvar { <makam.ident> }
 `( syntax.def_toplevel_js typ_concrete ).
 `( syntax.def_toplevel_js program_concrete ).
 
+change_unifs : typ -> typ -> prop.
+change_unifs_cases : [A]reified A -> reified A -> prop.
+
+change_unifs X Y :-
+  if (refl.isunif Y) then
+    (reify X X_reified,
+     change_unifs_cases X_reified Y_reified,
+     reflect Y_reified Y)
+  else
+    (reify Y Y_reified,
+     change_unifs_cases X_reified Y_reified,
+     reflect X_reified X).
+
+change_unifs_cases (reified.term Head Args) (reified.term Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.const C) (reified.const C).
+
+change_unifs_cases (reified.bvar Head Args) (reified.bvar Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.nvar Head Args) (reified.nvar Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.lambda F) (reified.lambda F') :-
+  (x:A -> change_unifs_cases (F x) (F' x)).
+
+change_unifs_cases (reified.unifvar I _ _ _) (reified.term concrete.var [ reified.term concrete.name [ reified.term typvar [], reified.const S ] ]) when refl.isunif S :-
+  tostring I IS, expansion.str `t_${IS}` S.
+
 isocast_def (Iso: iso typ string) :-
-  eq Iso (iso.compose [ iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
+  eq Iso (iso.compose [ iso.bidi change_unifs, iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
   isocast_find unit (PrettyIso: iso (concrete typ) string).
