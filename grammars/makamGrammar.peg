@@ -168,7 +168,9 @@ lexpr -> fn:lkeyword("fun") bindings:repplusWHITE(binding) token("=>") body:lexp
 
       / e:appexpr^ << e >>
 
-appexpr -> f:baseexpr^ args:repWHITE(baseexpr)
+appexpr -> f:baseexpr^ args:repWHITE(baseexpr) token("=") lastarg:baseexpr
+        << List.fold_left (autospan_bin mkApp) f (List.append args [lastarg]) >>
+        / f:baseexpr^ args:repWHITE(baseexpr)
         << List.fold_left (autospan_bin mkApp) f args >>
 
 namepref -> "^n" / "ⁿ" ;
