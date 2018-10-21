@@ -16,5 +16,10 @@ apply X (HD :: TL) X' :- apply (X HD) TL X'.
 applyfull : [A] A -> args A B -> B -> prop.
 applyfull (X: A -> B) (HD :: TL) Res :- applyfull (X HD) TL Res.
 applyfull X [] X when not(typ.eq X (_ : A -> B)).
+
+last : [A B C] args A B -> C -> prop.
+last [HD] HD.
+last (HD :: TL) Res :- last TL Res.
+
 %end.
 

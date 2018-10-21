@@ -1,0 +1,64 @@
+tests : testsuite. %testsuite tests.
+
+quasifun_rule : (A -> prop) -> A -> prop -> cmd -> prop.
+quasifun_whenrule : (A -> prop) -> A -> prop -> prop -> cmd -> prop.
+
+quasifun_rule
+    FunctionPattern FunctionResult Premise Cmd :-
+  quasifun_whenrule FunctionPattern FunctionResult success Premise Cmd.
+
+quasifun_whenrule
+    FunctionPattern FunctionResult Guard Premise 
+    (cmd_newclause (whenclause Goal Guard' Premise')) :-
+  refl.headargs (FunctionPattern _) FunctionHead _,
+  args.applyfull FunctionHead NewUnifs Goal,
+  args.last NewUnifs ResultUnif,
+  eq Guard' (pfun => pattern_match (FunctionPattern _) Goal, Guard),
+  eq Premise' (pfun => eq ResultUnif FunctionResult, Premise).
+
+(*
+quasieq : [A] A -> A -> prop.
+quasieq X X.
+*)
+
+quasieq : [A] A -> (A -> prop) -> prop.
+quasieq X P :- P X.
+
+term : type.
+typ : type.
+
+lam : typ -> (term -> term) -> term.
+app : term -> term -> term.
+eint : int -> term.
+
+arrow : typ -> typ -> typ.
+tint : typ.
+
+typeof : (Term: term) (Type: typ) -> prop.
+
+typeof (app E1 E2) => T2
+  where arrow T1 T2 = typeof E1,
+        T1 = typeof E2.
+
+typeof (lam T1 X_E) => (arrow T1 T2)
+  where (x:term ->
+         typeof x T1 ->
+         T2 = typeof (X_E x)).
+
+typeof (eint I) => tint.
+
+typeof (lam _ (fun x => x)) T ?
+>> Yes:
+>> T := arrow T1 T1.
+
+typeof (lam _ (fun x => app x (eint 5))) T ?
+>> Yes:
+>> T := arrow (arrow tint T1) T1.
+
+typeof (app E1 E2) T ?
+>> Impossible.
+
+typeof (eint N) T ?
+>> Yes:
+>> T := tint,
+>> N := N1.

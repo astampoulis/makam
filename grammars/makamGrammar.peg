@@ -69,7 +69,7 @@ let mkTuple l =
 let makam_toplevel_parser : (syntax_type -> unit Peg.parser_t) ref = ref (fun _ _ _ _ -> None) ;;
 let last_command_span : UChannel.span ref = ref None ;;
 
-let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "type"; "fun"; "pfun" ];;
+let _KEYWORDS = StringSet.of_list [ "if"; "then"; "else"; "when"; "where"; "type"; "fun"; "pfun" ];;
 
 exception Forget of string ;;
 
@@ -165,6 +165,9 @@ lexpr -> fn:lkeyword("fun") bindings:repplusWHITE(binding) token("=>") body:lexp
 
       / hd:appexpr^ token("::") tl:lexpr
         << mkTm "cons" [ hd ; tl ] >>
+
+      / left:appexpr^ token("=") right:appexpr
+        << mkTm "quasieq" [ left; right ] >>
 
       / e:appexpr^ << e >>
 
@@ -336,6 +339,14 @@ prologcmd1 ->
                 global_set_last_query None;
                 Benchmark.cumulative "total defs"
                 (lazy(List.iter (uncurry global_define) d))) >>
+           / c:funclause token(".")
+             << fun () ->
+                (global_set_last_query None;
+                 if !_ONLY_TYPECHECK then
+                   (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent c.content)))
+                 else
+                   (Benchmark.cumulative "total staged commands"
+                     (lazy(Termlangrefl.global_staged_command c.content)))) >>
            / c:clauseBM token(".") << fun () -> (global_set_last_query None;
                                                  if !_ONLY_TYPECHECK then
                                                   (Benchmark.cumulative "total clauses"
@@ -505,7 +516,7 @@ var_assignment -> x:ltoken(ident) token(":=") e:lexpr token(("," / ".")) to_EOL
                   << (autospan_un mkVar x, e) >>
 
 (* Free-form quotes *)
-start_enclosed -> &&( enclosed_starter << fun s -> end_enclosed_marker := enclosed_flip (fst s); true >> )
+start_enclosed -> &&( enclosed_starter << fun s -> end_enclosed_marker := enclosed_flip (fst s); UString.to_string (fst s) <> "{prop|" >> )
                   e:enclosed_starter << e >>
 
 end_enclosed -> &&( enclosed_ender << fun s -> (s = !end_enclosed_marker) >>)
@@ -580,6 +591,15 @@ dbt_elm -> h:dbt_head^ << h (mkTm "nil" []) >>
          / t:lparenthesized(dbt_top) << t >>
 
 dbt -> d:dbt_top repV(white) << d >>
+
+(* -------------------------------------- *)
+(* Quasi functional syntax                *)
+(* -------------------------------------- *)
+
+funclause -> left:lexpr^ token("=>") right:lexpr token("where") p:prop
+             << mkTm "quasifun_rule" [left; right; p] >>
+           / left:lexpr^ token("=>") right:lexpr endspan:loced(epsilon)
+             << mkTm "quasifun_rule" [left; right; mkTmConst endspan "success"] >>
 
 (* -------------------------------------- *)
 (* Utility definitions: character classes *)
