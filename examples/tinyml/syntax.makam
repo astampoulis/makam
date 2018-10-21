@@ -16,10 +16,21 @@ cletrec : (concrete.name expr * expr) -> expr -> expr.
 cpvar : concrete.name expr -> patt.
 cbranch : patt -> expr -> branch.
 
+token_ARROW : syntax unit.
+token_FATARROW : syntax unif.
+
+syntax.rule token_ARROW (token "→").
+syntax.rule token_ARROW (token "->").
+
+syntax.rule token_FATARROW (token "⇒").
+syntax.rule token_FATARROW (token "=>").
+
 `( syntax_rules {{
 
 expr -> etuple nil
         { "()" }
+      / (fun ids => fun body => lam (concrete.bindmany ids body))
+        { "(" <list_sep_plus (token ",") id> ")" token_FATARROW <expr> }
       / (fun hd => fun tl => etuple (cons hd tl))
         { "(" <expr> "," <list_sep (token ",") expr> ")" }
       / match
@@ -28,8 +39,6 @@ expr -> etuple nil
         { "let" "rec" <def> "in" <expr> }
       / clet
         { "let" <def> "in" <expr> }
-      / (fun ids => fun body => lam (concrete.bindmany ids body))
-        { "fun" <once_or_many id> "=>" <expr> }
       / app
         { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
       / constr
@@ -61,7 +70,7 @@ id -> concrete.name exprvar
 constrid -> constructor { <charcons (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ") makam.ident_> }
 
 branch -> cbranch
-        { <patt> "=>" <expr> }
+        { <patt> token_FATARROW <expr> }
 
 }} ).
 
@@ -124,14 +133,14 @@ topleveldef -> datadef
 constrdef -> tuple
            { <constrid> "of" <typC> }
 
-typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> "->" <typ> }
-     / arrowmany { "(" <list_sep (token ",") typ> ")" "->" <typ> }
+typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> token_ARROW <typ> }
+     / arrowmany { "(" <list_sep (token ",") typ> ")" token_ARROW <typ> }
      / prodtyp ;
 
 prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> "*" <list_sep_plus (token "*") basetyp> }
      / basetyp ;
 
-basetyp -> concrete.var { <typid > }
+basetyp -> concrete.var { <typid> }
          / product nil { "()" }
          / { "(" <typ> ")" }
 

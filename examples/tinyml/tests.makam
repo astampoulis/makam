@@ -15,7 +15,7 @@ tinyml : testsuite. %testsuite tinyml.
 
 >> (isocast {{
  data tree = Leaf of () | Node of tree * int * tree ;
- letrec map = fun f tree =>
+ letrec map = (f, tree) =>
    match tree {
      Leaf() => Leaf()
    | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
@@ -37,7 +37,7 @@ tinyml : testsuite. %testsuite tinyml.
 
 >> typechecker {{
  data tree = Leaf of () | Node of tree * int * tree ;
-   letrec map = fun f tree =>
+   letrec map = (f, tree) =>
      match tree {
        Leaf() => Leaf()
      | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
@@ -45,4 +45,4 @@ tinyml : testsuite. %testsuite tinyml.
    in map
 }} S ?
 >> Yes:
->> S := "( int -> int , tree ) -> tree ".
+>> S := "( int → int , tree ) → tree ".
