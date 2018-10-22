@@ -66,3 +66,16 @@ in (factorial, (factorial(5)) > 10)
 }} S ?
 >> Yes:
 >> S := "( int → int ) × bool ".
+
+>> interpreter {{
+
+letrec factorial = (n) =>
+  match (n == 0) {
+    True => 1
+  | False => n * (factorial(n - 1))
+  }
+in factorial(5)
+
+}} S ?
+>> Yes:
+>> S := "120 ".
