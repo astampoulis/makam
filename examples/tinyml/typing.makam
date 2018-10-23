@@ -31,8 +31,31 @@ typeof (ptuple (P :: PS)) (product (T :: TS)) VS VS'' :-
 
 typeof (eint N) (tbase "int").
 
+typeof_binop : binop -> typ -> typ -> typ -> prop.
+
+typeof (ebinop E1 Binop E2) TRes :-
+  typeof_binop Binop T1 T2 TRes,
+  typeof E1 T1, typeof E2 T2.
+
+typeof_binop binop_add (tbase "int") (tbase "int") (tbase "int").
+typeof_binop binop_sub (tbase "int") (tbase "int") (tbase "int").
+typeof_binop binop_mul (tbase "int") (tbase "int") (tbase "int").
+
+typeof_binop binop_lt (tbase "int") (tbase "int") (tbase "bool").
+typeof_binop binop_gt (tbase "int") (tbase "int") (tbase "bool").
+typeof_binop binop_eq (tbase "int") (tbase "int") (tbase "bool").
+typeof_binop binop_le (tbase "int") (tbase "int") (tbase "bool").
+typeof_binop binop_ge (tbase "int") (tbase "int") (tbase "bool").
+
 datadef_constructor : typ -> constructor -> typ -> prop.
 datadef_all_constructors : typ -> list (constructor * typ) -> prop.
+
+(* define bool *)
+
+datadef_constructor (tbase "bool") (constructor "True") (product []).
+datadef_constructor (tbase "bool") (constructor "False") (product []).
+datadef_all_constructors (tbase "bool") [ (constructor "True", product []),
+                                          (constructor "False", product []) ].
 
 typeof (constr C E) T :-
   datadef_constructor T C T_Arg,
@@ -67,3 +90,16 @@ wftoplevel (datadef Typ ConstrTyps :: Rest) P :-
 wfprogram : program -> typ -> prop.
 wfprogram (program Defs E) T :-
   wftoplevel Defs (typeof E T).
+
+allow_errors : prop.
+
+typeof E T when not(refl.isunif T), allow_errors :-
+  typeof E T',
+  isocast T TS, isocast T' TS', log_error E `expected type ${TS}, got ${TS'}`.
+
+typeof E T when not(refl.isunif T), allow_errors :-
+  isocast T TS, log_error E `untypeable expression with expected type ${TS}`.
+
+typeof E T when refl.isunif T, allow_errors :-
+  eq IsFirst false,
+  log_error E `untypeable expression`.

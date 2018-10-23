@@ -1,10 +1,12 @@
 expr, baseexpr, exprC : syntax expr.
-patt : syntax patt.
+constr_args : syntax expr.
+patt, pattC : syntax patt.
 typ : syntax typ.
 constrid : syntax constructor.
 branch : syntax branch.
 id : syntax (concrete.name expr).
 def : syntax (concrete.name expr * expr).
+binop, binopC : syntax binop.
 
 %open syntax.
 
@@ -16,31 +18,61 @@ cletrec : (concrete.name expr * expr) -> expr -> expr.
 cpvar : concrete.name expr -> patt.
 cbranch : patt -> expr -> branch.
 
+token_ARROW : syntax unit.
+token_FATARROW : syntax unit.
+token_PROD : syntax unit.
+
 `( syntax_rules {{
+
+token_ARROW -> { <token "→"> } / { <token "->"> }
+token_FATARROW -> { <token "⇒"> } / { <token "=>"> }
+token_PROD -> { <token "×"> } / { <token "*"> }
+
+binop ->
+        (fun u => binop_add) { <token "+"> }
+      / (fun u => binop_sub) { <token "-"> }
+      / (fun u => binop_mul) { <token "*"> }
+      / (fun u => binop_le) { <token "<="> }
+      / (fun u => binop_ge) { <token ">="> }
+      / (fun u => binop_eq) { <token "=="> }
+      / (fun u => binop_ne) { <token "!="> }
+      / (fun u => binop_ne) { <token "<>"> }
+      / (fun u => binop_lt) { <token "<"> }
+      / (fun u => binop_gt) { <token ">"> }
+
+}} ).
+
+`( syntax.def_js binopC binop ).
+
+`( syntax_rules {{
+
+constr_args -> { <expr> } / (fun u => etuple nil) { <optunit ws_empty> }
 
 expr -> etuple nil
         { "()" }
+      / (fun ids => fun body => lam (concrete.bindmany ids body))
+        { "(" <list_sep_plus (token ",") id> ")" token_FATARROW <expr> }
       / (fun hd => fun tl => etuple (cons hd tl))
         { "(" <expr> "," <list_sep (token ",") expr> ")" }
       / match
         { "match" <expr> "{" <list_sep (token "|") branch> "}" }
       / cletrec
-        { "let" "rec" <def> "in" <expr> }
+        { "letrec" <def> "in" <expr> }
       / clet
         { "let" <def> "in" <expr> }
-      / (fun ids => fun body => lam (concrete.bindmany ids body))
-        { "fun" <once_or_many id> "=>" <expr> }
       / app
         { <baseexpr> "(" <list_sep_plus (token ",") expr> ")" }
       / constr
-        { <constrid> <expr> }
-      / eint
-        { <makam.int_literal> }
+        { <constrid> <constr_args> }
+      / ebinop
+        { <baseexpr> <binopC> <baseexpr> }
       / { <baseexpr> }
 
 baseexpr ->
         concrete.var
         { <id> }
+      / eint
+        { <makam.int_literal> }
       / { "(" <expr> ")" }
 
 patt -> ptuple nil
@@ -51,6 +83,8 @@ patt -> ptuple nil
         { <id> }
       / pconstr
         { <constrid> <patt> }
+      / (fun c => pconstr c (ptuple nil))
+        { <constrid> }
 
 def -> tuple
         { <id> "=" <expr> }
@@ -61,10 +95,11 @@ id -> concrete.name exprvar
 constrid -> constructor { <charcons (charclass "ABCDEFGHIJKLMNOPQRSTUVWXYZ") makam.ident_> }
 
 branch -> cbranch
-        { <patt> "=>" <expr> }
+        { <pattC> token_FATARROW <expr> }
 
 }} ).
 
+`( syntax.def_js pattC patt ).
 `( syntax.def_js exprC expr ).
 
 concrete.pick_namespace_userdef (_: expr) exprvar.
@@ -123,15 +158,17 @@ topleveldef -> datadef
 
 constrdef -> tuple
            { <constrid> "of" <typC> }
+           / (fun c => tuple c (product nil))
+           { <constrid> }
 
-typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> "->" <typ> }
-     / arrowmany { "(" <list_sep (token ",") typ> ")" "->" <typ> }
+typ -> (fun t => fun t2 => arrowmany (cons t nil) t2)  { <basetyp> token_ARROW <typ> }
+     / arrowmany { "(" <list_sep (token ",") typ> ")" token_ARROW <typ> }
      / prodtyp ;
 
-prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> "*" <list_sep_plus (token "*") basetyp> }
+prodtyp -> (fun hd => fun tl => product (cons hd tl)) { <basetyp> token_PROD <list_sep_plus token_PROD basetyp> }
      / basetyp ;
 
-basetyp -> concrete.var { <typid > }
+basetyp -> concrete.var { <typid> }
          / product nil { "()" }
          / { "(" <typ> ")" }
 
@@ -143,6 +180,36 @@ typid -> concrete.name typvar { <makam.ident> }
 `( syntax.def_toplevel_js typ_concrete ).
 `( syntax.def_toplevel_js program_concrete ).
 
+change_unifs : typ -> typ -> prop.
+change_unifs_cases : [A]reified A -> reified A -> prop.
+
+change_unifs X Y :-
+  if (refl.isunif Y) then
+    (reify X X_reified,
+     change_unifs_cases X_reified Y_reified,
+     reflect Y_reified Y)
+  else
+    (reify Y Y_reified,
+     change_unifs_cases X_reified Y_reified,
+     reflect X_reified X).
+
+change_unifs_cases (reified.term Head Args) (reified.term Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.const C) (reified.const C).
+
+change_unifs_cases (reified.bvar Head Args) (reified.bvar Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.nvar Head Args) (reified.nvar Head Args') :-
+  reified_args.map @change_unifs_cases Args Args'.
+
+change_unifs_cases (reified.lambda F) (reified.lambda F') :-
+  (x:A -> change_unifs_cases (F x) (F' x)).
+
+change_unifs_cases (reified.unifvar I _ _ _) (reified.term concrete.var [ reified.term concrete.name [ reified.term typvar [], reified.const S ] ]) when refl.isunif S :-
+  tostring I IS, expansion.str `t_${IS}` S.
+
 isocast_def (Iso: iso typ string) :-
-  eq Iso (iso.compose [ iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
+  eq Iso (iso.compose [ iso.bidi change_unifs, iso.inverse (iso.bidi concrete.resolve), PrettyIso ]),
   isocast_find unit (PrettyIso: iso (concrete typ) string).

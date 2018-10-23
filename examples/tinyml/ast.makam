@@ -22,6 +22,20 @@ constr : constructor -> expr -> expr.
 pconstr : constructor -> patt -> patt.
 
 eint : int -> expr.
+
+binop : type.
+ebinop : expr -> binop -> expr -> expr.
+
+binop_add : binop.
+binop_sub : binop.
+binop_mul : binop.
+binop_lt : binop.
+binop_le : binop.
+binop_eq : binop.
+binop_ne : binop.
+binop_gt : binop.
+binop_ge : binop.
+
 named : string -> expr.
 
 program : type.

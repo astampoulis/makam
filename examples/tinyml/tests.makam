@@ -14,10 +14,10 @@ tinyml : testsuite. %testsuite tinyml.
 >> Y := program nil (let (etuple nil) (bind "x" (fun x => match x (cons (branch (tuple (ptuple (cons pvar (cons pvar nil))) (bind "a" (fun a => bind "b" (fun b => body a))))) nil)))).
 
 >> (isocast {{
- data tree = Leaf of () | Node of tree * int * tree ;
- letrec map = fun f tree =>
+ data tree = Leaf | Node of tree * int * tree ;
+ letrec map = (f, tree) =>
    match tree {
-     Leaf() => Leaf()
+     Leaf => Leaf
    | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
    }
  in map
@@ -29,20 +29,53 @@ tinyml : testsuite. %testsuite tinyml.
 >> XS := fun a b => [a, b].
 
 >> (isocast {{
- data tree = Leaf of () | Node of tree * int * tree ;
- Leaf()
+ data tree = Leaf | Node of tree * int * tree ;
+ Leaf
+}} _P, wfprogram _P _T, isocast _T (S: string)) ?
+>> Yes:
+>> S := "tree ".
+
+>> (isocast {{
+ data tree = Leaf | Node of tree * int * tree ;
+ Node(Leaf, 5, Leaf)
 }} _P, wfprogram _P _T, isocast _T (S: string)) ?
 >> Yes:
 >> S := "tree ".
 
 >> typechecker {{
- data tree = Leaf of () | Node of tree * int * tree ;
-   letrec map = fun f tree =>
+ data tree = Leaf | Node of tree * int * tree ;
+   letrec map = (f, tree) =>
      match tree {
-       Leaf() => Leaf()
+       Leaf => Leaf
      | Node(l, i, r) => Node(map(f,l), f(i), map(f,r))
      }
    in map
 }} S ?
 >> Yes:
->> S := "( int -> int , tree ) -> tree ".
+>> S := "( int → int , tree ) → tree ".
+
+>> typechecker {{
+
+letrec factorial = (n) =>
+  match (n == 0) {
+    True => 1
+  | False => n * (factorial(n-1))
+  }
+in (factorial, (factorial(5)) > 10)
+
+}} S ?
+>> Yes:
+>> S := "( int → int ) × bool ".
+
+>> interpreter {{
+
+letrec factorial = (n) =>
+  match (n == 0) {
+    True => 1
+  | False => n * (factorial(n - 1))
+  }
+in factorial(5)
+
+}} S ?
+>> Yes:
+>> S := "120 ".

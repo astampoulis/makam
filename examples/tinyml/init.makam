@@ -1,7 +1,16 @@
 %use "ast".
 %use "syntax".
 %use "typing".
-
+%use "eval".
 
 typechecker : string -> string -> prop.
-typechecker S S' :- isocast S (P: program), wfprogram P T, isocast T (S': string).
+typechecker S S' :-
+  either (isocast S (P: program)) (log_error S `Parse error in TinyML program`),
+  wfprogram P T,
+  isocast T (S': string).
+
+interpreter : string -> string -> prop.
+interpreter S S' :-
+  either (isocast S (P: program)) (log_error S `Parse error in TinyML program`),
+  evalprogram P P',
+  isocast P' (S': string).

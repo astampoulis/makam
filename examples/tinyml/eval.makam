@@ -1,0 +1,77 @@
+eval : expr -> expr -> prop.
+
+eval (etuple ES) (etuple VS) :- map eval ES VS.
+
+eval (letrec (bind X (fun x => (Def x, Body x)))) V :-
+  eq Def' (Def (letrec (bind X (fun x => (Def x, x))))),
+  eval (Body Def') V.
+
+eval (let E X_Body) V :-
+  eval E V1,
+  bindone.apply X_Body V1 Body',
+  eval Body' V.
+
+eval (lam XS_Body) (lam XS_Body).
+
+eval (app E ES) V :-
+  eval E (lam XS_Body),
+  map eval ES VS,
+  bindmany.apply XS_Body VS E',
+  eval E' V.
+
+eval (eint N) (eint N).
+
+match_branch : expr -> list branch -> expr -> prop.
+match_patt : patt -> expr -> list expr -> prop.
+
+match_patt (ptuple PS) (etuple VS) Subst' :-
+  map match_patt PS VS Substs,
+  concat Substs Subst'.
+match_patt pvar V [V].
+
+match_branch V ((branch (Patt, XS_Body)) :: TL) Body' :-
+  if (match_patt Patt V Subst)
+  then (bindmany.apply XS_Body Subst Body')
+  else (match_branch V TL Body').
+
+eval (match E Branches) V' :-
+  eval E V,
+  match_branch V Branches E',
+  eval E' V'.
+
+eval (constr C E) (constr C V) :-
+  eval E V.
+
+match_patt (pconstr C P) (constr C V) Subst :-
+  match_patt P V Subst.
+
+eval_binop : binop -> expr -> expr -> expr -> prop.
+
+eval (ebinop E1 Op E2) V :-
+  map eval [E1, E2] [V1, V2],
+  eval_binop Op V1 V2 V.
+
+eval_binop binop_add (eint N1) (eint N2) (eint N) :- plus N1 N2 N.
+eval_binop binop_sub (eint N1) (eint N2) (eint N) :- plus N2 N N1, if (lessthan N 0 true) then (log_error _ `no negatives allowed`, failure) else success.
+eval_binop binop_mul (eint N1) (eint N2) (eint N) :- mult N1 N2 N.
+
+convert_bool : bool -> expr -> prop.
+convert_bool true (constr (constructor "True") (etuple [])).
+convert_bool false (constr (constructor "False") (etuple [])).
+
+eval_binop binop_lt (eint N1) (eint N2) EB :- lessthan N1 N2 B, convert_bool B EB.
+eval_binop binop_gt (eint N1) (eint N2) EB :- lessthan N2 N1 B, convert_bool B EB.
+eval_binop binop_eq (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else eq B false, convert_bool B EB.
+eval_binop binop_le (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else lessthan N1 N2 B, convert_bool B EB.
+eval_binop binop_lt (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else lessthan N2 N1 B, convert_bool B EB.
+
+evalprogram : program -> program -> prop.
+
+evalprogram (program [] E) (program [] V) :- eval E V.
+evalprogram (program (letdef X E :: TL) E') P' :-
+  eval E V,
+  (eval (named X) V -> evalprogram (program TL E') P').
+evalprogram (program (datadef _ _ :: TL) E') P' :-
+  evalprogram (program TL E') P'.
+
+eval (named X) _ :- log_error X `unknown variable ${X}`, failure.
