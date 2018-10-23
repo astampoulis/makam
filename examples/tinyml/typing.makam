@@ -90,3 +90,16 @@ wftoplevel (datadef Typ ConstrTyps :: Rest) P :-
 wfprogram : program -> typ -> prop.
 wfprogram (program Defs E) T :-
   wftoplevel Defs (typeof E T).
+
+allow_errors : prop.
+
+typeof E T when not(refl.isunif T), allow_errors :-
+  typeof E T',
+  isocast T TS, isocast T' TS', log_error E `expected type ${TS}, got ${TS'}`.
+
+typeof E T when not(refl.isunif T), allow_errors :-
+  isocast T TS, log_error E `untypeable expression with expected type ${TS}`.
+
+typeof E T when refl.isunif T, allow_errors :-
+  eq IsFirst false,
+  log_error E `untypeable expression`.
