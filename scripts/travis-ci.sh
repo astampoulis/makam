@@ -25,6 +25,7 @@ fi
 
 # Install OPAM and OCaml
 
+brew search opam
 brew install opam@1 || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
