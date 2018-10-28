@@ -67,9 +67,9 @@ reflect X Y :- reflect [] X _ Y.
 
 reify : [A] A -> concretereif -> prop.
 reify_head : [A] A -> string -> prop.
-last_reify_head : int -> prop.
 
-last_reify_head 0.
+last_reify_head : fluid int.
+`( fluid.set last_reify_head 0 ).
 
 reify (X: A) (unifvar C_X ReifArgs) when refl.decomposeunif X I ArgsDyn :-
   dyn.to_args ArgsDyn Args,
@@ -87,11 +87,12 @@ reify X (term HeadS []) when refl.isfun X, args.applyfull X Args X_Body, refl.he
   if (reify_head Head HeadS) then success else tostring_qualified Head HeadS.
 
 reify X (lambda Var ReifBody) when refl.isfun X :-
-  once(last_reify_head I),
-  plus I 1 I',
+  fluid.get last_reify_head I,
   tostring I X_idx,
   expansion.str `reif_var_${X_idx}` Var,
-  (x:A -> reify_head x Var -> last_reify_head I' -> reify (X x) ReifBody).
+  fluid.modify last_reify_head (plus 1) (pfun =>
+    (x:A -> reify_head x Var ->
+     reify (X x) ReifBody)).
 
 reify X (const X) when refl.isconst X.
 

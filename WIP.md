@@ -2,6 +2,6 @@
 - [x] syntax of makam and syntax parses into concrete AST
 - [x] add missing file
 - [x] add better comments to concrete.reflect/reify
-- [ ] use fluid var for reify_head
+- [x] use fluid var for reify_head
 - [ ] forget about consignored/conscaptured and magic
 - [ ] new syntax of syntax
