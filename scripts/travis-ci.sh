@@ -39,6 +39,7 @@ eval $(opam config env)
 
 # Install dependencies
 
+opam update --yes
 opam pin add --yes makam . --no-action
 opam install --yes makam --deps-only
 npm install -g yarn
