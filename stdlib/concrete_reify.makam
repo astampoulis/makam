@@ -7,6 +7,16 @@ term : string -> list concretereif -> concretereif.
 const : A -> concretereif.
 lambda : string -> concretereif -> concretereif.
 
+(* Reflection works by converting a `concretereif` into a string
+   and then using the native makam parser (through `refl.fromstring`).
+   Only the result type is annotated in the string.
+   In order to avoid having the type of unification variables involved
+   influence the overloaded constant resolution, we abstract over them
+   and re-apply them in the end, after `refl.fromstring`.
+
+   In the future, this should use resolved variables for constants.
+*)
+
 convert_list_to_string : map string dyn -> list concretereif -> map string dyn -> string -> prop.
 convert_to_string : map string dyn -> concretereif -> map string dyn -> string -> prop.
 
@@ -28,9 +38,6 @@ convert_to_string Unifs (const S) Unifs S' :-
 convert_to_string Unifs (lambda X Body) Unifs' S' :-
   convert_to_string Unifs Body Unifs' S,
   expansion.str `(fun ${X} => ${S})` S'.
-
-(* this is gross, but that's the only way to make sure that we preserve the
-   same constant overloading behavior as normal Makam *)
 
 add_unifs : map string dyn -> string -> string -> prop.
 add_unifs [] S S.
@@ -54,6 +61,9 @@ reflect Unifs X Unifs' (Y: A) :-
 
 reflect : concretereif -> A -> prop.
 reflect X Y :- reflect [] X _ Y.
+
+(* Reification is much simpler: use reflection to look into
+   the structure of a term and produce a `concretereif`. *)
 
 reify : [A] A -> concretereif -> prop.
 reify_head : [A] A -> string -> prop.
