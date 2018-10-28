@@ -25,8 +25,7 @@ fi
 
 # Install OPAM and OCaml
 
-brew search opam
-brew install opam@1 || true
+brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/72ce8812eaa33abe23533dfa021b51351a6b9c3e/Formula/opam.rb || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
