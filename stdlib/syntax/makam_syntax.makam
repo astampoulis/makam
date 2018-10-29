@@ -68,9 +68,12 @@ syntax.inline int_literal_char.
 syntax.rule int_literal_char (charclass "0123456789").
 
 int_literal_, int_literal : syntax int.
+(* TODO: this does not handle bigints beyond ints (this would require
+   a reification/reflection procedure other than JSON.stringify/JSON.parse).
+   Also does not handle negative numbers. *)
 syntax.rule int_literal_
    (syntax.transform refl.fromstring
-              "(x) => parseInt(JSON.parse(x))"
+              "((x) => { if (x.length > 16) { console.error('bigints not supported in JavaScript yet; incorrect results expected'); return parseInt(JSON.parse(x).substring(0, 15)); }; return parseInt(JSON.parse(x)); })"
               (pfun res i => tostring i res)
               [ syntax.captured (char_once_or_many int_literal_char) ]).
 

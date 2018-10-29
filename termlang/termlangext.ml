@@ -49,7 +49,7 @@ let _totypinfo t = { term = () ; classifier = t ; loc = None ; extra = DummyExtr
 let _PtoString (s : pattcanon) = let open RunCtx.Monad in match s.term with `LamMany( _, { term = `AppMany( { term = `Const(o) }, _, _) } ) -> return (Obj.obj o) | _ -> mzero ;;
 let _PofString ?(loc = None) s : pattcanon = pattcanonString s ~loc:loc ;;
 
-let _PtoInt (s : pattcanon) : int RunCtx.Monad.m = let open RunCtx.Monad in match s.term with `LamMany( _, { term = `AppMany( { term = `Const(o) }, _, _) } ) -> return (Obj.obj o) | _ -> mzero ;;
+let _PtoInt (s : pattcanon) : Big_int.t RunCtx.Monad.m = let open RunCtx.Monad in match s.term with `LamMany( _, { term = `AppMany( { term = `Const(o) }, _, _) } ) -> return (Obj.obj o) | _ -> mzero ;;
 let _PofInt ?(loc = None) i : pattcanon = pattcanonInt i ~loc:loc ;;
 
 let _PtoList  (xs : pattcanon) : pattcanon list RunCtx.Monad.m =
@@ -145,13 +145,13 @@ new_builtin_predicate_from_functions "plus" ( _tInt **> _tInt **> _tInt **> _tPr
       return (_PofInt res ~loc:i1.loc)
   in
   [ (* Meta, Const, Const *)
-    convertfunc (fun b res -> res - b);
+    convertfunc (fun b res -> Big_int.sub res b);
 
     (* Const, Meta, Const *)
-    convertfunc (fun a res -> res - a);
+    convertfunc (fun a res -> Big_int.sub res a);
 
     (* Const, Const, Meta *)
-    convertfunc (fun a b -> a + b) ]
+    convertfunc (fun a b -> Big_int.add a b) ]
 end;;
 
 new_builtin_predicate_from_functions "mult" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
@@ -166,13 +166,13 @@ new_builtin_predicate_from_functions "mult" ( _tInt **> _tInt **> _tInt **> _tPr
         | None -> mzero
   in
   [ (* Meta, Const, Const *)
-    convertfunc (fun b res -> res / b);
+    convertfunc (fun b res -> Big_int.div res b);
 
     (* Const, Meta, Const *)
-    convertfunc (fun a res -> res / a);
+    convertfunc (fun a res -> Big_int.div res a);
 
     (* Const, Const, Meta *)
-    convertfunc (fun a b -> a * b) ]
+    convertfunc (fun a b -> Big_int.mul a b) ]
 end;;
 
 new_builtin_predicate "lessthan" ( _tInt **> _tInt **> _tBool **> _tProp ) begin
@@ -186,7 +186,7 @@ new_builtin_predicate "lessthan" ( _tInt **> _tInt **> _tBool **> _tProp ) begin
     else (perform
             i1'' <-- _PtoInt i1' ;
             i2'' <-- _PtoInt i2' ;
-            pattcanonUnifyFull res (_PofBool (i1'' < i2'') ~loc:i1.loc)))
+            pattcanonUnifyFull res (_PofBool (Big_int.lt_big_int i1'' i2'') ~loc:i1.loc)))
 
 end;;
 
@@ -520,8 +520,8 @@ new_builtin_predicate "cheapprint" ( _tInt **> ~* "A" **> _tProp )
      e <-- pattcanonRenormalize e ;
      p <-- chasePattcanon ~deep:true [] e ;
      depth <-- chasePattcanon ~deep:true [] depth ;
-     depth <-- _PtoInt depth ;
-     inmonad ~statewrite:false (fun _ -> Printf.printf "%a\n%!" (CheapPrint.canondepth depth) p);
+     depth <-- _PtoInt depth;
+     inmonad ~statewrite:false (fun _ -> Printf.printf "%a\n%!" (CheapPrint.canondepth (Big_int.to_int depth)) p);
      return ()))
 ;;
 

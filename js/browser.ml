@@ -131,6 +131,7 @@ let main () =
 
   Termlangcanon.global_term_reset ();
   Termlangprolog.global_reset ();
+  global_set_cache_directory None;
   load_init_files ()
 
 ;;
