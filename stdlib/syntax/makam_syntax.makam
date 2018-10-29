@@ -39,13 +39,14 @@ syntax.rule string_literal_char
          [ pretty.captured anychar ])).
 
 string_literal_, string_literal : syntax string.
-rule string_literal (token string_literal_).
 rule string_literal_
      (group [
       exact "\"",
       syntax.captured (charmany string_literal_char),
       exact "\""]).
-syntax.inline string_literal_. syntax.inline string_literal.
+syntax.inline string_literal_.
+
+`( syntax.def_js string_literal (token string_literal_) ).
 
 string_literal_char_str : peg string.
 peg.inline string_literal_char_str.
@@ -101,8 +102,29 @@ syntax.rule (term 2) (syntax.apply (fun x => x) [ token "(", syntax.captured (te
 syntax.rule term_args (syntax.apply cons [ syntax.captured (term 2), syntax.captured term_args ]).
 syntax.rule term_args (syntax.apply nil []).
 
-term : syntax concretereif.
-`( syntax.def_js term (term 0) ).
+
+(* optimized versions of the above. Unfortunately requires code duplication. *)
+term, term_0, term_1, term_1_aux, term_2, term_2_aux : syntax concretereif.
+term_args_aux : syntax (list concretereif).
+
+`( syntax.def_js term_0 (term 0) ).
+`( syntax.def_js term (term_0) ).
+
+syntax.rule (term_2_aux) (syntax.apply (fun id => concretereif.term id []) [ syntax.captured ident ]).
+syntax.rule (term_2_aux) (syntax.apply concretereif.const [ syntax.captured string_literal ]).
+syntax.rule (term_2_aux) (syntax.apply concretereif.const [ syntax.captured int_literal ]).
+syntax.rule (term_2_aux) (syntax.apply (fun x => x) [ token "(", syntax.captured (term_0), token ")" ]).
+
+`( syntax.def_js term_2 (term_2_aux) ).
+
+syntax.rule (term_1_aux)
+            (syntax.apply concretereif.term
+            [ syntax.captured ident, syntax.captured term_args_aux ]).
+syntax.rule (term_1_aux) (term_2).
+syntax.rule term_args_aux (syntax.apply cons [ syntax.captured (term_2), syntax.captured term_args_aux ]).
+syntax.rule term_args_aux (syntax.apply nil []).
+
+`( syntax.def_js term_1 (term_1_aux) ).
 
 (* makam types *)
 

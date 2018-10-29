@@ -31,7 +31,7 @@ args : syntax (list cst_syntax_arg).
 syntax.rule base
             (syntax.apply cst_token [ syntax.captured (token makam.string_literal) ]).
 syntax.rule base
-            (syntax.apply cst_pure [ syntax.captured (makam.term 2) ]).
+            (syntax.apply cst_pure [ syntax.captured (makam.term_2) ]).
 syntax.rule base
             (syntax.group [ exact "{", syntax.captured appl, exact "}" ]).
 
@@ -51,9 +51,9 @@ syntax.rule appl
             [ token "{", syntax.captured args, token "}" ]).
 syntax.rule appl
             (syntax.apply cst_apply
-            [ syntax.captured (makam.term 0), token "{", syntax.captured args, token "}" ]).
+            [ syntax.captured (makam.term), token "{", syntax.captured args, token "}" ]).
 syntax.rule appl
-            (syntax.apply cst_pure [ syntax.captured (makam.term 1) ]).
+            (syntax.apply cst_pure [ syntax.captured (makam.term_1) ]).
 
 cst_choices : type.
 cst_choices : list cst_syntax -> cst_choices.
@@ -66,7 +66,7 @@ cst_syndef : concretereif -> cst_choices -> cst_syndef.
 syndef : syntax cst_syndef.
 `( syntax.def_js syndef
     (syntax.apply cst_syndef
-      [ syntax.captured (makam.term 0), token "->", syntax.captured choices ]) ).
+      [ syntax.captured (makam.term), token "->", syntax.captured choices ]) ).
 
 syndef_many : syntax (list cst_syndef).
 `( syntax.def_js syndef_many (list_sep_plus (optunit (token ";")) syndef)).
