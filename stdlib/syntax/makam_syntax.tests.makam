@@ -27,24 +27,24 @@ all : testsuite. %testsuite all.
 term : type.
 lam : string -> term -> term.
 
->> syntax.pretty makam.term lam X ?
+>> (concretereif.reify lam _Term, syntax.pretty makam.term _Term X) ?
 >> Yes:
 >> X := "makam_syntax_tests.lam ".
 
->> syntax.pretty makam.term (fun (x: term) => x) X ?
+>> (concretereif.reify (fun (x: term) => x) _Term, syntax.pretty makam.term _Term X) ?
 >> Yes:
->> X := "fun anon0 => anon0 ".
+>> X := "fun reif_var_0 => reif_var_0 ".
 
->> syntax.pretty makam.term (fun x y => lam y x) X ?
+>> (concretereif.reify (fun x y => lam y x) _Term, syntax.pretty makam.term _Term X) ?
 >> Yes:
->> X := "fun anon0 => fun anon1 => makam_syntax_tests.lam anon1 anon0 ".
+>> X := "fun reif_var_0 => fun reif_var_1 => makam_syntax_tests.lam reif_var_1 reif_var_0 ".
 
->> syntax.pretty makam.term (fun x => lam "hello" x) X ?
+>> (concretereif.reify (fun x => lam "hello" x) _Term, syntax.pretty makam.term _Term X) ?
 >> Yes:
->> X := "fun anon0 => makam_syntax_tests.lam \"hello\" anon0 ".
+>> X := "fun reif_var_0 => makam_syntax_tests.lam \"hello\" reif_var_0 ".
 
 >> syntax.parse_opt makam.term {makam_syntax_tests.lam "hello\""} Y ?
 >> Yes:
->> Y := lam {hello"}.
+>> Y := concretereif.term "makam_syntax_tests.lam" (cons (concretereif.const "hello\"") nil).
 
 %end.

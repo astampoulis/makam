@@ -18,11 +18,11 @@ syntax.inline ident.
 
 all : testsuite. %testsuite all.
 
->> syntax.parse_opt choices {{ syntax_syntax_tests.lam { "λ" <syntax_syntax_tests.ident> "." <syntax_syntax_tests.term> } }} X ?
+>> isocast {{ syntax_syntax_tests.lam { "λ" <syntax_syntax_tests.ident> "." <syntax_syntax_tests.term> } }} (X: syntax A) ?
 >> Yes:
->> X := [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]].
+>> X := syntax.choices [syntax.apply lam (syntax.consignored (token "λ") (syntax.conscaptured ident (syntax.consignored (token ".") (syntax.conscaptured term syntax.nil))))].
 
->> syntax.pretty choices [syntax.apply lam [token "λ", syntax.captured ident, token ".", syntax.captured term]] X ?
+>> isocast (syntax.choices [syntax.apply lam (syntax.consignored (token "λ") (syntax.conscaptured ident (syntax.consignored (token ".") (syntax.conscaptured term syntax.nil))))]) (X: string) ?
 >> Yes:
 >> X := {{syntax_syntax_tests.lam { "λ"  < syntax_syntax_tests.ident > "."  < syntax_syntax_tests.term > } }}.
 

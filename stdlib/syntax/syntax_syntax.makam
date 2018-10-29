@@ -1,14 +1,11 @@
 (* This implements a syntax for syntax combinators --
-   basically a `syntax (syntax A)` syntax procedure,
+   basically a `iso (syntax A) string` procedure,
    which we can use to define syntax for other types.
 
    Due to the typed nature of `syntax`, typeful parsing
    does not really work; so we parse syntax combinators
-   into a string representing a makam term; when this
-   string is parsed with `makam.antiquote` we'll get something
-   of `syntax A` type. The pretty-printer does work normally,
-   so the syntax of syntax is defined through `iso`,
-   handling parsing and pretty-printing differently.
+   into a concrete representation; we then convert this
+   to an actual syntax through the use of `concrete_reify`.
 *)
 
 %open syntax.
@@ -17,142 +14,116 @@
 
 %extend syntax_syntax.
 
-appl_str, base_str : peg string.
-args_str : peg string.
+cst_syntax, cst_syntax_arg : type.
 
-appl, base : pretty (syntax A).
-args : pretty (syntax_args A B).
+ignore : cst_syntax -> cst_syntax_arg.
+captured : cst_syntax -> cst_syntax_arg.
 
-appl : syntax (syntax A).
-args : syntax (syntax_args A B).
+cst_apply : concretereif -> list cst_syntax_arg -> cst_syntax.
+cst_token : string -> cst_syntax.
+cst_pure : concretereif -> cst_syntax.
+
+appl, base : syntax cst_syntax.
+args : syntax (list cst_syntax_arg).
 
 (* actual syntax combinators *)
 
-peg.rule base_str
-         (string_transform (fun s => `(syntax.token "${s}")`)
-                [ peg.captured (syntax (token makam.string_literal)) ]).
-pretty.rule base
-         (unapply (fun (s: string) => (token s: syntax unit))
-                [ pretty.captured (syntax (token makam.string_literal)) ]).
-
-peg.rule base_str
-         (makam.term_str 2).
-pretty.rule base
-         (makam.term 2).
-
-peg.rule base_str
-         (string_transform (fun s => `(${s})`)
-                [ exact "{", peg.captured appl_str, exact "}" ]).
-pretty.rule base
-         (unapply (fun x => x)
-                [ const "{", pretty.captured appl, const "}" ]).
+syntax.rule base
+            (syntax.apply cst_token [ syntax.captured (token makam.string_literal) ]).
+syntax.rule base
+            (syntax.apply cst_pure [ syntax.captured (makam.term_2) ]).
+syntax.rule base
+            (syntax.group [ exact "{", syntax.captured appl, exact "}" ]).
 
 (* syntax.apply and syntax rules *)
 
-peg.rule args_str
-     (string_transform (fun hd tl => `(syntax.cons (syntax.captured ${hd}) ${tl})`)
-            [ syntax (token "<"),
-              peg.captured appl_str,
-              syntax (token ">"),
-              peg.captured args_str ]).
-pretty.rule args
-     (unapply (fun hd tl => syntax.cons (syntax.captured hd) tl)
-       [ syntax (token "<"),
-         pretty.captured appl,
-         syntax (token ">"),
-         pretty.captured args ]).
-
-peg.rule args_str
-     (string_transform (fun hd tl => `(syntax.cons (${hd}: syntax unit) ${tl})`)
-            [ peg.captured base_str,
-              peg.captured args_str ]).
-pretty.rule args
-     (unapply (syntax.cons : syntax unit -> syntax.syntax_args B C -> syntax.syntax_args B C)
-       [ pretty.captured base,
-         pretty.captured args ]).
-
-peg.rule args_str
-     (apply "syntax.nil" []).
-pretty.rule args
-     (unapply syntax.nil []).
-
-peg.rule appl_str
-          (string_transform (fun args => `(syntax.apply (fun x => x) ${args})`)
-          [ syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
-pretty.rule appl
-     (unapply (syntax.apply (fun (x: A) => x))
-      [ syntax (token "{"), pretty.captured (args: pretty (syntax_args (A -> A) A)), syntax (token "}") ]).
-
-peg.rule appl_str
-          (string_transform (fun id args => `(syntax.apply ${id} ${args})`)
-          [ peg.captured (makam.term_str 0), syntax (token "{"), peg.captured args_str, syntax (token "}") ]).
-pretty.rule appl
-     (unapply syntax.apply
-      [ pretty.captured (makam.term 0), syntax (token "{"), pretty.captured args, syntax (token "}") ]).
-
-peg.rule appl_str (makam.term_str 1).
-pretty.rule appl (makam.term 1).
+syntax.rule args
+            (syntax.apply (fun hd tl => (captured hd) :: tl)
+            [ token "<", syntax.captured appl, token ">", syntax.captured args ]).
+syntax.rule args
+            (syntax.apply (fun hd tl => (ignore hd) :: tl)
+            [ syntax.captured base, syntax.captured args ]).
+syntax.rule args
+            (syntax.apply nil []).
 
 syntax.rule appl
-         (iso (makam.antiquote appl_str)
-              (appl)).
+            (syntax.apply (cst_apply (concretereif.lambda "reif_var_0" (concretereif.term "reif_var_0" [])))
+            [ token "{", syntax.captured args, token "}" ]).
+syntax.rule appl
+            (syntax.apply cst_apply
+            [ syntax.captured (makam.term), token "{", syntax.captured args, token "}" ]).
+syntax.rule appl
+            (syntax.apply cst_pure [ syntax.captured (makam.term_1) ]).
 
-syntax.rule args
-         (iso (makam.antiquote args_str)
-              (args)).
+cst_choices : type.
+cst_choices : list cst_syntax -> cst_choices.
+choices : syntax cst_choices.
 
-choices_str : peg string.
-choices : pretty (list (syntax A)).
+`( syntax.def_js choices (syntax.apply cst_choices [ syntax.captured (list_sep_plus (token "/") appl) ]) ).
 
-peg.rule choices_str
-          (string_transform (fun c cs => `(cons ${c} ${cs})`)
-          [ peg.captured appl_str, syntax (token "/"), peg.captured choices_str ]).
-pretty.rule choices
-     (unapply cons
-      [ pretty.captured appl, syntax (token "/"), pretty.captured choices ]).
+cst_syndef : type.
+cst_syndef : concretereif -> cst_choices -> cst_syndef.
+syndef : syntax cst_syndef.
+`( syntax.def_js syndef
+    (syntax.apply cst_syndef
+      [ syntax.captured (makam.term), token "->", syntax.captured choices ]) ).
 
-peg.rule choices_str
-          (string_transform (fun c => `(cons ${c} nil)`)
-          [ peg.captured appl_str ]).
-pretty.rule choices
-     (unapply (fun hd => cons hd nil)
-      [ pretty.captured appl ]).
-
-choices_str_cached : peg string.
-`( peg.def_parser_js choices_str_cached choices_str ).
-
-choices : syntax (list (syntax A)).
-syntax.rule choices (iso (makam.antiquote choices_str_cached) choices).
+syndef_many : syntax (list cst_syndef).
+`( syntax.def_js syndef_many (list_sep_plus (optunit (token ";")) syndef)).
 
 syndef : type.
 syndef : syntax A -> syntax A -> syndef.
 
-syndef_str, syndef_str_cached : peg string.
-syndef : pretty syndef.
-
-peg.rule syndef_str
-       (string_transform (fun constr def => `(syntax_syntax.syndef ${constr} (syntax.choices ${def}))`)
-        [ peg.captured (makam.term_str 0), syntax (token "->"), peg.captured choices_str_cached ]).
-pretty.rule syndef
-       (unapply (fun constr def => syndef constr (choices def))
-        [ pretty.captured (makam.term 0), syntax (token "->"), pretty.captured choices, const "\n" ]).
-
-`( peg.def_parser_js syndef_str_cached syndef_str ).
-
-syndef : syntax syndef.
-syntax.rule syndef (iso (makam.antiquote syndef_str_cached) syndef).
-
-syndef_many : syntax (list syndef).
-syntax.rule syndef_many (list_sep_plus (optunit (token ";")) syndef).
-`( syntax.def_toplevel_js syndef_many ).
-
 syntax_rule_clause : syndef -> cmd -> prop.
 syntax_rule_clause (syndef SyntaxConstr SyntaxDef) (cmd_newclause (clause (syntax.rule SyntaxConstr SyntaxDef) success)).
+
+
+(* cst <-> reified conversion *)
+
+cst_to_reified : cst_syntax -> concretereif -> prop.
+cst_to_reified_args : list cst_syntax_arg -> concretereif -> prop.
+
+cst_to_reified (cst_apply Constr Args) (concretereif.term "syntax.apply" [ Constr, LR ]) :-
+  cst_to_reified_args Args LR.
+cst_to_reified (cst_token S) (concretereif.term "syntax.token" [concretereif.const S]).
+cst_to_reified (cst_pure R) R.
+
+cst_to_reified_args [] (concretereif.term "syntax.nil" []).
+cst_to_reified_args ((ignore HD) :: TL) (concretereif.term "syntax.consignored" [ HD', TL' ]) :-
+  cst_to_reified HD HD', cst_to_reified_args TL TL'.
+cst_to_reified_args ((captured HD) :: TL) (concretereif.term "syntax.conscaptured" [ HD', TL' ]) :-
+  cst_to_reified HD HD', cst_to_reified_args TL TL'.
+
+cst_to_reified : list concretereif -> concretereif -> prop.
+cst_to_reified [] (concretereif.term "nil" []).
+cst_to_reified (HD :: TL) (concretereif.term "cons" [ HD, TL' ]) :- cst_to_reified TL TL'.
+
+cst_to_reified : cst_choices -> concretereif -> prop.
+cst_to_reified (cst_choices CS) (concretereif.term "syntax.choices" [ LR ]) :-
+  if (refl.isunif CS)
+  then (cst_to_reified (LCSR: list concretereif) LR, map cst_to_reified CS LCSR)
+  else (map cst_to_reified CS LCSR, cst_to_reified LCSR LR).
+
+cst_to_reified : cst_syndef -> concretereif -> prop.
+cst_to_reified (cst_syndef Constr Def) (concretereif.term "syntax_syntax.syndef" [ Constr, DefR ]) :-
+  cst_to_reified Def DefR.
+
+isocast_def (Iso: iso cst_choices (syntax A)) :-
+  eq Iso (iso.compose [
+    iso.bidi cst_to_reified,
+    iso.iso concretereif.reflect concretereif.reify
+  ]).
+
+isocast_def (Iso: iso cst_syndef syndef) :-
+  eq Iso (iso.compose [
+    iso.bidi cst_to_reified,
+    iso.iso concretereif.reflect concretereif.reify
+  ]).
 
 %end.
 
 syntax_rules : string -> cmd -> prop.
 syntax_rules RulesS (cmd_many Clauses) :-
-  if (syntax.parse_opt syntax_syntax.syndef_many RulesS Rules)
+  if (syntax.parse_opt syntax_syntax.syndef_many RulesS RulesR, map isocast RulesR Rules)
   then map syntax_syntax.syntax_rule_clause Rules Clauses
   else (log_error RulesS `parsing the syntax rules failed`, failure).

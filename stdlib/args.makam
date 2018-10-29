@@ -16,5 +16,9 @@ apply X (HD :: TL) X' :- apply (X HD) TL X'.
 applyfull : [A] A -> args A B -> B -> prop.
 applyfull (X: A -> B) (HD :: TL) Res :- applyfull (X HD) TL Res.
 applyfull X [] X when not(typ.eq X (_ : A -> B)).
+
+map_to_list : [Args] forall A (A -> C -> prop) -> args Args Result -> list C -> prop.
+map_to_list P [] [].
+map_to_list P (HD :: TL) (HD' :: TL') :- forall.apply P HD HD', map_to_list P TL TL'.
 %end.
 

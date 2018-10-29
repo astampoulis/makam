@@ -54,8 +54,9 @@ syntax_captured : type -> type.
 captured : syntax A -> syntax_captured A.
 
 nil : syntax_args A A.
-cons : syntax unit -> syntax_args B C -> syntax_args B C.
+cons, consignored : syntax unit -> syntax_args B C -> syntax_args B C.
 cons : syntax_captured A -> syntax_args B C -> syntax_args (A -> B) C.
+conscaptured : syntax A -> syntax_args B C -> syntax_args (A -> B) C.
 
 apply : A -> syntax_args A B -> syntax B.
 
@@ -117,6 +118,11 @@ to_pretty (iso Peg Pretty) Pretty.
 to_peg_args [] peg.nil.
 to_pretty_args [] pretty.nil.
 
+to_peg_args (consignored HD TL) (peg.cons HD' TL') :-
+  to_peg HD HD', to_peg_args TL TL'.
+to_pretty_args (consignored HD TL) (pretty.cons HD' TL') :-
+  to_pretty HD HD', to_pretty_args TL TL'.
+
 to_peg_args ((HD: syntax A) :: TL) (peg.cons HD' TL') :-
   to_peg HD HD', to_peg_args TL TL'.
 to_pretty_args ((HD: syntax A) :: TL) (pretty.cons HD' TL') :-
@@ -125,6 +131,11 @@ to_pretty_args ((HD: syntax A) :: TL) (pretty.cons HD' TL') :-
 to_peg_args ((captured HD) :: TL) (peg.cons (peg.captured HD') TL') :-
   to_peg HD HD', to_peg_args TL TL'.
 to_pretty_args ((captured HD) :: TL) (pretty.cons (pretty.captured HD') TL') :-
+  to_pretty HD HD', to_pretty_args TL TL'.
+
+to_peg_args (conscaptured HD TL) (peg.cons (peg.captured HD') TL') :-
+  to_peg HD HD', to_peg_args TL TL'.
+to_pretty_args (conscaptured HD TL) (pretty.cons (pretty.captured HD') TL') :-
   to_pretty HD HD', to_pretty_args TL TL'.
 
 to_peg (apply F Args) (peg.apply F Args') :- to_peg_args Args Args'.

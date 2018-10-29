@@ -12,6 +12,7 @@ share: [
   "stdlib/caching.makam" {"stdlib/caching.makam"}
   "stdlib/clause.makam" {"stdlib/clause.makam"}
   "stdlib/concrete_bind.makam" {"stdlib/concrete_bind.makam"}
+  "stdlib/concrete_reify.makam" {"stdlib/concrete_reify.makam"}
   "stdlib/connectives.makam" {"stdlib/connectives.makam"}
   "stdlib/demand.makam" {"stdlib/demand.makam"}
   "stdlib/dyn.makam" {"stdlib/dyn.makam"}
