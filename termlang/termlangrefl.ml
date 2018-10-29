@@ -373,7 +373,7 @@ builtin_enter_module "refl" ;;
          | `LamMany([], { term = `Meta(_, idx, `Subst(args', _, args'info, _), _) }) ->
 
            perform
-             pattcanonUnifyFull index (pattcanonInt idx) ;
+             pattcanonUnifyFull index (pattcanonInt (Big_int.of_int idx)) ;
              let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
              let args'list = _PofList ~loc:term.loc _tDyn args' in
              pattcanonUnifyFull args args'list
@@ -424,7 +424,7 @@ builtin_enter_module "refl" ;;
 
           perform
              lvl <-- getMetaLevel (metaindex m1);
-             pattcanonUnifyFull level (pattcanonInt lvl) ;
+             pattcanonUnifyFull level (pattcanonInt (Big_int.of_int lvl)) ;
 
          | _ -> mzero
     end | _ -> assert false)

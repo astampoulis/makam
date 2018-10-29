@@ -92,9 +92,9 @@ let _ = builtinStringType := _tString ;;
 let _tiInt, _tInt, mkInt, pattheadInt, pattneutInt, pattcanonInt =
   new_builtin_const_type "int" 
   (module struct
-    type t = int
-    let printer i _ = string_of_int i
-    let eq i1 i2 _ _ = i1 == i2
+    type t = Big_int.big_int
+    let printer i _ = Big_int.to_string i
+    let eq i1 i2 _ _ = Big_int.equal i1 i2
   end);;
 
 let _tiLoc, _tLoc, mkLoc, pattheadLoc, pattneutLoc, pattcanonLoc =

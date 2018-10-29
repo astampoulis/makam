@@ -1,23 +1,8 @@
-// Provides: create_nat
-function create_nat() {};
+// Provides: caml_thread_initialize
+function caml_thread_initialize() {};
 
-// Provides: incr_nat
-function incr_nat() {};
+// Provides: caml_mutex_new
+function caml_mutex_new() {};
 
-// Provides: initialize_nat
-function initialize_nat() {};
-
-// Provides: mult_digit_nat
-function mult_digit_nat() {};
-
-// Provides: set_digit_nat
-function set_digit_nat() {};
-
-// Provides: set_to_zero_nat
-function set_to_zero_nat() {};
-
-// Provides: unix_close
-function unix_close() {};
-
-// Provides: unix_open
-function unix_open() {};
+// Provides: unix_mkdir
+function unix_mkdir() {};
