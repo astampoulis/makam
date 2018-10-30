@@ -114,14 +114,14 @@ webservice-prod-deploy:
 # js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin
-MAKAMFILES=$(foreach file, $(shell find . -name \*.makam), --file $(file):/$(file))
-MAKAM_MARKDOWN_FILES=$(foreach file, $(shell find examples -name \*.md), --file $(file):/$(file))
+MAKAMFILES=$(foreach file, $(shell git ls-files '*.makam'), --file $(file):/static/$(file))
+MAKAM_MARKDOWN_FILES=$(foreach file, $(shell git ls-files '*.md'), --file $(file):/static/$(file))
 
-JSOO_RUNTIME_LIBS:=+runtime.js +weak.js +toplevel.js
+JSOO_RUNTIME_LIBS:=+nat.js +toplevel.js
 
 js:
 	$(OCAMLBUILD) -plugin-tag "package(js_of_ocaml.ocamlbuild)" -no-links js/browser.byte
-	js_of_ocaml -I ./ $(MAKAMFILES) $(MAKAM_MARKDOWN_FILES) --noruntime $(JSOO_RUNTIME_LIBS) js/myruntime.js _build/js/browser.byte -o js/makam.js
+	js_of_ocaml -I ./ $(MAKAMFILES) $(MAKAM_MARKDOWN_FILES) $(JSOO_RUNTIME_LIBS) js/myruntime.js _build/js/browser.byte -o js/makam.js
 
 md2makam:
 	find -name \*.md -exec grep -l "^\`\`\`makam" {} \; | xargs -n 1 -r awk -f scripts/generate-makam.awk
