@@ -242,8 +242,7 @@ key_of P Key :-
 gather_used_results, gather_used_results_aux : [A] set string -> A -> set string -> prop.
 
 gather_used_results S R S' :-
-  demand.case_otherwise (gather_used_results_aux S R S')
-                        (generic.fold @gather_used_results S R S').
+  by_fold @gather_used_results_aux S R S'.
 
 gather_used_results_aux S X S' when refl.isnvar X, quote_parse_res_js X PRes :-
   set.ccons PRes S S'.
