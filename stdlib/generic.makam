@@ -14,9 +14,10 @@
      
      Substitute namedvar for any term would be implemented as follows:
   
-     subst, subst_ : string -> term -> A -> A -> prop.
+     subst : string -> term -> A -> A -> prop.
+     subst_ : string -> term -> term -> term -> prop.
   
-     subst S T X Y <- demand.case_otherwise (subst_ S T X Y) (structural (subst_ S T) X Y).
+     subst S T X Y <- by_struct_rec (subst_ S T) X Y.
   
      subst S T (namedvar S) T.
   
@@ -25,6 +26,7 @@
 
      (This will continue to work even after adding other constructors to term,
       or with any other type that term is incorporated into.)
+
 *)
 
 
@@ -51,6 +53,19 @@ structural Rec X Y when refl.isunif X, refl.isbaseterm Y <-
   refl.headargs Y Hd Args',
   map (dyn.call Rec) Args Args',
   refl.headargs X Hd Args.
+
+by_struct_rec : [B] (A -> A -> prop) -> B -> B -> prop.
+
+by_struct_rec (P: A -> A -> prop) (X: A) Y :-
+  demand.case_otherwise (P X Y) (structural @(by_struct_rec P) X Y).
+by_struct_rec (P: A -> A -> prop) (X: B) Y when not(typ.eq (_: A) (_: B)) :-
+  structural @(by_struct_rec P) X Y.
+
+by_struct_rec : [B] forall A (A -> A -> prop) -> B -> B -> prop.
+
+by_struct_rec P X Y :-
+  instantiate P P',
+  demand.case_otherwise (P' X Y) (structural @(by_struct_rec P) X Y).
 
 %extend generic.
 fold : [A'] forall A (B -> A -> B -> prop) -> B -> A' -> B -> prop.

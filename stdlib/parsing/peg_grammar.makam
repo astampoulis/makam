@@ -54,14 +54,13 @@ peg.rule (ppegrule) (bind (symbol ident) (fun id =>
                     (action (pfun x => [Tl]((y:A -> get_res id y -> tl (Tl y)),
                                             eq x (bind hd Tl)))))))))))).
 
-convert, convert_aux : [A]A -> A -> prop.
-convert X Y :- demand.case_otherwise (convert_aux X Y) (structural @convert X Y).
-convert_aux ((concat (L: list string)): string) S :- string.concat L S.
+convert : string -> string -> prop.
+convert ((concat (L: list string)): string) S :- string.concat L S.
 
 peg.rule (ppeg) (bind (many (seq (symbol (exact ("/"))) ppegrule)) (fun l =>
                 (action (pfun x => [L'] (
                           map (pfun e res => e res) l L',
-                          convert (choices L') x))))).
+                          by_struct_rec convert (choices L') x))))).
 
 `( def_toplevel_parser_js (ppeg: peg.peg (peg.peg string -> prop)) ).
 

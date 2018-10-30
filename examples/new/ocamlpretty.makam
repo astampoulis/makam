@@ -14,7 +14,7 @@ gracewithnames X Y <-
   gracewithnames 0 X Y.
 
 gracewithnames N X Y <-
-  demand.case_otherwise (gracewithnames_ N X Y) (structural @(gracewithnames N) X Y).
+  by_struct_rec @(gracewithnames_ N) X Y.
 
 gracewithnames_ N (X : bindone typ A) Y when bindone.varname X S, refl.isunif S <-
   tostring N Suffix, string.append "a" Suffix S,

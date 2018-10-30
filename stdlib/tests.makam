@@ -350,6 +350,21 @@ change_ X Y <- plus X 1 Y.
 >> Yes:
 >> Y := ("b", 16, (fun (x : string) => x), (fun (x : string) => 13)).
 
+change2 : [A]A -> A -> prop.
+change2 "a" "b".
+change2 X Y <- plus X 1 Y.
+
+>> by_struct_rec @change2 ("a", 15, (fun (x : string) => x), (fun (x : string) => 12)) Y ?
+>> Yes:
+>> Y := ("b", 16, (fun (x : string) => x), (fun (x : string) => 13)).
+
+change3 : string -> string -> prop.
+change3 "a" "b".
+
+>> by_struct_rec change3 ("a", 15, (fun (x : string) => x), (fun (x : string) => 12)) Y ?
+>> Yes:
+>> Y := ("b", 15, (fun (x : string) => x), (fun (x : string) => 12)).
+
 (* -------------------- forall *)
 
 forall : testsuite. %testsuite forall.
