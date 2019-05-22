@@ -25,7 +25,7 @@ fi
 
 # Install OPAM and OCaml
 
-brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/72ce8812eaa33abe23533dfa021b51351a6b9c3e/Formula/opam.rb || true
+brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/7cfc8ee1d8d2bff2f7545170936a9abdb4662547/Formula/opam.rb || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
@@ -40,8 +40,7 @@ eval $(opam config env)
 # Install dependencies
 
 opam update --yes
-opam pin add --yes makam . --no-action
-opam install --yes makam --deps-only
+opam create switch ./
 npm install -g yarn
 
 # Compile Makam

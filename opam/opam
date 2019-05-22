@@ -1,4 +1,4 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "makam"
 version: "0.7.16"
 maintainer: "Antonis Stampoulis <antonis.stampoulis@gmail.com>"
@@ -7,15 +7,14 @@ license: "GPL-3"
 homepage: "http://astampoulis.github.io/"
 dev-repo: "https://github.com/astampoulis/makam.git"
 bug-reports: "https://github.com/astampoulis/makam/issues"
-available: [
-  "ocaml-version" >= "4.06.0"
-]
+available: []
 substs: [ "makam" ]
 build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   ["ocaml" "setup.ml" "-build"]
 ]
 depends: [
+  "ocaml" {>= "4.07.1"}
   "oasis" {>= "0.4"}
   "ocamlfind"
   "batteries"
@@ -29,3 +28,18 @@ depends: [
   "js_of_ocaml-compiler"
   "camlp4"
 ]
+description: """
+The Makam Metalanguage -- a tool for rapid language prototyping
+
+Makam is a metalanguage that eases implementation of languages with rich type systems, supporting
+concise and modular language definitions, aimed at allowing rapid prototyping and experimentation
+with new programming language research ideas. The design of Makam is based on higher-order logic
+programming and is a refinement of the λProlog language. Makam is implemented from scratch in OCaml.
+
+The name comes from the makam/maqam of traditional Turkish and Arabic music: a set of
+techniques of improvisation, defining the pitches, patterns and development of a piece of music.
+
+To read more about Makam, visit the author's homepage:
+
+<http://astampoulis.github.io/>
+"""
