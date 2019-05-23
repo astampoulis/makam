@@ -30,9 +30,9 @@ brew install gpatch https://raw.githubusercontent.com/Homebrew/homebrew-core/7cf
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
 else
-  opam switch create ./ --yes
   mkdir -p travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"
-  (export MAIN_DIR=$(pwd | sed "s|^$HOME/||"); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz $MAIN_DIR/_opam .opam)
+  opam init --yes --comp="$OPAM_SWITCH"
+  (export MAIN_DIR=$(pwd); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam)
 fi
 
 eval $(opam config env)
@@ -40,7 +40,7 @@ eval $(opam config env)
 # Install dependencies
 
 opam update --yes
-opam install --yes ./
+opam switch create ./ --yes
 npm install -g yarn
 
 # Compile Makam
