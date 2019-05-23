@@ -32,7 +32,8 @@ if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
 else
   mkdir -p travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"
   opam init --yes --comp="$OPAM_SWITCH"
-  (export MAIN_DIR=$(pwd); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam)
+  opam switch create ./ --yes
+  (export MAIN_DIR=$(pwd | sed "s|^$HOME/||"); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam $MAIN_DIR/_opam)
 fi
 
 eval $(opam config env)
@@ -40,7 +41,7 @@ eval $(opam config env)
 # Install dependencies
 
 opam update --yes
-opam switch create ./ --yes
+opam install --yes --deps-only ./
 npm install -g yarn
 
 # Compile Makam
