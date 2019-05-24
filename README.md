@@ -87,11 +87,9 @@ add `$(pwd)/node_modules/.bin` to your path.)
 #### TL;DR
 
 - [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
-- `opam switch 4.06.0`
+- `opam create switch ./`
 - `eval $(opam config env)`
 - [Node.js 8.x](https://nodejs.org/en/download/)
-- `opam pin add makam . --no-action`
-- `opam install makam --deps-only`
 - `make`
 - `./makam`
 
@@ -104,11 +102,16 @@ Clone the repository to get the Makam source code.
 You then need to install OPAM, the OCaml Package Manager. Instructions are
 available at:
 
-<http://opam.ocaml.org/doc/Quick_Install.html>
+<http://opam.ocaml.org/doc/Install.html>
 
-We have been testing using the OCaml 4.06.0 configuration, which you can switch
-to with `opam switch 4.06.0` after you have installed OPAM. Make sure you have
-also loaded the needed environment variables with `eval $(opam config env)`.
+We have been testing using the OCaml 4.07.1 configuration. Creating a
+local switch is the recommended way to keep the OCaml compiler
+configuration and dependencies separate from other OCaml projects you
+might have. To create a local switch, install all dependencies, and set
+up the environment variables you need, do:
+
+- `opam create switch ./`
+- `eval $(opam config env)`
 
 Makam also depends on Node.js, which is used for optimized parser
 generation. Instructions are available at:
@@ -122,12 +125,7 @@ Most recent versions of Node.js should work. If you are on an old version
 
 (Other Node version managers like `n` and `nvm` should also work.)
 
-After you have OPAM installed, you need to install the Makam dependencies:
-
-    opam pin add makam . --no-action
-    opam install makam --deps-only
-
-And finally, compile Makam:
+Finally, compile Makam:
 
     make
 
@@ -142,7 +140,7 @@ tutorial yet; look in the `examples` directory.
 To update your version of Makam, you can do:
 
     git pull
-    opam install makam --deps-only
+    opam install . --deps-only
     make
 
 ## Using Makam

@@ -25,14 +25,15 @@ fi
 
 # Install OPAM and OCaml
 
-brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/72ce8812eaa33abe23533dfa021b51351a6b9c3e/Formula/opam.rb || true
+brew install gpatch https://raw.githubusercontent.com/Homebrew/homebrew-core/7cfc8ee1d8d2bff2f7545170936a9abdb4662547/Formula/opam.rb || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)
 else
-  opam init --yes --comp="$OPAM_SWITCH"
   mkdir -p travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"
-  (export MAIN_DIR=$(pwd); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam)
+  opam init --yes --comp="$OPAM_SWITCH"
+  opam switch create ./ --yes
+  (export MAIN_DIR=$(pwd | sed "s|^$HOME/||"); cd ~; tar czf $MAIN_DIR/travis-artifacts/ocaml-mac-bin/"$OPAM_SWITCH"/opam.tar.gz .opam $MAIN_DIR/_opam)
 fi
 
 eval $(opam config env)
@@ -40,8 +41,7 @@ eval $(opam config env)
 # Install dependencies
 
 opam update --yes
-opam pin add --yes makam . --no-action
-opam install --yes makam --deps-only
+opam install --yes --deps-only ./
 npm install -g yarn
 
 # Compile Makam

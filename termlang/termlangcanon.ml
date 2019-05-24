@@ -330,6 +330,17 @@ module ExprU =
 
     let highlight : Obj.t = Obj.repr (ref ()) ;;
 
+    let rec gatherList e =
+      match e with
+        { term = `App( { term = `App( { term = `Var(n, Some(`Free, _)) }, x ) }, xs ) }
+        when user_string_of_name false n = "cons" ->
+        Option.map (fun xs' -> x :: xs') (gatherList xs)
+       | { term = `Var(n, Some(`Free, _)) }
+        when user_string_of_name false n = "nil" ->
+        Some([])
+       | _ -> None
+    ;;
+
     let print_full ?(qualified_names=false) ?(debug=false) oc (expr : exprU) =
       let debug = debug || !_DEBUG in
       let binding oc (s, t) =
@@ -342,12 +353,14 @@ module ExprU =
       let rec aux level oc expr =
         let openparen, closeparen = if level > 0 then "(", ")" else "", "" in
         let base oc expr =
+        let maybeList = gatherList expr in
         match expr with
             { term = `App( { term = `Const(o) }, e ) } when o == highlight ->
               let hlbegin = "\027[33m" in
               let hlend = "\027[0m" in
               Printf.fprintf oc "%s%a%s" hlbegin (aux level) e hlend
-
+          | t when not debug && not qualified_names && Option.is_some maybeList ->
+              Printf.fprintf oc "[%a]" (List.print ~first:" " ~last:" " ~sep:", " (aux level)) (Option.get maybeList)
           | { term = `App _ } ->
               let e, args = gatherApp expr in
               Printf.fprintf oc "%s%a%s" openparen (List.print ~first:"" ~last:"" ~sep:" " (aux (level+1))) (e :: args) closeparen

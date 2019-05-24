@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker: &base-image
-      - image: ocaml/opam:ubuntu-16.04_ocaml-4.06.0
+      - image: ocaml/opam2:ubuntu-16.04-ocaml-4.07
     environment:
       - TERM: "xterm"
     steps:
@@ -18,19 +18,18 @@ jobs:
           command: |
             [[ -e skip ]] || ./scripts/makam-version.sh check-if-updated
 
-      - run: &install-dependencies
-          name: Install dependencies
-          command: |
-            [[ -e skip ]] || opam pin add --yes makam . --no-action
-            [[ -e skip ]] || opam install --yes makam --deps-only
-
       - run: &install-node
-          name: Install Node.js
+          name: Install Node.js and other system dependencies
           command: |
             [[ -e skip ]] || curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-            [[ -e skip ]] || sudo apt-get install -y nodejs
+            [[ -e skip ]] || sudo apt-get install -y nodejs m4
             [[ -e skip ]] || sudo npm install -g yarn
             [[ -e skip ]] || sudo chown -R $(whoami):$(id -gn $(whoami)) ~/.config
+
+      - run: &install-dependencies
+          name: Install OCaml dependencies
+          command: |
+            [[ -e skip ]] || opam switch create --yes ./
 
       - run: &compile
           name: Compile Makam
