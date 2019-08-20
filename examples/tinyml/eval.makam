@@ -63,7 +63,7 @@ eval_binop binop_lt (eint N1) (eint N2) EB :- lessthan N1 N2 B, convert_bool B E
 eval_binop binop_gt (eint N1) (eint N2) EB :- lessthan N2 N1 B, convert_bool B EB.
 eval_binop binop_eq (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else eq B false, convert_bool B EB.
 eval_binop binop_le (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else lessthan N1 N2 B, convert_bool B EB.
-eval_binop binop_lt (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else lessthan N2 N1 B, convert_bool B EB.
+eval_binop binop_ge (eint N1) (eint N2) EB :- if (eq N1 N2) then eq B true else lessthan N2 N1 B, convert_bool B EB.
 
 evalprogram : program -> program -> prop.
 
