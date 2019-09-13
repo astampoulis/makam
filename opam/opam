@@ -5,7 +5,7 @@ maintainer: "Antonis Stampoulis <antonis.stampoulis@gmail.com>"
 authors: [ "Antonis Stampoulis <antonis.stampoulis@gmail.com>" ]
 license: "GPL-3"
 homepage: "http://astampoulis.github.io/"
-dev-repo: "https://github.com/astampoulis/makam.git"
+dev-repo: "git+https://github.com/astampoulis/makam.git"
 bug-reports: "https://github.com/astampoulis/makam/issues"
 available: []
 substs: [ "makam" ]
@@ -14,7 +14,7 @@ build: [
   ["ocaml" "setup.ml" "-build"]
 ]
 depends: [
-  "ocaml" {>= "4.07.1"}
+  "ocaml" {= "4.07.1"}
   "oasis" {>= "0.4"}
   "ocamlfind"
   "batteries"

@@ -87,7 +87,7 @@ add `$(pwd)/node_modules/.bin` to your path.)
 #### TL;DR
 
 - [OPAM](http://opam.ocaml.org/doc/Quick_Install.html)
-- `opam create switch ./`
+- `opam switch create ./`
 - `eval $(opam config env)`
 - [Node.js 8.x](https://nodejs.org/en/download/)
 - `make`
@@ -110,7 +110,7 @@ configuration and dependencies separate from other OCaml projects you
 might have. To create a local switch, install all dependencies, and set
 up the environment variables you need, do:
 
-- `opam create switch ./`
+- `opam switch create ./`
 - `eval $(opam config env)`
 
 Makam also depends on Node.js, which is used for optimized parser

@@ -26,6 +26,11 @@ jobs:
             [[ -e skip ]] || sudo npm install -g yarn
             [[ -e skip ]] || sudo chown -R $(whoami):$(id -gn $(whoami)) ~/.config
 
+      - run: &update-opam
+          name: Update OPAM repositories
+          command: |
+            [[ -e skip ]] || opam update --yes
+
       - run: &install-dependencies
           name: Install OCaml dependencies
           command: |
