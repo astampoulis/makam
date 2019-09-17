@@ -1,23 +1,13 @@
-%use utils.
-
-memoized : A -> prop.
-memoized_aux : (A -> prop) -> A -> prop.
-memoized_aux P V <-
-  ifte (refl.isunif V) (P V) success.
-memoized X <-
-  refl.headargs X Hd Args,
-  reverse Args ( (dyn (Last : A)) :: RArgs'),
-  reverse RArgs' Args',
-  appmany Hd Args' P,
-  memoized_aux P Last.
-
 term : type.
 
 lam : (term -> term) -> term.
 app : term -> term -> term.
 
-
-eval : term -> term -> prop.
+(* we thread an extra int through our evaluation predicate,
+   as an example of additional state that the `side_effect`
+   term mutates. This way we can track how many times the
+   `side_effect` term gets evaluated under each strategy. *)
+eval : int -> term -> term -> int -> prop.
 
 strategy : type.
 eval_strategy : strategy -> prop.
@@ -25,53 +15,72 @@ cbval : strategy.
 cbneed : strategy.
 cbname : strategy.
 
-eval (app E1 E2) V <-
-   eval_strategy cbval,
-   eval E1 (lam (fun x => Body x)),
-   eval E2 V2,
-   eval (Body V2) V.
+eval N0 (app E1 E2) V N3 when eval_strategy cbval <-
+   eval N0 E1 (lam (fun x => Body x)) N1,
+   eval N1 E2 V2 N2,
+   eval N2 (Body V2) V N3.
 
-eval (lam E) (lam E).
+eval N0 (lam E) (lam E) N0.
 
-eval (app E1 E2) V <-
-   eval_strategy cbname,
-   eval E1 (lam (fun x => Body x)),
-   eval (Body E2) V.
+eval N0 (app E1 E2) V N2 when eval_strategy cbname <-
+   eval N0 E1 (lam (fun x => Body x)) N1,
+   eval N1 (Body E2) V N2.
 
 thunk : term -> term -> term.
 
-eval (thunk E2 V2) V2 <-
-  memoized(eval E2 V2).
-
-eval (app E1 E2) V <-
-  eval_strategy cbneed,
-  eval E1 (lam Body),
+eval N0 (app E1 E2) V N2 when eval_strategy cbneed <-
+  eval N0 E1 (lam Body) N1,
   (* the `V2` unification variable will be shared between all substitutions
-     of `x` within `Body`; coupled with `memoized`, we can make sure that
-     the `V2` result is re-used once it is evaluated *)
-  eval (Body (thunk E2 V2)) V.
+     of `x` within `Body`; with the evaluation rules for `thunk` that follow,
+     we can make sure that the `V2` result is re-used once it is evaluated *)
+  eval N1 (Body (thunk E2 V2)) V N2.
+
+eval N0 (thunk E2 V2) V2 N0 when not(refl.isunif V2).
+
+eval N0 (thunk E2 V2) V2 N1 when refl.isunif(V2) <-
+  eval N0 E2 V2 N1.
 
 tuple : list term -> term.
-eval (tuple ES) (tuple VS) <-
-  map eval ES VS.
+eval N0 (tuple []) (tuple []) N0.
+eval N0 (tuple (X :: XS)) (tuple (Y :: YS)) N2 <-
+  eval N0 X Y N1,
+  eval N1 (tuple XS) (tuple YS) N2.
 
 side_effect : term.
-eval (side_effect) (tuple []) <- print "evaluation".
+eval N0 (side_effect) (tuple []) N1 <- plus N0 1 N1.
 
-eval_cbv : term -> term -> prop.
-eval_cbnd : term -> term -> prop.
-eval_cbnm : term -> term -> prop.
-eval_cbv X Y <- (eval_strategy cbval -> eval X Y).
-eval_cbnm X Y <- (eval_strategy cbname -> eval X Y).
-eval_cbnd X Y <- (eval_strategy cbneed -> eval X Y).
+eval_cbv : term -> term -> int -> prop.
+eval_cbnd : term -> term -> int -> prop.
+eval_cbnm : term -> term -> int -> prop.
+eval_cbv X Y N1 <- (eval_strategy cbval -> eval 0 X Y N1).
+eval_cbnm X Y N1 <- (eval_strategy cbname -> eval 0 X Y N1).
+eval_cbnd X Y N1 <- (eval_strategy cbneed -> eval 0 X Y N1).
 
 
-(eq TERM (app (lam (fun x => tuple [x, x])) side_effect),
- print_string "cbv eval\n", eval_cbv TERM CBV_VAL, print CBV_VAL,
- print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
- print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
+stlc_strategies : testsuite.
+%testsuite stlc_strategies.
 
-(eq TERM (app (app (lam (fun x => lam (fun y => tuple [x, x, y, y])))  side_effect) (tuple [])),
- print_string "cbv eval\n", eval_cbv TERM CBV_VAL, print CBV_VAL,
- print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
- print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
+>> (eq _TERM (app (lam (fun x => tuple [x, x])) side_effect),
+    eval_cbv _TERM CBV_VAL CBV_COUNTER,
+    eval_cbnm _TERM CBNM_VAL CBNM_COUNTER,
+    eval_cbnd _TERM CBND_VAL CBND_COUNTER) ?
+>> Yes:
+>> CBV_VAL := tuple [ (tuple [  ]), (tuple [  ]) ],
+>> CBV_COUNTER := 1,
+>> CBNM_VAL := tuple [ (tuple [  ]), (tuple [  ]) ],
+>> CBNM_COUNTER := 2,
+>> CBND_VAL := tuple [ (tuple [  ]), (tuple [  ]) ],
+>> CBND_COUNTER := 1.
+
+
+>> (eq _TERM (app (app (lam (fun x => lam (fun y => tuple [x, x, y, y]))) side_effect) (tuple [])),
+    eval_cbv _TERM CBV_VAL CBV_COUNTER,
+    eval_cbnm _TERM CBNM_VAL CBNM_COUNTER,
+    eval_cbnd _TERM CBND_VAL CBND_COUNTER) ?
+>> Yes:
+>> CBV_VAL := tuple [ (tuple [  ]), (tuple [  ]), (tuple [  ]), (tuple [  ]) ],
+>> CBV_COUNTER := 1,
+>> CBNM_VAL := tuple [ (tuple [  ]), (tuple [  ]), (tuple [  ]), (tuple [  ]) ],
+>> CBNM_COUNTER := 2,
+>> CBND_VAL := tuple [ (tuple [  ]), (tuple [  ]), (tuple [  ]), (tuple [  ]) ],
+>> CBND_COUNTER := 1.

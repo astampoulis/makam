@@ -58,6 +58,7 @@ stdlib/dyn_expansion \
 new/testocaml \
 new/testcases_ocaml \
 small/systemf \
+experiments/stlc_strategies \
 big/testocaml \
 big/testveriml \
 big/testurweb \
