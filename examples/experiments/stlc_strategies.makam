@@ -38,12 +38,18 @@ eval (app E1 E2) V <-
    eval E1 (lam (fun x => Body x)),
    eval (Body E2) V.
 
+thunk : term -> term -> term.
+
+eval (thunk E2 V2) V2 <-
+  memoized(eval E2 V2).
+
 eval (app E1 E2) V <-
   eval_strategy cbneed,
   eval E1 (lam Body),
-  ( thunk:term ->
-    (eval thunk V2 <- memoized(eval E2 V2)) ->
-    eval (Body thunk) V ).
+  (* the `V2` unification variable will be shared between all substitutions
+     of `x` within `Body`; coupled with `memoized`, we can make sure that
+     the `V2` result is re-used once it is evaluated *)
+  eval (Body (thunk E2 V2)) V.
 
 tuple : list term -> term.
 eval (tuple ES) (tuple VS) <-
@@ -65,3 +71,7 @@ eval_cbnd X Y <- (eval_strategy cbneed -> eval X Y).
  print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
  print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
 
+(eq TERM (app (app (lam (fun x => lam (fun y => tuple [x, x, y, y])))  side_effect) (tuple [])),
+ print_string "cbv eval\n", eval_cbv TERM CBV_VAL, print CBV_VAL,
+ print_string "cbname eval\n", eval_cbnm TERM CBNM_VAL, print CBNM_VAL,
+ print_string "cbneed eval\n", eval_cbnd TERM CBND_VAL, print CBND_VAL) ?
