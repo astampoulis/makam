@@ -84,3 +84,16 @@ stlc_strategies : testsuite.
 >> CBNM_COUNTER := 2,
 >> CBND_VAL := tuple [ (tuple [  ]), (tuple [  ]), (tuple [  ]), (tuple [  ]) ],
 >> CBND_COUNTER := 1.
+
+>> (eq _TERM (app (lam (fun x => tuple [])) side_effect),
+    eval_cbv _TERM CBV_VAL CBV_COUNTER,
+    eval_cbnm _TERM CBNM_VAL CBNM_COUNTER,
+    eval_cbnd _TERM CBND_VAL CBND_COUNTER) ?
+>> Yes:
+>> CBV_VAL := tuple [  ],
+>> CBV_COUNTER := 1,
+>> CBNM_VAL := tuple [  ],
+>> CBNM_COUNTER := 0,
+>> CBND_VAL := tuple [  ],
+>> CBND_COUNTER := 0.
+
