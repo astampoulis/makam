@@ -35,10 +35,12 @@ eval N0 (app E1 E2) V N2 when eval_strategy cbneed <-
      we can make sure that the `V2` result is re-used once it is evaluated *)
   eval N1 (Body (thunk E2 V2)) V N2.
 
-eval N0 (thunk E2 V2) V2 N0 when not(refl.isunif V2).
+eval N0 (thunk E2 V2) V3 N0 when not(refl.isunif V2) :-
+  eq V2 V3.
 
-eval N0 (thunk E2 V2) V2 N1 when refl.isunif(V2) <-
-  eval N0 E2 V2 N1.
+eval N0 (thunk E2 V2) V3 N1 when refl.isunif(V2) <-
+  eval N0 E2 V2 N1,
+  eq V2 V3.
 
 tuple : list term -> term.
 eval N0 (tuple []) (tuple []) N0.
@@ -97,3 +99,8 @@ stlc_strategies : testsuite.
 >> CBND_VAL := tuple [  ],
 >> CBND_COUNTER := 0.
 
+>> (eq _TERM (app (lam (fun x => x)) side_effect),
+    eval_cbnd _TERM (tuple CBND_VAL) CBND_COUNTER) ?
+>> Yes:
+>> CBND_VAL := [  ],
+>> CBND_COUNTER := 1.
