@@ -60,6 +60,9 @@ open (heap XS_DefsBody) P :-
   bindmany.open XS_DefsBody (pfun XS (Defs, Body) =>
     assumeindex XS (P XS Defs Body)).
 
+(* used as a marker to denote which definitions to keep *)
+keep : heap A -> heap A.
+
 pair, pair_ : heap A -> heap B -> heap (A * B) -> prop.
 pair A B C :- once(pair_ A B C).
 pair_ (heap (body (Defs, Body1))) (heap (body (Defs, Body2)))
@@ -176,8 +179,9 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
   heap.openmany [Heap0_Body0, Heap0_Fun] (pfun XS Defs [app E X, Fun] => eq Fun E),
 
   eval Heap0_Fun Heap0_Heap1_Body1,
-  heap.openmany [Heap0_Body0, Heap0_Heap1_Body1, Heap0_Heap1_Body2]
-    (pfun XS Defs [app E X, Heap1_Body1, Heap1_Body2] =>
+  heap.openmany [Heap0_Heap1_Body1, Heap0_Heap1_Body2]
+    (pfun XS Defs [Heap1_Body1, Heap1_Body2] => [Unused E X]
+    heap.apply Heap0_Body0 XS Unused (app E X),
     heap.openmany [Heap1_Body1, Heap1_Body2]
       (pfun XS' Defs' [lam Y_E', Body2] =>
         eq Body2 (Y_E' X))),
@@ -214,8 +218,9 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
 
   eval Heap0_E1 Heap0_Heap1_Eval1,
 
-  heap.openmany [Heap0_E2, Heap0_Heap1_Eval1, Heap0_Heap1_Body2]
-    (pfun XS Defs [E2, Heap1_Eval1, Heap1_Body2] =>
+  heap.openmany [Heap0_Heap1_Eval1, Heap0_Heap1_Body2]
+    (pfun XS Defs [Heap1_Eval1, Heap1_Body2] => [Unused E2]
+    heap.apply Heap0_E2 XS Unused E2,
     heap.openmany [Heap1_Eval1, Heap1_Body2]
       (pfun XS' Defs' [intconst N1, Body2] =>
         eq N1 N1_, eq Body2 E2)),
@@ -275,3 +280,7 @@ maintests : testsuite. %testsuite maintests.
 >> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (intconst 10) (var x) ))))) X ?
 >> Yes:
 >> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (heap (body (tuple [  ] (intconst 25))))))).
+
+>> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (var x) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (heap (body (tuple [  ] (intconst 30))))))).
