@@ -63,22 +63,30 @@ open (heap XS_DefsBody) P :-
 pair, pair_ : heap A -> heap B -> heap (A * B) -> prop.
 pair A B C :- once(pair_ A B C).
 pair_ (heap (body (Defs, Body1))) (heap (body (Defs, Body2)))
-     (heap (body (Defs, (Body1, Body2)))).
+      (heap (body (Defs, (Body1, Body2)))).
 
 pair_ (heap (bind Name F)) (heap (bind Name F')) (heap (bind Name F'')) :-
   (x:A -> pair_ (heap (F x)) (heap (F' x)) (heap (F'' x))).
 
 many : [A] heaplist A -> heap (hlist A) -> prop.
+many_aux : [Head Tail] heap Head -> heaplist Tail -> heap (hlist Tail) -> prop.
 
-many [Heap] Heap' :-
-  pair Heap Heap' Heap'',
-  open Heap'' (pfun XS Defs (Body, [Body]) => success).
-
-many (Heap :: Heaps) HeapAll when not(dyn.eq Heaps []) :-
+many (Heap :: Heaps) Result :-
+  many_aux Heap Heaps Heaps',
   pair Heap Heaps' Heaps'',
-  pair Heaps'' HeapAll Heaps''',
-  open Heaps''' (pfun XS Defs ((BodyHD, BodyTL), (BodyHD :: BodyTL)) => success),
-  many Heaps Heaps'.
+  pair Heaps'' Result Heaps''',
+  open Heaps''' (pfun XS Defs ((HDBody, TLBody), (HDBody :: TLBody)) => success).
+
+many_aux Heap [] Heap' :-
+  pair Heap Heap' Heap'',
+  open Heap'' (pfun XS Defs (Unused, []) => success).
+
+many_aux Heap (HDHeap :: TLHeap) HeapAll :-
+  pair Heap HDHeap HDHeap',
+  many_aux Heap TLHeap TLHeap',
+  pair HDHeap' TLHeap' Heap',
+  pair Heap' HeapAll Heap'',
+  open Heap'' (pfun XS Defs (((Unused1, BodyHD), BodyTL), (BodyHD :: BodyTL)) => success).
 
 openmany : heaplist A -> (list var -> list expr -> hlist A -> prop) -> prop.
 openmany Heaps P :- many Heaps Heaps', open Heaps' P.
@@ -114,6 +122,12 @@ tests : testsuite. %testsuite tests.
 >> Yes:
 >> X := heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], [var a])))).
 
+>> heap.many [heap (bind "a" (fun a => body ([var a], var a))), H1, H2] X ?
+>> Yes:
+>> X := heap (bind "a" (fun a => body (tuple [ (var a) ] [ (var a), #Body1, #Body2 ]))),
+>> H1 := heap (bind "a" (fun a => body (tuple [ (var a) ] #Body1))),
+>> H2 := heap (bind "a" (fun a => body (tuple [ (var a) ] #Body2))).
+
 >> heap.many [heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], var a)))),
            heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], var b))))] X ?
 >> Yes:
@@ -131,6 +145,12 @@ tests : testsuite. %testsuite tests.
 
 eval : heap expr -> heap (heap expr) -> prop.
 
+return : heap expr -> heap (heap expr) -> prop.
+
+return Heap Heap' :-
+  heap.pair Heap Heap' Heap'',
+  heap.open Heap'' (pfun XS Defs (Body, heap (body ([], Body))) => success).
+
 (*
 
   ———————————————————
@@ -138,8 +158,9 @@ eval : heap expr -> heap (heap expr) -> prop.
 
 *)
 
-eval (Heap_Body) (heap (body ([], Heap_Body)))
-  when heap.open Heap_Body (pfun XS Defs (lam X_E) => success).
+eval (Heap_Body) Result
+    when heap.open Heap_Body (pfun XS Defs (lam X_E) => success) :-
+  return Heap_Body Result.
 
 (*
 
@@ -174,8 +195,9 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
   
 *)
 
-eval (Heap_Body) (heap (body ([], Heap_Body)))
-  when heap.open Heap_Body (pfun XS Defs (intconst N) => success).
+eval (Heap_Body) Result
+    when heap.open Heap_Body (pfun XS Defs (intconst N) => success) :-
+  return Heap_Body Result.
 
 (*
 
@@ -191,6 +213,7 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
   heap.openmany [Heap0_Body0, Heap0_E1, Heap0_E2] (pfun XS Defs [binop OP E1 E2, E1, E2] => eq OP OP_),
 
   eval Heap0_E1 Heap0_Heap1_Eval1,
+
   heap.openmany [Heap0_E2, Heap0_Heap1_Eval1, Heap0_Heap1_Body2]
     (pfun XS Defs [E2, Heap1_Eval1, Heap1_Body2] =>
     heap.openmany [Heap1_Eval1, Heap1_Body2]
@@ -245,4 +268,10 @@ maintests : testsuite. %testsuite maintests.
 >> Yes:
 >> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (heap (body (tuple [  ] (intconst 15))))))).
 
-eval (heap (bind "x" (fun x => (body ([intconst 10], binop plus (intconst 10) (var x) ))))) X ?
+>> eval (heap (bind "x" (fun x => (body ([intconst 10], binop plus (intconst 10) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 10) ] (heap (body (tuple [  ] (intconst 20))))))).
+
+>> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (intconst 10) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (heap (body (tuple [  ] (intconst 25))))))).
