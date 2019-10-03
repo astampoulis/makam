@@ -20,7 +20,7 @@ binop : (int -> int -> int -> prop) -> expr -> expr -> expr.
 (* now let's model heaps. In this semantics, heaps are
    variable binding - expression definition pairs. In Makam,
    we will model them as a number of bindings followed by
-   their definitions in the same order. 
+   their definitions in the same order.
 *)
 
 heap : type -> type.
@@ -49,6 +49,16 @@ split 0 Post [] Post.
 split N (X :: XS) (X :: Pre) Post :-
   plus 1 N' N,
   split N' XS Pre Post.
+
+bring_to_top : int -> list A -> list A -> prop.
+bring_to_top Index XS (X :: XS') :-
+  split Index XS XSPre (X :: XSPost),
+  append XSPre XSPost XS'.
+
+unbring_to_top : int -> list A -> list A -> prop.
+unbring_to_top Index (X :: XS) XS' :-
+  split Index XS XSPre XSPost,
+  append XSPre (X :: XSPost) XS'.
 
 %end.
 
@@ -110,14 +120,29 @@ collapse (heap AS_BS_Body) ASBS_Body :-
       append ADefs BDefs ABDefs,
       heap.apply ASBS_Body ASBS ABDefs Body)).
 
-extract (heap ASBS_Body) (heap AS_Rest) (heap AS_BS_Body) :-
-  bindmany.pair AS_Rest AS_BS_Body Both,
-  bindmany.open Both (pfun AS (Rest, (ADefs, Heap_BS_Body)) => [BS_Body]
-    bindmany.applysome ASBS_Body AS BS_Body,
-    bindmany.open BS_Body (pfun BS (ABDefs, Body) => [BDefs]
-      heap.apply Heap_BS_Body BS BDefs Body,
-      length AS N,
-      list.split N ABDefs ADefs BDefs)).
+extract Heap HeapRef Heap' :-
+  heap.open HeapRef (pfun AS Defs Body => length AS N),
+  heap.open Heap (pfun ASBS ASBSDefs Body => [AS BS ASDefs BSDefs Heap'']
+    list.split N ASBS AS BS,
+    list.split N ASBSDefs ASDefs BSDefs,
+    heap.apply Heap' AS ASDefs Heap'',
+    heap.apply Heap'' BS BSDefs Body).
+
+bring_to_top : int -> heap A -> heap A -> prop.
+bring_to_top Index Heap Heap' :-
+  heap.open Heap (pfun XS Defs Body => [XS' Defs']
+    list.bring_to_top Index XS XS',
+    list.bring_to_top Index Defs Defs',
+    heap.apply Heap' XS' Defs' Body
+  ).
+
+unbring_to_top : int -> heap A -> heap A -> prop.
+unbring_to_top Index Heap Heap' :-
+  heap.open Heap (pfun XS Defs Body => [XS' Defs']
+    list.unbring_to_top Index XS XS',
+    list.unbring_to_top Index Defs Defs',
+    heap.apply Heap' XS' Defs' Body
+  ).
 
 tests : testsuite. %testsuite tests.
 
@@ -196,7 +221,7 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
 
   —————————————-
   Γ : n ⇓ Γ : n
-  
+
 *)
 
 eval (Heap_Body) Result
@@ -239,25 +264,68 @@ eval (Heap0_Body0) (Heap0_Heap12_Body')
            Γ : e ⇓ Δ : z
   —————————————-—————————————————————
   (Γ, x |-> e) : x ⇓ (Δ, x |-> z) : z
-  
+
 *)
 
+(*
 eval (Heap0_Body0) (Heap0_Heap1_Body')
   when heap.open Heap0_Body0 (pfun (X :: XS) (XDef :: Defs) (var X) => success) :-
 
   heap.openmany [Heap0_Body0, Heap0_E] (pfun (X :: XS) (XDef :: Defs) [var X, XDef] => success),
-  heap.extract Heap0_E (heap (bind XName (fun x => Rest x))) HeapX_HeapXS_E,
+  heap.extract Heap0_E (heap (bind XName (fun x => body (Rest x)))) HeapX_HeapXS_E,
 
   heap.openmany [HeapX_HeapXS_E, HeapX_HeapXSYS_Eval] (pfun [X] [XDef] [HeapXS_E, HeapXSYS_Eval] => [HeapXS_HeapYS_Eval]
     eval HeapXS_E HeapXS_HeapYS_Eval,
     heap.collapse HeapXS_HeapYS_Eval HeapXSYS_Eval),
-  
+
   heap.open HeapX_HeapXSYS_Eval (pfun [X] [OldXDef] HeapXSYS_Eval =>
     heap.open HeapXSYS_Eval (pfun XSYS DefsRest Eval =>
       heap.apply HeapXUpdated_HeapXSYS_Eval [X] [Eval] HeapXSYS_Eval)),
 
   heap.collapse HeapXUpdated_HeapXSYS_Eval HeapXXSYS_Eval,
   heap.extract HeapXXSYS_Eval Heap0_Body0 Heap0_Heap1_Body'.
+*)
+
+eval (Heap0_Body0) (Heap0_Heap1_Body')
+  when heap.open Heap0_Body0 (pfun XS Defs (var X) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (var X) => index_of X XIndex),
+  heap.bring_to_top XIndex Heap0_Body0 Heap0'_Body0,
+
+  heap.openmany [Heap0'_Body0, Heap0'_E] (pfun (X :: XS) (XDef :: Defs) [var X, XDef] => success),
+  heap.extract Heap0'_E (heap (bind XName (fun x => body (Rest x)))) HeapX_HeapXS_E,
+
+  heap.openmany [HeapX_HeapXS_E, HeapX_HeapXSYS_Eval] (pfun [X] [XDef] [HeapXS_E, HeapXSYS_Eval] => [HeapXS_HeapYS_Eval]
+    eval HeapXS_E HeapXS_HeapYS_Eval,
+    heap.collapse HeapXS_HeapYS_Eval HeapXSYS_Eval),
+
+  heap.open HeapX_HeapXSYS_Eval (pfun [X] [OldXDef] HeapXSYS_Eval =>
+    heap.open HeapXSYS_Eval (pfun XSYS DefsRest Eval =>
+      heap.apply HeapXUpdated_HeapXSYS_Eval [X] [Eval] HeapXSYS_Eval)),
+
+  heap.collapse HeapXUpdated_HeapXSYS_Eval HeapXXSYS_Eval,
+  heap.unbring_to_top XIndex HeapXXSYS_Eval Heap0YS_Eval,
+  heap.extract Heap0YS_Eval Heap0_Body0 Heap0_Heap1_Body'.
+
+(*
+   Γ, x1 |-> e1 ... xn |-> en : e ⇓ Δ : z
+  —————————————-—————————————————————------
+  Γ : let x1 = e1 ... xn = en in e ⇓ Δ : z
+
+*)
+
+eval (Heap0_Body0) (Heap0_Heap12_Body')
+  when heap.open Heap0_Body0 (pfun XS Defs (let YS_Body) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS XSDefs (let YS_E) =>
+    bindmany.open YS_E (pfun YS (YSDefs, E) => [XSYS XSYSDefs]
+      append XS YS XSYS,
+      append XSDefs YSDefs XSYSDefs,
+      heap.apply Heap01_E XSYS XSYSDefs E)),
+
+  eval Heap01_E Heap01_Heap2_Res,
+  heap.collapse Heap01_Heap2_Res Heap012_Res,
+  heap.extract Heap012_Res Heap0_Body0 Heap0_Heap12_Body'.
 
 maintests : testsuite. %testsuite maintests.
 
@@ -284,3 +352,5 @@ maintests : testsuite. %testsuite maintests.
 >> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (var x) (var x) ))))) X ?
 >> Yes:
 >> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (heap (body (tuple [  ] (intconst 30))))))).
+
+eval (heap (body ([], let (bind "u" (fun u => bind "v" (fun v => body ([binop plus (intconst 2) (intconst 3), binop plus (var u) (intconst 1)], binop plus (var v) (var v)))))))) X ?
