@@ -24,42 +24,7 @@ binop : (int -> int -> int -> prop) -> expr -> expr -> expr.
 *)
 
 heap : type -> type.
-
 heap : bindmany var (list expr * A) -> heap A.
-
-index_of : var -> int -> prop.
-
-assumeindex : list var -> prop -> prop.
-assumeindex_aux : int -> list var -> prop -> prop.
-assumeindex_aux _ [] P when P.
-assumeindex_aux N (X :: XS) P when
-  plus N 1 N',
-  assumeindex_aux N' XS {prop| (index_of X N -> P) |}.
-
-assumeindex L P when assumeindex_aux 0 L P.
-
-heaplist : type -> type.
-nil : heaplist t_nil.
-cons : heap HD -> heaplist TL -> heaplist (t_cons HD TL).
-
-%extend list.
-
-split : int -> list A -> list A -> list A -> prop.
-split 0 Post [] Post.
-split N (X :: XS) (X :: Pre) Post :-
-  plus 1 N' N,
-  split N' XS Pre Post.
-
-nth : list A -> int -> A -> prop.
-nth L N E :-
-  split N L _ (E :: _).
-
-update_nth : list A -> int -> A -> list A -> prop.
-update_nth L N E L' :-
-  split N L Pre (_ :: Post),
-  split N L' Pre (E :: Post).
-
-%end.
 
 %extend heap.
 
@@ -67,41 +32,7 @@ open : heap A -> (list var -> list expr -> A -> prop) -> prop.
 
 open (heap XS_DefsBody) P :-
   bindmany.open XS_DefsBody (pfun XS (Defs, Body) =>
-    assumeindex XS (P XS Defs Body)).
-
-(* used as a marker to denote which definitions to keep *)
-keep : heap A -> heap A.
-
-pair, pair_ : heap A -> heap B -> heap (A * B) -> prop.
-pair A B C :- once(pair_ A B C).
-pair_ (heap (body (Defs, Body1))) (heap (body (Defs, Body2)))
-      (heap (body (Defs, (Body1, Body2)))).
-
-pair_ (heap (bind Name F)) (heap (bind Name F')) (heap (bind Name F'')) :-
-  (x:A -> pair_ (heap (F x)) (heap (F' x)) (heap (F'' x))).
-
-many : [A] heaplist A -> heap (hlist A) -> prop.
-many_aux : [Head Tail] heap Head -> heaplist Tail -> heap (hlist Tail) -> prop.
-
-many (Heap :: Heaps) Result :-
-  many_aux Heap Heaps Heaps',
-  pair Heap Heaps' Heaps'',
-  pair Heaps'' Result Heaps''',
-  open Heaps''' (pfun XS Defs ((HDBody, TLBody), (HDBody :: TLBody)) => success).
-
-many_aux Heap [] Heap' :-
-  pair Heap Heap' Heap'',
-  open Heap'' (pfun XS Defs (Unused, []) => success).
-
-many_aux Heap (HDHeap :: TLHeap) HeapAll :-
-  pair Heap HDHeap HDHeap',
-  many_aux Heap TLHeap TLHeap',
-  pair HDHeap' TLHeap' Heap',
-  pair Heap' HeapAll Heap'',
-  open Heap'' (pfun XS Defs (((Unused1, BodyHD), BodyTL), (BodyHD :: BodyTL)) => success).
-
-openmany : heaplist A -> (list var -> list expr -> hlist A -> prop) -> prop.
-openmany Heaps P :- many Heaps Heaps', open Heaps' P.
+    P XS Defs Body).
 
 apply : heap A -> list var -> list expr -> A -> prop.
 apply (heap (body (Defs, Body))) [] Defs Body.
@@ -114,49 +45,6 @@ apply_needed (heap (body (_, Body))) _ Body.
 apply_needed (heap (bind Name Rest)) (X :: XS) Body :-
   unless (nameofvar X Name) (success),
   apply_needed (heap (Rest X)) XS Body.
-
-collapse : heap (heap A) -> heap A -> prop.
-extract : heap A -> heap B -> heap (heap A) -> prop.
-
-collapse (heap AS_BS_Body) ASBS_Body :-
-  bindmany.open AS_BS_Body (pfun AS (ADefs, heap BS_Body) =>
-    bindmany.open BS_Body (pfun BS (BDefs, Body) => [ASBS ABDefs]
-      append AS BS ASBS,
-      append ADefs BDefs ABDefs,
-      heap.apply ASBS_Body ASBS ABDefs Body)).
-
-extract Heap HeapRef Heap' :-
-  heap.open HeapRef (pfun AS Defs Body => length AS N),
-  heap.open Heap (pfun ASBS ASBSDefs Body => [AS BS ASDefs BSDefs Heap'']
-    list.split N ASBS AS BS,
-    list.split N ASBSDefs ASDefs BSDefs,
-    heap.apply Heap' AS ASDefs Heap'',
-    heap.apply Heap'' BS BSDefs Body).
-
-tests : testsuite. %testsuite tests.
-
->> heap.many [heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], var a))))] X ?
->> Yes:
->> X := heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], [var a])))).
-
->> heap.many [heap (bind "a" (fun a => body ([var a], var a))), H1, H2] X ?
->> Yes:
->> X := heap (bind "a" (fun a => body (tuple [ (var a) ] [ (var a), #Body1, #Body2 ]))),
->> H1 := heap (bind "a" (fun a => body (tuple [ (var a) ] #Body1))),
->> H2 := heap (bind "a" (fun a => body (tuple [ (var a) ] #Body2))).
-
->> heap.many [heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], var a)))),
-           heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], var b))))] X ?
->> Yes:
->> X := heap (bind "a" (fun a => bind "b" (fun b => body ([var a, var b], [var a, var b])))).
-
->> heap.collapse (heap (bind "a" (fun a => body ([var a], heap (bind "b" (fun b => body ([var b], [var b, var a]))))))) X ?
->> Yes:
->> X := heap (bind "a" (fun a => bind "b" (fun b => body (tuple [ (var a), (var b) ] [ (var b), (var a) ])))).
-
->> heap.extract (heap (bind "a" (fun a => bind "b" (fun b => body (tuple [ (var a), (var b) ] [ (var b), (var a) ]))))) (heap (bind "a" (fun a => body ([app (var a) a], 1)))) X ?
->> Yes:
->> X := heap (bind "a" (fun a => body (tuple [ (var a) ] (heap (bind "b" (fun b => body (tuple [ (var b) ] [ (var b), (var a) ]))))))).
 
 %end.
 
@@ -248,7 +136,7 @@ eval (Heap0_Body0) (Heap2_Val)
   when heap.open Heap0_Body0 (pfun XS Defs (var X) => success) :-
 
   heap.open Heap0_Body0 (pfun XS Defs (var X) => [E]
-    index_of X N,
+    list.index_of (pfun Y => eq Y X) XS N,
     list.nth Defs N E,
     heap.apply Heap0_E XS Defs E),
 
@@ -274,6 +162,8 @@ eval (Heap0_Body0) (Heap2_V)
       heap.apply Heap1_E XSYS XSYSDefs E)),
 
   eval Heap1_E Heap2_V.
+
+(* and now for some tests *)
 
 maintests : testsuite. %testsuite maintests.
 
