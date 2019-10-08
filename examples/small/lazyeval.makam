@@ -171,6 +171,10 @@ maintests : testsuite. %testsuite maintests.
 >> Yes:
 >> X := heap (body (tuple [  ] (intconst 15))).
 
+>> eval (heap (body ([], binop plus (let (bind "u" (fun u => body([intconst 6], var u)) )) (intconst 14)  ))) X ?
+>> Yes:
+>> X := heap (bind "u" (fun u => body (tuple [ (intconst 6) ] (intconst 20)))).
+
 >> eval (heap (bind "x" (fun x => (body ([intconst 10], var x))))) X ?
 >> Yes:
 >> X := heap (bind "x" (fun x => body (tuple [ (intconst 10) ] (intconst 10)))).
