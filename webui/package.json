@@ -1,6 +1,6 @@
 {
   "name": "makam-webui",
-  "version": "0.7.19",
+  "version": "0.7.20",
   "description": "CodeMirror-based WebUI for Makam",
   "main": "makam-webui-bundle.js",
   "scripts": {
@@ -23,13 +23,14 @@
     "es6-promise": "^4.2.2",
     "isomorphic-fetch": "^2.2.1",
     "jump.js": "^1.0.2",
-    "preact": "^10.0.0"
+    "preact": "^8.2.7"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
+    "@babel/cli": "^7.6.3",
+    "@babel/core": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/preset-react": "^7.6.3",
     "babel-loader": "^8.0.6",
-    "babel-preset-env": "^1.7.0",
     "babel-preset-preact": "^2.0.0",
     "codemirror": "^5.33.0",
     "css-loader": "^3.2.0",
