@@ -9,11 +9,11 @@
   "author": "Antonis Stampoulis <antonis.stampoulis@gmail.com>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "aws-sdk": "^2.181.0",
-    "serverless": "^1.26.0",
-    "serverless-s3-remover": "^0.4.1"
+    "aws-sdk": "^2.543.0",
+    "serverless": "^1.53.0",
+    "serverless-s3-remover": "^0.6.0"
   },
   "dependencies": {
-    "object-hash": "^1.2.0"
+    "object-hash": "^2.0.0"
   }
 }
