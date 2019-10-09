@@ -1,0 +1,298 @@
+(* An implementation of the standard Launchbury semantics
+   for call-by-need evaluation, using an explicit heap. *)
+
+expr : type.
+var : type.
+
+lam : (var -> expr) -> expr.
+
+(* Arguments to applications need to be variables *)
+app : expr -> var -> expr.
+
+var : var -> expr.
+
+let : bindmany var (list expr * expr) -> expr.
+
+intconst : int -> expr.
+
+binop : (int -> int -> int -> prop) -> expr -> expr -> expr.
+
+(* now let's model heaps. In this semantics, heaps are
+   variable binding - expression definition pairs. In Makam,
+   we will model them as a number of bindings followed by
+   their definitions in the same order.
+*)
+
+heap : type -> type.
+heap : bindmany var (list expr * A) -> heap A.
+
+%extend heap.
+
+open : heap A -> (list var -> list expr -> A -> prop) -> prop.
+
+open (heap XS_DefsBody) P :-
+  bindmany.open XS_DefsBody (pfun XS (Defs, Body) =>
+    P XS Defs Body).
+
+apply : heap A -> list var -> list expr -> A -> prop.
+apply (heap (body (Defs, Body))) [] Defs Body.
+apply (heap (bind Name Rest)) (X :: XS) Defs Body :-
+  unless (nameofvar X Name) (success),
+  apply (heap (Rest X)) XS Defs Body.
+
+apply_needed : heap A -> list var -> A -> prop.
+apply_needed (heap (body (_, Body))) _ Body.
+apply_needed (heap (bind Name Rest)) (X :: XS) Body :-
+  unless (nameofvar X Name) (success),
+  apply_needed (heap (Rest X)) XS Body.
+
+%end.
+
+eval : heap expr -> heap expr -> prop.
+
+(*
+
+  ———————————————————
+  Γ : λx.e ⇓ Γ : λx.e
+
+*)
+
+eval (Heap_Body) Result
+    when heap.open Heap_Body (pfun XS Defs (lam X_E) => success) :-
+  eq Heap_Body Result.
+
+(*
+
+   Γ : e ⇓ Δ : λy.e'   Δ : e'[x/y] ⇓ Θ : z
+   ————————————————————————————————————————
+              Γ : e x ⇓ Θ : z
+
+*)
+
+eval (Heap0_Body0) (Heap2_Body2)
+  when heap.open Heap0_Body0 (pfun XS Defs (app E X) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (app E X) =>
+    heap.apply Heap0_Fun XS Defs E),
+  eval Heap0_Fun Heap1_Body1,
+
+  heap.open Heap1_Body1 (pfun XS Defs (lam Y_E') => [E X]
+    heap.apply_needed Heap0_Body0 XS (app E X),
+    heap.apply Heap1_Body2 XS Defs (Y_E' X)),
+  eval Heap1_Body2 Heap2_Body2.
+
+
+(*
+
+  —————————————-
+  Γ : n ⇓ Γ : n
+
+*)
+
+eval (Heap_Body) Result
+    when heap.open Heap_Body (pfun XS Defs (intconst N) => success) :-
+  eq Result Heap_Body.
+
+(*
+
+   Γ : e1 ⇓ Δ : n1     Δ : e2 ⇓ Θ : n2    OP n1 n2 = n3
+   —————————————————————————————————————————————————————
+              Γ : binop OP e1 e2 ⇓ Θ : n3
+
+*)
+
+eval (Heap0_Body0) (Heap2_Result)
+  when heap.open Heap0_Body0 (pfun XS Defs (binop OP E1 E2) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (binop OP E1 E2) =>
+    eq OP_ OP,
+    heap.apply Heap0_E1 XS Defs E1),
+  eval Heap0_E1 Heap1_V1,
+
+  heap.open Heap1_V1 (pfun XS Defs (intconst N1) => [OP E1 E2]
+    eq N1 N1_,
+    heap.apply_needed Heap0_Body0 XS (binop OP E1 E2),
+    heap.apply Heap1_E2 XS Defs E2),
+  eval Heap1_E2 Heap2_V2,
+
+  heap.open Heap2_V2 (pfun XS Defs (intconst N2) =>
+    eq N2 N2_),
+  
+  OP_ N1_ N2_ N3,
+
+  heap.open Heap2_V2 (pfun XS Defs V2 =>
+    heap.apply Heap2_Result XS Defs (intconst N3)).
+
+(*
+           Γ : e ⇓ Δ : z
+  —————————————-—————————————————————
+  (Γ, x |-> e) : x ⇓ (Δ, x |-> z) : z
+
+  here we differ in that we keep the binding for x alive in the premise
+
+*)
+
+eval (Heap0_Body0) (Heap2_Val)
+  when heap.open Heap0_Body0 (pfun XS Defs (var X) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (var X) => [E]
+    list.index_of (pfun Y => eq Y X) XS N,
+    list.nth Defs N E,
+    heap.apply Heap0_E XS Defs E),
+
+  eval Heap0_E Heap1_Val,
+  heap.open Heap1_Val (pfun XS Defs Val => [Defs']
+    list.update_nth Defs N Val Defs',
+    heap.apply Heap2_Val XS Defs' Val).
+
+(*
+   Γ, x1 |-> e1 ... xn |-> en : e ⇓ Δ : z
+  —————————————-—————————————————————------
+  Γ : let x1 = e1 ... xn = en in e ⇓ Δ : z
+
+*)
+
+eval (Heap0_Body0) (Heap2_V)
+  when heap.open Heap0_Body0 (pfun XS Defs (let YS_Body) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS XSDefs (let YS_E) =>
+    bindmany.open YS_E (pfun YS (YSDefs, E) => [XSYS XSYSDefs]
+      append XS YS XSYS,
+      append XSDefs YSDefs XSYSDefs,
+      heap.apply Heap1_E XSYS XSYSDefs E)),
+
+  eval Heap1_E Heap2_V.
+
+(* and now for some tests *)
+
+maintests : testsuite. %testsuite maintests.
+
+>> eval (heap (body ([], binop plus (intconst 10) (intconst 5)))) X ?
+>> Yes:
+>> X := heap (body (tuple [  ] (intconst 15))).
+
+>> eval (heap (body ([], binop plus (let (bind "u" (fun u => body([intconst 6], var u)) )) (intconst 14)  ))) X ?
+>> Yes:
+>> X := heap (bind "u" (fun u => body (tuple [ (intconst 6) ] (intconst 20)))).
+
+>> eval (heap (bind "x" (fun x => (body ([intconst 10], var x))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 10) ] (intconst 10)))).
+
+>> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], var x))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (intconst 15)))).
+
+>> eval (heap (bind "x" (fun x => (body ([intconst 10], binop plus (intconst 10) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 10) ] (intconst 20)))).
+
+>> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (intconst 10) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (intconst 25)))).
+
+>> eval (heap (bind "x" (fun x => (body ([binop plus (intconst 10) (intconst 5)], binop plus (var x) (var x) ))))) X ?
+>> Yes:
+>> X := heap (bind "x" (fun x => body (tuple [ (intconst 15) ] (intconst 30)))).
+
+>> eval (heap (body ([], let (bind "u" (fun u => bind "v" (fun v => body ([binop plus (intconst 2) (intconst 3), binop plus (var u) (intconst 1)], binop plus (var v) (var v)))))))) X ?
+>> Yes:
+>> X := heap (bind "u" (fun u => bind "v" (fun v => body (tuple [ (intconst 5), (intconst 6) ] (intconst 12))))).
+
+(* constructors and pattern-matching *)
+
+constr : string -> list var -> expr.
+
+case : expr -> list (string * bindmany var expr) -> expr.
+
+(*
+  ————————————————————————————————————
+  Γ : c x_1 .. x_n ⇓ Γ : c x_1 .. x_n
+*)
+
+eval (Heap0_Body0) (Heap0_Body0)
+  when heap.open Heap0_Body0 (pfun XS Defs (constr C Vars) => success).
+
+(*
+  Γ : e ⇓ Δ : c_k x_1 .. x_mk   Δ : e_k[x_i/y_i] ⇓ Θ : z
+  ——————————————————————————————————————————————————————
+  Γ : case e of { c_i (y_1 .. y_mi . e_i) }..i ⇓ Θ : z
+*)
+
+eval (Heap0_Body0) (Heap2_Body2)
+  when heap.open Heap0_Body0 (pfun XS Defs (case E Branches) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (case E Branches) =>
+    heap.apply Heap0_E XS Defs E),
+  eval Heap0_E Heap1_Scrutinee,
+
+  heap.open Heap1_Scrutinee (pfun XS Defs (constr Ck Vars) => [E Branches RestK EkSubst]
+    heap.apply_needed Heap0_Body0 XS (case E Branches),
+    list.index_of (pfun Branch => [Rest] eq Branch (Ck, Rest)) Branches N,
+    list.nth Branches N (Ck, RestK),
+    bindmany.apply RestK Vars EkSubst,
+    heap.apply Heap1_EkSubst XS Defs EkSubst),
+
+  eval Heap1_EkSubst Heap2_Body2.
+
+(* forms that normalize to the restricted grammar, to make writing the following tests easier *)
+
+app : expr -> expr -> expr.
+eval (Heap0_Body0) Result
+  when heap.open Heap0_Body0 (pfun XS Defs (app E1 E2) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (app E1 E2) =>
+    heap.apply Heap0_Body1 XS Defs (let (bind _ (fun x => body ([E2], app E1 x))))
+  ),
+
+  eval Heap0_Body1 Result.
+
+constr : string -> list expr -> expr.
+eval (Heap0_Body0) Result
+  when heap.open Heap0_Body0 (pfun XS Defs (constr S ES) => success) :-
+
+  heap.open Heap0_Body0 (pfun XS Defs (constr S ES) => [YS_C YS Body]
+    heap.apply Heap0_Body1 XS Defs (let YS_C),
+    map (fun e y => success) ES YS,
+    bindmany.apply YS_C YS Body,
+    bindmany.open YS_C (pfun NewYS RealBody =>
+      eq RealBody (ES, constr S NewYS)
+    )
+  ),
+
+  eval Heap0_Body1 Result.
+
+(* predicate to isolate the body in a heap when it does not depend on the heap variables *)
+get_body : heap A -> A -> prop.
+get_body Heap Body :-
+  heap.open Heap (pfun XS Defs Body' => eq Body Body').
+
+(* recursive function, non-recursive data *)
+>> (eval (heap (body ([], let (bind "length" (fun length => body (
+      [ (* length = *)
+        lam (fun l => case (var l) [
+          ( "nil", body (intconst 0) ),
+          ( "cons", bind "x" (fun x => bind "xs" (fun xs => body (
+                    let (bind "xs_length" (fun xs_length => body ([ app (var length) xs ],
+                      binop plus (intconst 1) (var xs_length))))))) )
+        ]) ],
+        app (var length) (constr "cons" [intconst 1, constr "cons" [intconst 2, constr "nil" []]]))))))) _X, get_body _X X) ?
+>> Yes:
+>> X := intconst 2.
+
+(* recursive data, non-recursive function *)
+>> (eval (heap (body ([], let (bind "head" (fun head => bind "second" (fun second => body (
+      [ (* head = *)
+        lam (fun l => case (var l) [
+          ( "cons", bind "x" (fun x => bind "xs" (fun xs => body (var x))))
+        ]),
+        (* second = *)
+        lam (fun l => case (var l) [
+          ( "cons", bind "x" (fun x => bind "xs" (fun xs => body (app (var head) xs))))
+        ])
+     ],
+     let (bind "inf_ones" (fun inf_ones => body (
+         [ constr "cons" [intconst 1, var inf_ones] ],
+         app (var second) (constr "cons" [intconst 2, var inf_ones]))))))))))) _X, get_body _X X) ?
+>> Yes:
+>> X := intconst 1.

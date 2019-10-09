@@ -131,4 +131,25 @@ snoc (X :: XS) Y (X :: XS_Y) :- snoc XS Y XS_Y.
 last : list A -> A -> prop.
 last [X] X.
 last (_ :: TL) X :- last TL X.
+
+split : int -> list A -> list A -> list A -> prop.
+split 0 Post [] Post.
+split N (X :: XS) (X :: Pre) Post :-
+  plus 1 N' N,
+  split N' XS Pre Post.
+
+nth : list A -> int -> A -> prop.
+nth L N E :-
+  split N L _ (E :: _).
+
+update_nth : list A -> int -> A -> list A -> prop.
+update_nth L N E L' :-
+  split N L Pre (_ :: Post),
+  split N L' Pre (E :: Post).
+
+index_of : (A -> prop) -> list A -> int -> prop.
+index_of_aux : int -> (A -> prop) -> list A -> int -> prop.
+index_of_aux I Pred (HD :: TL) N :- if (Pred HD) then eq N I else (plus I 1 I', index_of_aux I' Pred TL N).
+index_of Pred L N :- index_of_aux 0 Pred L N.
+
 %end.
