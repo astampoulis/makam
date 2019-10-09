@@ -14,9 +14,11 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        loader: "babel-loader",
-        options: {
-          presets: ["env", "preact"]
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env", "preact"]
+          }
         }
       },
       {
