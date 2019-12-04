@@ -59,6 +59,7 @@ new/testocaml \
 new/testcases_ocaml \
 small/systemf \
 small/lazyeval \
+small/externalparser \
 experiments/stlc_strategies \
 big/testocaml \
 big/testveriml \

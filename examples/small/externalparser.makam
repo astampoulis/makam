@@ -1,0 +1,72 @@
+json : type.
+
+str : string -> json.
+num : int -> json.
+bool : bool -> json.
+dict : list (string * json) -> json.
+array : list json -> json.
+
+%open peg.
+
+pjson : peg json.
+
+external pjson.
+
+extern_def pjson Code 
+  when expansion.str `
+  function (input, offset) {
+    const convert = function (obj) {
+      if (typeof obj == 'string') return "str " + JSON.stringify(obj);
+      else if (typeof obj == 'number') return "num " + JSON.stringify(obj);
+      else if (typeof obj == 'boolean') return "bool " + JSON.stringify(obj);
+      else if (obj instanceof Array) {
+        let result = "array [";
+        let first = true;
+        for (v of obj) {
+          if (!first) result += ", ";
+          result += convert(v);
+          if (first) first = false;
+        }
+        result += "]";
+        return result;
+      }
+      else if (typeof obj == 'object') {
+        let result = "dict [";
+        let first = true;
+        for (key in obj) {
+          if (!first) result += ", ";
+          result += "(" + JSON.stringify(key) + "," + convert(obj[key]) + ")";
+          if (first) first = false;
+        }
+        result += "]";
+        return result;
+      }
+    }
+
+    try {
+      let fullstring = input.slice(offset);
+      
+      // see if there's trailing stuff after the json
+      try { JSON.parse(fullstring); }
+      catch (e) {
+        const end = parseInt(e.message.slice(e.message.indexOf("in JSON at position ") + "in JSON at position ".length));
+        fullstring = fullstring.slice(0, end);
+      }
+      
+      const object = JSON.parse(fullstring.slice(offset));
+      return { newOffset: offset + fullstring.length, result: convert(object) };
+    } catch (e) {
+      return { newOffset: null };
+    }
+  }
+  ` Code.
+
+tests : testsuite. %testsuite tests.
+
+>> (expansion.str `{ "foo": [1, 2, "three"], "bar": { "baz": 2 } }` _String, peg.parse_opt pjson _String X) ?
+>> Yes:
+>> X := (dict [("foo", array [ num 1, num 2, str "three" ]), ("bar", dict [ ("baz", num 2) ])], "").
+
+>> (expansion.str `{} trailing stuff` _String, peg.parse_opt pjson _String X) ?
+>> Yes:
+>> X := (dict [], "trailing stuff").
