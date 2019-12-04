@@ -165,11 +165,17 @@ new_builtin_predicate_from_functions "mult" ( _tInt **> _tInt **> _tInt **> _tPr
           Some i -> return (_PofInt i ~loc:i1.loc)
         | None -> mzero
   in
+  let exact_division x y =
+    let (q, r) = Big_int.quomod_big_int x y in
+    if Big_int.eq_big_int r Big_int.zero_big_int 
+      then q 
+      else failwith "Division had non-zero remainder"
+  in
   [ (* Meta, Const, Const *)
-    convertfunc (fun b res -> Big_int.div res b);
+    convertfunc (fun b res -> exact_division res b);
 
     (* Const, Meta, Const *)
-    convertfunc (fun a res -> Big_int.div res a);
+    convertfunc (fun a res -> exact_division res a);
 
     (* Const, Const, Meta *)
     convertfunc (fun a b -> Big_int.mul a b) ]
