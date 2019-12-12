@@ -25,8 +25,8 @@ fi
 
 # Install OPAM and OCaml
 
-rvm install 2.6
-rvm use 2.6
+rvm install 2.6.3
+rvm use 2.6.3
 
 brew install gpatch https://raw.githubusercontent.com/Homebrew/homebrew-core/7cfc8ee1d8d2bff2f7545170936a9abdb4662547/Formula/opam.rb || true
 
