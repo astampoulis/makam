@@ -241,6 +241,8 @@ let_in : term -> (term -> term) -> term.
 
 (* ------------------- string *)
 
+string : testsuite. %testsuite string.
+
 >> string.concat [ "foo", "bar" ] X ?
 >> Yes:
 >> X := "foobar".
@@ -285,6 +287,48 @@ let_in : term -> (term -> term) -> term.
 >> ((pfun x => eqv `hello ${x}!` `hello world!`) X) ?
 >> Yes:
 >> X := "world".
+
+(* ------------------- int *)
+
+int : testsuite. %testsuite int.
+
+>> mult 2 3 6 ?
+>> Yes.
+
+>> mult 2 3 R ?
+>> Yes:
+>> R := 6.
+
+>> mult 2 R 6 ?
+>> Impossible.
+
+>> mult R 3 6 ?
+>> Impossible.
+
+
+>> div 6 3 Q R ?
+>> Yes:
+>> Q := 2,
+>> R := 0.
+
+>> div 8 3 2 2 ?
+>> Yes.
+
+>> div 6 R 2 0 ?
+>> Impossible.
+
+>> div R 3 2 0 ?
+>> Impossible.
+
+>> div 6 0 Q R ?
+>> Impossible.
+
+>> (plus 4 _B 0, div 25 _B _Q R, plus 6 _Q 0)?
+>> Yes:
+>> R := 1.
+
+>> div 0 0 Q R ?
+>> Impossible.
 
 (* ------------------- concrete reify *)
 

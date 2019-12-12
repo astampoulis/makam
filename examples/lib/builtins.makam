@@ -81,7 +81,10 @@ removableguard : unit -> A -> prop -> prop.
 
 plus : int -> int -> int -> prop.
 mult : int -> int -> int -> prop.
-       (* integer operations. these are bidirectional, so work like minus and div as well. *)
+div : int -> int -> int -> int -> prop.
+       (* integer operations. plus is bidirectional, so works like minus as well. 
+        * mult and div must be used with the first two arguments instantiated
+        *)
 
 lessthan : int -> int -> bool -> prop.
 
