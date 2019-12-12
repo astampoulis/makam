@@ -25,7 +25,7 @@ fi
 
 # Install OPAM and OCaml
 
-brew install gpatch https://raw.githubusercontent.com/Homebrew/homebrew-core/7cfc8ee1d8d2bff2f7545170936a9abdb4662547/Formula/opam.rb || true
+HOMEBREW_NO_AUTO_UPDATE=1 brew install gpatch https://raw.githubusercontent.com/Homebrew/homebrew-core/7cfc8ee1d8d2bff2f7545170936a9abdb4662547/Formula/opam.rb || true
 
 if [[ $OCAML_BIN_EXISTS == "yes" ]]; then
   (cd ~; wget -q $OCAML_BIN_URL; tar xzf opam.tar.gz; rm opam.tar.gz)

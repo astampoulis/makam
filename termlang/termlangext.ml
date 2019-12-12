@@ -154,25 +154,41 @@ new_builtin_predicate_from_functions "plus" ( _tInt **> _tInt **> _tInt **> _tPr
     convertfunc (fun a b -> Big_int.add a b) ]
 end;;
 
-new_builtin_predicate_from_functions "mult" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
+
+new_builtin_predicate "mult" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
+  
   let open RunCtx.Monad in
-  let convertfunc f [ i1 ; i2 ] =
-    perform
-      i1' <-- _PtoInt i1 ;
-      i2' <-- _PtoInt i2 ;
-      let res = try Some (f i1' i2') with _ -> None in
-      match res with
-          Some i -> return (_PofInt i ~loc:i1.loc)
-        | None -> mzero
-  in
-  [ (* Meta, Const, Const *)
-    convertfunc (fun b res -> Big_int.div res b);
+  let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
+  (fun _ -> fun [ i1; i2; res ] -> perform
+    i1' <-- chasePattcanon [] i1 ;
+    i2' <-- chasePattcanon [] i2 ;
+    res' <-- chasePattcanon [] res ;
+    if isMeta i1' || isMeta i2' then mzero
+    else (perform
+            i1'' <-- _PtoInt i1' ;
+            i2'' <-- _PtoInt i2' ;
+            pattcanonUnifyFull res' (_PofInt (Big_int.mul i1'' i2'') ~loc:res.loc)))
 
-    (* Const, Meta, Const *)
-    convertfunc (fun a res -> Big_int.div res a);
+end;;
 
-    (* Const, Const, Meta *)
-    convertfunc (fun a b -> Big_int.mul a b) ]
+new_builtin_predicate "div" ( _tInt **> _tInt **> _tInt **> _tInt **> _tProp ) begin
+  
+  let open RunCtx.Monad in
+  let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
+  (fun _ -> fun [ i1; i2; quo; rem ] -> perform
+    i1' <-- chasePattcanon [] i1 ;
+    i2' <-- chasePattcanon [] i2 ;
+    quo' <-- chasePattcanon [] quo ;
+    rem' <-- chasePattcanon [] rem ;
+    if isMeta i1' || isMeta i2' then mzero
+    else (perform
+            i1'' <-- _PtoInt i1' ;
+            i2'' <-- _PtoInt i2' ;
+            try (perform let (q'', r'') = Big_int.quomod_big_int i1'' i2'' in
+            pattcanonUnifyFull quo' (_PofInt q'' ~loc:quo.loc) ;
+            pattcanonUnifyFull rem' (_PofInt r'' ~loc:rem.loc))
+              with _ -> mzero))
+
 end;;
 
 new_builtin_predicate "lessthan" ( _tInt **> _tInt **> _tBool **> _tProp ) begin
