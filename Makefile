@@ -62,7 +62,6 @@ small/lazyeval \
 small/externalparser \
 experiments/stlc_strategies \
 big/testocaml \
-big/testveriml \
 big/testurweb \
 big/testf2tal \
 tinyml/tests
