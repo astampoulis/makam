@@ -219,15 +219,21 @@ hol.tmof (mvar X Sigma) T' <-
   ctxofsubst Sigma PhiT,
   ctx_body PhiT Sigma T'.
 
-cwftype : ctype -> prop.
-cwftype (ctype PhiT) <-
+cwftype, cwftypeg : ctype -> prop.
+cwftype T <-
+  guard T (cwftypeg T).
+
+cwftypeg (ctype PhiT) when refl.isunif PhiT <-
+  guard PhiT (cwftypeg (ctype PhiT)).
+
+cwftypeg (ctype PhiT) when not(refl.isunif PhiT) <-
   ctx_open PhiT (fun idPhi => {prop| [Phi T]
     ctx_get PhiT idPhi Phi,
     ctx_get PhiS idPhi Phi,
     ctx_body PhiT idPhi T,
     ctx_body PhiS idPhi (hol.sort S),
     hol.tmof T (hol.sort S) |}).
-cwftype cctxwf.
+cwftypeg cctxwf.
 
 
 (* ---------------------------------- *)
@@ -246,17 +252,17 @@ valrestr (packhol _ _ _).
 
 phol      : cexpr -> patt -> patt.
 
-kindof (pihol T F) ktype <-
-  guard T (cwftype T),
+kindofg (pihol T F) ktype <-
+  cwftype T,
   (x:cvar -> ctypeof_var x T -> kindof (F x) ktype).
 
-kindof (sighol T F) ktype <-
-  guard T (cwftype T),
+kindofg (sighol T F) ktype <-
+  cwftype T,
   (x:cvar -> ctypeof_var x T -> kindof (F x) ktype).
 
 
 typeof (lamhol T EF) (pihol T TF) <-
-  guard T (cwftype T),
+  cwftype T,
   (x:cvar -> ctypeof_var x T -> typeof (EF x) (TF x)).
 
 typeof (apphol E CT) T' <-
