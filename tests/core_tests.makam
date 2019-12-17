@@ -31,3 +31,50 @@ testcase makam_core :- ((pfun (X, Y) => eq X 1) (1, 2)).
 testcase makam_core :- eq X 2, ((pfun (X, Y) => eq X 1) (1, 3)).
 testcase makam_core :- (x:string -> ((pfun (X, Y) => eq X Y) (x, x))).
 
+(* Tests for guard *)
+
+testcase makam_core :-
+  guard X (eq Result 1), refl.isunif X, refl.isunif Result,
+  eq X "foo", not(refl.isunif X), not(refl.isunif Result).
+
+testcase makam_core :-
+  removableguard Trigger X (pfun => eq Trigger unit, eq Result1 1),
+  removableguard Trigger Y (pfun => eq Trigger unit, eq Result2 2),
+  refl.isunif X, refl.isunif Y, refl.isunif Result1, refl.isunif Result2,
+
+  eq X "foo",
+  not(refl.isunif X), refl.isunif Y, not(refl.isunif Result1), refl.isunif Result2,
+
+  eq Y "foo",
+  not(refl.isunif X), not(refl.isunif Y), not(refl.isunif Result1), refl.isunif Result2.
+
+testcase makam_core :-
+  removableguard Trigger X (pfun => eq Trigger unit, eq Result1 1),
+  removableguard Trigger Y (pfun => eq Trigger unit, eq Result2 2),
+  refl.isunif X, refl.isunif Y, refl.isunif Result1, refl.isunif Result2,
+
+  eq Y "foo",
+  refl.isunif X, not(refl.isunif Y), refl.isunif Result1, not(refl.isunif Result2),
+
+  eq X "foo",
+  not(refl.isunif X), not(refl.isunif Y), refl.isunif Result1, not(refl.isunif Result2).
+
+testcase makam_core :-
+  guard A (eq Result1 1), guard B (eq Result2 2),
+  refl.isunif A, refl.isunif B, refl.isunif Result1, refl.isunif Result2,
+
+  eq A B,
+  refl.isunif A, refl.isunif B, refl.isunif Result1, refl.isunif Result2,
+
+  eq A "foo",
+  not(refl.isunif A), not(refl.isunif B), not(refl.isunif Result1), not(refl.isunif Result2).
+
+testcase makam_core :-
+  guard A (eq Result1 1), guard B (eq Result2 2),
+  refl.isunif A, refl.isunif B, refl.isunif Result1, refl.isunif Result2,
+
+  eq A B,
+  refl.isunif A, refl.isunif B, refl.isunif Result1, refl.isunif Result2,
+
+  eq B "foo",
+  not(refl.isunif A), not(refl.isunif B), not(refl.isunif Result1), not(refl.isunif Result2).
