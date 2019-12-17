@@ -2462,7 +2462,7 @@ and handleConstraint_mutable c =
     `Unif(bound,p1,p2) -> pattUnifyFull_mutable ~bound:bound p1 p2
   | `UnifCanon(bound,p1,p2) -> pattcanonUnifyFull_mutable ~bound:bound p1 p2
   | (`Demand(idx,triggeridx,p,env) as demand) ->
-    let newMetaIdx =
+    (let newMetaIdx =
      (match getMetaParent_mutable idx with
          Some (p, _) ->
            (match (chasePattneut_mutable [] p).term with
@@ -2470,11 +2470,9 @@ and handleConstraint_mutable c =
              | _ -> None)
        | _ -> None)
     in
-    let isconcrete = Option.is_none newMetaIdx in
-    if isconcrete then addOpenGoal_mutable p env else (
-      let idx' = Option.get newMetaIdx in
-      addConstraint_mutable idx' (`Demand(idx',triggeridx,p,env))
-    )
+    match newMetaIdx with
+      Some(idx') -> addConstraint_mutable idx' (`Demand(idx',triggeridx,p,env))
+    | None -> addOpenGoal_mutable p env)
   | `RemoveDemand(fromidx,whichidx) ->
     let cs = getConstraints_mutable fromidx in
     let cs' = List.filter (function `Demand(_,Some whichidx',_,_) when whichidx == whichidx' -> false | _ -> true) cs in
