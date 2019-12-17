@@ -5,7 +5,7 @@ guardmany_aux : [A] hlist A -> unit -> prop -> prop.
 guardmany_aux [Last] Trigger P :-
   removableguard Trigger Last {prop| P, eq Trigger unit |}.
 
-guardmany_aux (HD :: TL) Trigger P :-
+guardmany_aux (HD :: TL) Trigger P when not(dyn.eq TL (nil: hlist Z)) :-
   guardmany_aux [HD] Trigger P, guardmany_aux TL Trigger P.
 
 guardmany XS P :- guardmany_aux XS Trigger P.
