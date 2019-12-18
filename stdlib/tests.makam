@@ -510,4 +510,7 @@ foo X Y (W, "y") when eq_nounif Y 1.
 >> Yes:
 >> Z := ("x", W).
 
+>> (guardmany [X] (success), failure) ?
+>> Impossible.
+
 %end.
