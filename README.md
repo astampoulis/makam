@@ -38,17 +38,17 @@ that includes a pre-compiled Makam binary.
 
 #### TL;DR
 
-- Install [Node.js 8.x](https://nodejs.org/en/download/)
+- Install [Node.js 12.x](https://nodejs.org/en/download/)
 - `npm install -g makam`
 - `makam`
 
 #### Instructions
 
-- Install [Node.js 8.x](https://nodejs.org/en/download/)
+- Install [Node.js 12.x](https://nodejs.org/en/download/)
 
   In Ubuntu/Debian Linux:
 
-        curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+        curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
         sudo apt-get install -y nodejs
 
   In MacOS X:
@@ -121,7 +121,7 @@ generation. Instructions are available at:
 Most recent versions of Node.js should work. If you are on an old version
 (before `7.x`), you can use `nave` to install a newer Node.js version:
 
-    npm install -g nave && nave use 8
+    npm install -g nave && nave use 12
 
 (Other Node version managers like `n` and `nvm` should also work.)
 

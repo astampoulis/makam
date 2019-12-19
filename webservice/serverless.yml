@@ -34,7 +34,7 @@ resources:
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   memorySize: 2048
   timeout: 45
   versionFunctions: false

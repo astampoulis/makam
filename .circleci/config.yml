@@ -21,7 +21,7 @@ jobs:
       - run: &install-node
           name: Install Node.js and other system dependencies
           command: |
-            [[ -e skip ]] || curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+            [[ -e skip ]] || curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
             [[ -e skip ]] || sudo apt-get install -y nodejs m4
             [[ -e skip ]] || sudo npm install -g yarn
             [[ -e skip ]] || sudo chown -R $(whoami):$(id -gn $(whoami)) ~/.config
