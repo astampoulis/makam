@@ -15,10 +15,9 @@ dyneq X X.
 %end.
 
 islambdaunif : [A]A -> prop.
-islambdaunif X :-
-  if (refl.isunif X) then
-    success
-  else (temp.dyneq X (Z : A -> B), (x:A -> islambdaunif (Z x))).
+islambdaunif (X: A) :-
+  if (refl.isunif X) then success
+  else (not(typ.isunif (_: A)), temp.dyneq X (Z: C -> D), (x:A -> islambdaunif (Z x))).
 
 isnvar : [A]A -> prop.
 isnvar X when newnmeta (pfun x => (eq x X, not(refl.islambdaunif x))).
