@@ -82,24 +82,20 @@ testcase makam_core :-
 (* Tests for assumptions *)
 
 %extend makam_core_tests.
-a1, a2, b, c : int -> prop.
-a1 X :- (b 3 -> c X).
-a2 X :-
-    (b 3 ->
-        ((b 5 -> c X), lessthan 3 X true)).
+a, b, c : int -> prop.
+a X :- (b 3 -> c X).
 
 c 2 :- b 3.
 c 4 :- b 3.
 c 6 :- b 3.
-c X :- ((eq X 100, b 3); (eq X 101, b 3)).
-c X :- if (eq X 200) then b 3 else (eq X 201, b 3).
+c X :- ((b 4 -> (once(b Y), eq Y 4, eq X 100)); (eq X 101, b Y, eq Y 3)).
+c X :- if (b 3, eq X 200) then success else (eq X 201, b 3).
 %end.
 
-testcase makam_core :- makam_core_tests.a1 X, not(refl.isunif X), eq X 2.
-testcase makam_core :- makam_core_tests.a1 4.
-testcase makam_core :- makam_core_tests.a1 X, eq X 4.
-testcase makam_core :- makam_core_tests.a1 X, (eq X 5; eq X 4).
-testcase makam_core :- makam_core_tests.a1 X, (if (makam_core_tests.b 3) then failure else eq X 4).
-testcase makam_core :- makam_core_tests.a1 X, eq X 101.
-testcase makam_core :- makam_core_tests.a1 201.
-testcase makam_core :- makam_core_tests.a2 X, eq X 6.
+testcase makam_core :- makam_core_tests.a X, not(refl.isunif X), eq X 2.
+testcase makam_core :- makam_core_tests.a 4.
+testcase makam_core :- makam_core_tests.a X, eq X 4.
+testcase makam_core :- makam_core_tests.a X, (eq X 5; eq X 4).
+testcase makam_core :- makam_core_tests.a X, (if (makam_core_tests.b 3) then failure else eq X 4).
+testcase makam_core :- makam_core_tests.a X, eq X 101.
+testcase makam_core :- makam_core_tests.a 201.
