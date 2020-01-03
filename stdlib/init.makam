@@ -4,8 +4,6 @@
 %use clause.
 %use typ.
 
-%use fix_builtins.
-
 %use forall.
 
 %use list.

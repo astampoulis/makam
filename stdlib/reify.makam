@@ -51,12 +51,10 @@ reify2 X R :-
   else reify3 X R.
 
 reify3 X R :-
-  if (refl.headargs X Head ArgsDyn, refl.isnvar Head) then
+  if (refl.headargs X Head ArgsDyn, refl.isnvar X) then
     (dyn.to_args ArgsDyn Args, reify_args Args ArgsR,
      eq R (reified.nvar Head ArgsR))
-  else (if refl.isnvar X then
-    (eq R (reified.nvar X []))
-  else reify4 X R).
+  else reify4 X R.
 
 reify4 X R :-
   if (refl.headargs X Head ArgsDyn, refl.isbaseterm X) then
