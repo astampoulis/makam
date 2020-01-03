@@ -149,27 +149,19 @@ module RunCtx =
       let mzero (type a) : a m =
         { twocont = fun ksucceed kfail -> Lazy.force kfail } ;;
 
-      let lift (type a) (e : a BaseMonad.m) : a m =
+      let mplus (type a) (first : a m) (second : (a m) Lazy.t) : a m =
         { twocont = fun ksucceed kfail ->
-          BaseMonad.bind e (fun x -> ksucceed x kfail) } ;;
-
-      let getenv   = lift BaseMonad.getenv ;;
-
-      let inenv (type a) (e : runEnv) (m : a m) : a m =
-        { twocont = fun ksucceed kfail ->
-          BaseMonad.inenv e (m.twocont ksucceed kfail) } ;;
-
-      let mplus (type a) (first: a m) (second : (a m) Lazy.t) : a m =
-        bind getenv (fun e ->
-          { twocont = fun ksucceed kfail ->
-            first.twocont ksucceed (lazy((inenv e (Lazy.force second)).twocont ksucceed kfail)) })
-      ;;
+          first.twocont ksucceed (lazy((Lazy.force second).twocont ksucceed kfail)) };;
 
       let (//) (type a) (first : a m) (second : (a m) Lazy.t) : a m =
         mplus first second ;;
 
       let msum (type a) (choices : ((a m) Lazy.t) list) : a m =
         List.fold_left mplus mzero choices ;;
+
+      let lift (type a) (e : a BaseMonad.m) : a m =
+        { twocont = fun ksucceed kfail ->
+          BaseMonad.bind e (fun x -> ksucceed x kfail) } ;;
 
       let liftl (type a) (e : (a BaseMonad.m) Lazy.t) : a m =
         { twocont = fun ksucceed kfail ->
@@ -311,7 +303,13 @@ module RunCtx =
 
       let setstate s = lift (BaseMonad.setstate s) ;;
 
+      let getenv   = lift BaseMonad.getenv ;;
+
       let getctx   = lift BaseMonad.getctx ;;
+
+      let inenv (type a) (e : runEnv) (m : a m) : a m =
+        { twocont = fun ksucceed kfail ->
+          BaseMonad.inenv e (m.twocont ksucceed kfail) } ;;
 
       module DynArray = struct
         include BaseMonad.DynArray ;;
