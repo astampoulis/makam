@@ -26,6 +26,7 @@ share: [
   "stdlib/init.makam" {"stdlib/init.makam"}
   "stdlib/iso.makam" {"stdlib/iso.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
+  "stdlib/listcomplex.makam" {"stdlib/listcomplex.makam"}
   "stdlib/logging.makam" {"stdlib/logging.makam"}
   "stdlib/map.makam" {"stdlib/map.makam"}
   "stdlib/morerefl.makam" {"stdlib/morerefl.makam"}
