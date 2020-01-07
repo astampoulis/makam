@@ -190,7 +190,7 @@ testcase reify :-
 testcase reify :- unif_alpha_eqv (X: string) (Y: string).
 testcase reify :- not(unif_alpha_eqv (dyn (X: string)) (dyn (Y: int))).
 testcase reify :- unif_alpha_eqv (lam X) (lam Y).
-testcase reify :- not(unif_alpha_eqv (app X Y) (app W W)).
+testcase reify :- unif_alpha_eqv (app X Y) (app W W).
 testcase reify :- not({prop|(x:term -> ([With_x] unif_alpha_eqv (With_x: term) (Without_x: term))) |}).
 
 

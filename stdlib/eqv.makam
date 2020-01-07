@@ -6,4 +6,5 @@ eqv : [A]A -> A -> prop.
 
 (* the refl rule can be disabled on a per-type basis *)
 without_eqv_refl : [A]A -> prop.
-eqv (X : A) X when not(without_eqv_refl (Z : A)).
+eqv (X : A) Y when not(without_eqv_refl (Z : A)) :-
+    (structural @(eqv) X Y).

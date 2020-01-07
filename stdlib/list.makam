@@ -97,18 +97,6 @@ filtermap Pred (HD :: TL) Res <-
   then (eq Res (HD' :: TL'), filtermap Pred TL TL')
   else (filtermap Pred TL Res).
 
-
-(* Succeeds if a list contains an element *)
-contains : A -> list A -> prop.
-contains X (HD :: TL) <- unless (eqv X HD) (contains X TL).
-
-(* Returns a list with the unique elements *)
-unique : list A -> list A -> prop.
-unique L L' <-
-  foldl (pfun cur elm res => (if contains elm cur then eq res cur else eq res (elm :: cur)) )
-        [] L L'', reverse L'' L'.
-
-
 (* Relates a number of lists to a lists where the corresponding elements are tupled together. Overloaded up to 4 lists. *)
 (* Can be used in the opposite direction to unzip into multiple lists. *)
 zip : list A -> list B -> list C -> list (A * B * C) -> prop.

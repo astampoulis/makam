@@ -1,6 +1,5 @@
 %use basic_predicates.
 %use connectives.
-%use eqv.
 %use clause.
 %use typ.
 
@@ -12,24 +11,29 @@
 %use vector.
 %use hlist.
 %use args.
-%use string.
 %use tuple.
 %use option.
-%use set.
-%use map.
 %use dyn.
 
 %use guard.
 %use demand.
 
-%use logging.
-%use testing.
 %use caching.
 
 %use fluid.
-%use iso.
 
 %use generic.
+%use eqv.
+
+%use listcomplex.
+%use string.
+%use set.
+%use map.
+
+%use logging.
+%use testing.
+
+%use iso.
 
 %use morerefl.
 %use reify.

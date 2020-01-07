@@ -42,15 +42,20 @@ structural Rec (X : A -> B) (Y: A -> B) <-
   (x:A -> forall.apply Rec (X x) (Y x)).
 
 (* the essence: forward and backward destructuring *)
-structural Rec X Y when refl.isbaseterm X <-
+structural Rec X Y when not(refl.isunif X), refl.isunif Y, refl.isbaseterm X <-
   refl.headargs X Hd Args,
   map (dyn.call Rec) Args Args',
   refl.headargs Y Hd Args'.
 
-structural Rec X Y when refl.isunif X, refl.isbaseterm Y <-
+structural Rec X Y when refl.isunif X, not(refl.isunif Y), refl.isbaseterm Y <-
   refl.headargs Y Hd Args',
   map (dyn.call Rec) Args Args',
   refl.headargs X Hd Args.
+
+structural Rec X Y when not(refl.isunif X), not(refl.isunif Y), refl.isbaseterm X <-
+  refl.headargs X Hd Args,
+  refl.headargs Y Hd Args',
+  map (dyn.call Rec) Args Args'.
 
 %extend generic.
 fold : [A'] forall A (B -> A -> B -> prop) -> B -> A' -> B -> prop.

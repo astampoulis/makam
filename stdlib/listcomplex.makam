@@ -1,0 +1,13 @@
+(* This is separated from the list module since it
+ * generated an recursive implementation with eqv
+ *)
+
+(* Succeeds if a list contains an element *)
+contains : A -> list A -> prop.
+contains X (HD :: TL) <- unless (eqv X HD) (contains X TL).
+
+(* Returns a list with the unique elements *)
+unique : list A -> list A -> prop.
+unique L L' <-
+  foldl (pfun cur elm res => (if contains elm cur then eq res cur else eq res (elm :: cur)) )
+        [] L L'', reverse L'' L'.
