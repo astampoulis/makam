@@ -34,7 +34,7 @@ run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Fa
 run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
   then (
-    if (verbose_run_tests) then (
+    if (once(verbose_run_tests)) then (
       tostring TestCase TestCaseS,
       log_info_do TestCase "Testcase" `${TestCaseS}`
     ) else success,
