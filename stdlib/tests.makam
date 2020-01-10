@@ -515,26 +515,26 @@ foo X Y (W, "y") when eq_nounif Y 1.
 
 (* -------------------- option (map) *)
 
->> map_op (eq 2) none ?
+>> option.map (eq 2) none ?
 >> Yes.
 
->> map_op (eq 2) (some 1) ?
+>> option.map (eq 2) (some 1) ?
 >> Impossible.
 
->> map_op (eq X) (some 2) ?
+>> option.map (eq X) (some 2) ?
 >> Yes:
 >> X := 2.
 
->> map_op plus (some 1) (some 2) X ?
+>> option.map plus (some 1) (some 2) X ?
 >> Yes:
 >> X := some 3.
 
->> map_op plus none X Y ?
+>> option.map plus none X Y ?
 >> Yes:
 >> X := none,
 >> Y := none.
 
->> map_op plus none (some _) none ?
+>> option.map plus none (some _) none ?
 >> Impossible.
 
 %end.
