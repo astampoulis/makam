@@ -513,4 +513,28 @@ foo X Y (W, "y") when eq_nounif Y 1.
 >> (guardmany [X] (success), failure) ?
 >> Impossible.
 
+(* -------------------- option (map) *)
+
+>> option.map (eq 2) none ?
+>> Yes.
+
+>> option.map (eq 2) (some 1) ?
+>> Impossible.
+
+>> option.map (eq X) (some 2) ?
+>> Yes:
+>> X := 2.
+
+>> option.map plus (some 1) (some 2) X ?
+>> Yes:
+>> X := some 3.
+
+>> option.map plus none X Y ?
+>> Yes:
+>> X := none,
+>> Y := none.
+
+>> option.map plus none (some _) none ?
+>> Impossible.
+
 %end.

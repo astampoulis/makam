@@ -1,3 +1,30 @@
 option : type -> type.
 none : option A.
 some : A -> option A.
+
+%extend option.
+
+(* Map a predicate over (a number of) options.
+
+   We overload the map predicate to work on up to 4 options,
+   but define the most commonly used version last -- the one on 2 lists.
+   This way if no typing constraints are present, the common version will be picked
+   by default. *)
+
+map : (A -> prop) -> option A -> prop.
+map P none.
+map P (some A) <- P A.
+
+map : (A -> B -> C -> prop) -> option A -> option B -> option C -> prop.
+map P none none none.
+map P (some A1) (some A2) (some A3) <- P A1 A2 A3.
+
+map : (A -> B -> C -> D -> prop) -> option A -> option B -> option C -> option D -> prop.
+map P none none none none.
+map P (some A1) (some A2) (some A3) (some A4) <- P A1 A2 A3 A4.
+
+map : (A -> B -> prop) -> option A -> option B -> prop.
+map P none none.
+map P (some A1) (some A2) <- P A1 A2.
+
+%end.
