@@ -595,8 +595,12 @@ num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_
 eof -> !. ;
 
 (* whitespace *)
-comment -> "(*" repV(commentchar) "*)" ;
+comment -> "(*" repV(commentchar) "*)" / "% " repV(slcommentchar) slcommentend;
 commentchar -> !"*)" . ;
+
+slcommentchar -> !slcommentend .;
+slcommentend -> "\n" << () >> / eof;
+
 white ->  &&( . << UString.is_whitespace >> ) . / comment ;
 whiteNoComment -> &&( . << UString.is_whitespace >>) . ;
 whiteNoNewline -> ![\n] white ;
