@@ -73,34 +73,34 @@ kindofall    : list typ -> knd -> prop.
 kindofconstr : typconstr -> knd -> prop.
 
 
-kindof T K <- guard T (kindofg T K).
-kindofg (tarrow T1 T2) ktype <- kindof T1 ktype, kindof T2 ktype.
-kindofg (tpi K TF)     ktype <- bindone.open TF (pfun x t => (kindofg x K -> kindof t ktype)).
-kindofg (tprod TS)     ktype <- kindofall TS ktype.
-kindofg (tbase T TS)   K     <- guard T (kindofbase T (karrow KS K)), map kindof TS KS.
+kindof T K :- guard T (kindofg T K).
+kindofg (tarrow T1 T2) ktype :- kindof T1 ktype, kindof T2 ktype.
+kindofg (tpi K TF)     ktype :- bindone.open TF (pfun x t => (kindofg x K -> kindof t ktype)).
+kindofg (tprod TS)     ktype :- kindofall TS ktype.
+kindofg (tbase T TS)   K     :- guard T (kindofbase T (karrow KS K)), map kindof TS KS.
 
-kindofall TS K <- map (fun t res => kindof t K) TS _.
+kindofall TS K :- map (fun t res => kindof t K) TS _.
 
 (* normal form of types *)
 typapply : typconstr -> list typ -> typ -> prop.
-typapply (typconstr TC) TS T <- bindmany.apply TC TS T.
+typapply (typconstr TC) TS T :- bindmany.apply TC TS T.
 
 nf         : typ -> typ -> prop.
 nf_        : typ -> typ -> prop.
 
-nf X Y <- if refl.isunif X then eq X Y else nf_ X Y.
+nf X Y :- if refl.isunif X then eq X Y else nf_ X Y.
 
 (nf_ X X) when refl.isnvar X.
-nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') <-
+nf_ (tbase TypConstr TypArgs) (tbase TypConstr TypArgs') :-
   map nf TypArgs TypArgs'.
-nf_ (tbase TypConstr TypArgs) T <-
+nf_ (tbase TypConstr TypArgs) T :-
   type_eq_def TypConstr _ Def,
   typapply Def TypArgs T.
-nf_ (tbase TypConstr TypArgs) T <-
+nf_ (tbase TypConstr TypArgs) T :-
   type_eq_def TypConstr _ Def,
   typapply Def TypArgs T0,
   nf T0 T.
-nf_ X Y when (refl.isbaseterm X, not(eq X (tbase _ _))) <-
+nf_ X Y when (refl.isbaseterm X, not(eq X (tbase _ _))) :-
   structural @nf X Y.
 
 
@@ -109,64 +109,64 @@ nf_ X Y when (refl.isbaseterm X, not(eq X (tbase _ _))) <-
 typeof    : term -> typ -> prop.
 
 
-typeof (lam E) (tarrow T1 T2) <-
+typeof (lam E) (tarrow T1 T2) :-
   bindone.open E (pfun x e =>
     (typeof x T1 -> typeof e T2)
   ), kindof T1 ktype.
 
-typeof (app E1 E2) T2 <-
+typeof (app E1 E2) T2 :-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
-typeof (lamt A_E) (tpi K A_T) <-
+typeof (lamt A_E) (tpi K A_T) :-
   bindone.pair A_E A_T A_ET,
   bindone.open A_ET (pfun a (E, T) =>
     (kindofg a K -> typeof E T)
   ).
 
-typeof (appt E T) T' <-
+typeof (appt E T) T' :-
   typeof E (tpi K TF), bindone.apply TF T T', kindof T K.
 
-typeof (tuple ES) (tprod TS) <- map typeof ES TS.
+typeof (tuple ES) (tprod TS) :- map typeof ES TS.
 
-typeof (ascribe E T) T <- typeof E T.
+typeof (ascribe E T) T :- typeof E T.
 
-typeof (raise E) T     <- typeof E (tbase "exn" nil), kindof T ktype.
+typeof (raise E) T     :- typeof E (tbase "exn" nil), kindof T ktype.
 
 gentypeof : term -> typ -> prop.
 
 (* implicit generalization/instantiation and so on *)
 typinst : typ -> typ -> prop.
-typinst (tpi K TF) T' <- bindone.apply TF Tnew Tres, typinst Tres T'.
-typinst T T' when not(eq T (tpi _ _)) <- (eq T T'; nf T T').
+typinst (tpi K TF) T' :- bindone.apply TF Tnew Tres, typinst Tres T'.
+typinst T T' when not(eq T (tpi _ _)) :- (eq T T'; nf T T').
 
 notinenv : typ -> prop.
-notinenv X <- refl.assume_get typeof Assumptions,
+notinenv X :- refl.assume_get typeof Assumptions,
 	      refl.assume_get gentypeof MoreAssumptions,
 	      append Assumptions MoreAssumptions AS,
               unifvars AS (XS : list typ),
               not(find (refl.sameunif X) XS _).
 
 next_typgen : typ -> (typ -> typ) -> prop.
-next_typgen T F <- refl.getunif T (X : typ),
+next_typgen T F :- refl.getunif T (X : typ),
 	           notinenv X,
 	           refl.absunif T X F.
 
 typgen : typ -> typ -> prop.
-typgen T T <- not(next_typgen T _).
-typgen T (tpi K F') <-
+typgen T T :- not(next_typgen T _).
+typgen T (tpi K F') :-
   next_typgen T F,
   bindone.open F' (pfun x f' => (kindofg x K -> typgen (F x) f')).
 
 typgenlist : list typ -> list typ -> prop.
-typgenlist TS TS' <- map typgen TS TS'.
+typgenlist TS TS' :- map typgen TS TS'.
 
 (typeof X T) when refl.isnvar X, gentypeof X T.
-(typeof X T') when refl.isnvar X, gentypeof X T <- typinst T T'.
+(typeof X T') when refl.isnvar X, gentypeof X T :- typinst T T'.
 
-typeof (named X) T <- named_gentypeof X T.
-typeof (named X) T' <- named_gentypeof X T, typinst T T'.
+typeof (named X) T :- named_gentypeof X T.
+typeof (named X) T' :- named_gentypeof X T, typinst T T'.
 
-typeof (app E1 E2) T2 <-
+typeof (app E1 E2) T2 :-
   typeof E1 (tarrow T1 T2),
   typeof E2 T1.
 
@@ -177,17 +177,17 @@ valrestr (lam      _).
 valrestr (lamt     _).
 valrestr (tuple _).
 valrestr (record _).
-valrestr (ascribe E _) <- valrestr E.
+valrestr (ascribe E _) :- valrestr E.
 (valrestr X) when refl.isnvar X.
 
-typeof (let E E') T' <-
+typeof (let E E') T' :-
   typeof E T, 
   if valrestr E
   then (typgen T Tgen, kindof Tgen ktype, bindone.open E' (pfun x e' => (gentypeof x Tgen -> typeof e' T')))
   else (kindof T ktype, bindone.open E' (pfun x e' => (typeof x T -> typeof e' T') )).
 
 (* let rec *)
-typeof (letrec ESE') T' <-
+typeof (letrec ESE') T' :-
 
   bindmany.open ESE' (pfun xs defsBody => [Defs Body]
     eq defsBody (Defs, Body),
@@ -199,12 +199,12 @@ typeof (letrec ESE') T' <-
   ).
   
 (* constructors *)
-typeof (construn C) (tbase Tbase TS) <-
+typeof (construn C) (tbase Tbase TS) :-
   constructor_def C csdefunit Tbase,
   type_variant_def Tbase KS _,
   map kindof TS KS.
 
-typeof (constr C Params) (tbase Tbase TS) <-
+typeof (constr C Params) (tbase Tbase TS) :-
   constructor_def C (csdef PolyParamsT) Tbase,
   type_variant_def Tbase KS _,
   map kindof TS KS,
@@ -212,7 +212,7 @@ typeof (constr C Params) (tbase Tbase TS) <-
   typeof Params ParamsT.
 
 (* records *)
-typeof (projrec E Field) T <-
+typeof (projrec E Field) T :-
 
   field_def Field PolyT Tbase,
   type_record_def Tbase KS _,
@@ -221,13 +221,13 @@ typeof (projrec E Field) T <-
   once (typeof E (tbase Tbase TS)).
 
 guess_type : map string A -> string -> prop.
-guess_type ((Key, _) :: _) Tbase <-
+guess_type ((Key, _) :: _) Tbase :-
   print "guessing!",
   field_def Key _ Tbase.
 
-eqv X Y <- (nf X Z, nf Y Z).
+eqv X Y :- (nf X Z, nf Y Z).
 
-typeof (record FieldsTerms) (tbase Tbase TS) <-
+typeof (record FieldsTerms) (tbase Tbase TS) :-
 
   guess_type FieldsTerms Tbase,
   type_record_def Tbase KS FieldsSpec,
@@ -245,11 +245,11 @@ typebranch   : typ -> typ -> bindmany term (patt * term) -> prop.
 typeofpatt   : patt -> typ -> prop.
 
 
-typeofpatt (pvar X) T <- typeof X T.
+typeofpatt (pvar X) T :- typeof X T.
 
-typeofpatt (ptuple PS) (tprod TS) <- map typeofpatt PS TS.
+typeofpatt (ptuple PS) (tprod TS) :- map typeofpatt PS TS.
 
-typeofpatt (pconstr C P) (tbase Tbase TS) <-
+typeofpatt (pconstr C P) (tbase Tbase TS) :-
 
   constructor_def C (csdef PolyParamsT) Tbase,
   type_variant_def Tbase KS _,
@@ -258,7 +258,7 @@ typeofpatt (pconstr C P) (tbase Tbase TS) <-
   typapply PolyParamsT TS T',
   typeofpatt P T'.
 
-typeofpatt (pconstrun C) (tbase Tbase TS) <-
+typeofpatt (pconstrun C) (tbase Tbase TS) :-
 
   constructor_def C csdefunit Tbase,
   type_variant_def Tbase KS _,
@@ -266,9 +266,9 @@ typeofpatt (pconstrun C) (tbase Tbase TS) <-
 
 typeofpatt pwild T.
 
-typeofpatt (pas P P') T <- typeofpatt P T, typeofpatt P' T.
+typeofpatt (pas P P') T :- typeofpatt P T, typeofpatt P' T.
 
-typeofpatt (precord FieldsPatts) (tbase Tbase TS) <-
+typeofpatt (precord FieldsPatts) (tbase Tbase TS) :-
   
   guess_type FP Tbase,
   type_record_def Tbase KS FieldsSpec,
@@ -278,7 +278,7 @@ typeofpatt (precord FieldsPatts) (tbase Tbase TS) <-
   eqv FieldsTypes FieldsTypes'.
 
 
-typebranch T T' Branch <-
+typebranch T T' Branch :-
   bindmany.open Branch (pfun pattvars branch => [Patt Body]
     eq branch (Patt, Body),
     assume_many typeof pattvars TS {prop|
@@ -287,27 +287,27 @@ typebranch T T' Branch <-
     |}).
   
 
-typeof (match E Branches) T' <-
+typeof (match E Branches) T' :-
   typeof E T, not(refl.isunif T),
   map (typebranch T T') Branches.
 
-typeof (match E Branches) T' <-
+typeof (match E Branches) T' :-
   typeof E T, not(refl.isunif T), nf T Tnf,
   map (typebranch Tnf T') Branches.
 
-typeof (match E Branches) T' <-
+typeof (match E Branches) T' :-
   map (typebranch T T') Branches,
   typeof E T.
 
-typeof (trycatch E Handlers) T <-
+typeof (trycatch E Handlers) T :-
   typeof E T,
   map (typebranch (tbase "exn" []) T) Handlers.
 
 
 (* conversion *)
 (* TODO: move this in an otherwise block *)
-(typeof X Tnf) when refl.isnvar X, once(typeof X T) <- nf T Tnf.
-(typeof E T) when not (refl.isnvar E), not (refl.isunif T), once(typeof E T') <- nf T' Z, nf T Z.
+(typeof X Tnf) when refl.isnvar X, once(typeof X T) :- nf T Tnf.
+(typeof E T) when not (refl.isnvar E), not (refl.isunif T), once(typeof E T') :- nf T' Z, nf T Z.
 
 
 (* ---------------------------- *)
@@ -348,13 +348,13 @@ sigitem_new_assumptions : sigitem -> list prop -> prop.
 typdef_new_assumptions  : string -> list knd -> typdef -> list prop -> prop.
 
 sigof (strlet Name E)
-      (sigval Name T') <- typeof (let E (bind _ (fun y => y))) T, eqv T T'.
+      (sigval Name T') :- typeof (let E (bind _ (fun y => y))) T, eqv T T'.
 
 sigof (strlet_ E)
-      (sigmany [])     <- typeof (let E (bind _ (fun y => y))) T.
+      (sigmany [])     :- typeof (let E (bind _ (fun y => y))) T.
 
 sigof (strletrec ES)
-      (sigmany Vals) <-
+      (sigmany Vals) :-
   bindmany.pair ES ESE' Both,
   bindmany.open Both (pfun xs (ES, ESE') => eq ESE' (ES, tuple xs)),
   bindmany.varnames ES Names,
@@ -366,37 +366,37 @@ typdef_wf : typdef -> list knd -> prop.
 typconstr_wf   : typconstr -> list knd -> prop.
 constructor_wf : constrdef -> list knd -> prop.
 
-typconstr_wf (typconstr TC) KS <-
+typconstr_wf (typconstr TC) KS :-
   bindmany.open TC (fun ts t =>
     assume_many kindofg ts KS (kindof t ktype)
   ).
 
 constructor_wf csdefunit KS.
-constructor_wf (csdef TC) KS <- typconstr_wf TC KS.
+constructor_wf (csdef TC) KS :- typconstr_wf TC KS.
 
-typdef_wf (typdef_variant Constructors) KS <-
+typdef_wf (typdef_variant Constructors) KS :-
   map (pfun nc => [Name Constr] eq nc (Name, Constr), constructor_wf Constr KS ) Constructors.
 
-typdef_wf (typdef_record Fields) KS <-
+typdef_wf (typdef_record Fields) KS :-
   map (pfun nc => [Name TConstr] eq nc (Name, TConstr), typconstr_wf TConstr KS ) Fields.
 
-typdef_wf (typdef_eq TC) KS <-
+typdef_wf (typdef_eq TC) KS :-
   typconstr_wf TC KS.
 
 sigof (strtype Names Arities Defs)
-      (sigtype Names Arities Defs) <-
+      (sigtype Names Arities Defs) :-
   
   map (fun ks => eq (karrow ks ktype)) Arities Kinds,
   assume_many kindofbase Names Kinds (map typdef_wf Defs Arities).
 
-sigof (strtypesingle Name Arity Def) S' <- sigof (strtype [Name] [Arity] [Def]) S'.
+sigof (strtypesingle Name Arity Def) S' :- sigof (strtype [Name] [Arity] [Def]) S'.
       
 
-sigof (strexn Name Constrdef) (sigexn Name Constrdef) <-
+sigof (strexn Name Constrdef) (sigexn Name Constrdef) :-
   constructor_wf Constrdef [].
 
 sigof (strmany []) (sigmany []).
-sigof (strmany (HD :: TL)) (sigmany (HDs :: TLs)) <-
+sigof (strmany (HD :: TL)) (sigmany (HDs :: TLs)) :-
   sigof HD HDs, sigitem_new_assumptions HDs Assum,
   assume_many Assum (sigof (strmany TL) (sigmany TLs)).
 
@@ -406,7 +406,7 @@ sigitem_new_assumptions (sigval Name T) [ named_gentypeof Name T ].
 
 sigitem_new_assumptions (sigtypedecl Name Arity) [ kindofbase Name (karrow Arity ktype) ].
 
-sigitem_new_assumptions (sigtype Names Arities Defs) Assumptions <-
+sigitem_new_assumptions (sigtype Names Arities Defs) Assumptions :-
 
   map (fun ks => eq (karrow ks ktype)) Arities Kinds,
   map (fun n k => eq (kindofbase n k)) Names Kinds Assume_Types,
@@ -415,18 +415,18 @@ sigitem_new_assumptions (sigtype Names Arities Defs) Assumptions <-
 
 sigitem_new_assumptions (sigexn Name Def) [ constructor_def Name Def "exn" ].
 
-sigitem_new_assumptions (sigmany Sigs)  Flattened <-
+sigitem_new_assumptions (sigmany Sigs)  Flattened :-
   map sigitem_new_assumptions Sigs Assums,
   concat Assums Flattened.
 
 typdef_new_assumptions TName KS (typdef_variant Constructors) ( (type_variant_def TName KS Constructors) ::
-                                                                ConstrAssumptions ) <-
+                                                                ConstrAssumptions ) :-
 
   map (pfun nc res => [Name Csdef] eq nc (Name, Csdef), eq res (constructor_def Name Csdef TName) )
       Constructors ConstrAssumptions.
 
 typdef_new_assumptions TName KS (typdef_record Fields) ( (type_record_def TName KS Map) ::
-                                                         FieldAssumptions ) <-
+                                                         FieldAssumptions ) :-
   map.from_list Fields Map,
   map (pfun nt res => [Name Tconstr] eq nt (Name, Tconstr), eq res (field_def Name Tconstr TName) )
       Fields FieldAssumptions.
@@ -437,12 +437,12 @@ typdef_new_assumptions TName KS (typdef_eq TypConstr) [ type_eq_def TName KS Typ
 (* adding assumptions to global environment *)
 
 ocamldo_sig : sigitem -> cmd -> prop.
-ocamldo_sig S (cmd_many Cmds) <-
+ocamldo_sig S (cmd_many Cmds) :-
    sigitem_new_assumptions S Assumptions,
    map (fun g => eq (cmd_newclause (clause g success))) Assumptions Cmds.
 
 ocamldo : stritem -> cmd -> prop.
-ocamldo S C <- sigof S S', ocamldo_sig S' C.
+ocamldo S C :- sigof S S', ocamldo_sig S' C.
 
 (* ------------------------------------------------------------------------- *)
 

@@ -3,7 +3,7 @@
 
 ocaml_test_suite : testsuite.
 
-testcase ocaml_test_suite <-
+testcase ocaml_test_suite :-
   typeof (let (lam (bind "x" (fun x => x))) (bind "id" (fun id => id))) X,
   gracewithnames X X',
   eq_nounif X' (tpi ktype (bind "a0" (fun a => tarrow a a))).
