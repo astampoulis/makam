@@ -68,19 +68,19 @@ rows_disjoint        : typ -> typ -> prop.
 
 kindof_var : string -> knd -> prop.
 
-kindof T K                   	       <- guard T (kindof_ T K).
-kindof_ (tarrow T1 T2) ktype 	       <- kindof T1 ktype, kindof T2 ktype.
-kindof_ (tbase T)      K     	       <- kindof_var T K.
-kindof_ (tpi K TF)     ktype 	       <- (x:typ -> kindof_ x K -> kindof (TF x) ktype).
-kindof_ (tlam K TF)    (karrow K K')   <- (x:typ -> kindof_ x K -> kindof (TF x) K').
-kindof_ (tapp T1 T2)   K'    	       <- kindof T1 (karrow K K'), kindof T2 K.
+kindof T K                   	       :- guard T (kindof_ T K).
+kindof_ (tarrow T1 T2) ktype 	       :- kindof T1 ktype, kindof T2 ktype.
+kindof_ (tbase T)      K     	       :- kindof_var T K.
+kindof_ (tpi K TF)     ktype 	       :- (x:typ -> kindof_ x K -> kindof (TF x) ktype).
+kindof_ (tlam K TF)    (karrow K K')   :- (x:typ -> kindof_ x K -> kindof (TF x) K').
+kindof_ (tapp T1 T2)   K'    	       :- kindof T1 (karrow K K'), kindof T2 K.
 kindof_ (tname N)      kname.
-kindof_ (trowtype C)   ktype 	       <- kindof C (krow ktype).
+kindof_ (trowtype C)   ktype 	       :- kindof C (krow ktype).
 kindof_ (trowempty K)  (krow K).
-kindof_ (trowsingleton C1 C2) (krow K) <- kindof C1 kname, kindof C2 K.
-kindof_ (trowunion C1 C2) (krow K)     <- kindof C1 (krow K), kindof C2 (krow K), rows_disjoint_prove C1 C2.
+kindof_ (trowsingleton C1 C2) (krow K) :- kindof C1 kname, kindof C2 K.
+kindof_ (trowunion C1 C2) (krow K)     :- kindof C1 (krow K), kindof C2 (krow K), rows_disjoint_prove C1 C2.
 kindof_ (trowmap K1 K2) (karrow (karrow K1 K2) (karrow (krow K1) (krow K2))).
-kindof_ (trowconstraint C1 C2 T) ktype <- kindof C1 (krow K1), kindof C2 (krow K2), rows_disjoint_assume C1 C2 (kindof T ktype).
+kindof_ (trowconstraint C1 C2 T) ktype :- kindof C1 (krow K1), kindof C2 (krow K2), rows_disjoint_assume C1 C2 (kindof T ktype).
 kindof_ (tunit) ktype.
 kindof_ (tint) ktype.
 
@@ -88,28 +88,28 @@ teq : typ -> typ -> prop.
 
 (* term typing *)
 
-typeof E T <- guard E (typeof_ E T).
+typeof E T :- guard E (typeof_ E T).
 
-typeof_ (lam T1 E) (tarrow T1 T2) <-
+typeof_ (lam T1 E) (tarrow T1 T2) :-
   (x:term -> typeof_ x T1 -> typeof (E x) T2), kindof T1 ktype.
 
-typeof_ (app E1 E2) T2 <-
+typeof_ (app E1 E2) T2 :-
   typeof E1 (tarrow T1 T2), typeof E2 T1.
 
-typeof_ (lamt K E) (tpi K TF) <-
+typeof_ (lamt K E) (tpi K TF) :-
   (x:typ -> kindof_ x K -> typeof (E x) (TF x)).
 
-typeof_ (appt E T) (TF T) <-
+typeof_ (appt E T) (TF T) :-
   typeof E (tpi K TF), kindof T K.
 
-typeof_ (let E T E') T' <-
+typeof_ (let E T E') T' :-
   typeof E T, (x:term -> typeof_ x T -> typeof (E' x) T').
 
-typeof_ (lett T K E') T' <-
+typeof_ (lett T K E') T' :-
   kindof T K, typeof (E' T) T'.
 
 (* let rec *)
-typeof_ (letrec ES E') T' <-
+typeof_ (letrec ES E') T' :-
 
   bindmutrec_newvars ES (fun xs => {prop| [Bodies Rest Assumption]
     many_assume typeof_ xs TS ({prop|
@@ -123,54 +123,54 @@ typeof_ (letrec ES E') T' <-
      typeof Rest T' |}) |}).
      
 typeof_ rowempty (trowtype (trowempty ktype)).
-typeof_ (rowsingleton N E) (trowtype (trowsingleton N T)) <-
+typeof_ (rowsingleton N E) (trowtype (trowsingleton N T)) :-
   kindof N kname, typeof E T.
-typeof_ (rowproject E N) T <-
+typeof_ (rowproject E N) T :-
   kindof N kname,
   typeof E (trowtype (trowunion (trowsingleton N T) M)).
-typeof_ (rowremove E N) (trowtype M) <-
+typeof_ (rowremove E N) (trowtype M) :-
   kindof N kname,
   typeof E (trowtype (trowunion (trowsingleton N T) M)).
-typeof_ (rowunion E1 E2) (trowtype (trowunion C1 C2)) <-
+typeof_ (rowunion E1 E2) (trowtype (trowunion C1 C2)) :-
   typeof E1 (trowtype C1), typeof E2 (trowtype C2), rows_disjoint_prove C1 C2.
-typeof_ (rowneedcon C1 C2 E) (trowconstraint C1 C2 T) <-
+typeof_ (rowneedcon C1 C2 E) (trowconstraint C1 C2 T) :-
   kindof C1 (krow K1), kindof C2 (krow K2), rows_disjoint_assume C1 C2 (typeof E T).
-typeof_ (rowprovcon E) T <-
+typeof_ (rowprovcon E) T :-
   typeof E (trowconstraint C1 C2 T), rows_disjoint_prove C1 C2.
 
 typeof_ (eunit) (tunit).
 typeof_ (intconst _) tint.
 
 intplus : term -> term -> term.
-typeof_ (intplus E1 E2) tint <- typeof E1 tint, typeof E2 tint.
+typeof_ (intplus E1 E2) tint :- typeof E1 tint, typeof E2 tint.
 
 magic : term -> term.
 expandmagic : term -> typ -> term -> prop.
-expandmagic E T E' <-
+expandmagic E T E' :-
   case T
    [ (tpi K TF, expandmagic (appt E Tunif) (TF Tunif) E'),
      (trowconstraint _ _ T', expandmagic (rowprovcon E) T' E'),
      (_, eq E E') ].
 
-typeof_ (magic E) T' <- typeof E T, expandmagic E T E', typeof_ E' T'.
+typeof_ (magic E) T' :- typeof E T, expandmagic E T E', typeof_ E' T'.
 
 (* conversion *)
-(typeof_ E T) when not (refl.isunif T), once(typeof_ E T') <- teq T' T.
+(typeof_ E T) when not (refl.isunif T), once(typeof_ E T') :- teq T' T.
 
 
 toption : typ -> typ.
 esome : term -> term.
 enone : term.
-kindof_ (toption T) ktype <- kindof T ktype.
-typeof_ (esome E) (toption T) <- kindof T ktype, typeof E T.
-typeof_ (enone)   (toption T) <- kindof T ktype.
+kindof_ (toption T) ktype :- kindof T ktype.
+typeof_ (esome E) (toption T) :- kindof T ktype, typeof E T.
+typeof_ (enone)   (toption T) :- kindof T ktype.
 
 tlist : typ -> typ.
 econs : term -> term -> term.
 enil  : term.
-kindof_ (tlist T) ktype <- kindof T ktype.
-typeof_ (econs E ES) (tlist T) <- kindof T ktype, typeof E T, typeof ES (tlist T).
-typeof_ (enil) (tlist T) <- kindof T ktype.
+kindof_ (tlist T) ktype :- kindof T ktype.
+typeof_ (econs E ES) (tlist T) :- kindof T ktype, typeof E T, typeof ES (tlist T).
+typeof_ (enil) (tlist T) :- kindof T ktype.
 
 
 (* head-normal forms, row summarization, etc. *)
@@ -178,9 +178,9 @@ hnf : typ -> typ -> prop.
 hnf_ : typ -> typ -> prop.
 hnfvar : typ -> typ -> prop.
 
-(hnf_ T Res) when not(refl.isunif T) <- hnf T Res.
+(hnf_ T Res) when not(refl.isunif T) :- hnf T Res.
 
-hnf T Res <-
+hnf T Res :-
     (caseguard T
        [ (X, refl.isunif X, eq Res X),
 	 (tapp LAM C2, hnf LAM (tlam _ C1), hnf (C1 C2) Res),
@@ -205,11 +205,11 @@ hnf T Res <-
 	 (_, success, eq Res T) ]).
 
 
-(typeof_ X T') when (newnmeta (fun x => eq x X)) <- once(typeof_ X T), hnf T T'.
+(typeof_ X T') when (newnmeta (fun x => eq x X)) :- once(typeof_ X T), hnf T T'.
 
 
 row_summary : typ -> map typ unit -> list typ -> prop.
-row_summary T Res Unifs <-
+row_summary T Res Unifs :-
   hnf T T',
     (caseguard T'
 	  [ (X, refl.isunif X,
@@ -228,13 +228,13 @@ row_summary T Res Unifs <-
 
 cartesian_product : (A -> B -> prop) -> list A -> list B -> list prop -> prop.
 cartesian_product P [] _ [].
-cartesian_product P (HD :: TL) L Props <-
+cartesian_product P (HD :: TL) L Props :-
   map (fun elm => eq (P HD elm)) L HDProp,
   cartesian_product P TL L TLProp,
   append HDProp TLProp Props.
 
 disjointness_assumptions : typ -> typ -> list prop -> prop.
-disjointness_assumptions T1 T2 ASSUM <-
+disjointness_assumptions T1 T2 ASSUM :-
   guardmany [dyn T1, dyn T2] {prop|
     row_summary T1 (map L1) [],
     row_summary T2 (map L2) [],
@@ -244,17 +244,17 @@ disjointness_assumptions T1 T2 ASSUM <-
     cartesian_product rows_disjoint L2' L1' Prop2,
     append Prop1 Prop2 ASSUM |}.
 
-rows_disjoint_assume T1 T2 P <-
+rows_disjoint_assume T1 T2 P :-
   guardmany [dyn T1, dyn T2] {prop|
   disjointness_assumptions T1 T2 ASSUM,
   assumemany ASSUM P |}.
 
 rows_disjoint_prove_atomic : typ -> typ -> prop.
 (rows_disjoint_prove_atomic T1 T2) when rows_disjoint T1' T2', eq_benign T1 T1', eq_benign T2 T2'.
-(rows_disjoint_prove_atomic T1 T2) when not(refl.isunif T1), not(refl.isunif T2), eq T1 (tname N1), eq T2 (tname N2) <- not(eq N1 N2).
+(rows_disjoint_prove_atomic T1 T2) when not(refl.isunif T1), not(refl.isunif T2), eq T1 (tname N1), eq T2 (tname N2) :- not(eq N1 N2).
 
 
-rows_disjoint_prove T1 T2 <-
+rows_disjoint_prove T1 T2 :-
   row_summary T1 (map L1) U1,
   row_summary T2 (map L2) U2,
   map (fun elm res => eq elm (tuple res unit)) L1 L1',
@@ -277,13 +277,13 @@ partition_union : tuple (list (tuple typ typ)) (tuple (list (tuple typ unit)) (l
                   tuple (list (tuple typ typ)) (tuple (list (tuple typ unit)) (list (tuple typ unit))) ->
                   tuple (list (tuple typ typ)) (tuple (list (tuple typ unit)) (list (tuple typ unit))) ->
                   prop.
-partition_union (L1, L2, L3) (L1', L2', L3') (L1'', L2'', L3'') <-
+partition_union (L1, L2, L3) (L1', L2', L3') (L1'', L2'', L3'') :-
   append L1 L1' L1'',
   append L2 L2' L2'',
   append L3 L3' L3''.
     
 row_partition : typ -> list (tuple typ typ) -> list (tuple typ unit) -> list (tuple typ unit) -> prop.
-row_partition T Singletons Unifs Others <-
+row_partition T Singletons Unifs Others :-
   hnf T T',
     caseguard T'
 	  [ (X, refl.isunif X,
@@ -300,13 +300,13 @@ row_partition T Singletons Unifs Others <-
 
 row_remove : list (tuple A B) -> tuple A B -> list (tuple A B) -> bool -> prop.
 row_remove [] _ [] false.
-(row_remove ( (Key', Val') :: Rest ) ( Key, Val ) Rest true) when eq_benign Key Key' <- eq Val Val'.
-(row_remove ( (Key', Val') :: Rest ) ( Key, Val ) ( (Key', Val') :: Rest' ) Found) when not(eq_benign Key Key') <-
+(row_remove ( (Key', Val') :: Rest ) ( Key, Val ) Rest true) when eq_benign Key Key' :- eq Val Val'.
+(row_remove ( (Key', Val') :: Rest ) ( Key, Val ) ( (Key', Val') :: Rest' ) Found) when not(eq_benign Key Key') :-
   row_remove Rest (Key, Val) Rest' Found.
 
 row_cross_off : list (tuple A B) -> list (tuple A B) -> list (tuple A B) -> list (tuple A B) -> prop.
 row_cross_off [] L2 [] L2.
-row_cross_off ( HD :: TL ) L2 L1' L2' <-
+row_cross_off ( HD :: TL ) L2 L1' L2' :-
   (if row_remove L2 HD L2'' true
    then row_cross_off TL L2'' L1' L2'
    else (row_cross_off TL L2 TL' L2', eq L1' ( HD :: TL' ))).
@@ -316,28 +316,28 @@ row_union none T (some T).
 row_union (some T) T' (some (trowunion T T')).
 
 row_reconstruct : tuple (list (tuple typ typ)) (tuple (list (tuple typ unit)) (list (tuple typ unit))) -> typ -> prop.
-row_reconstruct (Singletons, Unifs, Others) T <-
+row_reconstruct (Singletons, Unifs, Others) T :-
   foldl (fun cur elm res => {prop| [N T] eq elm (N, T), row_union cur (trowsingleton N T) res |}) none Singletons T1,
   foldl (fun cur elm res => {prop| [N] eq elm (N, unit), row_union cur N res |}) T1 Unifs T2,
   foldl (fun cur elm res => {prop| [N] eq elm (N, unit), row_union cur N res |}) T2 Others T3,
   (if eq T3 (some T) then success else eq T (trowempty ktype)).
 
 is_concrete_name : typ -> prop.
-is_concrete_name N <-
+is_concrete_name N :-
   not(refl.isunif N), eq N (tname N'), not(refl.isunif N').
 concrete_names_partition : list (tuple typ A) -> prop.
-concrete_names_partition L <-
+concrete_names_partition L :-
   map0 (fun elm => {prop| [N N' T] eq elm (N, T), is_concrete_name N |}) L.
 
 
 deepguard : A -> prop -> prop.
-deepguard (X : A) P <-
+deepguard (X : A) P :-
   gather_all_unifs (dyn X) (Y : typ) Unifs,
   map (fun elm => eq (dyn elm)) Unifs DynUnifs,
   guardmany DynUnifs P.
 
 
-troweq T1 T2 <-
+troweq T1 T2 :-
   row_partition T1 Ston1 Unif1 Misc1,
   row_partition T2 Ston2 Unif2 Misc2,
   row_cross_off Ston1 Ston2 Ston1' Ston2',
@@ -375,7 +375,7 @@ troweq T1 T2 <-
 
 dynteq : dyn -> dyn -> prop.
 
-teq T1 T2 <-
+teq T1 T2 :-
   hnf T1 T1', hnf T2 T2',
   caseguard (T1', T2')
    [ ( (X1, X2), {prop| once( (refl.isunif X1; refl.isunif X2) ) |}, eq T1' T2'),
@@ -385,7 +385,7 @@ teq T1 T2 <-
 	                  refl.headargs T2' HD ARGS2,
 	                  map (structural dynteq) ARGS1 ARGS2 |}) ].
 
-dynteq (dyn T) (dyn T') <-
+dynteq (dyn T) (dyn T') :-
   (if (eq (dyn T) (dyn (X : typ)), eq (dyn T') (dyn (Y : typ)))
    then teq X Y
    else structural dynteq (dyn T) (dyn T')).
@@ -394,7 +394,7 @@ letdef : [E] string -> E -> cmd -> prop.
 letdef X E (cmd_many [ cmd_newterm X (_ : term),
                        cmd_stage (fun res => {prop|
 	                  refl.lookup X C,
-	                  eq res (cmd_newclause (clause (typeof_ C T) success)) |}) ]) <-
+	                  eq res (cmd_newclause (clause (typeof_ C T) success)) |}) ]) :-
   typeof E T.
 
 
@@ -404,5 +404,5 @@ typedef X T (cmd_many [ cmd_newterm X (_ : typ),
 	                  refl.lookup X C,
 	                  eq res (cmd_many
 	                    [ cmd_newclause (clause (kindof_ C K) success),
-			      cmd_newclause (clause (hnfvar C T) success) ]) |}) ]) <-
+			      cmd_newclause (clause (hnfvar C T) success) ]) |}) ]) :-
   kindof T K.

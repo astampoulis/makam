@@ -68,7 +68,7 @@ ctxofsubst (substconcrete nil) (ctxconcrete (lbnil _)).
    ——————————
    ⊢ (t, σ) : (– : t') x.Φ
 *)
-ctxofsubst (substconcrete (cons HD TL)) (ctxconcrete (lbcons HDt Rest)) <-
+ctxofsubst (substconcrete (cons HD TL)) (ctxconcrete (lbcons HDt Rest)) :-
   hol.tmof HD HDt,
   ctxofsubst (substconcrete TL) (ctxconcrete (Rest HD)).
 
@@ -78,7 +78,7 @@ ctxofsubst (substconcrete (cons HD TL)) (ctxconcrete (lbcons HDt Rest)) <-
    ——————————
    ⊢ (id_φ, σ) : (– : φ) ς.Φ
 *)
-ctxofsubst (substparam ID_Phi TL) (ctxparam Phi Rest) <-
+ctxofsubst (substparam ID_Phi TL) (ctxparam Phi Rest) :-
   ctypeof_var Phi cctxwf,
   ctxofsubst_var ID_Phi Phi,
   ctxofsubst (substconcrete TL) (ctxconcrete (Rest ID_Phi)).
@@ -91,11 +91,11 @@ ctxofsubst (substparam ID_Phi TL) (ctxparam Phi Rest) <-
      and runs P with that identity substitution *)
 
 ctx_open : ctx A -> (subst -> prop) -> prop.
-ctx_open (ctxconcrete Phi) F <-
+ctx_open (ctxconcrete Phi) F :-
   listbindmany_newvars Phi (fun vars => {prop| [Typs]
    listbindmany_getinfo Phi vars Typs,
    many_assume hol.tmof vars Typs (F (substconcrete vars)) |}).
-ctx_open (ctxparam Phi Rest) F <-
+ctx_open (ctxparam Phi Rest) F :-
   (id_phi:svar -> ctxofsubst_var id_phi Phi ->
    listbindmany_newvars (Rest id_phi) (fun vars => {prop| [Typs]
      listbindmany_getinfo (Rest id_phi) vars Typs,
@@ -106,9 +106,9 @@ ctx_open (ctxparam Phi Rest) F <-
      return the body of the contextual term *)
 
 ctx_body : ctx A -> subst -> A -> prop.
-ctx_body (ctxconcrete PhiA) (substconcrete Sigma) A <-
+ctx_body (ctxconcrete PhiA) (substconcrete Sigma) A :-
    listbindmany_apply PhiA Sigma A.
-ctx_body (ctxparam Phi Rest) (substparam IDPhi RestSigma) A <-
+ctx_body (ctxparam Phi Rest) (substparam IDPhi RestSigma) A :-
    listbindmany_apply (Rest IDPhi) RestSigma A.
 
 (* ctx_get ([Φ]a) id{Φ} ([Φ]())
@@ -116,39 +116,39 @@ ctx_body (ctxparam Phi Rest) (substparam IDPhi RestSigma) A <-
 ctx_get : ctx A -> subst -> ctx unit -> prop.
 ctx_get (ctxconcrete (lbnil _)) (substconcrete nil) (ctxconcrete (lbnil unit)).
 ctx_get (ctxconcrete (lbcons HDt Rest)) (substconcrete (cons HD TL))
-        (ctxconcrete (lbcons HDt Rest')) <-
+        (ctxconcrete (lbcons HDt Rest')) :-
   ctx_get (ctxconcrete (Rest HD)) (substconcrete TL) (ctxconcrete (Rest' HD)).
 ctx_get (ctxparam Phi Rest) (substparam IDphi Sigma')
-        (ctxparam Phi Rest') <-
+        (ctxparam Phi Rest') :-
   ctx_get (ctxconcrete (Rest IDphi)) (substconcrete Sigma') (ctxconcrete (Rest' IDphi)).
 
 
 ctx_get_partial : ctx A -> subst -> ctx unit -> ctx A -> prop.
 ctx_get_partial A (substconcrete nil) (ctxconcrete (lbnil unit)) A.
 ctx_get_partial (ctxconcrete (lbcons HDt Rest)) (substconcrete (cons HD TL))
-        (ctxconcrete (lbcons HDt Rest')) RestEnd <-
+        (ctxconcrete (lbcons HDt Rest')) RestEnd :-
   ctx_get_partial (ctxconcrete (Rest HD)) (substconcrete TL) (ctxconcrete (Rest' HD)) RestEnd.
 ctx_get_partial (ctxparam Phi Rest) (substparam IDphi Sigma')
-        (ctxparam Phi Rest') RestEnd <-
+        (ctxparam Phi Rest') RestEnd :-
   ctx_get_partial (ctxconcrete (Rest IDphi)) (substconcrete Sigma') (ctxconcrete (Rest' IDphi)) RestEnd.
 
 (* ctx_append ([Φ]a) ([Φ']b) ([Φ, Φ']b) *)
 ctx_append : ctx A -> listbindmany hol.term hol.term B -> ctx B -> prop.
-ctx_append (ctxconcrete L) L' (ctxconcrete L'') <-
+ctx_append (ctxconcrete L) L' (ctxconcrete L'') :-
   listbindmany_append L L' L''.
-ctx_append (ctxparam Phi L) L' (ctxparam Phi L'') <-
+ctx_append (ctxparam Phi L) L' (ctxparam Phi L'') :-
   (id_phi:svar -> listbindmany_append (L id_phi) L' (L'' id_phi)).
 
 
 subst_append : subst -> list hol.term -> subst -> prop.
-subst_append (substconcrete L) L' (substconcrete L'') <-
+subst_append (substconcrete L) L' (substconcrete L'') :-
   append L L' L''.
-subst_append (substparam IDPhi L) L' (substparam IDPhi L'') <-
+subst_append (substparam IDPhi L) L' (substparam IDPhi L'') :-
   append L L' L''.
 
 (* Actual contextual judgements *)
 
-ctypeof (cterm CtxT) (ctype CtxT') <-
+ctypeof (cterm CtxT) (ctype CtxT') :-
   ctx_open CtxT (fun (idCtx : subst) =>  {prop| [Ctx T T']
   ctx_get CtxT  idCtx Ctx,
   ctx_get CtxT' idCtx Ctx,
@@ -157,10 +157,10 @@ ctypeof (cterm CtxT) (ctype CtxT') <-
   hol.tmof T T' |}).
 
 ctypeof (cctx (ctxconcrete (lbnil _))) cctxwf.
-ctypeof (cctx (ctxconcrete (lbcons HD TL))) cctxwf <-
+ctypeof (cctx (ctxconcrete (lbcons HD TL))) cctxwf :-
   hol.tmof HD (hol.sort S),
   (x:hol.term -> hol.tmof x HD -> ctypeof (cctx (ctxconcrete (TL x))) cctxwf).
-ctypeof (cctx (ctxparam Phi Rest)) cctxwf <-
+ctypeof (cctx (ctxparam Phi Rest)) cctxwf :-
   ctypeof_var Phi cctxwf,
   (id_phi : svar -> ctxofsubst_var id_phi Phi ->
      ctypeof (cctx (ctxconcrete (Rest id_phi))) cctxwf).
@@ -174,7 +174,7 @@ svar_subst_aux   : svar -> subst -> dyn -> dyn -> prop.
 cvar_subst       : (cvar -> A) -> cexpr -> A -> prop.
 svar_subst       : (svar -> A) -> subst -> A -> prop.
 
-svar_subst_aux Var What (dyn Tin) (dyn Tout) <-
+svar_subst_aux Var What (dyn Tin) (dyn Tout) :-
   defcase (dyn Tin)
      (structural (svar_subst_aux Var What) (dyn Tin) (dyn Tout))
      [ (dyn (substparam Var Rest), {prop|
@@ -182,7 +182,7 @@ svar_subst_aux Var What (dyn Tin) (dyn Tout) <-
 	subst_append What Rest' Result,
 	dyneq Result Tout |}) ].
 
-cvar_subst_aux Var What (dyn Tin) (dyn Tout) <-
+cvar_subst_aux Var What (dyn Tin) (dyn Tout) :-
   defcase (dyn Tin)
      (structural (cvar_subst_aux Var What) (dyn Tin) (dyn Tout))
      [ (dyn (mvar Var Sigma),
@@ -209,24 +209,24 @@ cvar_subst_aux Var What (dyn Tin) (dyn Tout) <-
 
 	         dyneq Tout Phi'A' |}) |}) |}) ].
 
-cvar_subst F What Res <- (x:cvar -> structural (cvar_subst_aux x What) (dyn (F x)) (dyn Res)).
-svar_subst F What Res <- (x:svar -> structural (svar_subst_aux x What) (dyn (F x)) (dyn Res)).
+cvar_subst F What Res :- (x:cvar -> structural (cvar_subst_aux x What) (dyn (F x)) (dyn Res)).
+svar_subst F What Res :- (x:svar -> structural (svar_subst_aux x What) (dyn (F x)) (dyn Res)).
 
 (* We are ready to add contextual terms to λHOL. *)
 
-hol.tmof (mvar X Sigma) T' <-
+hol.tmof (mvar X Sigma) T' :-
   ctypeof_var X (ctype PhiT),
   ctxofsubst Sigma PhiT,
   ctx_body PhiT Sigma T'.
 
 cwftype, cwftypeg : ctype -> prop.
-cwftype T <-
+cwftype T :-
   guard T (cwftypeg T).
 
-cwftypeg (ctype PhiT) when refl.isunif PhiT <-
+cwftypeg (ctype PhiT) when refl.isunif PhiT :-
   guard PhiT (cwftypeg (ctype PhiT)).
 
-cwftypeg (ctype PhiT) when not(refl.isunif PhiT) <-
+cwftypeg (ctype PhiT) when not(refl.isunif PhiT) :-
   ctx_open PhiT (fun idPhi => {prop| [Phi T]
     ctx_get PhiT idPhi Phi,
     ctx_get PhiS idPhi Phi,
@@ -252,32 +252,32 @@ valrestr (packhol _ _ _).
 
 phol      : cexpr -> patt -> patt.
 
-kindofg (pihol T F) ktype <-
+kindofg (pihol T F) ktype :-
   cwftype T,
   (x:cvar -> ctypeof_var x T -> kindof (F x) ktype).
 
-kindofg (sighol T F) ktype <-
+kindofg (sighol T F) ktype :-
   cwftype T,
   (x:cvar -> ctypeof_var x T -> kindof (F x) ktype).
 
 
-typeof (lamhol T EF) (pihol T TF) <-
+typeof (lamhol T EF) (pihol T TF) :-
   cwftype T,
   (x:cvar -> ctypeof_var x T -> typeof (EF x) (TF x)).
 
-typeof (apphol E CT) T' <-
+typeof (apphol E CT) T' :-
   typeof E (pihol CTt TF),
   cvar_subst TF CT T',
   ctypeof CT CTt.
 
-typeof (packhol CT E Et) Et <-
+typeof (packhol CT E Et) Et :-
   eq Et (sighol CTt Tf),
   ctypeof CT CTt,
   cvar_subst Tf CT T',
   typeof E T',
   guard CTt (kindof Et ktype).
 
-typeof (unpackhol E EF) T' <-
+typeof (unpackhol E EF) T' :-
   typeof E (sighol Tt TF),
   (u:cvar -> x:term ->
    ctypeof_var u Tt ->
@@ -294,15 +294,15 @@ ctypeof_patt : cexpr -> ctype -> prop.
 ctx_id_subst   : subst -> prop.
  
 modify_id_subst : (subst -> subst -> prop) -> prop -> prop.
-modify_id_subst Mod Next <-
+modify_id_subst Mod Next :-
   ctx_id_subst Cur, Mod Cur Cur',
   refl.assume_reset ctx_id_subst {prop| (ctx_id_subst Cur' -> Next) |}.
 
 subst_snoc : hol.term -> subst -> subst -> prop.
-subst_snoc X S S' <- subst_append S [X] S'.
+subst_snoc X S S' :- subst_append S [X] S'.
 
 subst_prefix : subst -> subst -> prop.
-subst_prefix S S' <- subst_append S _ S'.
+subst_prefix S S' :- subst_append S _ S'.
 
 cpatt_unif_var : cvar -> prop.
 subst_wf_patt  : subst -> prop.
@@ -312,41 +312,41 @@ subst_wf_patt  : subst -> prop.
 wf_patt    : term -> prop.
 wellsorted_patt : term -> prop.
 
-wellsorted_patt X <-
+wellsorted_patt X :-
   tmof X T, tmof T (sort S), not(eq S sprop).
 
-wf_patt X <-
+wf_patt X :-
    newvmeta (fun x => eq x X),
    wellsorted_patt X.
 
 wf_patt (sort _).
 
-wf_patt (pi S T1 T2) <-
+wf_patt (pi S T1 T2) :-
    wf_patt T1,
    (x:term -> tmof x T1 -> modify_id_subst (subst_snoc x) (wf_patt (T2 x)) ).
 
-wf_patt (lam T E) <- 
+wf_patt (lam T E) :- 
    wellsorted_patt (lam T E),
    (x:term -> tmof x T -> modify_id_subst (subst_snoc x) (wf_patt (E x))).
 
-wf_patt (app E1 K E2) <-
+wf_patt (app E1 K E2) :-
    tmof (app E1 K E2) _, tmof K (sort S), not(eq S sprop),
    wf_patt E1,
    wf_patt E2.
 
-wf_patt (eqp T1 T2) <-
+wf_patt (eqp T1 T2) :-
    tmof T1 T',
    tmof T' (sort stype),
    wf_patt T1,
    wf_patt T2.
 
-wf_patt (mvar X Sigma) <-
+wf_patt (mvar X Sigma) :-
    not(cpatt_unif_var X),
    wellsorted_patt (mvar X Sigma),
    subst_wf_patt Sigma.
 
 
-wf_patt (mvar X Sigma) <-
+wf_patt (mvar X Sigma) :-
    cpatt_unif_var X,
    ctypeof_var X (ctype CtxT),
    bindrel_wf X,
@@ -361,17 +361,17 @@ wf_patt (mvar X Sigma) <-
 
 %end.
 
-subst_wf_patt (substconcrete L) <- map0 hol.wf_patt L.
-subst_wf_patt (substparam _ L)  <- map0 hol.wf_patt L.
+subst_wf_patt (substconcrete L) :- map0 hol.wf_patt L.
+subst_wf_patt (substparam _ L)  :- map0 hol.wf_patt L.
 
-ctypeof_patt (cterm CtxT) (ctype CtxT') <-
+ctypeof_patt (cterm CtxT) (ctype CtxT') :-
   
    ctypeof (cterm CtxT) (ctype CtxT'),
    ctx_open CtxT (fun idCtx => {prop| [T]
     ctx_body CtxT idCtx T,
     (ctx_id_subst idCtx -> hol.wf_patt T) |}).
 
-(ctypeof_patt (cctx CtxU) (cctxwf)) when eq CtxU (ctxparam Phi (fun idPhi => lbcons (T idPhi) (fun x => lbnil unit))) <-
+(ctypeof_patt (cctx CtxU) (cctxwf)) when eq CtxU (ctxparam Phi (fun idPhi => lbcons (T idPhi) (fun x => lbnil unit))) :-
 
    ctypeof (cctx CtxU) (cctxwf),
    ctx_open (ctxparam Phi (fun idPhi => lbnil unit)) (fun idCtx => {prop| [IdPhi]
@@ -381,8 +381,8 @@ ctypeof_patt (cterm CtxT) (ctype CtxT') <-
 ctypeof_patt (cctx (ctxconcrete (lbnil unit))) (cctxwf).
 
 
-nf_ (sighol T TF) (sighol T TF') <- (x:cvar -> nf_ (TF x) (TF' x)).
-nf_ (pihol T TF)  (pihol  T TF') <- (x:cvar -> nf_ (TF x) (TF' x)).
+nf_ (sighol T TF) (sighol T TF') :- (x:cvar -> nf_ (TF x) (TF' x)).
+nf_ (pihol T TF)  (pihol  T TF') :- (x:cvar -> nf_ (TF x) (TF' x)).
 
 
 (* ------------------------- *)
@@ -393,7 +393,7 @@ matchhol : cexpr -> (cvar -> typ) -> list (bindrel (tuple cexpr term)) -> term.
 dynamic_assumption (dyn (X : cvar)) [ cpatt_unif_var X, ctypeof_var X CT ] [ ctypeof_var X CT ].
 
 depbranch_wf : ctype -> (cvar -> typ) -> bindrel (tuple cexpr term) -> prop.
-depbranch_wf CT RetT Branch <-
+depbranch_wf CT RetT Branch :-
   bindrel_newvars Branch (fun unifs => {prop| [Patt Body PattAssume BodyAssume ExpT]
    bindrel_apply Branch unifs (Patt, Body),
    dynamic_assumptions unifs PattAssume BodyAssume,
@@ -401,7 +401,7 @@ depbranch_wf CT RetT Branch <-
    cvar_subst RetT Patt ExpT,
    assumemany BodyAssume (typeof Body ExpT) |}).
 
-typeof (matchhol CT RetT Branches) Tsubst <-
+typeof (matchhol CT RetT Branches) Tsubst :-
   ctypeof CT CT',
   (x:cvar -> ctypeof_var x CT' -> kindof (RetT x) ktype),
   cvar_subst RetT CT Tsubst,
