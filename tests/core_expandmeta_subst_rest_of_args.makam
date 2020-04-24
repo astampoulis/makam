@@ -2,14 +2,14 @@
 
 map : (A -> B -> prop) -> list A -> list B -> prop.
 map P [] [].
-map P (HD :: TL) (HD' :: TL') <- P HD HD', map P TL TL'.
+map P (HD :: TL) (HD' :: TL') :- P HD HD', map P TL TL'.
 
 catenable : list A -> (list A -> list A) -> prop.
 catenable [] (fun x => x).
-catenable (HD :: TL) (fun x => HD :: (TL' x)) <- catenable TL TL'.
+catenable (HD :: TL) (fun x => HD :: (TL' x)) :- catenable TL TL'.
 
 flatten : list (list A) -> list A -> prop.
-flatten LS L <- map catenable LS LS',
+flatten LS L :- map catenable LS LS',
                 reverse LS' LS'rev,
                 foldl (fun cur lst => eq (lst cur)) nil LS'rev L.
 

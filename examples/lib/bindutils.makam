@@ -37,8 +37,8 @@ bnil     : B -> bindmany A B.
 bindmanycast : [T] T -> bindmany A B -> prop.
 bindmanycast_aux : [T] T -> bindmany A B -> prop.
 
-bindmanycast X R <- once(bindmanycast_aux X R).
-bindmanycast_aux (fun (x : A) => P x) (bcons (fun (x : A) => R x)) <-
+bindmanycast X R :- once(bindmanycast_aux X R).
+bindmanycast_aux (fun (x : A) => P x) (bcons (fun (x : A) => R x)) :-
   (x:A -> once(bindmanycast_aux (P x) (R x))).
 bindmanycast_aux (X : B) ((bnil X) : bindmany A B).
 
@@ -46,43 +46,43 @@ bindmanycast_aux (X : B) ((bnil X) : bindmany A B).
 
 bindmany_map : (A -> C -> prop) -> (B -> D -> prop) ->
 	       bindmany A B -> list C -> D -> prop.
-bindmany_map P Q (bnil X)  nil          X' <- Q X X'.
-bindmany_map P Q (bcons (F : A -> bindmany A B)) (cons HD TL) X' <-
+bindmany_map P Q (bnil X)  nil          X' :- Q X X'.
+bindmany_map P Q (bcons (F : A -> bindmany A B)) (cons HD TL) X' :-
   (x:A -> P x HD -> bindmany_map P Q (F x) TL X').
 
 bindmany_endmap : (B -> C -> prop) ->
 		  bindmany A B -> C -> prop.
-bindmany_endmap P (bnil X) X' <- P X X'.
-bindmany_endmap P (bcons (F : A -> bindmany A B)) X' <-
+bindmany_endmap P (bnil X) X' :- P X X'.
+bindmany_endmap P (bcons (F : A -> bindmany A B)) X' :-
   (x:A -> bindmany_endmap P (F x) X').
 
 bindmany_apply : bindmany A B -> list A -> B -> prop.
 bindmany_apply (bnil X)  nil          X.
-bindmany_apply (bcons F) (cons HD TL) X' <- bindmany_apply (F HD) TL X'.
+bindmany_apply (bcons F) (cons HD TL) X' :- bindmany_apply (F HD) TL X'.
 
 
 bindmany_newvars : bindmany A B -> (list A -> prop) -> prop.
 bindmany_newvars_aux : bindmany A B -> list A -> (list A -> prop) -> prop.
-bindmany_newvars_aux (bnil _)                        Vars P <- reverse Vars Vars', P Vars'.
-bindmany_newvars_aux (bcons (F : A -> bindmany A B)) Vars P <-
+bindmany_newvars_aux (bnil _)                        Vars P :- reverse Vars Vars', P Vars'.
+bindmany_newvars_aux (bcons (F : A -> bindmany A B)) Vars P :-
   (x:A -> bindmany_newvars_aux (F x) (cons x Vars) P).
-bindmany_newvars X P <- bindmany_newvars_aux X nil P.
+bindmany_newvars X P :- bindmany_newvars_aux X nil P.
 
 
 bindmany_changetype : bindmany A B -> bindmany C unit -> prop.
 bindmany_changetype (bnil X) (bnil unit).
-bindmany_changetype (bcons (fun (x : A) => R x)) (bcons (fun (x : C) => R')) <-
+bindmany_changetype (bcons (fun (x : A) => R x)) (bcons (fun (x : C) => R')) :-
   (x:A -> bindmany_changetype (R x) R').
 
 bindmany_fromlist : list A -> bindmany B unit -> prop.
 bindmany_fromlist (nil) (bnil unit).
 bindmany_fromlist (cons HD TL) ( (bcons (fun (x : A) => TL' x))
-                                 : bindmany A unit ) <-
+                                 : bindmany A unit ) :-
   (x:A -> bindmany_fromlist TL (TL' x)).
 
 
 many_assume : (A -> B -> prop) -> list A -> list B -> prop -> prop.
-many_assume P AS BS Q <-
+many_assume P AS BS Q :-
  map2 (fun a b => eq (P a b)) AS BS PS,
  assumemany PS Q.
 
@@ -104,18 +104,18 @@ bindmutrec : type -> type -> type.
 bindmutrec : bindmany A (list B) -> bindmutrec A B.
 bindmutrec_map : (A -> C -> prop) -> (B -> D -> prop) ->
 	         bindmutrec A B -> list C -> list D -> prop.
-bindmutrec_map P Q (bindmutrec BS) Ins Outs <-
+bindmutrec_map P Q (bindmutrec BS) Ins Outs :-
   bindmany_map P (map Q) BS Ins Outs.
 bindmutrec_endmap : (B -> C -> prop) ->
 		    bindmutrec A B -> list C -> prop.
-bindmutrec_endmap P (bindmutrec BS) Out <-
+bindmutrec_endmap P (bindmutrec BS) Out :-
   bindmany_endmap (map P) BS Out.
 
 bindmutrec_newvars : bindmutrec A B -> (list A -> prop) -> prop.
-bindmutrec_newvars (bindmutrec BS) P <- bindmany_newvars BS P.
+bindmutrec_newvars (bindmutrec BS) P :- bindmany_newvars BS P.
 
 bindmutrec_apply   : bindmutrec A B -> list A -> list B -> prop.
-bindmutrec_apply (bindmutrec BS) XS ES <- bindmany_apply BS XS ES.
+bindmutrec_apply (bindmutrec BS) XS ES :- bindmany_apply BS XS ES.
 
 
 
@@ -132,61 +132,61 @@ bnil   : T -> bindany T.
 bindany_cast     : [T] T -> bindany A -> prop.
 bindany_cast_aux : [T] T -> bindany A -> prop.
 
-bindany_cast X R <- once(bindany_cast_aux X R).
-bindany_cast_aux (fun (x : B) => P x) (bcons (fun (x : B) => R x)) <-
+bindany_cast X R :- once(bindany_cast_aux X R).
+bindany_cast_aux (fun (x : B) => P x) (bcons (fun (x : B) => R x)) :-
   (x:B -> once(bindany_cast_aux (P x) (R x))).
 bindany_cast_aux (X : A) ((bnil X) : bindany A).
 
 bindany_newvars : bindany A -> (list dyn -> prop) -> prop.
 bindany_newvars_aux : bindany A -> list dyn -> (list dyn -> prop) -> prop.
-bindany_newvars_aux (bnil _)                     Vars P <- reverse Vars Vars', P Vars'.
-bindany_newvars_aux (bcons (F : T -> bindany A)) Vars P <-
+bindany_newvars_aux (bnil _)                     Vars P :- reverse Vars Vars', P Vars'.
+bindany_newvars_aux (bcons (F : T -> bindany A)) Vars P :-
   (x:T -> bindany_newvars_aux (F x) (cons (dyn x) Vars) P).
-bindany_newvars X P <- bindany_newvars_aux X nil P.
+bindany_newvars X P :- bindany_newvars_aux X nil P.
 
 bindany_apply : bindany A -> list dyn -> A -> prop.
 bindany_apply (bnil Body) (nil) Body.
-bindany_apply (bcons (F : T -> bindany A)) (cons (dyn (X : T)) XS) Body <-
+bindany_apply (bcons (F : T -> bindany A)) (cons (dyn (X : T)) XS) Body :-
   bindany_apply (F X) XS Body.
 
 bindany_apply_sametype : bindany A -> list B -> A -> prop.
 bindany_apply_sametype (bnil Body) (nil) Body.
-bindany_apply_sametype (bcons F) (cons X XS) Body <-
+bindany_apply_sametype (bcons F) (cons X XS) Body :-
   bindany_apply_sametype (F X) XS Body.
 
 bindany_apply_partial : bindany A -> list dyn -> bindany A -> prop.
 bindany_apply_partial End nil End.
-bindany_apply_partial (bcons (fun (x : T) => F x)) (cons (dyn (X : T)) XS) End <-
+bindany_apply_partial (bcons (fun (x : T) => F x)) (cons (dyn (X : T)) XS) End :-
   bindany_apply_partial (F X) XS End.
 
 bindany_apply_partial_sametype : bindany A -> list B -> bindany A -> prop.
 bindany_apply_partial_sametype End nil End.
-bindany_apply_partial_sametype (bcons F) (cons X XS) End <-
+bindany_apply_partial_sametype (bcons F) (cons X XS) End :-
   bindany_apply_partial_sametype (F X) XS End.
 
 bindany_endmap : (B -> C -> prop) ->
 		 bindany B -> C -> prop.
-bindany_endmap P (bnil X) X' <- P X X'.
-bindany_endmap P (bcons (F : A -> bindany B)) X' <-
+bindany_endmap P (bnil X) X' :- P X X'.
+bindany_endmap P (bcons (F : A -> bindany B)) X' :-
   (x:A -> bindany_endmap P (F x) X').
 
 bindany_modifybody : (B -> C -> prop) ->
 		     bindany B -> bindany C -> prop.
-bindany_modifybody P (bnil X) (bnil X') <- P X X'.
-bindany_modifybody P (bcons (F : A -> bindany B)) (bcons (G : A -> bindany C)) <-
+bindany_modifybody P (bnil X) (bnil X') :- P X X'.
+bindany_modifybody P (bcons (F : A -> bindany B)) (bcons (G : A -> bindany C)) :-
   (x:A -> bindany_modifybody P (F x) (G x)).
 
 (* TODO: fix this *)
 bindany_list_flatten : list (bindany A) -> bindany (list A) -> prop.
 bindany_list_flatten_aux : list (bindany A) -> bindany (list A) -> list A -> prop.
-bindany_list_flatten_aux nil          (bnil Rev) Acc <- reverse Acc Rev.
-bindany_list_flatten_aux (cons HD TL) BHDRest Acc <-
+bindany_list_flatten_aux nil          (bnil Rev) Acc :- reverse Acc Rev.
+bindany_list_flatten_aux (cons HD TL) BHDRest Acc :-
   bindany_newvars HD (fun xs =>
   newmeta (fun hdBody => newmeta (fun rest =>
   (and (bindany_apply HD xs hdBody)
   (and (bindany_apply_partial BHDRest xs rest)
        (bindany_list_flatten_aux TL rest (cons hdBody Acc))))))).
-bindany_list_flatten L B <- bindany_list_flatten_aux L B nil.
+bindany_list_flatten L B :- bindany_list_flatten_aux L B nil.
   
 
 (* listbindmany A B C
@@ -202,26 +202,26 @@ lbnil    : C -> listbindmany A B C.
 listbindmany_binding : listbindmany A B C -> bindmany B C -> prop.
 
 listbindmany_binding (lbnil C) (bnil C).
-listbindmany_binding (lbcons _ (F : B -> listbindmany A B C)) (bcons F') <-
+listbindmany_binding (lbcons _ (F : B -> listbindmany A B C)) (bcons F') :-
   (x:B -> listbindmany_binding (F x) (F' x)).
 
 listbindmany_newvars : listbindmany A B C -> (list B -> prop) -> prop.
-listbindmany_newvars LB XSF <- listbindmany_binding LB B,
+listbindmany_newvars LB XSF :- listbindmany_binding LB B,
                                bindmany_newvars B XSF.
 
 listbindmany_apply : listbindmany A B C -> list B -> C -> prop.
-listbindmany_apply LB XS Body <- listbindmany_binding LB B,
+listbindmany_apply LB XS Body :- listbindmany_binding LB B,
                                  bindmany_apply B XS Body.
 
 listbindmany_getinfo : listbindmany A B C -> list B -> list A -> prop.
 listbindmany_getinfo (lbnil Body) nil nil.
-listbindmany_getinfo (lbcons HD F) (cons X XS) (cons HD TL) <-
+listbindmany_getinfo (lbcons HD F) (cons X XS) (cons HD TL) :-
   listbindmany_getinfo (F X) XS TL.
 
 listbindmany_append : listbindmany A B C -> listbindmany A B D ->
                       listbindmany A B D -> prop.
 listbindmany_append (lbnil _) Rest Rest.
-listbindmany_append (lbcons HD (TL : B -> listbindmany A B C)) Rest (lbcons HD TL') <-
+listbindmany_append (lbcons HD (TL : B -> listbindmany A B C)) Rest (lbcons HD TL') :-
   (x:B -> listbindmany_append (TL x) Rest (TL' x)).
 
 
@@ -236,7 +236,7 @@ lbnil    : listbindany A.
 
 listbindany_append : listbindany A -> bindany (listbindany A) -> listbindany A -> prop.
 listbindany_append lbnil (bnil Y) Y.
-listbindany_append (lbcons HD BTL) BY (lbcons HD BR) <-
+listbindany_append (lbcons HD BTL) BY (lbcons HD BR) :-
   bindany_newvars       BTL (fun vars =>
   newmeta (fun TL => newmeta (fun Y => newmeta (fun R => 
   and  (bindany_apply BTL vars TL)
@@ -248,7 +248,7 @@ mklistbindany : list (tuple dyn B) -> listbindany B -> prop.
 mklistbindany nil lbnil.
 mklistbindany (cons (tuple (dyn (X : A)) Elm)
 	       TL)
-	      (lbcons Elm (bcons XRest)) <-
+	      (lbcons Elm (bcons XRest)) :-
   eq (XRest X) (bnil Rest),
   mklistbindany TL Rest.
 

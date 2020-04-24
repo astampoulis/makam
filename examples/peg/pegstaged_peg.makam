@@ -4,8 +4,8 @@
 
 
 isemaction : peg A -> lm_arrow A B -> peg B.
-peginline_parse  (isemaction P C) (semaction P C') <- lm_forward C C'.
-peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) <- lm_backward C C'.
+peginline_parse  (isemaction P C) (semaction P C') :- lm_forward C C'.
+peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) :- lm_backward C C'.
 
 ppeg : string -> peg (peg A).
 
@@ -33,9 +33,9 @@ concatpegbw : peg A -> list dyn -> prop.
 
 concatpegfw nil epsilon.
 concatpegfw (cons (dyn HD) nil) HD.
-concatpegfw (cons (dyn HD) TL) (concat HD TL') <- concatpegfw TL TL'.
+concatpegfw (cons (dyn HD) TL) (concat HD TL') :- concatpegfw TL TL'.
 concatpegbw epsilon nil.
-concatpegbw (concat HD TL') (cons (dyn HD) TL) <- concatpegbw TL' TL.
+concatpegbw (concat HD TL') (cons (dyn HD) TL) :- concatpegbw TL' TL.
 concatpegbw HD (cons (dyn HD) nil).
 
 `( pegrule (ppeg "concat") (isemaction (rep (dynp (ppeg "prim")))

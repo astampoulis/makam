@@ -35,12 +35,12 @@ prop : type.
 
 clause : type.
 
-clause : prop -> prop -> clause. (* P <- Q. where P is goal and Q is premise *)
+clause : prop -> prop -> clause. (* P :- Q. where P is goal and Q is premise *)
 whenclause : prop -> prop -> prop -> clause.
-                                 (* (P) when P' <- Q. P is the goal, P' is an
+                                 (* (P) when P' :- Q. P is the goal, P' is an
                                     extra premise to see if the rule applies,
                                     and Q is the actual premise.
-                                    behaves exactly like P <- and P' Q, but the
+                                    behaves exactly like P :- and P' Q, but the
                                     tracing behavior is different, so just useful for
                                     debugging *)
 

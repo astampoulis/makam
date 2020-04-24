@@ -25,14 +25,14 @@ tmof : term -> term -> prop.
 
 tmof (sort sprop) (sort stype).
 tmof (sort stype) (sort sext).
-tmof (pi S T T')  (sort S'') <-
+tmof (pi S T T')  (sort S'') :-
                      guard T (tmof T (sort S)),
                      (x:term -> tmof x T -> tmof (T' x) (sort S')),
 		     rule S S' S''.
-tmof (lam T E) (pi S T T') <- guard T (tmof T (sort S)),
+tmof (lam T E) (pi S T T') :- guard T (tmof T (sort S)),
 		              (x:term -> tmof x T -> tmof (E x) (T' x)),
                               tmof (pi S T T') _ .
-tmof (app E1 (pi S T T') E2) (T' E2) <- tmof E1 (pi S T T'), tmof E2 T.
+tmof (app E1 (pi S T T') E2) (T' E2) :- tmof E1 (pi S T T'), tmof E2 T.
 
 (* equality *)
 eqp : term -> term -> term.
@@ -42,23 +42,23 @@ subst : term -> (term -> term) -> term -> term.
 congLam : term -> (term -> term) -> term.
 congForall : term -> (term -> term) -> term.
 beta : term -> (term -> term) -> term -> term.
-tmof (eqp T1 T2) (sort sprop) <- tmof T1 T, tmof T2 T, guard T (tmof T (sort stype)).
-tmof (refl T) (eqp T T) <- guard T (tmof T T'), tmof T' (sort stype).
-tmof (conv T1 T2) T' <- tmof T1 T, tmof T (sort sprop), tmof T2 (eqp T T').
-tmof (subst Tk Tp T) (eqp (Tp Ta) (Tp Tb)) <-
+tmof (eqp T1 T2) (sort sprop) :- tmof T1 T, tmof T2 T, guard T (tmof T (sort stype)).
+tmof (refl T) (eqp T T) :- guard T (tmof T T'), tmof T' (sort stype).
+tmof (conv T1 T2) T' :- tmof T1 T, tmof T (sort sprop), tmof T2 (eqp T T').
+tmof (subst Tk Tp T) (eqp (Tp Ta) (Tp Tb)) :-
                         guard Tk (tmof Tk (sort stype)),
 			(x:term -> tmof x Tk -> tmof (Tp x) (sort sprop)),
 		        tmof T (eqp Ta Tb),
 		        tmof Ta Tk.
-tmof (congLam Tk T) (eqp (lam Tk T1) (lam Tk T2)) <-
+tmof (congLam Tk T) (eqp (lam Tk T1) (lam Tk T2)) :-
 			guard Tk (tmof Tk (sort stype)),
 		        (x:term -> tmof x Tk -> tmof (T x) (eqp (T1 x) (T2 x))).
-tmof (congForall Tk T) (eqp (pi stype Tk T1) (pi stype Tk T2)) <-
+tmof (congForall Tk T) (eqp (pi stype Tk T1) (pi stype Tk T2)) :-
 			guard Tk (tmof Tk (sort stype)),
 		        (x:term -> tmof x Tk ->
 			  (tmof (T x) (eqp (T1 x) (T2 x)),
 			   tmof (T1 x) (sort sprop))).
-tmof (beta Ta T1 T2) (eqp (app (lam Ta T1) _ T2) (T1 T2)) <-
+tmof (beta Ta T1 T2) (eqp (app (lam Ta T1) _ T2) (T1 T2)) :-
                         tmof (lam Ta T1) (pi S Ta (fun x => Tb)),
 		        tmof (pi S Ta (fun x => Tb)) (sort stype),
 		        tmof T2 Ta.

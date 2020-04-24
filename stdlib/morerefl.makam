@@ -1,7 +1,7 @@
 %extend refl.
 
 sameunif : A -> A -> prop.
-sameunif X Y <-
+sameunif X Y :-
   refl.isunif X, refl.isunif Y,
   refl.decomposeunif X I _, refl.decomposeunif Y I _.
 
@@ -12,26 +12,26 @@ getunif : [A B] A -> B -> prop.
 
 getunif_aux, getunif_ : [A B] option B -> A -> option B -> prop.
 
-getunif_aux X Y Z <-
+getunif_aux X Y Z :-
   demand.case_otherwise
     (getunif_ X Y Z)
     (generic.fold @getunif_aux X Y Z).
 getunif_ (some Res) _ (some Res).
 getunif_ _ X (some X) when refl.isunif X.
 
-getunif Root Unif <- getunif_aux none Root (some Unif).
+getunif Root Unif :- getunif_aux none Root (some Unif).
 
 absunif : [A B] A -> B -> (B -> A) -> prop.
 absunif_aux, absunif_ : [A B] B -> B -> A -> A -> prop.
 
 absunif_ Unif Replace Root Replace when refl.sameunif Root Unif.
 absunif_ Unif Replace Root Root when refl.isunif Root.
-absunif_aux Unif Replace Root Result <-
+absunif_aux Unif Replace Root Result :-
   demand.case_otherwise
     (absunif_ Unif Replace Root Result)
     (structural @(absunif_aux Unif Replace) Root Result).
 
-absunif Root (Unif : A) Res <-
+absunif Root (Unif : A) Res :-
   (x:A -> absunif_aux Unif x Root (Res x)).
 
 %end.

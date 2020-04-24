@@ -2,10 +2,10 @@
    extensions are supported properly. *)
 
 builtin_known : clause -> prop -> prop.
-builtin_known C G <- known C G.
+builtin_known C G :- known C G.
 
 builtin_resetknown : A -> prop -> prop.
-builtin_resetknown P G <- resetknown P G.
+builtin_resetknown P G :- resetknown P G.
 
 known : clause -> prop -> prop.
 resetknown : A -> prop -> prop.
@@ -20,12 +20,12 @@ resetknown : A -> prop -> prop.
 guarded : type -> type.
 
 transform_guarded : A -> B -> list dyn -> list dyn -> list dyn -> list dyn ->prop.
-transform_guarded (X : (guarded A -> B)) (Y : A -> B') Res Res' Guards Guards' <-
+transform_guarded (X : (guarded A -> B)) (Y : A -> B') Res Res' Guards Guards' :-
   transform_guarded (X' : B) (Y' : B') ( (dyn (Z : A)) :: Res ) Res' ( (dyn (Z : A)) :: Guards ) Guards'.
-transform_guarded (X : A -> B) (Y : A -> B') Res Res' Guards Guards' <-
+transform_guarded (X : A -> B) (Y : A -> B') Res Res' Guards Guards' :-
   not(typeq (Q : A) (W : guarded C)),
   transform_guarded (X' : B) (Y' : B') ( (dyn (Z : A)) :: Res ) Res' Guards Guards'.
-transform_guarded X Y Res Res' Guards Guards' <-
+transform_guarded X Y Res Res' Guards Guards' :-
   not(typeq (X : A) (W : B -> C)), typeq X Y, reverse Res Res', reverse Guards Guards'.
 
 transform_modedecl_preds : A -> A -> prop.
@@ -34,7 +34,7 @@ modedecl : cmd -> cmd -> prop.
 
 transform_modedecl_clause : clause -> clause -> prop.
 
-transform_modedecl_clause ClauseIn ClauseOut <-
+transform_modedecl_clause ClauseIn ClauseOut :-
 
   caseguard ClauseIn
    [ (clause G1 P1,
@@ -49,7 +49,7 @@ transform_modedecl_clause ClauseIn ClauseOut <-
 
    
 
-modedecl CmdIn CmdOut <-
+modedecl CmdIn CmdOut :-
 
   caseguard CmdIn
    [ (cmd_newterm X T,
@@ -76,7 +76,7 @@ modedecl CmdIn CmdOut <-
 (* --------------------------------------------------------- *)
 
 otherwise : A -> prop.
-otherwise X <- print "The otherwise predicate is just an annotation -- it should not be used directly. Make sure you are using the owise extension.", failure.
+otherwise X :- print "The otherwise predicate is just an annotation -- it should not be used directly. Make sure you are using the owise extension.", failure.
 
 transform_owise_preds : A -> A -> A -> prop.
 
@@ -92,7 +92,7 @@ set_goal (whenclause _ Q R) G (whenclause G Q R).
 
 transform_owise_clause : clause -> clause -> prop.
 
-transform_owise_clause ClauseIn ClauseOut <-
+transform_owise_clause ClauseIn ClauseOut :-
 
   get_goal ClauseIn Goal,
 
@@ -109,10 +109,10 @@ transform_owise_clause ClauseIn ClauseOut <-
         {prop| eq ClauseOut ClauseIn |}) ].
 
 appmany_all : A -> list dyn -> B -> prop.
-appmany_all (X : A -> B) (cons (dyn (HD : A)) TL) Res <- appmany_all (X HD) TL Res.
-appmany_all (X : A) nil (X : A) <- not(typeq X (Z : B -> C)).
+appmany_all (X : A -> B) (cons (dyn (HD : A)) TL) Res :- appmany_all (X HD) TL Res.
+appmany_all (X : A) nil (X : A) :- not(typeq X (Z : B -> C)).
 
-owise CmdIn CmdOut <-
+owise CmdIn CmdOut :-
 
   caseguard CmdIn
    [ (cmd_newterm X T,
@@ -141,12 +141,12 @@ owise CmdIn CmdOut <-
 (* ------------------------------------------------ *)
 
 transform_clause : clause -> clause -> prop.
-transform_clause C C'' <- transform_modedecl_clause C C', transform_owise_clause C' C''.
+transform_clause C C'' :- transform_modedecl_clause C C', transform_owise_clause C' C''.
 
 
-known C Q <- 
+known C Q :- 
   transform_clause C C', builtin_known C' Q.
-resetknown C Q <-
+resetknown C Q :-
   transform_clause C C', builtin_known C' Q.
 
 

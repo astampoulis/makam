@@ -44,7 +44,7 @@ parse P (fun S Res' => {prop| [Chars Res RestChars RealRes S']
         (if (eq Res (some (tuple RestChars RealRes)))
 	 then  (string.explode S' RestChars, eq Res' (some (tuple S' RealRes)))
 	 else  (eq Res' none)) |}
-	) <-
+	) :-
   xparse P P'.
 
 pretty : [A] peg A -> (option (tuple string A) -> string -> prop) -> prop.
@@ -52,12 +52,12 @@ pretty P (fun FullRes Input => {prop| [Output Res OutputC InputC]
   eq FullRes (some (tuple Output Res)),
   string.explode Output OutputC,
   P' InputC (some (tuple OutputC Res)),
-  string.explode Input InputC |}) <-
+  string.explode Input InputC |}) :-
   xpretty P P'.
 
 
-xxparse X Y  <- (if refl.isunif X then (if xuparse X Y then success else success) else xparse X Y).
-xxpretty X Y <- (if refl.isunif X then (if xupretty X Y then success else success) else xpretty X Y).
+xxparse X Y  :- (if refl.isunif X then (if xuparse X Y then success else success) else xparse X Y).
+xxpretty X Y :- (if refl.isunif X then (if xupretty X Y then success else success) else xpretty X Y).
 
 pegbuiltin (exactchar _).
 xparse (exactchar S) (fun Input Result => {prop| [Output]
@@ -83,59 +83,59 @@ xparse (concat P1 P2) (fun Input Result => {prop| [Input1 Input2 Res1 Res2]
    (if (P1' Input (some (tuple Input1 Res1)),
         P2' Input1 (some (tuple Input2 Res2)))
     then eq Result (some (tuple Input2 (tuple Res1 Res2)))
-    else eq Result none) |}) <-
+    else eq Result none) |}) :-
   xxparse P1 P1', xxparse P2 P2'.
 xpretty (concat P1 P2) (fun Input Result => {prop| [Input1 Input2 Res1 Res2]
    eq Result (some (tuple Input2 (tuple Res1 Res2))),
    P2' Input1 (some (tuple Input2 Res2)),
-   P1' Input  (some (tuple Input1 Res1)) |}) <-
+   P1' Input  (some (tuple Input1 Res1)) |}) :-
    xxpretty P1 P1', xxpretty P2 P2'.
 
 pegbuiltin (choice _ _).
 xparse (choice P1 P2) (fun Input Result => {prop| [Res1 U0]
   (if (P1' Input Res1, eq Res1 (some U0))
    then (eq Result Res1)
-   else (P2' Input Result)) |}) <-
+   else (P2' Input Result)) |}) :-
   xxparse P1 P1', xxparse P2 P2'.
 xpretty (choice P1 P2) (fun Input Result => {prop| [Input' Res]
   eq Result (some (tuple Input' Res)),
   (if P1' Input (some (tuple Input' Res))
    then success
-   else P2' Input (some (tuple Input' Res))) |}) <-
+   else P2' Input (some (tuple Input' Res))) |}) :-
   xxpretty P1 P1', xxpretty P2 P2'.
 
 pegbuiltin (lookahd _).
 xparse (lookahd P) (fun Input Result => {prop| [Res U0]
   (if (P' Input (some (tuple U0 Res)))
    then (eq Result (some (tuple Input Res)))
-   else (eq Result none)) |}) <-
+   else (eq Result none)) |}) :-
   xxparse P P'.
 xpretty (lookahd P) (fun Input Result => {prop| [Res U0]
   eq Result (some (tuple Input Res)),
-  P' Input (some (tuple U0 Res)) |}) <-
+  P' Input (some (tuple U0 Res)) |}) :-
   xxparse P P'.
 
 pegbuiltin (notp _).
 xparse (notp P) (fun Input Result => {prop|
   (if P' Input none
    then eq Result (some (tuple Input unit))
-   else eq Result none) |}) <-
+   else eq Result none) |}) :-
   xxparse P P'.
 xpretty (notp P) (fun Input Result => {prop| [U0]
   eq Result (some (tuple Input U0)),
-  P' Input none |}) <-
+  P' Input none |}) :-
   xxparse P P'.
 
 pegbuiltin (semaction _ _).
 xparse (semaction P F) (fun Input Result => {prop| [Input' Res Res']
   (if P' Input (some (tuple Input' Res))
    then (F Res Res', eq Result (some (tuple Input' Res')))
-   else (eq Result none)) |}) <-
+   else (eq Result none)) |}) :-
   xxparse P P'.
 xpretty (semaction P F) (fun Input Result => {prop| [Input' Res Res']
   eq Result (some (tuple Input' Res')),
   F Res Res',
-  P' Input (some (tuple Input' Res)) |}) <-
+  P' Input (some (tuple Input' Res)) |}) :-
   xxpretty P P'.
 
 pegbuiltin (externalclass _).
@@ -163,12 +163,12 @@ xpretty (compiled Parse Pretty) Pretty.
 peginline_xparse  : [A] peg A -> peg A -> prop.
 peginline_xpretty : [A] peg A -> peg A -> prop.
 
-peginline_xparse  P Def <- (if peginline_parse P Def then success else peginline P Def).
-peginline_xpretty P Def <- (if peginline_pretty P Def then success else peginline P Def).
+peginline_xparse  P Def :- (if peginline_parse P Def then success else peginline P Def).
+peginline_xpretty P Def :- (if peginline_pretty P Def then success else peginline P Def).
 
-xparse (P : peg A) Prop <-
+xparse (P : peg A) Prop :-
   not(pegbuiltin P), peginline_xparse P Def, xxparse Def Prop.
-xpretty (P : peg A) Prop <-
+xpretty (P : peg A) Prop :-
   not(pegbuiltin P), peginline_xpretty P Def, xxpretty Def Prop.
 
 
@@ -179,8 +179,8 @@ xpretty (P : peg A) Prop <-
 pegcompile_parse : dyn -> dyn -> prop.
 pegcompile_pretty : dyn -> dyn -> prop.
 
-pegcompile_parse (dyn (X : peg A)) (dyn Y) <- xxparse X Y.
-pegcompile_pretty (dyn (X : peg A)) (dyn Y) <- xxpretty X Y.
+pegcompile_parse (dyn (X : peg A)) (dyn Y) :- xxparse X Y.
+pegcompile_pretty (dyn (X : peg A)) (dyn Y) :- xxpretty X Y.
 
 pegcompile_parse (dyn (X : string)) (dyn X).
 pegcompile_pretty (dyn (X : string)) (dyn X).
@@ -198,7 +198,7 @@ xparse (Peg : peg A) (fun Input Result => {prop| [U0]
              (if (once( P'' Input Result, eq Result (some U0) ))
 	      then success
 	      else eq Result none)
-         |}) <-
+         |}) :-
   not(pegbuiltin Peg), not(peginline Peg _),
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
@@ -207,7 +207,7 @@ xparse (Peg : peg A) (fun Input Result => {prop| [U0]
   map pegcompile_parse Args Args',
   appmany P' Args' P''.
 
-xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) <-
+xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) :-
   not(pegbuiltin Peg), not(peginline Peg _),
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
@@ -218,13 +218,13 @@ xpretty (Peg : peg A) (fun Input Result => once(P'' Input Result)) <-
 
 mkclause : [A] A -> A -> clause -> prop.
 mkclause (G : prop) (P : prop) (clause G P).
-mkclause (G : A -> B) (P : A -> B) X <- mkclause (G Y) (P Y) X.
+mkclause (G : A -> B) (P : A -> B) X :- mkclause (G Y) (P Y) X.
 
 mkclausecmd : [A] string -> A -> cmd -> prop.
-mkclausecmd GName P (cmd_newclause Clause) <- refl.lookup GName G, mkclause G P Clause.
+mkclausecmd GName P (cmd_newclause Clause) :- refl.lookup GName G, mkclause G P Clause.
 
 mkclausecmd2 : [B] string -> list dyn -> list prop -> (B -> prop) -> cmd -> prop.
-mkclausecmd2 GName Args Knowns Proc (cmd_newclause Clause) <-
+mkclausecmd2 GName Args Knowns Proc (cmd_newclause Clause) :-
   refl.lookup GName G,
   appmany G Args G',
   assumemany Knowns (Proc X),
@@ -232,13 +232,13 @@ mkclausecmd2 GName Args Knowns Proc (cmd_newclause Clause) <-
 
 weirdappmanyrev : [A B] A -> list dyn -> B -> prop.
 weirdappmanyrev (X : A) nil (Y : A).
-weirdappmanyrev (X : A) (cons (dyn (HD : B)) TL) Z <- weirdappmanyrev (Y : B -> A) TL Z.
+weirdappmanyrev (X : A) (cons (dyn (HD : B)) TL) Z :- weirdappmanyrev (Y : B -> A) TL Z.
 weirdappmanyrevreal : A -> list dyn -> B -> prop.
-weirdappmanyrevreal X L Y <- reverse L L', weirdappmanyrev X L' Y.
+weirdappmanyrevreal X L Y :- reverse L L', weirdappmanyrev X L' Y.
 
 
 pegdeclare   : [A] peg A -> cmd -> prop.
-pegdeclare (Peg : peg A) Cmd <-
+pegdeclare (Peg : peg A) Cmd :-
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
   string.append Name "~xparse" XParseName,
@@ -261,7 +261,7 @@ pegdeclare (Peg : peg A) Cmd <-
   eq Cmd CmdPredDef.
 
 pegrule_full : bool -> bool -> peg A -> peg A -> cmd -> prop.
-pegrule_full GenParse GenPretty (Peg : peg A) Def Cmd <-
+pegrule_full GenParse GenPretty (Peg : peg A) Def Cmd :-
 
   refl.headname Peg Name,
   refl.headargs Peg _ Args,
@@ -299,13 +299,13 @@ pegrule_full GenParse GenPretty (Peg : peg A) Def Cmd <-
 
   eq Cmd (cmd_many CmdList3).
 
-pegrule        Peg Def Cmd <- pegrule_full true true  Peg Def Cmd.
-pegrule_parse  Peg Def Cmd <- pegrule_full true false Peg Def Cmd.
-pegrule_pretty Peg Def Cmd <- pegrule_full false true Peg Def Cmd.
+pegrule        Peg Def Cmd :- pegrule_full true true  Peg Def Cmd.
+pegrule_parse  Peg Def Cmd :- pegrule_full true false Peg Def Cmd.
+pegrule_pretty Peg Def Cmd :- pegrule_full false true Peg Def Cmd.
 
 
 pegexport : peg A -> cmd -> prop.
-pegexport (Peg : peg A) Cmd <-
+pegexport (Peg : peg A) Cmd :-
   parse Peg Prop1,
   pretty Peg Prop2,
   refl.headname Peg Name,
@@ -317,7 +317,7 @@ pegexport (Peg : peg A) Cmd <-
 	             cmd_stage (mkclausecmd PrettyName Prop2) ]).
 
 pegexport : string -> peg A -> cmd -> prop.
-pegexport Name (Peg : peg A) Cmd <-
+pegexport Name (Peg : peg A) Cmd :-
   parse Peg Prop1,
   pretty Peg Prop2,
   string.append Name "_parse" ParseName,
@@ -331,7 +331,7 @@ pegexport Name (Peg : peg A) Cmd <-
 
 (* useful parsers *)
 class : string -> peg string.
-peginline (class S) P <-
+peginline (class S) P :-
    string.explode S Chars,
    foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
          failp Chars P.
@@ -340,7 +340,7 @@ ignorep : peg A -> peg unit.
 peginline (ignorep P) (semaction P (fun a res => eq res unit)).
 
 exactstr : string -> peg unit.
-peginline (exactstr S) P <-
+peginline (exactstr S) P :-
   string.explode S Chars,
   foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
         Chars epsilon P.

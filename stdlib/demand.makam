@@ -1,24 +1,24 @@
 %extend demand.
 
 aux_demand : (prop -> list clause -> prop) -> prop -> prop.
-aux_demand ClauseDemand Goal <-
+aux_demand ClauseDemand Goal :-
   refl.headargs Goal Pred _,
   refl.rules_get_applicable Goal AllRules,
   ClauseDemand Goal AllRules.
 
 or : prop -> prop.
-or Goal <- aux_demand clause.demand_or Goal.
+or Goal :- aux_demand clause.demand_or Goal.
 
 and : prop -> prop.
-and Goal <- aux_demand clause.demand_and Goal.
+and Goal :- aux_demand clause.demand_and Goal.
 
 case : prop -> prop.
-case Goal <- aux_demand clause.demand_case Goal.
+case Goal :- aux_demand clause.demand_case Goal.
 
 case_otherwise : prop -> prop -> prop.
-case_otherwise Goal Otherwise <-
+case_otherwise Goal Otherwise :-
   (
-    (clause.demand_case Goal [] <- Otherwise) ->
+    (clause.demand_case Goal [] :- Otherwise) ->
     aux_demand clause.demand_case Goal
   ).
 

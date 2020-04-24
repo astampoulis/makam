@@ -27,19 +27,19 @@ example
 									                 (term (iconst 1) #_))
 									      #_)) #_)) #_)) #_)) #_)
         (term (iconst 6) #_)) #_)
-<- useexample "fact".
+:- useexample "fact".
 
 example
  (term (lamt (fun a =>
        term (fix (tarrow a a) #_ (fun unused1 => fun f =>
        term (fix a            #_ (fun unused2 => fun x =>
        term (app (term f #_) (term (app (term f #_) (term x #_)) #_)) #_)) #_)) #_)) #_)
-<- useexample "twice".
+:- useexample "twice".
 
 example
  (term (lamt (fun a =>
        term (fix a #_ (fun unused1 => fun x => term x #_)) #_)) #_)
-<- useexample "id".
+:- useexample "id".
 
 
 

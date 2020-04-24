@@ -3,42 +3,42 @@
 %extend refltype.
 
 result : [A B] A -> B -> prop.
-(result X Y) when refl.isfun X <- (x:A -> result (X x) Y).
-(result X Y) when not(refl.isfun X) <- typeq X Y.
+(result X Y) when refl.isfun X :- (x:A -> result (X x) Y).
+(result X Y) when not(refl.isfun X) :- typeq X Y.
 
 ispred : [A] A -> prop.
-ispred X <- result X (Z : prop).
+ispred X :- result X (Z : prop).
 
 %end.
 
 
 dup_head : [A B] A -> B -> prop.
-(dup_head P P') when refl.isfun P <- (x:T -> dup_head (P x) P').
-(dup_head P P') when refl.isbaseterm P <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
+(dup_head P P') when refl.isfun P :- (x:T -> dup_head (P x) P').
+(dup_head P P') when refl.isbaseterm P :- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
 dyncall : [A] (A -> prop) -> dyn -> prop.
-dyncall P (dyn X) <- refl.duphead P P', P' X.
+dyncall P (dyn X) :- refl.duphead P P', P' X.
 
 dyncall : [A B] (A -> B -> prop) -> dyn -> dyn -> prop.
-dyncall P (dyn X) (dyn Y) <- refl.duphead P P', P' X Y.
+dyncall P (dyn X) (dyn Y) :- refl.duphead P P', P' X Y.
 
 (* ([X]allheads X, print X, map0 (dyncall printhead) X) ? *)
 
 
 filter : (A -> prop) -> list A -> list A -> prop.
-filter P (HD :: TL) (HD :: TL') <- P HD, filter P TL TL'.
-filter P (HD :: TL) TL' <- not(P HD), filter P TL TL'.
+filter P (HD :: TL) (HD :: TL') :- P HD, filter P TL TL'.
+filter P (HD :: TL) TL' :- not(P HD), filter P TL TL'.
 filter P nil nil.
 
 allrules : list clause -> prop.
-allrules Rules <- refl.allconstants XS, filter (dyncall refltype.ispred) XS PS, map (dyncall refl.rules_get) PS RulesCD,
+allrules Rules :- refl.allconstants XS, filter (dyncall refltype.ispred) XS PS, map (dyncall refl.rules_get) PS RulesCD,
                   map (fun x y => eq x (dyn y)) RulesCD RulesC,
                   foldl append [] RulesC Rules.
 
 %use generic.
 
 printlocsof_aux : A -> dyn -> dyn -> prop.
-printlocsof_aux Head (dyn X) (dyn Y) <-
+printlocsof_aux Head (dyn X) (dyn Y) :-
   (if refl.headargs X Head' _
    then (if dyneq Head' Head
          then (locget X L, print L, structural (printlocsof_aux Head) (dyn X) (dyn Y))
@@ -48,15 +48,15 @@ printlocsof_aux Head (dyn X) (dyn Y) <-
          else structural (printlocsof_aux Head) (dyn X) (dyn Y))).
 
 printlocsof : A -> B -> prop.
-printlocsof Head What <- printlocsof_aux Head (dyn What) _.
+printlocsof Head What :- printlocsof_aux Head (dyn What) _.
 
 
 printloc : A -> prop.
 printloc X.
-(* printloc X <- print X, locget X L, print L. *)
+(* printloc X :- print X, locget X L, print L. *)
 
 finduses : A -> prop.
-finduses X <- allrules Rules, 
+finduses X :- allrules Rules, 
 	      map0 (printlocsof X) Rules.
 
 finduses not ?

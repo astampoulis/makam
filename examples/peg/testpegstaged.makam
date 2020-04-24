@@ -1,11 +1,11 @@
 %use pegstaged_lam.
 
 test1 : A -> prop.
-test1 X <-
+test1 X :-
    pclosedterm_parse "λx.λy.λz.y x" (some (tuple "" X)).
 
 test2 : string -> prop.
-test2 R <- 
+test2 R :- 
    eq X "x",
    eq Y "y",
    eq Z "z",

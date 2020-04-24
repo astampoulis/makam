@@ -18,13 +18,13 @@ tunit : typ .
 typeof : term -> typ -> prop .
 typeof eunit tunit .
 
-typeof (lam E) (arrow T1 T2) <-
+typeof (lam E) (arrow T1 T2) :-
   (x:term -> typeof x T1 -> typeof (E x) T2) .
 
-typeof (lam T1 E) (arrow T1 T2) <-
+typeof (lam T1 E) (arrow T1 T2) :-
   (x:term -> typeof x T1 -> typeof (E x) T2) .
 
-typeof (app E1 E2) T2 <-
+typeof (app E1 E2) T2 :-
   typeof E1 (arrow T1 T2),
   typeof E2 T1 .
 
@@ -43,24 +43,24 @@ polyinst : term -> typ -> term .
 pi : (typ -> typ) -> typ .
 
 
-typeof (polylam EF) (pi TF) <-
+typeof (polylam EF) (pi TF) :-
   (x : typ -> typeof (EF x) (TF x)).
 
-typeof (polyinst E T) (TF T) <-
+typeof (polyinst E T) (TF T) :-
   typeof E (pi TF).
 
 ascribe : term -> typ -> term.
-typeof (ascribe E T) T <-
+typeof (ascribe E T) T :-
   typeof E T.
 
 sigma : (typ -> typ) -> typ.
 pack  : typ -> term -> term.
 unpack : term -> (typ -> term -> term) -> term.
 
-typeof (pack T E) (sigma F) <-
+typeof (pack T E) (sigma F) :-
   typeof E (F T).
 
-typeof (unpack E F) T' <-
+typeof (unpack E F) T' :-
   typeof E (sigma TF),
   (x:typ -> y:term ->
    typeof y (TF x) ->
@@ -68,11 +68,11 @@ typeof (unpack E F) T' <-
 
 gentypeof : term -> typ -> prop.
 gentype : typ -> typ -> prop.
-gentypeof E T' <-
+gentypeof E T' :-
   typeof E T,
   gentype T T'.
-gentype T T <- not(getunif T (T' : typ)).
-gentype T (pi TF') <-
+gentype T T :- not(getunif T (T' : typ)).
+gentype T (pi TF') :-
   getunif T (T' : typ),
   absunif T (T' : typ) TF,
   (x:typ -> gentype (TF x) (TF' x)).

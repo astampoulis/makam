@@ -23,16 +23,16 @@ dbt_lookup  : string -> list dbt -> dbt.
 dbt_auto    : A -> list dbt -> dbt.
 
 dbtrun : dbt -> dyn -> prop.
-dbtrun (dbt_constr HD ARGS) (dyn E) <-
+dbtrun (dbt_constr HD ARGS) (dyn E) :-
   map dbtrun ARGS ARGS',
   applymany HD ARGS' E.
 
-dbtrun (dbt_comp F ARGS) (dyn E) <-
+dbtrun (dbt_comp F ARGS) (dyn E) :-
   map dbtrun ARGS ARGS',
   applymany F ARGS' (F' : A -> prop),
   F' E.
 
-dbtrun (dbt_lam (F : A -> dbt)) (dyn E) <-
+dbtrun (dbt_lam (F : A -> dbt)) (dyn E) :-
   (x:A -> dbtrun (F x) (dyn (E x))).
 
 dbtrun (dbt_int I) (dyn (I : int)).
@@ -43,7 +43,7 @@ dbtmagicenv : list string -> prop.
 dbtmagic : list dyn -> A.
 
 findbenign : list A -> A -> prop.
-findbenign L HD <-
+findbenign L HD :-
   (if refl.isunif L
    then failure
    else (eq L (HD' :: TL),
@@ -51,7 +51,7 @@ findbenign L HD <-
 	 then success
          else findbenign TL HD)).
 
-dbtenv X dbtmagic <-
+dbtenv X dbtmagic :-
   dbtmagicenv XS,
   ifte (findbenign XS X)
        (success)
@@ -60,21 +60,21 @@ dbtenv X dbtmagic <-
 	eq Last (X :: Last') |}.
 
 headargs' : A -> B -> list dyn -> prop.
-headargs' E HD ARGS <-
+headargs' E HD ARGS :-
   (if eq (dyn HD) (dyn dbtmagic)
    then eq E (dbtmagic ARGS)
    else refl.headargs E HD ARGS).
 
-dbtrun (dbt_lookup S ARGS) (dyn E) <-
+dbtrun (dbt_lookup S ARGS) (dyn E) :-
   dbtenv S HD,
   map dbtrun ARGS ARGS',
   headargs' E HD ARGS'.
 
-dbtrun (dbt_nu X D) (dyn (E : A -> B)) <-
+dbtrun (dbt_nu X D) (dyn (E : A -> B)) :-
   (x:A -> dbtenv X x -> 
      (eq ^nx X, dbtrun D (dyn (E x)))).
 
-dbtrun (dbt_magicnu D) E <-
+dbtrun (dbt_magicnu D) E :-
   (dbtmagicenv XS -> dbtrun D _),
   getunif XS (Last : list string),
   eq Last [],
@@ -82,24 +82,24 @@ dbtrun (dbt_magicnu D) E <-
   dbtrun D' E.
 
 argtyps : [A] A -> list dyn -> prop.
-argtyps (X : unit -> B) TL <-
+argtyps (X : unit -> B) TL :-
   (x:unit -> argtyps (X x) TL).
-argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) <-
+argtyps (X : A -> B) ( (dyn (Z : A)) :: TL ) :-
   not(typeq X (W : unit)), (x:A -> argtyps (X x) TL).
-argtyps (X : A) [] <- not(typeq (X : A) (Z : B -> C)).
+argtyps (X : A) [] :- not(typeq (X : A) (Z : B -> C)).
 
 
 
 dbtguess : dyn -> dbt -> dbt -> prop.
 
 
-dbtrun (dbt_auto HD ARGS) E <-
+dbtrun (dbt_auto HD ARGS) E :-
   argtyps HD TYPS,
   map2 dbtguess TYPS ARGS ARGS',
   dbtrun (dbt_constr HD ARGS') E.
 
 
-dbtrun (dbt_list ARGS) (dyn ARGS'') <-
+dbtrun (dbt_list ARGS) (dyn ARGS'') :-
   map dbtrun ARGS ARGS',
   map (fun elm res => eq (dyn res) elm) ARGS' ARGS''.
 
@@ -107,7 +107,7 @@ dbtrun (dbt_list ARGS) (dyn ARGS'') <-
 dbtguess (dyn (X : A -> B)) D D.
 
 dbt_mk_bindmany : C -> bindmany A B -> prop.
-dbt_mk_bindmany (X : C) (B : bindmany A B) <-
+dbt_mk_bindmany (X : C) (B : bindmany A B) :-
   (if refl.isunif X
    then eq (dyn B) (dyn X)
    else (if typeq (X : C) (Z : A -> C')
@@ -118,7 +118,7 @@ dbtguess (dyn (X : bindmany A B)) D (dbt_comp dbt_mk_bindmany [ D ]).
 
 
 dbtguess (dyn (X : bindmutrec A B)) (dbt_list L)
-  (dbt_constr bindmutrec [ L' ]) <-
+  (dbt_constr bindmutrec [ L' ]) :-
   map2 (fun elm x body => eq elm (dbt_nu x body)) L XS Bodies,
   foldr (fun elm cur => eq (dbt_constr (bcons : (A -> bindmany A (list B)) -> bindmany A (list B)) [ dbt_nu elm cur ]))
         XS (dbt_constr (bnil : list B -> bindmany A (list B)) [ dbt_list Bodies ]) L'.
@@ -126,4 +126,4 @@ dbtguess (dyn (X : bindmutrec A B)) (dbt_list L)
 
 
 dbtquery : dbt -> cmd -> prop.
-dbtquery D (cmd_query P) <- dbtrun D (dyn P).
+dbtquery D (cmd_query P) :- dbtrun D (dyn P).
