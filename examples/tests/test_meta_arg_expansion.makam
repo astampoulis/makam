@@ -12,9 +12,9 @@ testpred : (string -> string) -> string -> prop.
 testpred2 : (string -> string -> string) -> string -> prop.
 
 dup_head : A -> B -> prop.
-dup_head P P' <- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
+dup_head P P' :- refl.headargs P Head _, refl.headname P PName, refl.lookup PName P'.
 
 dyncall : (A -> prop) -> dyn -> prop.
-dyncall P (dyn X) <- dup_head (P _) P', P' X.
+dyncall P (dyn X) :- dup_head (P _) P', P' X.
 
 (map0 (dyncall printhead) [dyn testpred, dyn testpred2]) ?

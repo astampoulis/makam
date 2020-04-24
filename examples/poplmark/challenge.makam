@@ -20,14 +20,14 @@ subtypeof_var : typ -> typ -> prop.
 
 subtypeof S ttop.
 
-subtypeof X X <- subtypeof_var X U.
+subtypeof X X :- subtypeof_var X U.
 
-subtypeof X T <- subtypeof_var X U, subtypeof U T.
+subtypeof X T :- subtypeof_var X U, subtypeof U T.
 
-subtypeof (tarrow S1 S2) (tarrow T1 T2) <-
+subtypeof (tarrow S1 S2) (tarrow T1 T2) :-
   subtypeof T1 S1, subtypeof S2 T2.
 
-subtypeof (tforall S1 S2) (tforall T1 T2) <-
+subtypeof (tforall S1 S2) (tforall T1 T2) :-
   subtypeof T1 S1,
   bindone.open S2 T2 (pfun x s2 t2 =>
     (subtypeof_var x T1 ->
@@ -38,7 +38,7 @@ subtypeof (tforall S1 S2) (tforall T1 T2) <-
 trecord : map string typ -> typ.
 
 submap : (B -> B -> prop) -> map A B -> map A B -> map A B -> prop.
-submap SubRel MapA MapB MapR <-
+submap SubRel MapA MapB MapR :-
   map.to_list MapB MapBList,
   foldl (pfun mA keyvalB mA' =>
     [Key ValA ValB](eq keyvalB (Key, ValB),
@@ -46,23 +46,23 @@ submap SubRel MapA MapB MapR <-
     SubRel ValA ValB))
   MapA MapBList MapR. 
 
-subtypeof (trecord Map1) (trecord Map2) <-
+subtypeof (trecord Map1) (trecord Map2) :-
   submap subtypeof Map1 Map2 _.
 
-testcase poplmark_tests <-
+testcase poplmark_tests :-
   (x:typ ->
     subtypeof (trecord [ ("a", x), ("b", x) ]) (trecord [ ("a", ttop) ])).
 
-testcase poplmark_tests <-
+testcase poplmark_tests :-
   (x:typ -> y:typ ->
     subtypeof (trecord [ ("a", x), ("c", x), ("b", x) ]) (trecord [ ("b", ttop), ("a", ttop) ])).
 
 
-testcase poplmark_tests <-
+testcase poplmark_tests :-
   (x:typ ->
     not(subtypeof (trecord [ ("a", x) ]) (trecord [ ("a", ttop), ("b", ttop) ]))).
 
-testcase poplmark_tests <-
+testcase poplmark_tests :-
   (x:typ ->
     not(subtypeof (trecord [ ("a", ttop) ]) (trecord [ ("a", x) ]))).
 
@@ -84,27 +84,27 @@ typeof : term -> typ -> prop.
 typeof_aux : term -> typ -> prop.
 typeof_var : term -> typ -> prop.
 
-typeof E T <-
+typeof E T :-
   unless (typeof_aux E T)
          {prop| typeof_aux E S, subtypeof S T |}.
 
-typeof_aux X T <- typeof_var X T.
+typeof_aux X T :- typeof_var X T.
 
-typeof_aux (lam T1 E) (tarrow T1 T2) <-
+typeof_aux (lam T1 E) (tarrow T1 T2) :-
   bindone.open E (pfun x e =>
     (typeof_var x T1 ->
      typeof e T2)).
 
-typeof_aux (app E1 E2) T2 <-
+typeof_aux (app E1 E2) T2 :-
   typeof E1 (tarrow T1 T2),
   typeof E2 T1.
 
-typeof_aux (lamt T1 E) (tforall T1 T2) <-
+typeof_aux (lamt T1 E) (tforall T1 T2) :-
   bindone.open E T2 (pfun a e t2 =>
    (subtypeof_var a T1 ->
     typeof e t2)).
 
-typeof_aux (appt E T2) T' <-
+typeof_aux (appt E T2) T' :-
   typeof E (tforall T11 T12),
   subtypeof T2 T11,
   bindone.apply T12 T2 T'.
@@ -114,11 +114,11 @@ typeof_aux (appt E T2) T' <-
 to_string : typ -> string -> prop.
 
 to_string ttop "⊤".
-to_string X V when refl.isnvar X <- nameofvar X V.
-to_string (tarrow T1 T2) S <-
+to_string X V when refl.isnvar X :- nameofvar X V.
+to_string (tarrow T1 T2) S :-
   to_string T1 T1s, to_string T2 T2s,
   string.concat [ "(", T1s , " → ", T2s, ")" ] S.
-to_string (tforall T1 T2) S <-
+to_string (tforall T1 T2) S :-
   to_string T1 T1s, bindone.open T2 (pfun x t2 => to_string t2 T2s, nameofvar x V),
   string.concat [ "∀", V, "<:", T1s, ".", T2s ] S.
 %end.
@@ -132,7 +132,7 @@ to_string (tforall T1 T2) S <-
                        lambda z:Z. s z) : (All X21 <: Top. (All X46 <: X21. (All X71 <: X21. (X21 -> X46) -> X71 -> X46)))
 *)
 
-testcase poplmark_tests <-
+testcase poplmark_tests :-
   typeof (lamt ttop (bind "X" (fun X =>
           lamt X (bind "S" (fun S =>
           lamt X (bind "Z" (fun Z =>
@@ -148,23 +148,23 @@ testcase poplmark_tests <-
 
 
 evalstep : term -> term -> prop.
-evalstep (app (lam T E) V) E' <-
+evalstep (app (lam T E) V) E' :-
   is_value V, bindone.apply E V E'.
-evalstep (appt (lamt T E) T') E' <-
+evalstep (appt (lamt T E) T') E' :-
   bindone.apply E T' E'.
 
 ctxdecompose : term -> (term -> term) -> term -> prop.
 ctxdecompose E (fun x => x) E.
-ctxdecompose (app E1 E2) (fun x => app (Ectx x) E2) E1' <- ctxdecompose E1 Ectx E1'.
-ctxdecompose (app V1 E2) (fun x => app V1 (Ectx x)) E2' <- is_value V1, ctxdecompose E2 Ectx E2'.
-ctxdecompose (appt E T)  (fun x => appt (Ectx x) T) E' <- ctxdecompose E Ectx E'.
+ctxdecompose (app E1 E2) (fun x => app (Ectx x) E2) E1' :- ctxdecompose E1 Ectx E1'.
+ctxdecompose (app V1 E2) (fun x => app V1 (Ectx x)) E2' :- is_value V1, ctxdecompose E2 Ectx E2'.
+ctxdecompose (appt E T)  (fun x => appt (Ectx x) T) E' :- ctxdecompose E Ectx E'.
 
 evalstepfull : term -> term -> prop.
-evalstepfull E1 E2 <- ctxdecompose E1 Ectx Focus, evalstep Focus Focus', eq E2 (Ectx Focus').
+evalstepfull E1 E2 :- ctxdecompose E1 Ectx Focus, evalstep Focus Focus', eq E2 (Ectx Focus').
 
 eval : term -> term -> prop.
-eval V V <- is_value V.
-eval E E' <- evalstepfull E E'', eval E'' E'.
+eval V V :- is_value V.
+eval E E' :- evalstepfull E E'', eval E'' E'.
 
 
 
