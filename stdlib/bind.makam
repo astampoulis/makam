@@ -15,7 +15,7 @@ open : bindone A B -> (A -> B -> prop) -> prop.
 apply : bindone A B -> A -> B -> prop.
 pair : bindone A B -> bindone A C -> bindone A (B * C) -> prop.
 
-open (bind Name (F : A -> B)) (P : A -> B -> prop) <-
+open (bind Name (F : A -> B)) (P : A -> B -> prop) :-
   (x:A -> nameofvar x Name -> P x (F x)).
 
 apply (bind _ F) X (F X).
@@ -44,7 +44,7 @@ applysome : bindmany A B -> list A -> bindmany A B -> prop.
 pair : bindmany A B -> bindmany A C -> bindmany A (B * C) -> prop.
 
 open (body Body) P :- P [] Body.
-open (bind Name (F : A -> bindmany A B)) (P : list A -> B -> prop) <-
+open (bind Name (F : A -> bindmany A B)) (P : list A -> B -> prop) :-
   (x:A -> nameofvar x Name -> open (F x) (pfun l => P (x :: l))).
 
 apply (body Body) [] Body.

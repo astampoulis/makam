@@ -15,23 +15,23 @@ run_tests (X : testsuite) :- run_tests [ X ] .
 %extend testing_private.
 
 handle_result : list clause -> list clause -> prop.
-handle_result Successes [] <-
+handle_result Successes [] :-
   length Successes Tests, tostring Tests TestsS,
   print_string `\n\n=== TESTS SUCCESSFUL (${TestsS} passed, 0 failed) ===\n\n`.
 
-handle_result Successes Failures when not(eq Failures []) <-
+handle_result Successes Failures when not(eq Failures []) :-
   length Successes SuccessN, tostring SuccessN SuccessS,
   length Failures FailureN, tostring FailureN FailureS,
   print_string `\n\n=== TESTS FAILED (${SuccessS} passed, ${FailureS} failed) ===\n\n`,
   failure.
 
 handle_failure : clause -> prop.
-handle_failure TestCase <-
+handle_failure TestCase :-
   log_error TestCase `Test failure for testcase`.
 
 run_test : list testsuite -> list clause -> list clause -> prop -> list clause -> prop.
-run_test Suites Successes Failures (testcase X) [] <- handle_result Successes Failures.
-run_test Suites Successes Failures (testcase X) (TestCase :: TL) <-
+run_test Suites Successes Failures (testcase X) [] :- handle_result Successes Failures.
+run_test Suites Successes Failures (testcase X) (TestCase :: TL) :-
   if (once(find (fun suite => clause.applies (testcase suite) TestCase) Suites _))
   then (
     if (once(verbose_run_tests)) then (
@@ -59,7 +59,7 @@ print_tests : testsuite -> prop.
 print_tests Suite :-
   once(demand.aux_demand testing_private.print_tests_aux (testcase Suite)).
 
-run_tests Suites <-
+run_tests Suites :-
   if (refl.isunif Suites)
   then (eq SuitesStr " all")
   else (map tostring Suites (SuitesStrs : list string),

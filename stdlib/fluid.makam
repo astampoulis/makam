@@ -12,10 +12,10 @@ inc : fluid int -> prop -> prop.
 
 current_value : [A] fluid A -> A -> prop.
 
-get X Value <- demand.most_recent (current_value X Value'), eq Value Value'.
+get X Value :- demand.most_recent (current_value X Value'), eq Value Value'.
 set X Value (cmd_newclause (clause (current_value X Value) success)).
-set X Value Pred <- (current_value X Value -> Pred).
-modify X Modify Pred <- get X CurrentValue, Modify CurrentValue NewValue, set X NewValue Pred.
-inc X Pred <- modify X (plus 1) Pred.
+set X Value Pred :- (current_value X Value -> Pred).
+modify X Modify Pred :- get X CurrentValue, Modify CurrentValue NewValue, set X NewValue Pred.
+inc X Pred :- modify X (plus 1) Pred.
 
 %end.

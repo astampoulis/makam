@@ -16,7 +16,7 @@ concat_backwards Consume (S :: Rest) Consume'' when refl.isconst S :-
   append SL Consume' Consume,
   concat_backwards Consume' Rest Consume''.
 
-concat Strings Result <-
+concat Strings Result :-
   if (refl.isunif Result) then
     foldl append "" Strings Result
   else (

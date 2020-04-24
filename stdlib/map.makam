@@ -8,13 +8,13 @@ cons : A * B -> map A B -> map A B.
 (* Remove the key-value pair matching the key. *)
 remove_if_member : map A B -> A -> map A B -> prop.
 remove_if_member nil A nil.
-remove_if_member ((Key', Val') :: Map') Key MapR <-
+remove_if_member ((Key', Val') :: Map') Key MapR :-
   if (eqv Key Key')
   then (remove_if_member Map' Key MapR)
   else (remove_if_member Map' Key MapR', eq MapR ((Key', Val') :: MapR')).
 
 remove : map A B -> A -> B -> map A B -> prop.
-remove ((Key', Val') :: Map') Key Val MapR <-
+remove ((Key', Val') :: Map') Key Val MapR :-
   if (eqv Key Key')
   then (eq Val Val', remove_if_member Map' Key MapR)
   else (remove Map' Key Val MapR', eq MapR ((Key', Val') :: MapR')).
@@ -30,12 +30,12 @@ empty [].
 
 (* Find the value corresponding to a key in a map *)
 find : map A B -> A -> B -> prop.
-find Map Key Val <-
+find Map Key Val :-
   remove Map Key Val _.
 
 (* Check whether a key exists in the map *)
 elem : map A B -> A -> prop.
-elem Map Key <- find Map Key _.
+elem Map Key :- find Map Key _.
 
 add_new : map A B -> A * B -> map A B -> prop.
 add_new M (Key, Val) ((Key, Val) :: M) when not(elem M Key).
@@ -72,13 +72,13 @@ mapvalues P ((Key, Val) :: Map) ((Key, Val') :: Map') :-
 
 (* Compute the union of two maps, assuming the keys are distinct. *)
 union : map A B -> map A B -> map A B -> prop.
-union MapA MapB MapResult <-
+union MapA MapB MapResult :-
   to_list MapB MapBList,
   foldl add_new MapA MapBList MapResult.
 
 (* Compute the merge of two maps, with the latter map taking precedence. *)
 merge_onto : map A B -> map A B -> map A B -> prop.
-merge_onto MapA MapB MapResult <-
+merge_onto MapA MapB MapResult :-
   to_list MapB MapBList,
   foldl add_or_update MapA MapBList MapResult.
 

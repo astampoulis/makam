@@ -1,37 +1,37 @@
 not : prop -> prop.
-not P <- if once(P) then failure else success.
+not P :- if once(P) then failure else success.
 
 or_many : list prop -> prop.
-or_many (HD :: TL) <- (HD ; or_many TL).
+or_many (HD :: TL) :- (HD ; or_many TL).
 
 and_many : list prop -> prop.
 and_many [].
-and_many (HD :: TL) <- HD, and_many TL.
+and_many (HD :: TL) :- HD, and_many TL.
 
 unless : prop -> prop -> prop.
-unless P Q <- if P then success else Q.
+unless P Q :- if P then success else Q.
 
 unless_many : list prop -> prop.
-unless_many (HD :: TL) <- if HD then success else unless_many TL.
+unless_many (HD :: TL) :- if HD then success else unless_many TL.
 
 assume_many : list prop -> prop -> prop.
-assume_many [] P <- P.
-assume_many (HD :: TL) P <- (HD -> assume_many TL P).
+assume_many [] P :- P.
+assume_many (HD :: TL) P :- (HD -> assume_many TL P).
 
 assume_many_clauses : list clause -> prop -> prop.
-assume_many_clauses [] P <- P.
-assume_many_clauses (HD :: TL) P <- assume HD (assume_many_clauses TL P).
+assume_many_clauses [] P :- P.
+assume_many_clauses (HD :: TL) P :- assume HD (assume_many_clauses TL P).
 
 assume_many : (A -> B -> prop) -> list A -> list B -> prop -> prop.
-assume_many P [] [] G <- G.
-assume_many P (A :: AS) (B :: BS) G <- (P A B -> assume_many P AS BS G).
+assume_many P [] [] G :- G.
+assume_many P (A :: AS) (B :: BS) G :- (P A B -> assume_many P AS BS G).
 
 (* alias *)
 assumemany : (A -> B -> prop) -> list A -> list B -> prop -> prop.
 assumemany P AS BS Q :- assume_many P AS BS Q.
 
 either : prop -> prop -> prop.
-either P Q <- if P then success else Q.
+either P Q :- if P then success else Q.
 
 for_least_upto : int -> int -> (int -> prop) -> prop.
 for_least_upto_aux : int -> int -> int -> (int -> prop) -> prop.
