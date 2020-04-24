@@ -15,20 +15,20 @@ cbval : strategy.
 cbneed : strategy.
 cbname : strategy.
 
-eval N0 (app E1 E2) V N3 when eval_strategy cbval <-
+eval N0 (app E1 E2) V N3 when eval_strategy cbval :-
    eval N0 E1 (lam (fun x => Body x)) N1,
    eval N1 E2 V2 N2,
    eval N2 (Body V2) V N3.
 
 eval N0 (lam E) (lam E) N0.
 
-eval N0 (app E1 E2) V N2 when eval_strategy cbname <-
+eval N0 (app E1 E2) V N2 when eval_strategy cbname :-
    eval N0 E1 (lam (fun x => Body x)) N1,
    eval N1 (Body E2) V N2.
 
 thunk : term -> term -> term.
 
-eval N0 (app E1 E2) V N2 when eval_strategy cbneed <-
+eval N0 (app E1 E2) V N2 when eval_strategy cbneed :-
   eval N0 E1 (lam Body) N1,
   (* the `V2` unification variable will be shared between all substitutions
      of `x` within `Body`; with the evaluation rules for `thunk` that follow,
@@ -38,25 +38,25 @@ eval N0 (app E1 E2) V N2 when eval_strategy cbneed <-
 eval N0 (thunk E2 V2) V3 N0 when not(refl.isunif V2) :-
   eq V2 V3.
 
-eval N0 (thunk E2 V2) V3 N1 when refl.isunif(V2) <-
+eval N0 (thunk E2 V2) V3 N1 when refl.isunif(V2) :-
   eval N0 E2 V2 N1,
   eq V2 V3.
 
 tuple : list term -> term.
 eval N0 (tuple []) (tuple []) N0.
-eval N0 (tuple (X :: XS)) (tuple (Y :: YS)) N2 <-
+eval N0 (tuple (X :: XS)) (tuple (Y :: YS)) N2 :-
   eval N0 X Y N1,
   eval N1 (tuple XS) (tuple YS) N2.
 
 side_effect : term.
-eval N0 (side_effect) (tuple []) N1 <- plus N0 1 N1.
+eval N0 (side_effect) (tuple []) N1 :- plus N0 1 N1.
 
 eval_cbv : term -> term -> int -> prop.
 eval_cbnd : term -> term -> int -> prop.
 eval_cbnm : term -> term -> int -> prop.
-eval_cbv X Y N1 <- (eval_strategy cbval -> eval 0 X Y N1).
-eval_cbnm X Y N1 <- (eval_strategy cbname -> eval 0 X Y N1).
-eval_cbnd X Y N1 <- (eval_strategy cbneed -> eval 0 X Y N1).
+eval_cbv X Y N1 :- (eval_strategy cbval -> eval 0 X Y N1).
+eval_cbnm X Y N1 :- (eval_strategy cbname -> eval 0 X Y N1).
+eval_cbnd X Y N1 :- (eval_strategy cbneed -> eval 0 X Y N1).
 
 
 stlc_strategies : testsuite.
