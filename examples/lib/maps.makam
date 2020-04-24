@@ -6,41 +6,41 @@ map : list (tuple A B) -> map A B.
 
 
 map_param_find : (B -> B -> prop) -> tuple A B -> map A B -> map A B -> prop.
-map_param_find ParamEq (Key, Val) (map ( (Key', Val') :: Rest )) (map Rest) <-
+map_param_find ParamEq (Key, Val) (map ( (Key', Val') :: Rest )) (map Rest) :-
   eq_benign Key Key', ParamEq Val Val'.
 map_param_find ParamEq (Key, Val) (map ( (Key', Val') :: Rest ))
-                       (map ( (Key', Val') :: Rest' )) <-
+                       (map ( (Key', Val') :: Rest' )) :-
   not(eq_benign Key Key'), map_param_find ParamEq (Key, Val) (map Rest) (map Rest').
 
 map_param_sub : (B -> B -> prop) -> map A B -> map A B -> map A B -> prop.
 map_param_sub ParamEq (map nil) X X.
 map_param_sub ParamEq
         (map ( (Key,  Val)  :: Rest1 ))
-        Map2 Res <-
+        Map2 Res :-
   map_param_find ParamEq (Key, Val) Map2 Rest2,
   map_param_sub ParamEq (map Rest1) Rest2 Res.
 
 map_param_eq : (B -> B -> prop) -> map A B -> map A B -> prop.
-map_param_eq ParamEq S1 S2 <- map_param_sub ParamEq S1 S2 (map nil).
+map_param_eq ParamEq S1 S2 :- map_param_sub ParamEq S1 S2 (map nil).
 
 map_find : tuple A B -> map A B -> map A B -> prop.
-map_find A B C <- map_param_find eq A B C.
+map_find A B C :- map_param_find eq A B C.
 
 map_sub  : map A B -> map A B -> map A B -> prop.
-map_sub A B C <- map_param_sub eq A B C.
+map_sub A B C :- map_param_sub eq A B C.
 
 map_eq   : map A B -> map A B -> prop.
-map_eq A B <- map_param_eq eq A B.
+map_eq A B :- map_param_eq eq A B.
 
 map_map : (A -> B -> prop) -> map K A -> map K B -> prop.
 map_map P (map ( (Key, ValA) :: RestA ))
-          (map ( (Key, ValB) :: RestB )) <-
+          (map ( (Key, ValB) :: RestB )) :-
   P ValA ValB, map_map P (map RestA) (map RestB).
 
 map_add : map K A -> tuple K A -> map K A -> prop.
-map_add (map M) (K, V) (map M') <-
+map_add (map M) (K, V) (map M') :-
   ifte (map_find (K, _) (map M) _) (eq M' M) (eq M' ((K, V) :: M)).
 
 map_union : map K A -> map K A -> map K A -> prop.
-map_union M (map L') M'' <-
+map_union M (map L') M'' :-
   foldl map_add M L' M''.

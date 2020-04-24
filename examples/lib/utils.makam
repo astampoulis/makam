@@ -4,39 +4,39 @@ eq : A -> A -> prop.
 eq X X.
 
 not : prop -> prop.
-not P <- if once P then failure else success.
+not P :- if once P then failure else success.
 
 is : A -> (A -> prop) -> prop.
-is X F <- F X.
+is X F :- F X.
 
 
 (* list stuff *)
 map0 : (A -> prop) -> list A -> prop.
 map0 P nil.
-map0 P (cons HD TL) <- P HD, map0 P TL.
+map0 P (cons HD TL) :- P HD, map0 P TL.
 
 map : (A -> B -> prop) -> list A -> list B -> prop.
 map P nil nil.
-map P (cons HD TL) (cons HD' TL') <- P HD HD', map P TL TL'.
+map P (cons HD TL) (cons HD' TL') :- P HD HD', map P TL TL'.
 
 map2 : (A -> B -> C -> prop) -> list A -> list B -> list C -> prop.
 map2 P nil nil nil.
-map2 P (cons HD TL) (cons HD' TL') (cons HD'' TL'') <- P HD HD' HD'', map2 P TL TL' TL''.
+map2 P (cons HD TL) (cons HD' TL') (cons HD'' TL'') :- P HD HD' HD'', map2 P TL TL' TL''.
 
 map3 : (A -> B -> C -> D -> prop) -> list A -> list B -> list C -> list D -> prop.
 map3 P nil nil nil nil.
-map3 P (cons HDA TLA) (cons HDB TLB) (cons HDC TLC) (cons HDD TLD) <- P HDA HDB HDC HDD, map3 P TLA TLB TLC TLD.
+map3 P (cons HDA TLA) (cons HDB TLB) (cons HDC TLC) (cons HDD TLD) :- P HDA HDB HDC HDD, map3 P TLA TLB TLC TLD.
 
 snoc : list A -> A -> list A -> prop.
 snoc nil Last (cons Last nil).
-snoc (cons Hd Tl) Last (cons Hd Tl') <- snoc Tl Last Tl'.
+snoc (cons Hd Tl) Last (cons Hd Tl') :- snoc Tl Last Tl'.
 
 foldr : (A -> B -> B -> prop) -> list A -> B -> B -> prop.
 foldr P nil S S.
-foldr P (cons HD TL) S S'' <- foldr P TL S S', P HD S' S''.
+foldr P (cons HD TL) S S'' :- foldr P TL S S', P HD S' S''.
 
 foldrinv : (A -> B -> B -> prop) -> B -> list A -> B -> prop.
-foldrinv P SStart Res SEnd <-
+foldrinv P SStart Res SEnd :-
   if P Hd SNext SStart
   then (foldrinv P SNext Tl SEnd, eq Res (cons Hd Tl))
   else (eq Res nil, eq SStart SEnd).
@@ -44,14 +44,14 @@ foldrinv P SStart Res SEnd <-
 
 foldl : (B -> A -> B -> prop) -> B -> list A -> B -> prop.
 foldl P S nil S.
-foldl P S (cons HD TL) S'' <- P S HD S', foldl P S' TL S''.
+foldl P S (cons HD TL) S'' :- P S HD S', foldl P S' TL S''.
 
 find : list A -> A -> prop.
 find (HD :: TL) HD.
-find (HD' :: TL) HD <- find TL HD.
+find (HD' :: TL) HD :- find TL HD.
 
 foldlinv : (B -> A -> B -> prop) -> B -> list A -> B -> prop.
-foldlinv P SEnd Res SStart <-
+foldlinv P SEnd Res SStart :-
   if P SPrev Last SEnd
   then (foldlinv P SPrev Res' SStart, snoc Res' Last Res)
   else (eq Res nil, eq SStart SEnd).
@@ -59,15 +59,15 @@ foldlinv P SEnd Res SStart <-
 reverse : list A -> list A -> prop.
 reverse_aux : list A -> (list A -> list A) -> list A -> prop.
 reverse_aux nil L (L nil).
-reverse_aux (cons HD TL) L L' <- reverse_aux TL (fun x => cons HD (L x)) L'.
-reverse L L' <- reverse_aux L (fun x => x) L'.
+reverse_aux (cons HD TL) L L' :- reverse_aux TL (fun x => cons HD (L x)) L'.
+reverse L L' :- reverse_aux L (fun x => x) L'.
 
 append : list A -> list A -> list A -> prop.
 append nil Y Y.
-append (cons HD TL) Y (cons HD TL') <- append TL Y TL'.
+append (cons HD TL) Y (cons HD TL') :- append TL Y TL'.
 
 flatten : list (list A) -> list A -> prop.
-flatten LS L <- foldl (fun cur elm res => newmeta (fun rev => and (reverse elm rev) (append rev cur res))) nil LS Lrev, reverse Lrev L.
+flatten LS L :- foldl (fun cur elm res => newmeta (fun rev => and (reverse elm rev) (append rev cur res))) nil LS Lrev, reverse Lrev L.
 
 
 
@@ -78,63 +78,63 @@ none : option A.
 some : A -> option A.
 
 map : (A -> C -> prop) -> (B -> D -> prop) -> tuple A B -> tuple C D -> prop.
-map P Q (tuple X Y) (tuple X' Y') <- P X X', Q Y Y'.
+map P Q (tuple X Y) (tuple X' Y') :- P X X', Q Y Y'.
 
 split : (list (tuple A B)) -> tuple (list A) (list B) -> prop.
 split nil (tuple nil nil).
-split (cons (tuple HD1 HD2) TL) (tuple (cons HD1 TL1) (cons HD2 TL2)) <- split TL (tuple TL1 TL2).
+split (cons (tuple HD1 HD2) TL) (tuple (cons HD1 TL1) (cons HD2 TL2)) :- split TL (tuple TL1 TL2).
 
 filterlist : list (option A) -> list A -> prop.
 filterlist nil nil.
-filterlist (cons (some HD) TL) (cons HD TL') <- filterlist TL TL'.
-filterlist (cons none TL) TL' <- filterlist TL TL'.
+filterlist (cons (some HD) TL) (cons HD TL') :- filterlist TL TL'.
+filterlist (cons none TL) TL' :- filterlist TL TL'.
 
 
 (* other predicates *)
 
 is_constructor : A -> prop.
-is_constructor X <- newfmeta (fun c => eq c X).
+is_constructor X :- newfmeta (fun c => eq c X).
 
 renamebinder : (A -> B) -> string -> (A -> B) -> prop.
 renamebinder F ID (fun newbinderⁿID => F newbinderⁿID).
 
 printhead : [A] A -> prop.
-printhead (X : A -> B) <- (x:A -> printhead (X x)).
-(printhead (X : A)) when not(eq (dyn(X : A)) (dyn(Y : B -> C))) <- refl.headargs X HD _, refl.headname HD S, print S.
+printhead (X : A -> B) :- (x:A -> printhead (X x)).
+(printhead (X : A)) when not(eq (dyn(X : A)) (dyn(Y : B -> C))) :- refl.headargs X HD _, refl.headname HD S, print S.
 
 
 assumemany : list prop -> prop -> prop.
-assumemany (cons HD TL) P <- (HD -> assumemany TL P).
-assumemany nil P <- P.
+assumemany (cons HD TL) P :- (HD -> assumemany TL P).
+assumemany nil P :- P.
 
 assumemanyclauses : list clause -> prop -> prop.
-assumemanyclauses (cons HD TL) P <- assume HD (assumemanyclauses TL P).
-assumemanyclauses nil P <- P.
+assumemanyclauses (cons HD TL) P :- assume HD (assumemanyclauses TL P).
+assumemanyclauses nil P :- P.
 
 define : (A -> prop) -> (A -> prop) -> cmd -> prop.
-define Pred How (cmd_newclause (clause (Pred Res) success)) <- How Res.
+define Pred How (cmd_newclause (clause (Pred Res) success)) :- How Res.
 
 
 case : A -> (list (tuple A prop)) -> prop.
-case Scrutinee ( (Pattern, Body) :: Rest ) <-
+case Scrutinee ( (Pattern, Body) :: Rest ) :-
   if eq Scrutinee Pattern then Body else case Scrutinee Rest.
 
 caseguard : A -> (list (tuple A (tuple prop prop))) -> prop.
-caseguard Scrutinee ( (Pattern, Guard, Body) :: Rest ) <-
+caseguard Scrutinee ( (Pattern, Guard, Body) :: Rest ) :-
   if (eq Scrutinee Pattern, Guard) then Body else caseguard Scrutinee Rest.
 
 
 isdeepunif : A -> prop.
-isdeepunif A <-
+isdeepunif A :-
   if refl.isunif A then success else
    case (dyn A)
           [ (dyn (dyn X), isdeepunif X),
             (dyn (tuple X Y), {prop| isdeepunif X, isdeepunif Y |}) ].
 
 defcase : A -> prop -> (list (tuple A prop)) -> prop.
-defcase Scrutinee Default Branches <-
+defcase Scrutinee Default Branches :-
   if isdeepunif Scrutinee then Default
-  else ((case Scrutinee nil <- Default) ->
+  else ((case Scrutinee nil :- Default) ->
          case Scrutinee Branches ).
 
 (* dynamic types *)
@@ -143,10 +143,10 @@ dyneq X X.
 
 dynmap : (dyn -> dyn -> prop) -> list dyn -> list dyn -> prop.
 dynmap P nil nil.
-dynmap P (cons (dyn HD) TL) (cons (dyn HD') TL') <- P (dyn HD) (dyn HD'), dynmap P TL TL'.
+dynmap P (cons (dyn HD) TL) (cons (dyn HD') TL') :- P (dyn HD) (dyn HD'), dynmap P TL TL'.
 
 applymany : [A B] A -> list dyn -> B -> prop.
-applymany X ( ( dyn (HD : A) ) :: TL ) RES <-
+applymany X ( ( dyn (HD : A) ) :: TL ) RES :-
   applymany (X HD) TL RES.
 applymany X [] X.
 
@@ -155,45 +155,45 @@ typeq (X : A) (Y : A).
 
 appmany : [A B] A -> list dyn -> B -> prop.
 appmany (X : A) nil (X : A).
-appmany (X : A -> B) (cons (dyn (HD : A)) TL) Res <- appmany (X HD) TL Res.
+appmany (X : A -> B) (cons (dyn (HD : A)) TL) Res :- appmany (X HD) TL Res.
 
 newvmeta : (A -> prop) -> prop.
-newvmeta P <- if newfmeta P then success else newnmeta P.
+newvmeta P :- if newfmeta P then success else newnmeta P.
 
 isnvar : A -> prop.
 (isnvar X) when newnmeta (fun x => eq x X).
 
 userdef_headargs : [A B] A -> B -> list dyn -> prop.
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A) => {prop|
                             eq X Y, eq C Y, eq List [] |}).
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A1 -> A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A1 -> A) => {prop|
 	                    eq X (Y A1), eq C Y, eq List [dyn A1] |}).
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A1 -> A2 -> A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A1 -> A2 -> A) => {prop|
 	                    eq X (Y A1 A2), eq C Y, eq List [dyn A1, dyn A2] |}).
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A1 -> A2 -> A3 -> A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A1 -> A2 -> A3 -> A) => {prop|
 	                    eq X (Y A1 A2 A3), eq C Y, eq List [dyn A1, dyn A2, dyn A3] |}).
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A1 -> A2 -> A3 -> A4 -> A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A1 -> A2 -> A3 -> A4 -> A) => {prop|
 	                    eq X (Y A1 A2 A3 A4), eq C Y, eq List [dyn A1, dyn A2, dyn A3, dyn A4] |}).
-userdef_headargs (X : A) C List <- newvmeta (fun (Y : A1 -> A2 -> A3 -> A4 -> A5 -> A) => {prop|
+userdef_headargs (X : A) C List :- newvmeta (fun (Y : A1 -> A2 -> A3 -> A4 -> A5 -> A) => {prop|
 	                    eq X (Y A1 A2 A3 A4 A5), eq C Y, eq List [dyn A1, dyn A2, dyn A3, dyn A4, dyn A5] |}).
 
 
 (* guard *)
 dynguard : A -> prop -> prop.
-(dynguard X P) when dyneq X (dyn Y) <- guard Y P.
+(dynguard X P) when dyneq X (dyn Y) :- guard Y P.
 
 dynremovableguard : unit -> A -> prop -> prop.
-(dynremovableguard RT X P) when dyneq X (dyn Y) <- removableguard RT Y P.
+(dynremovableguard RT X P) when dyneq X (dyn Y) :- removableguard RT Y P.
 
 guardmany : list dyn -> prop -> prop.
-guardmany [] P <- P.
-guardmany XS P <-
+guardmany [] P :- P.
+guardmany XS P :-
   not(eq XS []),
   map0 (fun elm => dynremovableguard RemoveTrigger elm (and P (eq RemoveTrigger unit))) XS.
 
 
 
 guardall : list dyn -> prop -> prop.
-guardall XS P <-
+guardall XS P :-
   reverse XS XS',
   foldl (fun cur elm => eq (dynguard elm cur)) P XS' Q, Q.

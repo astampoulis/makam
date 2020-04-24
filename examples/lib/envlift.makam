@@ -20,57 +20,57 @@ inenv_nurec  : ctx A -> list string -> list (inenv B) -> inenv (bindmutrec A B).
 inenv_run      : inenv A -> A -> prop.
 
 
-inenv_run (inenv_nu (Ctx : ctx A) Id Body) (fun x => Body' x) <-
+inenv_run (inenv_nu (Ctx : ctx A) Id Body) (fun x => Body' x) :-
   eq ^nx Id,
   (x:A -> ctx_lookup Ctx Id x -> (ctx_guess Id x Ctx, inenv_run Body (Body' x))).
 
-inenv_run (inenv_numany Ctx nil Body)          (bnil  Body') <- inenv_run Body Body'.
-inenv_run (inenv_numany Ctx (cons HD TL) Body) (bcons (fun x => Body' x))  <-
+inenv_run (inenv_numany Ctx nil Body)          (bnil  Body') :- inenv_run Body Body'.
+inenv_run (inenv_numany Ctx (cons HD TL) Body) (bcons (fun x => Body' x))  :-
   eq ^nx HD,
   (x:A -> ctx_lookup Ctx HD x -> (ctx_guess HD x Ctx, inenv_run (inenv_numany Ctx TL Body) (Body' x))).
 
 inenv_run (inenv_nurec Ctx nil nil) (bindmutrec (bnil nil)).
-inenv_run (inenv_nurec Ctx nil (cons HD TL)) (bindmutrec (bnil (cons HD' TL'))) <-
+inenv_run (inenv_nurec Ctx nil (cons HD TL)) (bindmutrec (bnil (cons HD' TL'))) :-
   inenv_run HD HD', inenv_run (inenv_nurec Ctx nil TL) (bindmutrec (bnil TL')).
-inenv_run (inenv_nurec Ctx (cons HD TL) Bodies) (bindmutrec (bcons (fun x => Rest x))) <-
+inenv_run (inenv_nurec Ctx (cons HD TL) Bodies) (bindmutrec (bcons (fun x => Rest x))) :-
   eq ^nx HD,
   (x:A -> ctx_lookup Ctx HD x -> (ctx_guess HD x Ctx, inenv_run (inenv_nurec Ctx TL Bodies) (bindmutrec (Rest x)))).
 
-inenv_run (inenv_var Ctx Id) (V' : A) <-
+inenv_run (inenv_var Ctx Id) (V' : A) :-
   newnmeta (fun (n : A) => and (eq n V') (ctx_lookup Ctx Id V')).
 
-inenv_run (inenv_lift0 C) E' <-
+inenv_run (inenv_lift0 C) E' :-
   newfmeta (fun c => and (eq E' c) (eq C c)).
 
-inenv_run (inenv_lift1 C A1) E' <-
+inenv_run (inenv_lift1 C A1) E' :-
   newfmeta (fun c => and (and (eq C c) (eq E' (c A1')))
                      (inenv_run A1 A1')).
 
-inenv_run (inenv_lift2 C A1 A2) E' <-
+inenv_run (inenv_lift2 C A1 A2) E' :-
   newfmeta (fun c => and (and (eq C c) (eq E' (c A1' A2')))
                      (and (inenv_run A1 A1') (inenv_run A2 A2'))).
 
-inenv_run (inenv_lift3 C A1 A2 A3) E' <-
+inenv_run (inenv_lift3 C A1 A2 A3) E' :-
   newfmeta (fun c => and (and (eq C c) (eq E' (c A1' A2' A3')))
                      (and (and (inenv_run A1 A1') (inenv_run A2 A2')) (inenv_run A3 A3'))).
 
 lm_valenv : A -> lm_comp (inenv A).
-lmcomp_to_ipred (lm_valenv C) IPred <- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift0 C)) IPred.
+lmcomp_to_ipred (lm_valenv C) IPred :- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift0 C)) IPred.
 
 lm_valenv : (T1 -> A) -> inenv T1 -> lm_comp (inenv A).
-lmcomp_to_ipred (lm_valenv C A1) IPred <- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift1 C A1)) IPred.
+lmcomp_to_ipred (lm_valenv C A1) IPred :- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift1 C A1)) IPred.
 
 lm_valenv : (T1 -> T2 -> A) -> inenv T1 -> inenv T2 -> lm_comp (inenv A).
-lmcomp_to_ipred (lm_valenv C A1 A2) IPred <- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift2 C A1 A2)) IPred.
+lmcomp_to_ipred (lm_valenv C A1 A2) IPred :- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift2 C A1 A2)) IPred.
 
 lm_valenv : (T1 -> T2 -> T3 -> A) -> inenv T1 -> inenv T2 -> inenv T3 -> lm_comp (inenv A).
-lmcomp_to_ipred (lm_valenv C A1 A2 A3) IPred <- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift3 C A1 A2 A3)) IPred.
+lmcomp_to_ipred (lm_valenv C A1 A2 A3) IPred :- is_constructor C, lmcomp_to_ipred (lm_val (inenv_lift3 C A1 A2 A3)) IPred.
 
 lm_valenvget : ctx A -> string -> lm_comp (inenv A).
-lmcomp_to_ipred (lm_valenvget Ctx Id) IPred <- lmcomp_to_ipred (lm_val (inenv_var Ctx Id)) IPred.
+lmcomp_to_ipred (lm_valenvget Ctx Id) IPred :- lmcomp_to_ipred (lm_val (inenv_var Ctx Id)) IPred.
 
 lm_envrun : inenv B -> lm_comp B.
-lmcomp_to_ipred (lm_envrun X) IPred <- lmcomp_to_ipred (lm_lift inenv_run X) IPred.
+lmcomp_to_ipred (lm_envrun X) IPred :- lmcomp_to_ipred (lm_lift inenv_run X) IPred.
 
 
 
