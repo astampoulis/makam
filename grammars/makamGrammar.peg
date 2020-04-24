@@ -595,7 +595,7 @@ num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_
 eof -> !. ;
 
 (* whitespace *)
-comment -> "(*" repV(commentchar) "*)" / "% " repV(slcommentchar) slcommentend;
+comment -> "(*" repV(commentchar) "*)" / "% " repV(slcommentchar) slcommentend / "%" slcommentend;
 commentchar -> !"*)" . ;
 
 slcommentchar -> !slcommentend .;
