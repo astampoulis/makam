@@ -3,8 +3,8 @@
 %use envlift.
 
 isemaction : peg A -> lm_arrow A B -> peg B.
-peginline_parse  (isemaction P C) (semaction P C') <- lm_forward C C'.
-peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) <- lm_backward C C'.
+peginline_parse  (isemaction P C) (semaction P C') :- lm_forward C C'.
+peginline_pretty (isemaction P C) (semaction P (fun output input => C' input output)) :- lm_backward C C'.
 
 term : type.
 app  : term -> term -> term.

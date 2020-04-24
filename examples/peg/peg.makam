@@ -25,7 +25,7 @@ xparse  : peg A -> list string -> option (tuple (list string) A) -> prop.
 xpretty : peg A -> list string -> option (tuple (list string) A) -> prop.
 
 parse : peg A -> string -> option (tuple string A) -> prop.
-parse P S Res' <-
+parse P S Res' :-
   string.explode S Chars,
   xparse P Chars Res,
   (if (eq Res (some (tuple RestChars RealRes)))
@@ -33,14 +33,14 @@ parse P S Res' <-
    else (eq Res' none)).
 
 pretty : peg A -> option (tuple string A) -> string -> prop.
-pretty P (some (tuple Output Res)) Input <-
+pretty P (some (tuple Output Res)) Input :-
   string.explode Output OutputC,
   xpretty P InputC (some (tuple OutputC Res)),
   string.explode Input InputC.
 	  
 
 pegbuiltin (exactchar _).
-xparse (exactchar S) Input Result <-
+xparse (exactchar S) Input Result :-
    (if (eq Input (cons S Output))
     then eq Result (some (tuple Output S))
     else eq Result none).
@@ -48,7 +48,7 @@ xpretty (exactchar S) (cons S Output) (some (tuple Output _)).
 
 
 pegbuiltin (any).
-xparse (any) Input Result <-
+xparse (any) Input Result :-
    (if (eq Input (cons Hd Output))
     then eq Result (some (tuple Output Hd))
     else eq Result none).
@@ -56,61 +56,61 @@ xpretty (any) (cons Hd Output) (some (tuple Output Hd)).
 
 
 pegbuiltin (concat _ _).
-xparse (concat P1 P2) Input Result <-
+xparse (concat P1 P2) Input Result :-
    (if (xparse P1 Input (some (tuple Input1 Res1)),
         xparse P2 Input1 (some (tuple Input2 Res2))),
     then eq Result (some (tuple Input2 (tuple Res1 Res2)))
     else eq Result none).
-xpretty (concat P1 P2) Input (some (tuple Input2 (tuple Res1 Res2))) <-
+xpretty (concat P1 P2) Input (some (tuple Input2 (tuple Res1 Res2))) :-
    xpretty P2 Input1 (some (tuple Input2 Res2)),
    xpretty P1 Input  (some (tuple Input1 Res1)).
 
 
 pegbuiltin (choice _ _).
-xparse (choice P1 P2) Input Result <-
+xparse (choice P1 P2) Input Result :-
   (if   (xparse P1 Input Res1, eq Res1 (some _))
    then (eq Result Res1)
    else (xparse P2 Input Result)).
-xpretty (choice P1 P2) Input (some (tuple Input' Res)) <-
+xpretty (choice P1 P2) Input (some (tuple Input' Res)) :-
   (if xpretty P1 Input (some (tuple Input' Res))
    then success
    else xpretty P2 Input (some (tuple Input' Res))).
 
 
 pegbuiltin (lookahd _).
-xparse (lookahd P) Input Result <-
+xparse (lookahd P) Input Result :-
   (if (xparse P Input (some (tuple _ Res)))
    then (eq Result (some (tuple Input Res)))
    else (eq Result none)).
-xpretty (lookahd P) Input (some (tuple Input Res)) <-
+xpretty (lookahd P) Input (some (tuple Input Res)) :-
   xparse P Input (some (tuple _ Res)).
 
 
 pegbuiltin (notp _).
-xparse (notp P) Input Result <-
+xparse (notp P) Input Result :-
   (if xparse P Input none
    then eq Result (some (tuple Input unit))
    else eq Result none).
-xpretty (notp P) Input (some (tuple Input _)) <-
+xpretty (notp P) Input (some (tuple Input _)) :-
   xparse P Input none.
 
 
 pegbuiltin (semaction _ _).
-xparse (semaction P F) Input Result <-
+xparse (semaction P F) Input Result :-
   (if xparse P Input (some (tuple Input' Res))
    then (F Res Res', eq Result (some (tuple Input' Res')))
    else (eq Result none)).
-xpretty (semaction P F) Input (some (tuple Input' Res')) <-
+xpretty (semaction P F) Input (some (tuple Input' Res')) :-
   F Res Res',
   xpretty P Input (some (tuple Input' Res)).
 
 
 pegbuiltin (externalclass _).
-xparse (externalclass P) Input Result <-
+xparse (externalclass P) Input Result :-
   (if (eq Input (cons Hd Tl), P Hd)
    then eq Result (some (tuple Tl Hd))
    else eq Result none).
-xpretty (externalclass P) (cons Hd Tl) (some (tuple Tl Hd)) <-
+xpretty (externalclass P) (cons Hd Tl) (some (tuple Tl Hd)) :-
   P Hd.
 
 
@@ -124,22 +124,22 @@ xparse (failp)   Input none.
 xpretty (failp)  Input none.
 
 
-xparse P Input Result <- 
+xparse P Input Result :- 
   not(pegbuiltin P),
   (if (once( (pegdef P P', xparse P' Input Result, eq Result (some _))) )
    then success
    else eq Result none).
-xpretty P Input Result <-
+xpretty P Input Result :-
   not(pegbuiltin P),
   once( (pegdefpretty_real P P', xpretty P' Input Result) ).
 
-pegdefpretty_real P P' <- (if pegdefpretty P P' then success else pegdef P P').
+pegdefpretty_real P P' :- (if pegdefpretty P P' then success else pegdef P P').
 
 
 
 (* useful parsers *)
 class : string -> peg string.
-pegdef (class S) P <-
+pegdef (class S) P :-
   string.explode S Chars,
   foldl (fun cur elm res => eq res (choice cur (exactchar elm)))
         failp Chars P.
@@ -148,7 +148,7 @@ ignorep : peg A -> peg unit.
 pegdef (ignorep P) (semaction P (fun a res => eq res unit)).
 
 exactstr : string -> peg unit.
-pegdef (exactstr S) P <-
+pegdef (exactstr S) P :-
   string.explode S Chars,
   foldr (fun elm cur res => eq res (ignorep (concat (exactchar elm) cur)))
         Chars epsilon P.
