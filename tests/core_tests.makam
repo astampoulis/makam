@@ -99,3 +99,8 @@ testcase makam_core :- makam_core_tests.a X, (eq X 5; eq X 4).
 testcase makam_core :- makam_core_tests.a X, (if (makam_core_tests.b 3) then failure else eq X 4).
 testcase makam_core :- makam_core_tests.a X, eq X 101.
 testcase makam_core :- makam_core_tests.a 201.
+
+(* Tests for hex parsing *)
+
+testcase makam_core :- eq 0xada 2778.
+

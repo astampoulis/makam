@@ -591,7 +591,8 @@ letterchar -> &&( .
               a:. << a >>
 latin1letter -> &latin1char c:letterchar << c >>
 digitchar -> a:[0123456789]              << a >>
-num       -> is:repplus(digitchar)       << is |> UString.implode |> UString.to_string |> Big_int.of_string >>
+num       -> "0x" is:repplus(hexdigitchar) << ("0x" ^ (is |> UString.implode |> UString.to_string)) |> Big_int.of_string >>
+           / is:repplus(digitchar)         << is |> UString.implode |> UString.to_string |> Big_int.of_string >>;
 eof -> !. ;
 
 (* whitespace *)
