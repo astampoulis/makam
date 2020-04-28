@@ -24,7 +24,6 @@ depends: [
   "pa_monad_custom"
   "js_of_ocaml"
   "js_of_ocaml-ocamlbuild"
-  "js_of_ocaml-camlp4"
   "js_of_ocaml-compiler"
   "camlp4"
 ]

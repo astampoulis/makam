@@ -123,7 +123,7 @@ MAKAM_MARKDOWN_FILES=$(foreach file, $(shell git ls-files '*.md'), --file $(file
 JSOO_RUNTIME_LIBS:=+nat.js +toplevel.js
 
 js:
-	$(OCAMLBUILD) -plugin-tag "package(js_of_ocaml.ocamlbuild)" -no-links js/browser.byte
+	$(OCAMLBUILD) -plugin-tag "package(js_of_ocaml-ocamlbuild)" -no-links js/browser.byte
 	js_of_ocaml -I ./ $(MAKAMFILES) $(MAKAM_MARKDOWN_FILES) $(JSOO_RUNTIME_LIBS) js/myruntime.js _build/js/browser.byte -o js/makam.js
 
 md2makam:

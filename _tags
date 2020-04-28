@@ -10,7 +10,7 @@ true: -traverse, debug
 	       package(camlp4), syntax(camlp4o), package(monad-custom)
 
 <js/*>: package(js_of_ocaml)
-<js/*.ml>: package(js_of_ocaml), package(js_of_ocaml.syntax)
+<js/*.ml>: package(js_of_ocaml)
 
 <bootstrap/*.ml>: package(camlp4.quotations.o)
 <utils/toploopTools.ml>: package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
