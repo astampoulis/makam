@@ -17,9 +17,9 @@ export type MakamResult = {
 };
 
 const parseLocation = (message: string): ?Location => {
-  const sameLineRegexp = /line ([0-9]+), characters ([0-9]+)-([0-9]+)/m;
-  const spansLineRegexp = /line ([0-9]+), character ([0-9]+) to line ([0-9]+), character ([0-9]+)/m;
-  const singleCharRegexp = /line ([0-9]+), character ([0-9]+)/m;
+  const sameLineRegexp = /([0-9]+):([0-9]+)-([0-9]+)/m;
+  const spansLineRegexp = /([0-9]+)\.([0-9]+)-([0-9]+)\.([0-9]+)/m;
+  const singleCharRegexp = /([0-9]+):([0-9]+)/m;
 
   const singleMatch = message.match(singleCharRegexp);
   const sameMatch = message.match(sameLineRegexp);
@@ -49,7 +49,7 @@ const parseLocation = (message: string): ?Location => {
 };
 
 const parseError = (error: string): LocatedMessage => {
-  const errorRegexp = /^!! Error in block block[0-9]*, .*:$/m;
+  const errorRegexp = /^!! Error in block block[0-9]*:.*:$/m;
   return {
     message: error.replace(errorRegexp, "").trim(),
     location: parseLocation(error)
@@ -57,7 +57,7 @@ const parseError = (error: string): LocatedMessage => {
 };
 
 const parseQueryResult = (queryResult: string): LocatedMessage => {
-  const headerRegexp = /^line .+:$/m;
+  const headerRegexp = /^.+:$/m;
   return {
     message: queryResult.replace(headerRegexp, "").trim(),
     location: parseLocation(queryResult)
@@ -67,7 +67,7 @@ const parseQueryResult = (queryResult: string): LocatedMessage => {
 const parseOutput = (output: string): MakamResult => {
   let processed = output;
 
-  const errorRegexp = /^!! Error in block block[0-9]*, .*$\n(.+\n)*\n/gm;
+  const errorRegexp = /^!! Error in block block[0-9]*:.*$\n(.+\n)*\n/gm;
   let errors = [];
   const errorMatch = processed.match(errorRegexp);
   if (errorMatch) {
@@ -75,7 +75,7 @@ const parseOutput = (output: string): MakamResult => {
   }
 
   processed = processed.replace(errorRegexp, "");
-  const queryResultRegexp = /^-- Query result in block block[0-9]*, /m;
+  const queryResultRegexp = /^-- Query result in block block[0-9]*:/m;
   let queryResults = processed.split(queryResultRegexp);
   if (queryResults.length >= 1) {
     queryResults = queryResults.slice(1).map(parseQueryResult);
