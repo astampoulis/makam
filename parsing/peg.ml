@@ -2663,7 +2663,7 @@ let string_of_peg g =
   let outstr = IO.output_string ()
   in (PegPrint.printer outstr g; IO.close_out outstr)
   
-exception IncompleteParse of UChannel.t * string
+exception IncompleteParse of UChannel.t * UChannel.loc
   
 let getFullParse result =
   match result with
@@ -2672,7 +2672,7 @@ let getFullParse result =
        | Some _ ->
            raise
              (IncompleteParse (uc,
-                (UChannel.string_of_loc (UChannel.loc uc))))
+                (UChannel.loc uc)))
        | None -> realresult)
   | None -> failwith "failed to parse"
   

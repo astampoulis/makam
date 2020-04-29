@@ -1102,13 +1102,13 @@ let string_of_peg g =
   PegPrint.printer outstr g;
   IO.close_out outstr ;;
 
-exception IncompleteParse of UChannel.t * string
+exception IncompleteParse of UChannel.t * UChannel.loc
 
 let getFullParse result = 
   match result with
     Some(realresult, uc) -> 
       (match UChannel.get_one uc with
-	  Some _ -> raise (IncompleteParse (uc, UChannel.string_of_loc (UChannel.loc uc)))
+	  Some _ -> raise (IncompleteParse (uc, UChannel.loc uc))
 	| None -> realresult)
   | None -> failwith "failed to parse" ;;
 

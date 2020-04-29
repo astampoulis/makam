@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "makam"
-version: "0.7.33"
+version: "0.7.34"
 maintainer: "Antonis Stampoulis <antonis.stampoulis@gmail.com>"
 authors: [ "Antonis Stampoulis <antonis.stampoulis@gmail.com>" ]
 license: "GPL-3"
@@ -24,7 +24,6 @@ depends: [
   "pa_monad_custom"
   "js_of_ocaml"
   "js_of_ocaml-ocamlbuild"
-  "js_of_ocaml-camlp4"
   "js_of_ocaml-compiler"
   "camlp4"
 ]

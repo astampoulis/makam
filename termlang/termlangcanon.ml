@@ -1435,7 +1435,7 @@ let typing_handler (type a) (code : unit -> a) : a =
         Printf.sprintf "Term of type %a,\n   whereas expected a type of form %a."
                        Typ.print t1 Typ.print t2
       in
-      Utils.log_error (UChannel.string_of_span e.loc) s; raise TypingError
+      Log.error e.loc s; raise TypingError
     end
 
   | OccursCheck(i, t) ->
@@ -1448,7 +1448,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let s = Printf.sprintf "Type %a needs to be unified with %a, which contains it."
                  Typ.print tm Typ.print t
       in
-      Utils.log_error (UChannel.string_of_span e.loc) s; raise TypingError
+      Log.error e.loc s; raise TypingError
     end
 
 
@@ -1460,7 +1460,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let s = Printf.sprintf "Variable %a with type %a does not exist."
                  (ExprU.print ~debug:false) x Typ.print t
       in
-      Utils.log_error (UChannel.string_of_span x.loc) s; raise TypingError
+      Log.error x.loc s; raise TypingError
 
     end
 
@@ -1473,7 +1473,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let s = Printf.sprintf "Unknown type variable %a."
                  Typ.print t
       in
-      Utils.log_error (UChannel.string_of_span t.loc) s; raise TypingError
+      Log.error t.loc s; raise TypingError
 
     end
 
@@ -1487,7 +1487,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let s = Printf.sprintf "Type %s used with %d arguments instead of %d as defined."
                  s actual expected
       in
-      Utils.log_error (UChannel.string_of_span t.loc) s; raise TypingError
+      Log.error t.loc s; raise TypingError
 
     end
 
@@ -1500,7 +1500,7 @@ let typing_handler (type a) (code : unit -> a) : a =
       let s = Printf.sprintf "Could not fully determine type; got as far as %a."
                              Typ.print t
       in
-      Utils.log_error (UChannel.string_of_span e.loc) s; raise TypingError
+      Log.error e.loc s; raise TypingError
 
     end
 
@@ -1510,7 +1510,7 @@ let typing_handler (type a) (code : unit -> a) : a =
 
       let t = prepareTypeForUser t in
       let s = Printf.sprintf "The kind %a is invalid." Typ.print t in
-      Utils.log_error (UChannel.string_of_span t.loc) s; raise TypingError
+      Log.error t.loc s; raise TypingError
 
     end
 
@@ -1520,7 +1520,7 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
 
       let s = Printf.sprintf "Abstraction over type is not allowed here." in
-      Utils.log_error (UChannel.string_of_span t.loc) s; raise TypingError
+      Log.error t.loc s; raise TypingError
 
     end
 
@@ -1529,7 +1529,7 @@ let typing_handler (type a) (code : unit -> a) : a =
     begin
 
       let s = Printf.sprintf "Rank-N-polymorphism not supported." in
-      Utils.log_error (UChannel.string_of_span t.loc) s; raise TypingError
+      Log.error t.loc s; raise TypingError
 
     end
 

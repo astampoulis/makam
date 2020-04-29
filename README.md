@@ -110,7 +110,7 @@ configuration and dependencies separate from other OCaml projects you
 might have. To create a local switch, install all dependencies, and set
 up the environment variables you need, do:
 
-- `opam switch create ./`
+- `opam switch create ./ ocaml-base-compiler.4.07.1`
 - `eval $(opam config env)`
 
 Makam also depends on Node.js, which is used for optimized parser

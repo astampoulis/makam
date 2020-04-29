@@ -3396,7 +3396,7 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
     _ <-- mapM (uncurry nameUnify) nu ;
     let _ =
       if print && not !is_interactive then
-        Utils.log_info_header (UChannel.string_of_span goal.loc) "Query result"
+        Log.info_header goal.loc "Query result"
     in
 
     _     <-- ifte
@@ -3466,26 +3466,26 @@ let prolog_handler e =
   try Lazy.force e
   with
   | UnknownPredicate(p) -> begin
-    Utils.log_error (UChannel.string_of_span p.loc)
+    Log.error p.loc
     (Printf.sprintf "The predicate in %a is not concrete."
                     Pattneut.alphaSanitizedPrint p);
     raise PrologError
     end
   | MalformedClause(p) -> begin
-    Utils.log_error (UChannel.string_of_span p.loc)
+    Log.error p.loc
     (Printf.sprintf "The clause %a is malformed."
                     Pattneut.alphaSanitizedPrint p);
     raise PrologError
   end
   | MalformedClauseTypecase(p,t,t') -> begin
-    Utils.log_error (UChannel.string_of_span p.loc)
+    Log.error p.loc
     (Printf.sprintf "The clause conclusion %a specializes parametric type variables.\n   Expected type: %a\n   Actual type: %a"
       Pattneut.alphaSanitizedPrint p
       Typ.print t Typ.print t');
     raise PrologError
   end
   | ClauseForBuiltin(p,s) -> begin
-    Utils.log_error (UChannel.string_of_span p.loc)
+    Log.error p.loc
     (Printf.sprintf "Cannot add new clause to builtin predicate %s." s);
     raise PrologError
   end

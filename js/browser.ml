@@ -6,6 +6,7 @@ open Termlangprolog;;
 open Termlangext;;
 open Termlangrefl;;
 open Termlangparse;;
+open Js_of_ocaml;;
 
 let version = Version.version;;
 
@@ -109,7 +110,7 @@ let (process_input : string -> unit) input =
          (Printf.printf "In %s:\n  Last command was not a query.\n%!"
             (last_cmd_span ()); loop (UChannel.flush_to_furthest input))
       | Peg.IncompleteParse(_, s) ->
-        (print_now ("\nParse error at " ^ s ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
+        (print_now ("\nParse error at " ^ (UChannel.string_of_loc s) ^ ".\n"); restore_debug (); loop (UChannel.flush_to_furthest input))
       | e ->
 	raise e
   in

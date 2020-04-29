@@ -6,17 +6,21 @@ type realspan = { startloc : loc ; endloc : loc } ;;
 type span     = realspan option ;;
 
 
-let string_of_loc loc  = Printf.sprintf "%s, line %d, character %d%!" loc.description loc.lineno loc.charno ;;
+let string_of_loc loc  = Printf.sprintf "%s:%d:%d%!" loc.description loc.lineno loc.charno ;;
 let string_of_span span : string =
   match span with
       None -> "<none>"
     | Some({startloc = locstart ; endloc = locend }) ->
       begin
         assert(locstart.description = locend.description);
-        if locstart.lineno = locend.lineno then
-          Printf.sprintf "%s, line %d, characters %d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
+        if locstart.lineno = locend.lineno then begin
+          if locstart.charno = locend.charno then
+            string_of_loc locstart
+          else
+            Printf.sprintf "%s:%d:%d-%d%!" locstart.description locstart.lineno locstart.charno locend.charno
+          end
         else
-          Printf.sprintf "%s, line %d, character %d to line %d, character %d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
+          Printf.sprintf "%s:%d.%d-%d.%d%!" locstart.description locstart.lineno locstart.charno locend.lineno locend.charno
       end
 ;;
 

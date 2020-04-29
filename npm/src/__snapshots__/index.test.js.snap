@@ -18,11 +18,11 @@ Object {
     },
   ],
   "fullOutput": "
--- Query result in block block, line 5, characters 7-10:
+-- Query result in block block:5:7-10:
 helloYes.
 
 
-!! Error in block block, line 6, characters 7-11:
+!! Error in block block:6:7-11:
    Variable test with type prop does not exist.
 
 ",
@@ -61,7 +61,7 @@ Object {
     Object {
       "errors": Array [],
       "fullOutput": "
--- Query result in block block2, line 2, characters 1-4:
+-- Query result in block block2:2:1-4:
 helloYes.
 
 ",
@@ -98,7 +98,7 @@ helloYes.
         },
       ],
       "fullOutput": "
-!! Error in block block3, line 2, characters 1-5:
+!! Error in block block3:2:1-5:
    Variable test with type prop does not exist.
 
 ",

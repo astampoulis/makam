@@ -132,40 +132,40 @@ let restore_state filename =
 exception ErrorInFile;;
 
 let exception_handler (type a) (f: unit -> a) (recover: unit -> a) (recover_parse: unit -> a) =
-  let last_cmd_span () = UChannel.string_of_span !MakamGrammar.last_command_span in
+  let last_cmd_span () = !MakamGrammar.last_command_span in
   try f ()
   with
   | Termlangcanon.FileNotFound(s, all) ->
-     (Utils.log_error (last_cmd_span ())
+     (Log.error (last_cmd_span ())
      (Printf.sprintf "File %s not found (searched: %a)."
                     s (List.print ~first:"[" ~last:"]" ~sep:"; " String.print) all)
      ; recover())
   | Termlangcanon.TypingError | Termlangprolog.PrologError ->
      (recover())
   | Termlangrefl.StagingError(code) ->
-     (Utils.log_error (UChannel.string_of_span code.loc)
+     (Log.error code.loc
      "Error in staged code."
      ; recover())
   | Termlangprolog.ResetInModule m ->
-     (Utils.log_error (last_cmd_span ())
+     (Log.error (last_cmd_span ())
      (Printf.sprintf "Module %s tried to reset the state." m)
      ; recover())
   | Termlangcanon.NotInModule ->
-     (Utils.log_error (last_cmd_span ())
+     (Log.error (last_cmd_span ())
      "Stopping extension to module, but no module is open."
      ; recover())
   | MakamGrammar.NoTestSuite ->
-     (Utils.log_error (last_cmd_span ())
+     (Log.error (last_cmd_span ())
      "Test suite has not been specified, use %testsuite directive."
      ; recover())
   | MakamGrammar.NoQueryToTest ->
-     (Utils.log_error (last_cmd_span ())
+     (Log.error (last_cmd_span ())
      "Last command was not a query."
      ; recover())
   | MakamGrammar.Forget(s) ->
      (forget_to_state s; recover())
   | Peg.IncompleteParse(_, s) ->
-     (Utils.log_error s
+     (Log.error (UChannel.mk_span s s)
      "Parse error."
      ; recover_parse())
   | ErrorInFile -> recover ()
@@ -189,7 +189,7 @@ let _ =
         let res = prevparser syntax memo mode input in
         match res, UChannel.reached_eof input with
           Some(_, uc), false ->
-            raise (Peg.IncompleteParse(uc, (UChannel.string_of_loc (UChannel.loc uc))))
+            raise (Peg.IncompleteParse(uc, UChannel.loc uc))
         | _ -> restore_interactivity (); res)
         (fun _ -> restore_interactivity (); raise ErrorInFile)
         (fun _ -> restore_interactivity (); raise ErrorInFile))
@@ -250,7 +250,7 @@ let rec repl ?input () : unit =
           | Some(_, input') ->
              store_state (); loop input'
           | None ->
-             raise (Peg.IncompleteParse(input, (input |> UChannel.loc |> UChannel.string_of_loc)))
+             raise (Peg.IncompleteParse(input, input |> UChannel.loc))
       end)
       (fun () -> restore_debug (); if !is_interactive then recover () else (raise ErrorInFile))
       (fun () -> restore_debug (); if !is_interactive then skip_line_and_recover () else (raise ErrorInFile))

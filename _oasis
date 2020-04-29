@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        makam
-Version:     0.7.33
+Version:     0.7.34
 Synopsis:    The Makam Metalanguage -- a tool for rapid language prototyping
 Authors:     Antonis Stampoulis <antonis.stampoulis@gmail.com>
 Homepage:    http://astampoulis.github.io/
@@ -10,7 +10,7 @@ Plugins:     DevFiles (0.4)
 BuildTools:  ocamlbuild
 OCamlVersion:          >= 4.04
 AlphaFeatures:         ocamlbuild_more_args
-XOCamlBuildPluginTags: package(js_of_ocaml.ocamlbuild)
+XOCamlBuildPluginTags: package(js_of_ocaml-ocamlbuild)
 XOCamlBuildExtraArgs:  -byte-plugin
 
 SourceRepository master

@@ -149,7 +149,7 @@ val parseGen : pegGrammar -> Camlp4.PreCast.Ast.str_item
   
 val peg_to_file : string -> pegGrammar -> unit
   
-exception IncompleteParse of UChannel.t * string
+exception IncompleteParse of UChannel.t * UChannel.loc
   
 val getFullParse : ('a * UChannel.t) option -> 'a
   
