@@ -1,0 +1,45 @@
+functional_tests : testsuite. %testsuite functional_tests.
+
+%use functional.
+
+%open functional.
+
+>> find_lift (lift (eq "foo")) X Y ?
+>> Yes:
+>> X := eq "foo",
+>> Y := (fun x => x).
+
+>> find_lift (return (lift (eq "foo"))) X Y ?
+>> Yes:
+>> X := eq "foo",
+>> Y := (fun x => return x).
+
+>> find_lift (return !(plus 5 !(plus 5 2))) X Y ?
+>> Yes:
+>> X := plus 5 2,
+>> Y := (fun x => return !(plus 5 x)).
+
+
+>> to_a_normal (return (lift (eq "foo"))) X ?
+>> Yes:
+>> X := bind (eq "foo") (fun x => return x).
+
+>> to_a_normal (return !(plus 5 !(plus 5 2))) X ?
+>> Yes:
+>> X := bind (plus 5 2) (fun a => bind (plus 5 a) (fun b => return b)).
+
+>> to_a_normal (return !(plus !(minus 5 2) !(plus 5 2))) X ?
+>> Yes:
+>> X := bind (minus 5 2) (fun a => bind (plus 5 2) (fun b => bind (plus a b) (fun c => return c))).
+
+>> functional.do !(plus 5 2) X ?
+>> Yes:
+>> X := 7.
+
+>> functional.do !(plus !(plus 5 2) !(plus 5 3)) X ?
+>> Yes:
+>> X := 15.
+
+>> functional.do !(plus !(minus 5 5) !(plus 5 3)) X ?
+>> Yes:
+>> X := 8.

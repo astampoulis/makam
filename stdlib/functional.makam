@@ -1,0 +1,89 @@
+(*
+
+This is an experiment at functional syntax for Makam.
+
+This is inspired by the Idris !-notation:
+  http://docs.idris-lang.org/en/latest/tutorial/interfaces.html#notation
+and the Ciao functional syntax:
+  http://ciao-lang.org/ciao/build/doc/ciao.html/fsyntax_doc.html
+
+It introduces a "magic" operator `lift` that allows us to turn a one-argument
+logic predicate of type `A -> prop` into a value of type A. The syntactic sugar
+`!P` stands for `lift P`.
+
+The `functional.do` predicate can be used to execute code containing instances
+of `lift`.
+
+Usage example:
+
+functional.do !(plus 10 !(plus 20 30)) X ?
+
+*)
+
+lift : (A -> prop) -> A.
+
+%extend functional.
+
+a_normal : type -> type.
+
+return : A -> a_normal A.
+bind : (A -> prop) -> (A -> a_normal B) -> a_normal B.
+
+(* converts a-normalized code into a logical predicate *)
+convert_a_normal : a_normal A -> (A -> prop) -> prop.
+
+convert_a_normal (return X) (pfun result => eq result X).
+convert_a_normal (bind (P_A: Type_A -> prop) (K: Type_A -> a_normal Type_B))
+        (pfun result => [ValueA] (P_A ValueA, P_K ValueA result)) :-
+   (a:Type_A -> convert_a_normal (K a) (P_K a)).
+
+
+(* finds the innermost, leftmost instance of a `lift` inside a term,
+   and returns the `lift` instance and the hole containing it *)
+find_lift : B -> (A -> prop) -> (A -> B) -> prop.
+
+find_lift_aux, find_lift_rules : [A] dyn -> dyn -> A -> A -> prop.
+
+find_lift_rules DynReplacement Lift
+                (lift X) Context
+    when refl.isunif Lift, not(find_lift X _ _) :-
+  dyn.eq DynReplacement (dyn Context),
+  dyn.eq Lift (dyn (lift X)).
+
+find_lift_aux Replacement Lift Context Context' :-
+  demand.case_otherwise
+    (find_lift_rules Replacement Lift Context Context')
+    (structural @(find_lift_aux Replacement Lift) Context Context').
+
+find_lift Input Lift Hole :-
+  (x:A ->
+     ([Lift' Hole']
+     find_lift_aux (dyn x) LiftResult Input Hole',
+     not(refl.isunif LiftResult),
+     dyn.eq LiftResult (dyn (lift Lift)),
+     dyn.eq Hole' (Hole x))).
+
+(* converts functional code containing lifts into a-normalized code.
+   The type of the first argument is imprecise here: the code is not
+   yet in a-normal form, since it potentially contains nested instances
+   of `lift`. *)
+to_a_normal : [A] a_normal A -> a_normal A -> prop.
+to_a_normal Input Input when not(find_lift Input _ _).
+to_a_normal Input (bind First Rest) :-
+  find_lift Input First Hole,
+  (x:A -> to_a_normal (Hole x) (Rest x)).
+
+(* converts code containing instances of `lift` into a one-argument predicate *)
+hoist_lifts : A -> (A -> prop) -> prop.
+hoist_lifts FunctionalCode LogicCode :-
+  to_a_normal (return FunctionalCode) ANormalCode,
+  convert_a_normal ANormalCode LogicCode.
+
+(* executes code containing instances of `lift` *)
+do : A -> A -> prop.
+
+do FunctionalCode Result :-
+  hoist_lifts FunctionalCode LogicCode,
+  LogicCode Result.
+
+%end.
