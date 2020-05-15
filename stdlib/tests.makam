@@ -9,6 +9,23 @@ testcase builtins :- guard X success, refl.open_constraints X.
 testcase builtins :- guard X success, not(refl.open_constraints Y).
 testcase builtins :- guard X success, eq X "foo", not(refl.open_constraints X).
 
+(* ------------------- int *)
+
+ints : testsuite.
+
+testcase ints :- plus 5 2 X, eq X 7.
+testcase ints :- plus X 5 7, eq X 2.
+testcase ints :- plus X 5 0, eq X -5.
+testcase ints :- minus 5 2 X, eq X 3.
+testcase ints :- minus 0 5 X, eq X -5.
+testcase ints :- mult 5 2 X, eq X 10.
+testcase ints :- mult -1 5 X, eq X -5.
+testcase ints :- mult -5 -5 X, eq X 25.
+testcase ints :- div 5 2 Quot Rem, eq Quot 2, eq Rem 1.
+testcase ints :- div 10 2 Quot Rem, eq Quot 5, eq Rem 0.
+testcase ints :- div -10 2 Quot Rem, eq Quot -5, eq Rem 0.
+testcase ints :- div -11 2 Quot Rem, eq Quot -6, eq Rem 1.
+
 (* ------------------- eqv *)
 
 icase : type.

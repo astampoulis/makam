@@ -1,0 +1,3 @@
+minus : int -> int -> int -> prop.
+minus A B Result :-
+  plus B Result A.

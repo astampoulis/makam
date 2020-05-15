@@ -6,6 +6,7 @@
 
 %use forall.
 
+%use int.
 %use list.
 %use vector.
 %use hlist.
