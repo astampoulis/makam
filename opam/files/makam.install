@@ -24,6 +24,7 @@ share: [
   "stdlib/guard.makam" {"stdlib/guard.makam"}
   "stdlib/hlist.makam" {"stdlib/hlist.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
+  "stdlib/int.makam" {"stdlib/int.makam"}
   "stdlib/iso.makam" {"stdlib/iso.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
   "stdlib/logging.makam" {"stdlib/logging.makam"}
