@@ -46,9 +46,12 @@ find_lift_aux, find_lift_rules : [A] dyn -> dyn -> A -> A -> prop.
 
 find_lift_rules DynReplacement Lift
                 (lift X) Context
-    when refl.isunif Lift, not(find_lift X _ _) :-
-  dyn.eq DynReplacement (dyn Context),
-  dyn.eq Lift (dyn (lift X)).
+    when refl.isunif Lift :-
+  find_lift_aux DynReplacement Lift X Context',
+  if (refl.isunif Lift)
+  then (dyn.eq (dyn Context) DynReplacement,
+        dyn.eq Lift (dyn (lift X)))
+  else (dyn.eq Context (lift Context')).
 
 find_lift_aux Replacement Lift Context Context' :-
   demand.case_otherwise
