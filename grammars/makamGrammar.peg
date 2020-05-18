@@ -185,6 +185,8 @@ baseexpr -> id:ltoken(qualident)   << autospan_un mkVar id >>
           / id:ltoken( ("#" s:identany << s >>) ) << autospan_un mkCapturingVar id >>
           / token("@") e:baseexpr
             << mkTm "mkforall" [ e ] >>
+          / token("!") e:baseexpr
+            << mkTm "lift" [ e ] >>
           / s:loced( ( token(["]) str:rep(strchar) ["] << str |> String.concat "" >> ) )
             << autospan_un mkString s >>
 
@@ -591,8 +593,10 @@ letterchar -> &&( .
               a:. << a >>
 latin1letter -> &latin1char c:letterchar << c >>
 digitchar -> a:[0123456789]              << a >>
+sign      -> x:[-] << [x] >>
+           / epsilon << [] >>
 num       -> "0x" is:repplus(hexdigitchar) << ("0x" ^ (is |> UString.implode |> UString.to_string)) |> Big_int.of_string >>
-           / is:repplus(digitchar)         << is |> UString.implode |> UString.to_string |> Big_int.of_string >>;
+           / sign:sign is:repplus(digitchar)  << (List.append sign is) |> UString.implode |> UString.to_string |> Big_int.of_string >>;
 eof -> !. ;
 
 (* whitespace *)

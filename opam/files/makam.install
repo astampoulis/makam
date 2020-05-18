@@ -19,10 +19,12 @@ share: [
   "stdlib/eqv.makam" {"stdlib/eqv.makam"}
   "stdlib/fluid.makam" {"stdlib/fluid.makam"}
   "stdlib/forall.makam" {"stdlib/forall.makam"}
+  "stdlib/functional.makam" {"stdlib/functional.makam"}
   "stdlib/generic.makam" {"stdlib/generic.makam"}
   "stdlib/guard.makam" {"stdlib/guard.makam"}
   "stdlib/hlist.makam" {"stdlib/hlist.makam"}
   "stdlib/init.makam" {"stdlib/init.makam"}
+  "stdlib/int.makam" {"stdlib/int.makam"}
   "stdlib/iso.makam" {"stdlib/iso.makam"}
   "stdlib/list.makam" {"stdlib/list.makam"}
   "stdlib/logging.makam" {"stdlib/logging.makam"}

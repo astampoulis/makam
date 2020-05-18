@@ -44,6 +44,7 @@ TESTS= \
 tests/core_tests \
 stdlib/tests \
 stdlib/concrete_bind.tests \
+stdlib/functional.tests \
 stdlib/parsing/tests \
 stdlib/parsing/tests_opt \
 stdlib/parsing/peg_grammar \
