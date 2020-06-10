@@ -222,6 +222,8 @@ qualidentmain -> ms:repplus( (x:ident^ "." &ident^) ) x:ident^ << let prefix = S
 qualident  -> x:qualidentmain << x >>
             / "." x:qualidentmain^ << "." ^ x >>
             / "." x:ident^ << "." ^ x >>
+optqualident -> x:qualidentmain << x >>
+              / x:ident << x >>
 
 annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >>
 
@@ -403,7 +405,7 @@ directive -> "use" repplus(white) s:token(ident_or_str)
            << fun () -> Termlangcanon.global_enter_module s >>
            / "end"
            << fun () -> Termlangcanon.global_leave_module () >>
-           / "open" s:token(ident)
+           / "open" s:token(optqualident)
            << fun () -> Termlangcanon.global_open_module s >>
            / "directory" repplus(white) s:token(str)
            << fun () -> Termlangcanon.global_add_directory s >>
@@ -639,8 +641,11 @@ escapechar ->
            << ([ s; c ] |> UString.implode) |> UString.to_string >>
    / s:[\\] n1:digitchar n2:digitchar n3:digitchar
            << ([ s; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
-   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar n3:hexdigitchar
-           << ([ s; x; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar
+           << ([ s; x; n1; n2 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] [u] [{] ns:repplus(hexdigitchar) [}]
+           << let code = "0x" ^ (ns |> UString.implode |> UString.to_string) in
+              UString.implode [code |> Int.of_string |> UChar.chr ] |> UString.to_string >>
 strchar ->  s:escapechar << Utils.unescape s >>
          / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
 str     -> token(["]) str:rep(strchar) ["] << str |> String.concat "" >>

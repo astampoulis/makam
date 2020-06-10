@@ -104,3 +104,11 @@ testcase makam_core :- makam_core_tests.a 201.
 
 testcase makam_core :- eq 0xada 2778.
 
+(* Tests for string parsing *)
+
+testcase makam_core :- eq "A" "\x41".
+testcase makam_core :- eq "A" "\065".
+testcase makam_core :- eq "\n" "\x0a".
+testcase makam_core :- eq "\n" "\010".
+testcase makam_core :- eq "\n" "\u{a}".
+testcase makam_core :- eq "😀" "\u{1f600}".

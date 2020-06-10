@@ -43,3 +43,9 @@ functional_tests : testsuite. %testsuite functional_tests.
 >> functional.do !(plus !(minus 5 5) !(plus 5 3)) X ?
 >> Yes:
 >> X := 8.
+
+>> functional.do success X ?
+>> Impossible.
+
+>> map (fun x y => functional.do !(lessthan 0 !(mult x y) true)) [1, -2, 3] [5, -5, 5] ?
+>> Yes.

@@ -42,6 +42,7 @@ configure:
 
 TESTS= \
 tests/core_tests \
+tests/namespace_tests \
 stdlib/tests \
 stdlib/concrete_bind.tests \
 stdlib/functional.tests \

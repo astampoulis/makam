@@ -20,6 +20,7 @@ functional.do !(plus 10 !(plus 20 30)) X ?
 
 *)
 
+lift : prop -> unit.
 lift : (A -> prop) -> A.
 
 %extend functional.
@@ -45,12 +46,21 @@ find_lift : B -> (A -> prop) -> (A -> B) -> prop.
 find_lift_aux, find_lift_rules : [A] dyn -> dyn -> A -> A -> prop.
 
 find_lift_rules DynReplacement Lift
-                (lift X) Context
+                (lift (X: A -> prop)) Context
     when refl.isunif Lift :-
   find_lift_aux DynReplacement Lift X Context',
   if (refl.isunif Lift)
   then (dyn.eq (dyn Context) DynReplacement,
         dyn.eq Lift (dyn (lift X)))
+  else (dyn.eq Context (lift Context')).
+
+find_lift_rules DynReplacement Lift
+                (lift (X: prop)) Context
+    when refl.isunif Lift :-
+  find_lift_aux DynReplacement Lift X Context',
+  if (refl.isunif Lift)
+  then (dyn.eq (dyn Context) DynReplacement,
+        dyn.eq Lift (dyn (lift (pfun u => X, eq u unit))))
   else (dyn.eq Context (lift Context')).
 
 find_lift_aux Replacement Lift Context Context' :-
@@ -86,7 +96,15 @@ hoist_lifts FunctionalCode LogicCode :-
 do : A -> A -> prop.
 
 do FunctionalCode Result :-
+  or (dyn.eq FunctionalCode (lift (_: A -> prop)))
+     (dyn.eq FunctionalCode (lift (_: prop))),
   hoist_lifts FunctionalCode LogicCode,
+  LogicCode Result.
+
+(* version of `functional.do` when no result is produced *)
+do : unit -> prop.
+do (lift (FunctionalCode: prop)) :-
+  hoist_lifts (lift FunctionalCode) LogicCode,
   LogicCode Result.
 
 %end.
