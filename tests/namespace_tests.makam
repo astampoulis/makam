@@ -1,0 +1,11 @@
+(* Test for opening a nested namespace. *)
+
+%extend foo.
+%extend bar.
+test : type.
+%end.
+%end.
+
+%open foo.bar.
+
+mk : test.

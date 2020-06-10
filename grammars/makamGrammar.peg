@@ -222,6 +222,8 @@ qualidentmain -> ms:repplus( (x:ident^ "." &ident^) ) x:ident^ << let prefix = S
 qualident  -> x:qualidentmain << x >>
             / "." x:qualidentmain^ << "." ^ x >>
             / "." x:ident^ << "." ^ x >>
+optqualident -> x:qualidentmain << x >>
+              / x:ident << x >>
 
 annotexpr -> e:lexpr^ token(":") t:lmonotyp << autospan_bin mkAnnot e t >>
 
@@ -403,7 +405,7 @@ directive -> "use" repplus(white) s:token(ident_or_str)
            << fun () -> Termlangcanon.global_enter_module s >>
            / "end"
            << fun () -> Termlangcanon.global_leave_module () >>
-           / "open" s:token(ident)
+           / "open" s:token(optqualident)
            << fun () -> Termlangcanon.global_open_module s >>
            / "directory" repplus(white) s:token(str)
            << fun () -> Termlangcanon.global_add_directory s >>
