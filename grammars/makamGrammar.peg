@@ -641,8 +641,11 @@ escapechar ->
            << ([ s; c ] |> UString.implode) |> UString.to_string >>
    / s:[\\] n1:digitchar n2:digitchar n3:digitchar
            << ([ s; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
-   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar n3:hexdigitchar
-           << ([ s; x; n1; n2; n3 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] x:[x] n1:hexdigitchar n2:hexdigitchar
+           << ([ s; x; n1; n2 ] |> UString.implode) |> UString.to_string >>
+   / s:[\\] [u] [{] ns:repplus(hexdigitchar) [}]
+           << let code = "0x" ^ (ns |> UString.implode |> UString.to_string) in
+              UString.implode [code |> Int.of_string |> UChar.chr ] |> UString.to_string >>
 strchar ->  s:escapechar << Utils.unescape s >>
          / !"\"" c:. << ([ c ] |> UString.implode) |> UString.to_string >>
 str     -> token(["]) str:rep(strchar) ["] << str |> String.concat "" >>
