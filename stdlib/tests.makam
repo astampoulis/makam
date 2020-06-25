@@ -42,7 +42,7 @@ testcase list :- (contains 1 [1,2,3]).
 testcase list :- (contains 2 [1,2,3]).
 testcase list :- (not(contains 4 [1,2,3])).
 testcase list :- contains (icase "LaLa") [icase "lala"].
-
+testcase list :- filtermap (pfun a b => lessthan a 5 true, plus a 1 b) [1, 2, 10] X, eq X [2, 3].
 
 (* ------------------- set *)
 

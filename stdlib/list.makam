@@ -92,6 +92,7 @@ filter Pred (HD :: TL) Res :-
 
 (* Combination of filter and map *)
 filtermap : (A -> B -> prop) -> list A -> list B -> prop.
+filtermap Pred [] [].
 filtermap Pred (HD :: TL) Res :-
   if (Pred HD HD')
   then (eq Res (HD' :: TL'), filtermap Pred TL TL')
