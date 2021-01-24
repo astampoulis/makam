@@ -341,13 +341,17 @@ prologcmd1 ->
                 global_set_last_query None;
                 Benchmark.cumulative "total defs"
                 (lazy(List.iter (uncurry global_define) d))) >>
-           / c:clauseBM token(".") << fun () -> (global_set_last_query None;
-                                                 if !_ONLY_TYPECHECK then
-                                                  (Benchmark.cumulative "total clauses"
-                                                    (lazy(global_typecheck_silent c.content)))
-                                                 else
-                                                  (Benchmark.cumulative "total clauses"
-                                                    (lazy(Termlangprolog.global_new_clause c.content)))) >>
+           / c:clauseBM token(".") << fun () ->
+             (global_set_last_query None;
+              if !_ONLY_TYPECHECK then
+                (Benchmark.cumulative "total clauses"
+                   (lazy(global_typecheck_silent c.content)))
+              else
+                (let cmd = mkTm "cmd_newclause" [ c ] in
+                 let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                 Benchmark.cumulative "total staged commands"
+                 (lazy(Termlangrefl.global_staged_command staged.content)))
+             ) >>
            / p:hyp token("?") << fun () -> (global_set_last_query (Some p);
                                             if !_ONLY_TYPECHECK then
                                              (Benchmark.cumulative "total queries"

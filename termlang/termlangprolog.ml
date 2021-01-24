@@ -2695,7 +2695,14 @@ let exprToProp ((e, nameunifs) : expr * nameunifs) : prop =
 let checkClauseNotBuiltin p idx =
 
   let name = nameOfFVar idx in
-  if IMap.mem idx !builtin_predicates then raise (ClauseForBuiltin(p,name))
+  if name = "handle_toplevel_command" then
+    (* special case:
+       handle_toplevel_command is builtin but can be redefined *)
+    builtin_predicates := IMap.remove idx !builtin_predicates
+  else (
+    if IMap.mem idx !builtin_predicates
+    then raise (ClauseForBuiltin(p,name))
+  )
 
 ;;
 

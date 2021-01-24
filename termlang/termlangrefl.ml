@@ -768,3 +768,10 @@ let global_staged_command cmdcode =
                     doStagedCommand cmdcode)
 
 ;;
+
+new_builtin_predicate "handle_toplevel_command" ( _tCmd **> _tCmd **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> function [ cmdin ; cmdout ] ->
+                pattcanonUnifyFull cmdin cmdout
+                     | _ -> assert false)
+;;

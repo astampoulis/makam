@@ -382,7 +382,7 @@ sigof (strletrec ES)
       (sigmany Vals) :-
   bindmutrec_newvars ES (fun xs => {prop|
    bindmany_apply BXS xs (tuple xs),
-   map (fun x n => eq n ⁿx) xs Names,
+   map (fun xⁿName n => eq n Name) xs Names,
    typeof (letrec ES BXS) (tprod TS) |}),
   map2 (fun n t => eq (sigval n t)) Names TS Vals.
 
