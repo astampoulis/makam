@@ -494,17 +494,17 @@ foo [3, 4].
 
 (* -------------------- demand.most_recent *)
 
->> (demand.most_recent (foo X), dyn.eq X [3, 4]) ?
+>> (once(demand.most_recent (foo X)), dyn.eq X [3, 4]) ?
 >> Yes.
 
 >> demand.most_recent (foo (X: string)) ?
 >> Yes:
 >> X := "bar".
 
->> ((foo "one" -> demand.most_recent (foo X)), dyn.eq X "one") ?
+>> ((foo "one" -> once(demand.most_recent (foo X))), dyn.eq X "one") ?
 >> Yes.
 
->> ((foo "one" -> foo "two" -> demand.most_recent (foo X)), dyn.eq X "two") ?
+>> ((foo "one" -> foo "two" -> once(demand.most_recent (foo X))), dyn.eq X "two") ?
 >> Yes.
 
 (* -------------------- guardmany *)
