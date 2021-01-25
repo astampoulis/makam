@@ -69,7 +69,7 @@ let compareLR (type a) (type b) (res1 : (a * UChannel.t) option) (res2 : (b * UC
     Some _, None -> 1
   | None, Some _ -> -1
   | None, None   -> 0
-  | Some (_, input1), Some (_, input2) -> Pervasives.compare (UChannel.offset input1) (UChannel.offset input2)
+  | Some (_, input1), Some (_, input2) -> Stdlib.compare (UChannel.offset input1) (UChannel.offset input2)
 ;;
     
 

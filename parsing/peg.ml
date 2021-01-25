@@ -1125,7 +1125,7 @@ let (recursive_decoupling :
         
         let hash uobj = uobj.hcode
           
-        let compare i1 i2 = Pervasives.compare i1.tag i2.tag
+        let compare i1 i2 = Stdlib.compare i1.tag i2.tag
           
         let to_string uobj =
           let (`Id id) = uobj.obj in UString.to_string id#id

@@ -2,7 +2,7 @@ module Dict = Map.Make(String)
 module StringSet = Set.Make(String)
 module IMap = Map.Make(struct
 			 type t = int
-		         let compare = Pervasives.compare
+		         let compare = Stdlib.compare
 		       end)
 module StdHashtbl = Hashtbl
 module DictHash = StdHashtbl.Make(struct

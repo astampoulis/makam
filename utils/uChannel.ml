@@ -27,10 +27,10 @@ let string_of_span span : string =
 let loc_compare loc1 loc2 =
   if loc1.description <> loc2.description then assert false
   else
-    Pervasives.compare loc1.offset loc2.offset
+    Stdlib.compare loc1.offset loc2.offset
     (*
-    (let res = Pervasives.compare loc1.lineno loc2.lineno in
-     if res = 0 then Pervasives.compare loc1.charno loc2.charno else res)
+    (let res = Stdlib.compare loc1.lineno loc2.lineno in
+     if res = 0 then Stdlib.compare loc1.charno loc2.charno else res)
     *)
 ;;
 

@@ -1832,7 +1832,6 @@ let global_set_cache_directory dir =
 ;;
 
 let global_get_cache_directory dir =
-  let state = !globalstate in
   (!globalstate).cache_directory
 ;;
 

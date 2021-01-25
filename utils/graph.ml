@@ -197,7 +197,7 @@ example code:
 
 module M = Graph.Make(struct
   type t = int * string
-  let compare (i1,_) (i2,_) = Pervasives.compare i1 i2
+  let compare (i1,_) (i2,_) = Stdlib.compare i1 i2
   let equal t1 t2 = compare t1 t2 == 0
   let hash (i,_) = Hashtbl.hash i
   let to_string (_,s) = s

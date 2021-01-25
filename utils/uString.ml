@@ -54,7 +54,7 @@ let print oc (s, off, bend, _) =
     BatIO.write oc (String.get s' i)
   done ;;
 
-let compare s1 s2 = Pervasives.compare (to_string s1) (to_string s2) ;;
+let compare s1 s2 = Stdlib.compare (to_string s1) (to_string s2) ;;
 
 let iter proc (s, off, bend, _) =
   let off = ref off in

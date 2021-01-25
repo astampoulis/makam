@@ -140,8 +140,8 @@ let main () =
 
 let js_process_input_batch s =
   let output = ref "" in
-  Sys_js.set_channel_flusher Pervasives.stdout (fun s -> output := (!output) ^ s) ;
-  Sys_js.set_channel_flusher Pervasives.stderr (fun s -> output := (!output) ^ s) ;
+  Sys_js.set_channel_flusher Stdlib.stdout (fun s -> output := (!output) ^ s) ;
+  Sys_js.set_channel_flusher Stdlib.stderr (fun s -> output := (!output) ^ s) ;
   process_input (Js.to_string s);
   Js.string !output
 ;;
@@ -151,7 +151,7 @@ let js_process_input_interactive s =
 ;;
 
 let define_as_worker () =
-  Sys_js.set_channel_flusher Pervasives.stdout (fun s ->
+  Sys_js.set_channel_flusher Stdlib.stdout (fun s ->
     Js.Unsafe.meth_call (Js.Unsafe.variable "self") "postMessage"
     [| Js.Unsafe.inject (Js.string s) |]);
   Js.Unsafe.meth_call (Js.Unsafe.variable "self") "addEventListener"

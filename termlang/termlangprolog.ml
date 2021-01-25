@@ -2463,7 +2463,7 @@ and handleConstraint_mutable c =
   match c with
     `Unif(bound,p1,p2) -> pattUnifyFull_mutable ~bound:bound p1 p2
   | `UnifCanon(bound,p1,p2) -> pattcanonUnifyFull_mutable ~bound:bound p1 p2
-  | (`Demand(idx,triggeridx,p,env) as demand) ->
+  | `Demand(idx,triggeridx,p,env) ->
     (let newMetaIdx =
      (match getMetaParent_mutable idx with
          Some (p, _) ->
