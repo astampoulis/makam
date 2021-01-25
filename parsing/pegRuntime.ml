@@ -25,10 +25,9 @@ module Memotable =
 
     let find_in_memocell memocell offset =
       let open Option.Monad in
-      (perform
- 	 existingIdTbl <-- (match !memocell with MCLeft x -> Some x | MCRight _ -> None) ;
-         existingOffsetEntry <-- M.find_option existingIdTbl offset ;
-	 return existingOffsetEntry)
+      bind (match !memocell with MCLeft x -> Some x | MCRight _ -> None) (fun existingIdTbl ->
+      bind (M.find_option existingIdTbl offset) (fun existingOffsetEntry ->
+	 return existingOffsetEntry))
     ;;
 
     let add_in_memocell memocell offset what =

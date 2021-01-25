@@ -16,6 +16,7 @@ module Make =
 	fun ctx ->
 	let a, state' = f ctx in
 	g a { ctx with state = state' } ;;
+      let ( let* ) = bind ;;
       let lazyreturn (type a) (x : a Lazy.t) : a m =
 	fun c -> Lazy.force x, c.state
       ;;
@@ -40,23 +41,21 @@ module Make =
       ;;
       let bindlist (type a) (l : (a m) list) : (a list) m =
 	List.fold_left (fun mList mElm ->
-	                  perform list <-- mList ;
-	                          elm  <-- mElm  ;
-				  return (list ++ [elm])) (return []) l ;;
+	                  let* list = mList in
+	                  let* elm  = mElm  in
+		          return (list ++ [elm])) (return []) l ;;
       let mapM     (type a) (type b) (f : a -> b m) (l : a list) : (b list) m =
 	bindlist (List.map f l) ;;
       let foldM    (type a) (type b) (f : a -> b -> a m) (s : a) (l : b list) : a m =
 	List.fold_left (fun s e -> 
-                        perform s' <-- s ;
-	                        f s' e)
+                        let* s' = s in
+	                f s' e)
 	  (return s) l ;;
       let foldmapM (type a) (type b) (type c)
 	           (f : a -> b -> (a * c) m) (s : a) (l : b list) : (a * (c list)) m =
-	perform
-	  (res, lrev) <-- foldM (fun (cur, lrev) elm ->
-	                         perform
-				   (cur', elm') <-- f cur elm ;
-	                           return (cur', elm' :: lrev)) (s, []) l ;
+        let* (res, lrev) = foldM (fun (cur, lrev) elm ->
+	                           let* (cur', elm') = f cur elm in
+	                           return (cur', elm' :: lrev)) (s, []) l  in
 	  return (res, List.rev lrev)
       ;;
       let benchM (type a) (s : string) (f : (a m) Lazy.t) : a m =

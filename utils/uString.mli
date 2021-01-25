@@ -9,9 +9,7 @@ val to_string        : t -> string;;
 val of_string_unsafe : string -> t ;;
 external of_string_unsafe_fast : string * int * int * bool -> ustring = "%identity" ;;
 
-val ustring_ast_of_string   : Camlp4.PreCast.Ast.loc -> string -> Camlp4.PreCast.Ast.expr ;;
-val ast_of_ustring          : Camlp4.PreCast.Ast.loc -> t -> Camlp4.PreCast.Ast.expr ;;
-
+val underlying : t -> BatUTF8.t * BatUTF8.ByteIndex.b_idx * BatUTF8.ByteIndex.b_idx * bool ;;
 
 val is_empty   : t -> bool ;;
 val gethd      : t -> UChar.t ;;

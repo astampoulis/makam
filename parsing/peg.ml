@@ -63,7 +63,31 @@ type 'a identMap = 'a IdentMap.t
 module IdentSet = Set.Make(IdentOrdered)
   
 let needed_memocells_external : (int IdentMap.t) ref = ref IdentMap.empty
-  
+
+
+
+let ast_of_ustring _loc input =
+  let (s, off, bend, algn) = UString.underlying input in
+  let open Camlp4.PreCast in
+  let (s, off, bend, algn) = (s |> BatUTF8.to_string_unsafe |> String.escaped,
+			     off |> BatUTF8.ByteIndex.to_int |> string_of_int,
+			     bend |> BatUTF8.ByteIndex.to_int |> string_of_int,
+			     if algn then "True" else "False") in
+  Ast.ExApp (_loc,
+      (Ast.ExId (_loc,
+           (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "UString")),
+              (Ast.IdLid (_loc, "of_string_unsafe_fast")))))),
+        (Ast.ExTup (_loc,
+           (Ast.ExCom (_loc, (Ast.ExStr (_loc, s)),
+              (Ast.ExCom (_loc, (Ast.ExInt (_loc, off)),
+                 (Ast.ExCom (_loc, (Ast.ExInt (_loc, bend)),
+                    (Ast.ExId (_loc, Ast.IdUid(_loc, algn))))))))))))
+  (*
+  <:expr< UString.of_string_unsafe ($str:s$, $int:off$, $int:bend$, $int:len$) >>
+  *)
+;;
+
+
 (* PEG grammars *)
 type parsePrim =
   [
@@ -1551,7 +1575,7 @@ let (parseGen : pegGrammar -> Ast.str_item) =
                   (Ast.IdLid (_loc, "get_one")))))),
             (Ast.ExId (_loc, (Ast.IdLid (_loc, "_input")))))
       | `CharClass o ->
-          let chars = o#chars |> (UString.ast_of_ustring _loc)
+          let chars = o#chars |> (ast_of_ustring _loc)
           in
             Ast.ExMat (_loc,
               (Ast.ExApp (_loc,
@@ -1613,7 +1637,7 @@ let (parseGen : pegGrammar -> Ast.str_item) =
                        end))) in
           let names = List.map (fun _ -> None) ps in
           let action =
-            let strng = o#s |> (UString.ast_of_ustring _loc) in strng in
+            let strng = o#s |> (ast_of_ustring _loc) in strng in
           let p' =
             `Concat
               (object

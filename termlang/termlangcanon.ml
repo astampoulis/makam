@@ -231,7 +231,7 @@ module Const =
 
 module Typ =
   struct
-    let (print : 'a BatInnerIO.output -> typ -> unit) oc (typ : typ) =
+    let print oc (typ : typ) =
       let indexprint oc idx =
         if !_DEBUG then
         match idx with

@@ -82,7 +82,7 @@ let from_filename ?(statehash_update = true) filename =
   let str   = IO.read_all input in
   let _     = IO.close_in input in
   let location = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 } in
-  { from_string ~initloc:location str with update_statehash = statehash_update }
+  { (from_string ~initloc:location str) with update_statehash = statehash_update }
 ;;
 
 let from_filename_buffered ?(buffersize = 1024) filename =

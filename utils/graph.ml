@@ -32,7 +32,7 @@ module Make =
     let printer_nodeset oc x = Printf.fprintf oc "%a" (NodeSet.print ~first:"[" ~sep:"," ~last:"]" printer_node) x ;;
     let printer_nodelist oc x = Printf.fprintf oc "%a" (List.print ~first:"[" ~sep:"," ~last:"]" printer_node) x ;;
 
-    let (reverse : dgraph -> dgraph) dg =
+    let reverse (dg: dgraph) =
     
       let edges'Empty = dg.nodes |> List.map (fun n -> n, NodeSet.empty) |> List.enum |> NodeMap.of_enum in
       let edges' =
@@ -47,7 +47,7 @@ module Make =
       in
       { nodes = dg.nodes; edges = edges' }
 
-    let (topo_sort : dgraph -> Node.t list) dg =
+    let topo_sort (dg: dgraph) =
 
       let processed = ref NodeSet.empty in
       let result = ref [] in
@@ -64,7 +64,7 @@ module Make =
       !result
 
 
-    let (cyclic_topo_sort : dgraph -> NodeSet.t list) dg =
+    let cyclic_topo_sort dg =
 
       let module NodeMap = 
 	  struct 

@@ -6,15 +6,17 @@ true: -traverse, debug
 <parsing> or <bootstrap> or <utils> or <termlang> or <grammars> or <toploop>: include
 
 
-<**/*.ml{,i}>: package(findlib), package(batteries), package(uucp), \
-	       package(camlp4), syntax(camlp4o), package(monad-custom)
+<**/*.ml{,i}>: package(findlib), package(batteries), package(uucp)
 
 <js/*>: package(js_of_ocaml)
 <js/*.ml>: package(js_of_ocaml)
 
-<bootstrap/*.ml>: package(camlp4.quotations.o)
-<utils/toploopTools.ml>: package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
+<**/{pegGrammar,bootPegParser,boot2PegParser}.ml>: package(camlp4), syntax(camlp4o), package(camlp4.quotations.o), package(camlp4.fulllib)
+
+<bootstrap/*.ml>: package(camlp4), syntax(camlp4o), package(camlp4.quotations.o), package(camlp4.fulllib)
+<utils/toploopTools.ml>: package(camlp4), syntax(camlp4o), package(compiler-libs.toplevel), package(camlp4.extend), package(camlp4.fulllib), package(camlp4.quotations.o), parsers
 <parsing/pegQuote.ml>: package(camlp4.fulllib), package(camlp4.extend), package(camlp4.quotations.o)
+<parsing/*.ml{,i}>: package(camlp4), syntax(camlp4o), package(camlp4.fulllib)
 
 
 <bootstrap/dumpBootParser.byte>: package(compiler-libs.toplevel), package(camlp4.quotations.o)

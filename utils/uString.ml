@@ -21,32 +21,10 @@ let of_string_unsafe x = BatUTF8.of_string_unsafe x, BatUTF8.ByteIndex.first, Ba
 
 external of_string_unsafe_fast : string * int * int * bool -> ustring = "%identity" ;;
 
-let ast_of_ustring _loc (s, off, bend, algn) =
-  let open Camlp4.PreCast in
-  let (s, off, bend, algn) = (s |> BatUTF8.to_string_unsafe |> String.escaped,
-			     off |> BatUTF8.ByteIndex.to_int |> string_of_int,
-			     bend |> BatUTF8.ByteIndex.to_int |> string_of_int,
-			     if algn then "True" else "False") in
-  Ast.ExApp (_loc,
-      (Ast.ExId (_loc,
-           (Ast.IdAcc (_loc, (Ast.IdUid (_loc, "UString")),
-              (Ast.IdLid (_loc, "of_string_unsafe_fast")))))),
-        (Ast.ExTup (_loc,
-           (Ast.ExCom (_loc, (Ast.ExStr (_loc, s)),
-              (Ast.ExCom (_loc, (Ast.ExInt (_loc, off)),
-                 (Ast.ExCom (_loc, (Ast.ExInt (_loc, bend)),
-                    (Ast.ExId (_loc, Ast.IdUid(_loc, algn))))))))))))
-  (*
-  <:expr< UString.of_string_unsafe ($str:s$, $int:off$, $int:bend$, $int:len$) >>
-  *)
-;;
-
-let ustring_ast_of_string _loc s =
-  ast_of_ustring _loc (of_string s)
-;;
-
 let to_string  (x, off, bend, _) =
   String.sub (BatUTF8.to_string_unsafe x) (BatUTF8.ByteIndex.to_int off) (BatUTF8.ByteIndex.to_int bend - BatUTF8.ByteIndex.to_int off) ;;
+
+let underlying (x, off, bend, b) = (x, off, bend, b) ;;
 
 let print oc (s, off, bend, _) =
   let s' = BatUTF8.to_string_unsafe s in
