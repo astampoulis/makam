@@ -1,0 +1,42 @@
+(* An experimental feature that gives the option of transforming
+   top-level predicates before issuing them to Makam.
+   It works by turning all new clause commands to staged commands,
+   which are transformed through `handle_toplevel_command`.
+
+   This gives the ability to add new functionality to Makam
+   by defining predicate transformers within Makam, which operate
+   on all predicates and transform them as needed.
+
+   Potential examples of the functionality are mode definitions;
+   a macro facility; and testing support (which currently has
+   built-in support).
+
+   To use this, one needs to register a new `toplevel_command_transformer`:
+
+   ` toplevel_command_transformer Name Cmd Cmd' `
+
+   For an example of use, look at tests.makam.
+
+   In the future, this could be extended to handle all top-level
+   commands rather than just new clauses.
+
+*)
+
+toplevel_command_transformer : string -> cmd -> cmd -> prop.
+
+do_transform : cmd -> clause -> cmd -> prop.
+
+do_transform Cmd (clause (toplevel_command_transformer Name Cmd Cmd') Prem) Cmd' :-
+  if (Prem)
+  then success
+  else (log_error_and_fail Cmd `failed to apply definition transformer ${Name}`).
+
+do_transform Cmd (whenclause (toplevel_command_transformer Name Cmd Cmd') When Prem) Cmd' :-
+  if (if When then Prem else failure)
+  then success
+  else (log_error_and_fail Cmd `failed to apply definition transformer ${Name}`).
+
+
+handle_toplevel_command CmdInput CmdOutput :-
+  refl.rules_get_applicable (toplevel_command_transformer Name CmdInput _) Rules,
+  foldl do_transform CmdInput Rules CmdOutput.

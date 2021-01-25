@@ -1,0 +1,41 @@
+%use "init".
+
+tests : testsuite.
+%testsuite tests.
+
+foo : string -> prop.
+
+toplevel_command_transformer
+  "foo-use-pattern-matching"
+  (cmd_newclause Clause)
+  (cmd_newclause Clause')
+    when eq Clause (clause (foo X) Premise) :-
+  eq Clause'
+    (clause (foo Z)
+                {prop| pattern_match X Z,
+                       Premise |}).
+
+(* The order of application of transformers is fixed:
+   transformers defined first get applied first *)
+
+toplevel_command_transformer
+  "foo-second-transformer-applies-second"
+    (cmd_newclause Clause)
+    (cmd_newclause Clause')
+      when eq Clause (clause (foo X) Premise) :-
+    eq Clause' (clause (foo X) (ifte success Premise failure)).
+
+
+foo "foo".
+
+>> foo X ?
+>> Impossible.
+
+>> foo "foo" ?
+>> Yes.
+
+>> refl.rules_get foo X ?
+>> Yes:
+>> X := [ clause (foo Z) {prop| if success
+                                then (pattern_match "foo" Z, success)
+                                else failure |} ].
