@@ -43,6 +43,12 @@ jobs:
             [[ -e skip ]] || (cd npm; opam config exec yarn jest)
             [[ -e skip ]] || npm install makam-$(./scripts/makam-version.sh npm-test-version).tgz
 
+      - run: &publish-npm-package
+          name: TEMP Publish test package
+          command: |
+            (set -u; echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc; set +u)
+            opam config exec make npm-test-publish
+
       - run: &tests
           name: Run Tests
           command: |
