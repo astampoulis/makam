@@ -146,6 +146,8 @@ module RunCtx =
         { twocont = fun ksucceed ->
           e.twocont (fun x -> (f x).twocont ksucceed) } ;;
 
+      let ( let* ) = bind ;;
+
       let mzero (type a) : a m =
         { twocont = fun ksucceed kfail -> Lazy.force kfail } ;;
 
@@ -1261,11 +1263,6 @@ let rec pattcanonEtaLong_mutable ?(only_top = false) (e : pattcanon) : pattcanon
       assert (nlams <= narrows) ;
       if only_top && nlams == narrows then begin
 
-        (* optimization: keep info to see whether renormalization will ever be needed *)
-        (* let extra = PattExtras.castout e.extra in
-        let renormneed = match rng.term with `TVar(_, Some (`Meta, _), _) -> `Maybe | _ -> `Never in
-        perform
-          _ <-- Ref.setM extra.renormneed renormneed ; *)
           e
 
       end
@@ -1275,10 +1272,6 @@ let rec pattcanonEtaLong_mutable ?(only_top = false) (e : pattcanon) : pattcanon
              `LamMany(lams', body'') ->
                assert (narrows == nlams + List.length lams') ;
                let res = { e with term = `LamMany( lams ++ lams', body'' ) } in
-               (* let extra = PattExtras.castout e.extra in
-               let renormneed = match rng.term with `TVar(_, Some (`Meta, _), _) -> `Cached res | _ -> `Never in
-               perform
-                 _ <-- Ref.setM extra.renormneed renormneed ; *)
                  res)
 
 and pattneutEtaLong_mutable (e : pattneut) : pattcanon =
@@ -3205,8 +3198,6 @@ module BuiltinProps = struct
   let _eiAssume = new_builtin_predicate "assume"  (_tClause **> _tProp **> _tProp)
     (fun _ -> function [ c; { term = `LamMany([], p) } ] -> begin perform
 
-         (* the check below would not work, even though it's disabled elsewhere anyway *)
-         (* _           <-- intermlang (checkWellformedClause p1) ; *)
          c              <-- chasePattcanon [] c ;
          let c = match c.term with `LamMany([], body) -> body | _ -> assert false in
          (idx, gl, a,b,c')  <-- inmonad ~statewrite:true (fun _ -> getInfoFromUnchasedClause_mutable c) ;

@@ -1399,18 +1399,6 @@ let rec typecheck (e : exprU) : expr =
       { e with term = ebase.term }
 
     | `Unparsed(s) -> raise (NoGenericParsingYet)
-(*
-        perform
-          t <-- deepChaseType tRes ;
-          let parser_for_type t' s loc =
-            match t with `Unknown(_) -> failwith (Printf.sprintf "Cannot parse %s of unknown type at %s." s (UChannel.string_of_loc loc))
-            | _ -> try (get_expr_parser t) t' s loc with (Peg.IncompleteParse(_) as e) -> raise e | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc loc))
-          in
-          e <-- parser_for_type t s loc ;
-          env'' <-- setfocus e ;
-          _ <-- inenv env'' (typUnify e.classifier t) ;
-          typecheck e
-*)
 
   end
 
@@ -1616,19 +1604,6 @@ let mkAnnot ?(loc = None) e t () =
 let mkUnparsed ?(loc = None) s () =
   let uA = newTMeta loc in
   { term = `Unparsed(s) ; classifier = uA ; loc = loc ; extra = ExprExtras.empty () }
-
-(*
-let mkBaseParsed ?(loc = None) s locstart =
-  let open Ctx.Monad in
-  perform
-    uA <-- newTMeta loc ;
-    e  <-- begin
-      try !default_expr_parser uA s locstart
-      with (Peg.IncompleteParse(_) as e) -> raise e
-           | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc locstart))
-    end;
-    return e ;;
-*)
 
 let (%@) = mkApp;;
 let (~%) = mkVar;;
