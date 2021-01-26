@@ -528,7 +528,7 @@ new_builtin_predicate "cheapprint" ( _tInt **> ~* "A" **> _tProp )
      let* p = chasePattcanon ~deep:true [] e in
      let* depth = chasePattcanon ~deep:true [] depth in
      let* depth = _PtoInt depth in
-     inmonad ~statewrite:false (fun _ -> Printf.printf "%a\n%!" (CheapPrint.canondepth (Big_int.to_int depth)) p);
+     let* _ = inmonad ~statewrite:false (fun _ -> Printf.printf "%a\n%!" (CheapPrint.canondepth (Big_int.to_int depth)) p) in
      return ()))
 ;;
 

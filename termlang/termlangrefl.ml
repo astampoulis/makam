@@ -386,7 +386,7 @@ builtin_enter_module "refl" ;;
 
              (* check types *)
              let* argstyps = intermlang (fun _ -> gatherArrowTyps typ) in
-             if (List.length ps <> List.length argstyps) then mzero else return () ;
+             let* _ = if (List.length ps <> List.length argstyps) then mzero else return () in
              let* args' = mapM (uncurry _PtoDyn) (List.combine ps argstyps) in
 
              let term' =
@@ -461,7 +461,7 @@ builtin_enter_module "refl" ;;
                 chaseTypeDeep
                         ~metasAreFine:true
                         ~replaceUninst:true
-                        p'.classifier;
+                        p'.classifier ();
                 p') in
      let* _ = setstate state in
      (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
