@@ -30,13 +30,13 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "lookup" ( _tString **> ( ~* "A" ) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ varname ; res ] -> begin perform
-         varname <-- chasePattcanon [] varname ;
-         varname <-- _PtoString varname ;
+     fun _ -> function [ varname ; res ] -> begin
+         let* varname = chasePattcanon [] varname in
+         let* varname = _PtoString varname in
          let expr = pattcanonToExpr (-1) res in
-         varidx  <-- intermlang (fun _ ->
+         let* varidx = intermlang (fun _ ->
            try Some (findUnifiableVar `Free (findFvar varname) (exprAsExprU expr))
-           with _ -> None) ;
+           with _ -> None) in
          match varidx with
          | Some (`Free, varidx) ->
            let patt = pattheadToCanon { expr with term = `Var(`Concrete(varname), (`Free, varidx)) } in
@@ -47,15 +47,14 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "open_constraints" ( ~* "A" **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ term ] -> begin perform
-       term <-- pattcanonRenormalize term ;
-       term <-- chasePattcanon [] term ;
+     fun _ -> function [ term ] -> begin
+       let* term = pattcanonRenormalize term in
+       let* term = chasePattcanon [] term in
        match term.term with
 
          (* deconstruct *)
          | `LamMany([], { term = `Meta(_, idx, _, _) }) ->
-            perform
-              state  <-- getstate ;
+              let* state = getstate in
               moneOrMzero (Termlangcanon.ISet.mem idx state.rsmetaswithconstraints)
 
          | _ -> mzero
@@ -65,9 +64,9 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "headname" ( ( ~* "A" ) **> _tString **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ patt ; res ] -> begin perform
-         patt <-- pattcanonRenormalize patt ;
-         patt <-- chasePattcanon [] patt ;
+     fun _ -> function [ patt ; res ] -> begin
+         let* patt = pattcanonRenormalize patt in
+         let* patt = chasePattcanon [] patt in
          match patt.term with
            | `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(s), (`Free, _)) }, _, _ ) }) ->
              pattcanonUnifyFull res (_PofString ~loc:patt.loc s)
@@ -77,39 +76,38 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "headargs" ( ( ~* "A" ) **> ( ~* "B" ) **> (_tList _tDyn) **> _tProp)
     (let open RunCtx.Monad in
-     fun _ -> function [ term ; head ; args ] -> begin perform
-       term <-- pattcanonRenormalize term ;
-       term <-- chasePattcanon [] term ;
+     fun _ -> function [ term ; head ; args ] -> begin
+       let* term = pattcanonRenormalize term in
+       let* term = chasePattcanon [] term in
        match term.term with
 
          (* deconstruct *)
          | `LamMany([], { term = `AppMany(hd, args', args'info) }) ->
 
-           perform
-             hd <-- pattcanonRenormalize (pattheadToCanon hd) ;
-             pattcanonUnifyFull head hd ;
+             let* hd = pattcanonRenormalize (pattheadToCanon hd) in
+             let* _ = pattcanonUnifyFull head hd in
              let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
              let args'list = _PofList ~loc:term.loc _tDyn args' in
              pattcanonUnifyFull args args'list
 
          (* reconstruct *)
          | `LamMany([], { term = `Meta(_) }) ->
-           perform
-             args <-- _PtoList args ;
-             ps <-- mapM pattcanonRenormalize (head :: args) ;
-             ps <-- mapM (chasePattcanon []) ps ;
+             let* args = _PtoList args in
+             let* ps = mapM pattcanonRenormalize (head :: args) in
+             let* ps = mapM (chasePattcanon []) ps in
              let (head' :: args') = ps in
-             (head'', argsinfo, typ) <--
+             let* (head'', argsinfo, typ) =
                (match head'.term with
                    `LamMany(_, { term = `AppMany(hd, _, argsinfo) ;
                                  classifier = typ }) ->
                      return (hd, argsinfo, typ)
-                 | _ -> mzero) ;
+                 | _ -> mzero)
+             in
 
              (* check types *)
-             argstyps <-- intermlang (fun _ -> gatherArrowTyps head''.classifier) ;
-             if (List.length args' <> List.length argstyps) then mzero else return () ;
-             args' <-- mapM (uncurry _PtoDyn) (List.combine args' argstyps) ;
+             let* argstyps = intermlang (fun _ -> gatherArrowTyps head''.classifier) in
+             let* _ = if (List.length args' <> List.length argstyps) then mzero else return () in
+             let* args' = mapM (uncurry _PtoDyn) (List.combine args' argstyps) in
 
              let term' =
                pattneutToCanon
@@ -140,48 +138,48 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "duphead" ( (~* "A") **> ( ~* "B" ) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ var ; res ] -> begin perform
-         var <-- pattcanonRenormalize var;
-         var <-- chasePattcanon [] var ;
-         (name, idx) <-- begin
+     fun _ -> function [ var ; res ] -> begin
+         let* var = pattcanonRenormalize var in
+         let* var = chasePattcanon [] var in
+         let* (name, idx) = begin
            match var.term with
              `LamMany(_, { term = `AppMany( { term = `Var(`Concrete(name), (`Free, idx)) }, _, _ ) }) ->
                return (name, idx)
            | _ -> mzero
-           end;
-         newvar <-- intermlang (fun _ -> pattOfConstant name idx);
+           end
+         in
+         let* newvar = intermlang (fun _ -> pattOfConstant name idx) in
          pattcanonUnifyFull res newvar
     end | _ -> mzero)
   ;;
 
   new_builtin_predicate "allconstants" ( (_tList _tDyn) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ res ] -> begin perform
-         vars <-- intermlang (fun _ ->
+     fun _ -> function [ res ] -> begin
+         let* vars = intermlang (fun _ ->
            let idxs  = increasing !termstate.fvars in
            let names = List.map nameOfFVar idxs in
            let patts = List.map2 pattOfConstant names idxs in
            let dynpatts = List.map _PofDyn patts in
            let list = _PofList _tDyn dynpatts in
-           list);
+           list) in
          pattcanonUnifyFull res vars
      end | _ -> assert false)
   ;;
 
   new_builtin_predicate "assume_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ pred ; unif ] -> begin perform
+     fun _ -> function [ pred ; unif ] -> begin
 
-        pred <-- pattcanonRenormalize pred ;
-        pred <-- chasePattcanon [] pred ;
+        let* pred = pattcanonRenormalize pred in
+        let* pred = chasePattcanon [] pred in
 
         match pred.term with
             `LamMany(_, body) ->
-              perform
                 let idx  =   headPredicate body in
-                env      <-- getenv ;
+                let* env = getenv in
                 let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
-                cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
+                let* cs' = inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) in
                 pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
 
     end | _ -> assert false)
@@ -189,15 +187,14 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "assume_reset" ( ~* "A" **> _tProp **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ pred ; { term = `LamMany([], p) } ] -> begin perform
+     fun _ -> function [ pred ; { term = `LamMany([], p) } ] -> begin
 
-        pred <-- chasePattcanon [] pred ;
+        let* pred = chasePattcanon [] pred in
 
         match pred.term with
             `LamMany(_, body) ->
-              perform
                 let idx = headPredicate body in
-                env' <-- resetTempConstructors idx ;
+                let* env' = resetTempConstructors idx in
                 inenv env' (demand p)
 
     end | _ -> assert false)
@@ -205,17 +202,16 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "rules_get" ( ~* "A" **> (_tList _tClause) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ pred ; unif ] -> begin perform
+     fun _ -> function [ pred ; unif ] -> begin
 
-        pred <-- pattcanonRenormalize pred ;
-        pred <-- chasePattcanon [] pred ;
+        let* pred = pattcanonRenormalize pred in
+        let* pred = chasePattcanon [] pred in
 
         match pred.term with
             `LamMany(_, body) ->
-              perform
                   let idx  =   headPredicate body in
-                  cs       <-- findConstructors idx ;
-                  cs'      <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) ;
+                  let* cs = findConstructors idx in
+                  let* cs' = inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs) in
                   pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs')
 
     end | _ -> assert false)
@@ -223,22 +219,22 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "rules_get_applicable" ( ~* "A" **> (_tList _tClause) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ pred ; unif ] -> begin perform
+     fun _ -> function [ pred ; unif ] -> begin
 
-        pred <-- pattcanonRenormalize pred ;
-        pred <-- chasePattcanon [] pred ;
+        let* pred = pattcanonRenormalize pred in
+        let* pred = chasePattcanon [] pred in
 
         match pred.term with
             `LamMany(_, body) ->
-              perform
                   let idx  =   headPredicate body in
-                  cs       <-- findConstructors idx ;
-                  state    <-- getbacktrackstate ;
-                  csAppl   <-- mapM (fun c -> perform
-                                                applies <-- constructorApplies state body c ;
-                                                return (if applies then Some c else None)) cs;
+                  let* cs = findConstructors idx in
+                  let* state = getbacktrackstate in
+                  let* csAppl = mapM (fun c ->
+                                                let* applies = constructorApplies state body c in
+                                                return (if applies then Some c else None)) cs
+                  in
                   let cs'  = List.filter_map identity csAppl in
-                  cs''     <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') ;
+                  let* cs'' = inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') in
                   pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs'')
 
     end | _ -> assert false)
@@ -246,23 +242,23 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "assume_get_applicable" ( ~* "A" **> (_tList _tClause) **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ pred ; unif ] -> begin perform
+     fun _ -> function [ pred ; unif ] -> begin
 
-        pred <-- pattcanonRenormalize pred ;
-        pred <-- chasePattcanon [] pred ;
+        let* pred = pattcanonRenormalize pred in
+        let* pred = chasePattcanon [] pred in
 
         match pred.term with
             `LamMany(_, body) ->
-              perform
                 let idx  =   headPredicate body in
-                env      <-- getenv ;
+                let* env = getenv in
                 let cs   =   try Termlangcanon.IMap.find idx env.retemp_constr_for_pred with Not_found -> [] in
-                state    <-- getbacktrackstate ;
-                csAppl   <-- mapM (fun c -> perform
-                                              applies <-- constructorApplies state body c ;
-                                              return (if applies then Some c else None)) cs;
+                let* state = getbacktrackstate in
+                let* csAppl = mapM (fun c ->
+                                              let* applies = constructorApplies state body c in
+                                              return (if applies then Some c else None)) cs
+                in
                 let cs'  = List.filter_map identity csAppl in
-                cs''     <-- inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') ;
+                let* cs'' = inmonad ~statewrite:true (fun _ -> List.map (pattneutToCanon % fst % allocateMetas_mutable) cs') in
                 pattcanonUnifyFull unif (_PofList ~loc:pred.loc _tClause cs'')
 
     end | _ -> assert false)
@@ -271,11 +267,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isunif" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] -> begin
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isunif = match p.term with `LamMany([], { term = `Meta _ }) -> true | _ -> false in
          moneOrMzero isunif)
       end | _ -> assert false)
@@ -284,11 +279,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isconst" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isconst = match p.term with
              `LamMany([], { term = `AppMany( { term = `Const _ }, [], [] ) }) -> true
            | _ -> false
@@ -300,11 +294,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isbaseterm" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isbaseterm = match p.term with
              `LamMany([], { term = `AppMany( { term = `Var (_, _) }, _, _ ) }) -> true
            | _ -> false
@@ -316,11 +309,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isfvar" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isbaseterm = match p.term with
              `LamMany([], { term = `AppMany( { term = `Var (_, (`Free, _)) }, _, _ ) }) -> true
            | _ -> false
@@ -332,11 +324,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isnvar" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isbaseterm = match p.term with
              `LamMany([], { term = `AppMany( { term = `Var (_, (`New, _)) }, _, _ ) }) -> true
            | _ -> false
@@ -348,11 +339,10 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "isfun" ( ~* "A" **> _tProp )
     (fun _ -> function [ p ] ->
       (let open RunCtx.Monad in
-       perform
-         state  <-- getstate ;
-         p      <-- pattcanonRenormalize p ;
-         p      <-- chasePattcanon [] p ;
-         _      <-- setstate state ;
+         let* state = getstate in
+         let* p = pattcanonRenormalize p in
+         let* p = chasePattcanon [] p in
+         let* _ = setstate state in
          let isfun = match p.term with
              `LamMany(hd :: _, _) -> true
            | _ -> false
@@ -364,19 +354,18 @@ builtin_enter_module "refl" ;;
   (* --- more low-level operations with metavariables --- *)
   new_builtin_predicate "decomposeunif" ( ( ~* "A" ) **> _tInt **> (_tList _tDyn) **> _tProp)
     (let open RunCtx.Monad in
-     fun _ -> function [ term ; index ; args ] -> begin perform
-       term <-- pattcanonRenormalize term ;
-       term <-- chasePattcanon [] term ;
+     fun _ -> function [ term ; index ; args ] -> begin
+       let* term = pattcanonRenormalize term in
+       let* term = chasePattcanon [] term in
        match term.term with
 
          (* deconstruct *)
          | `LamMany([], { term = `Meta(_, idx, `Subst(args', _, args'info, _), _) }) ->
 
-           perform
-             pattcanonUnifyFull index (pattcanonInt (Big_int.of_int idx)) ;
-             let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
-             let args'list = _PofList ~loc:term.loc _tDyn args' in
-             pattcanonUnifyFull args args'list
+            let* _ = pattcanonUnifyFull index (pattcanonInt (Big_int.of_int idx)) in
+            let args' = List.map (fun e -> _PofDyn ~loc:e.loc e) args' in
+            let args'list = _PofList ~loc:term.loc _tDyn args' in
+            pattcanonUnifyFull args args'list
 
          | _ -> mzero
     end | _ -> assert false)
@@ -384,22 +373,21 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "recomposeunif" ( ( ~* "A" ) **> (_tList _tDyn) **> ( ~* "A" ) **> _tProp)
     (let open RunCtx.Monad in
-     fun _ -> function [ term ; args ; result ] -> begin perform
-       term <-- pattcanonRenormalize term ;
-       term <-- chasePattcanon [] term ;
+     fun _ -> function [ term ; args ; result ] -> begin
+       let* term = pattcanonRenormalize term in
+       let* term = chasePattcanon [] term in
        match term.term with
 
          (* reconstruct *)
          | `LamMany([], ({ term = `Meta(s, idx, `Subst(_, _, argsinfo, names), typ) } as neut)) ->
-           perform
-             args <-- _PtoList args ;
-             ps <-- mapM pattcanonRenormalize args ;
-             ps <-- mapM (chasePattcanon []) ps ;
+             let* args = _PtoList args in
+             let* ps = mapM pattcanonRenormalize args in
+             let* ps = mapM (chasePattcanon []) ps in
 
              (* check types *)
-             argstyps <-- intermlang (fun _ -> gatherArrowTyps typ) ;
+             let* argstyps = intermlang (fun _ -> gatherArrowTyps typ) in
              if (List.length ps <> List.length argstyps) then mzero else return () ;
-             args' <-- mapM (uncurry _PtoDyn) (List.combine ps argstyps) ;
+             let* args' = mapM (uncurry _PtoDyn) (List.combine ps argstyps) in
 
              let term' =
                pattneutToCanon
@@ -414,16 +402,15 @@ builtin_enter_module "refl" ;;
 
   new_builtin_predicate "unifmetalevel" ( ( ~* "A" ) **> _tInt **> _tProp)
     (let open RunCtx.Monad in
-     fun _ -> function [ term ; level ] -> begin perform
-       term <-- pattcanonRenormalize term ;
-       term <-- chasePattcanon [] term ;
+     fun _ -> function [ term ; level ] -> begin
+       let* term = pattcanonRenormalize term in
+       let* term = chasePattcanon [] term in
        match term.term with
 
          (* deconstruct *)
          | `LamMany([], { term = `Meta(m1) }) ->
 
-          perform
-             lvl <-- getMetaLevel (metaindex m1);
+             let* lvl = getMetaLevel (metaindex m1) in
              pattcanonUnifyFull level (pattcanonInt (Big_int.of_int lvl)) ;
 
          | _ -> mzero
@@ -432,8 +419,7 @@ builtin_enter_module "refl" ;;
 
   let ensure_concrete_type (p : pattcanon) : unit RunCtx.Monad.m =
     let open RunCtx.Monad in
-    perform
-      t <-- intermlang (fun _ -> chaseType p.classifier) ;
+      let* t = intermlang (fun _ -> chaseType p.classifier) in
       let b = match t.term with `TVar(_, Some (`Free, _), _) -> true | _ -> false in
       if b then return () else (Printf.printf "wrong call to external predicate expecting concrete type\n"; mzero)
 
@@ -443,33 +429,31 @@ builtin_enter_module "refl" ;;
   new_builtin_predicate "monotyp" ( ( ~* "A" ) **> _tProp)
   (fun _ -> fun [ e ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
-     state <-- getbacktrackstate;
-     b <-- intermlang (fun _ ->
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
+     let* state = getbacktrackstate in
+     let* b = intermlang (fun _ ->
               try
                 let p' =
                  p |> pattcanonToExpr 0
                    |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
                 in
-                traverseTypeDeep
+                ignore(traverseTypeDeep
                         ~uninstantiatedMeta:(fun _ -> raise MonotypUninstantiatedTMetas)
-                        p'.classifier;
+                        p'.classifier);
                 true
-               with MonotypUninstantiatedTMetas -> false);
-     setstate state;
+               with MonotypUninstantiatedTMetas -> false) in
+     let* _ = setstate state in
      moneOrMzero b))
   ;;
 
   new_builtin_predicate "typstring" ( ( ~* "A" ) **> _tString **> _tProp)
   (fun _ -> fun [ e ; s ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
-     state <-- getbacktrackstate;
-     p' <-- intermlang (fun _ ->
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
+     let* state = getbacktrackstate in
+     let* p' = intermlang (fun _ ->
                 let p' =
                  p |> pattcanonToExpr 0
                    |> chaseTypesInExpr ~replaceUninst:false ~metasAreFine:true
@@ -478,20 +462,20 @@ builtin_enter_module "refl" ;;
                         ~metasAreFine:true
                         ~replaceUninst:true
                         p'.classifier;
-                p');
-     setstate state;
+                p') in
+     let* _ = setstate state in
      (let res = Printf.ksprintf2 (fun s -> s) "%a" Typ.print p'.classifier in
       pattcanonUnifyFull s (_PofString ~loc:e.loc res))))
   ;;
 
   new_builtin_predicate "statehash" ( _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ s ] -> perform
-    metaidx <-- (match s.term with
+  (fun _ -> fun [ s ] ->
+    let* metaidx = (match s.term with
          | `LamMany([], { term = `Meta(_, idx, _, _) }) ->
             return idx
-         | _ -> mzero);
-    statehash <-- inmonad ~statewrite:false (fun _ ->
+         | _ -> mzero) in
+    let* statehash = inmonad ~statewrite:false (fun _ ->
       let inp = !UChannel.input_statehash in
       let mt = Hashtbl.hash metaidx in
       let root =
@@ -504,7 +488,7 @@ builtin_enter_module "refl" ;;
       (* we need three components: the input so far, the query we're at,
          and a distinct point within that query. The current metavariable should provide
          that last one. *)
-      inp + mt + root);
+      inp + mt + root) in
     let statehash = string_of_int statehash in
     pattcanonUnifyFull s (_PofString statehash ~loc:s.loc))
   end;;
@@ -521,12 +505,11 @@ builtin_enter_module "refl" ;;
        let rec auxneut cur (p : pattneut) =
          match p.term with
            `Meta(m1) ->
-             perform
-               ifte (perform
-                       b <-- intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) ;
+               ifte (
+                       let* b = intermlang(fun _ -> typUnifyBool ~allow_instantiation:false p.classifier output.classifier) in
                        moneOrMzero b)
-                    (fun () -> perform
-                       level <-- getMetaLevel (metaindex m1) ;
+                    (fun () ->
+                       let* level = getMetaLevel (metaindex m1) in
                        return (combine cur (Some (level, p))))
                     (lazy(foldM auxcanon cur (metasubstmain m1)))
          | `AppMany(hd, args, _) ->
@@ -535,11 +518,10 @@ builtin_enter_module "refl" ;;
          match p.term with
            `LamMany(lamsinfo, p) -> auxneut cur p
        in
-       perform
-         _     <-- mapM ensure_concrete_type [ input ; output ] ;
-         p     <-- chasePattcanon ~deep:true [] input ;
-         p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
-         unif  <-- auxneut None p ;
+         let* _ = mapM ensure_concrete_type [ input ; output ] in
+         let* p = chasePattcanon ~deep:true [] input in
+         let* p = (match p.term with `LamMany([], p) -> return p | _ -> mzero) in
+         let* unif = auxneut None p in
          match unif, output.term with
            Some (_, unif), `LamMany([], { term = `Meta(o) }) ->
              (* pattUnifyFull output unif *)
@@ -559,25 +541,26 @@ builtin_enter_module "refl" ;;
              [] -> return visited
            | uvar :: tl when ISet.mem uvar visited -> aux visited tl (ISet.remove uvar tovisit_set)
            | uvar :: tl ->
-             (perform
+             (
                 let visited = ISet.add uvar visited in
                 let tovisit_set = ISet.remove uvar tovisit_set in
-                cs  <-- getConstraints uvar ;
-                cs' <-- mapM (fun elm ->
+                let* cs = getConstraints uvar in
+                let* cs' = mapM (fun elm ->
                               match elm with
-                                `UnifCanon(bound, p1, p2) -> perform
-                                                               state <-- getbacktrackstate ;
-                                                               p1 <-- chasePattcanon bound p1 ;
-                                                               p2 <-- chasePattcanon bound p2 ;
-                                                               setstate state ;
-                                                               return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
-                              | `Unif(bound, p1, p2) -> perform
-                                                          state <-- getbacktrackstate ;
-                                                          p1 <-- chasePattneut bound p1 ;
-                                                          p2 <-- chasePattneut bound p2 ;
-                                                          setstate state ;
-                                                          return (List.filter_map getmetaindexneut [ p1 ; p2 ])
-                              | _ -> return []) cs;
+                                `UnifCanon(bound, p1, p2) ->
+                                 let* state = getbacktrackstate in
+                                 let* p1 = chasePattcanon bound p1 in
+                                 let* p2 = chasePattcanon bound p2 in
+                                 let* _ = setstate state in
+                                 return (List.filter_map getmetaindexcanon [ p1 ; p2 ])
+                              | `Unif(bound, p1, p2) ->
+                                 let* state = getbacktrackstate in
+                                 let* p1 = chasePattneut bound p1 in
+                                 let* p2 = chasePattneut bound p2 in
+                                 let* _ = setstate state in
+                                 return (List.filter_map getmetaindexneut [ p1 ; p2 ])
+                              | _ -> return []) cs
+                in
                 let cs' = List.flatten cs' in
                 let newones = List.filter (fun elm -> not (ISet.mem elm visited || ISet.mem elm tovisit_set)) cs' in
                 aux visited (newones ++ tl) (ISet.union (newones |> List.enum |> ISet.of_enum) tovisit_set))
@@ -601,13 +584,12 @@ builtin_enter_module "refl" ;;
          match p.term with
            `LamMany(lamsinfo, body) -> { p with term = `LamMany(lamsinfo, auxneut (bound + List.length lamsinfo) uvars body) }
        in
-       perform
-         _    <-- mapM ensure_concrete_type [ term ; meta ] ;
-         p    <-- chasePattcanon ~deep:true [] term ;
-         meta <-- chasePattcanon ~deep:true [] meta ;
-         uvar <-- (match getmetaindexcanon meta with Some i -> return i | _ -> mzero);
-         uvars <-- chaseWithConstraints uvar ;
-         p     <-- (match p.term with `LamMany([], p) -> return p | _ -> mzero) ;
+         let* _ = mapM ensure_concrete_type [ term ; meta ] in
+         let* p = chasePattcanon ~deep:true [] term in
+         let* meta = chasePattcanon ~deep:true [] meta in
+         let* uvar = (match getmetaindexcanon meta with Some i -> return i | _ -> mzero) in
+         let* uvars = chaseWithConstraints uvar in
+         let* p = (match p.term with `LamMany([], p) -> return p | _ -> mzero) in
          let ctx = auxneut 0 uvars p in
          let restyp = meta.classifier **> term.classifier in
          let res = { term = `LamMany( [ { term = (`Anon, meta.classifier) ; classifier = restyp ; loc = p.loc ; extra = PattExtras.empty () } ], ctx ) ;
@@ -664,12 +646,12 @@ exception StagingError of exprU;;
 let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
 
   let open RunCtx.Monad in
-  perform
-    code   <-- intermlang (let code' = mkAnnot ~loc:code.loc (fun _ -> code) (t **> _tProp) in
-                           mkApp ~loc:code.loc code' (mkVar "Result~~")) ;
-    metas  <-- ifte (queryGoal ~print:false code) (fun x -> return (Some x))
-      (lazy(raise (StagingError(code)))) ;
-    result <-- (match metas with Some metas -> intermlang (fun _ ->
+    let* code = intermlang (let code' = mkAnnot ~loc:code.loc (fun _ -> code) (t **> _tProp) in
+                           mkApp ~loc:code.loc code' (mkVar "Result~~")) in
+    let* metas = ifte (queryGoal ~print:false code) (fun x -> return (Some x))
+      (lazy(raise (StagingError(code))))
+    in
+    let* result = (match metas with Some metas -> intermlang (fun _ ->
       let result = List.assoc "Result~~" metas in
       let result =
         try
@@ -677,9 +659,9 @@ let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
                     alphaSanitize |> exprRemoveUnresolved
         with NewVarUsed -> assert false
       in
-      Some result) | None -> return None);
-    state  <-- getstate ;
-    setstate (clearRunMetas state) ;
+      Some result) | None -> return None) in
+    let* state = getstate in
+    let* _ = setstate (clearRunMetas state) in
     (match result with Some result -> return result | None -> mzero)
 
 ;;
@@ -705,9 +687,8 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
   let open RunCtx.Monad in
   let hd, args = ExprU.gatherApp e in
   let postCleanupMetas e =
-    perform
-      _     <-- e ;
-      state <-- getstate ;
+      let* _ = e in
+      let* state = getstate in
       setstate (clearRunMetas state)
   in
   postCleanupMetas begin
@@ -725,14 +706,12 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
 
   | `Var(_, Some (`Free, idx)), [ list ] when idx = _eiCmdMany ->
 
-    perform
-      _ <-- mapM doCommand (_EUtoList list) ;
+      let* _ = mapM doCommand (_EUtoList list) in
       return ()
 
   | `Var(_, Some (`Free, idx)), [ code ] when idx = _eiCmdStage ->
 
-    perform
-      cmd <-- getQueryResult _tCmd code ;
+      let* cmd = getQueryResult _tCmd code in
       doCommand cmd
 
   | `Var(_, Some (`Free, idx)), [] when idx = _eiCmdNone ->
@@ -752,8 +731,7 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
 let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
-  perform
-    cmd <-- getQueryResult _tCmd code ;
+    let* cmd = getQueryResult _tCmd code in
     ifte (doCommand cmd) return
       (lazy(Printf.printf "Error in staged code at %s.\n"
               (UChannel.string_of_span code.loc); mzero))
@@ -764,8 +742,8 @@ let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
 let global_staged_command cmdcode =
 
   let open RunCtx.Monad in
-  globalprolog_do (perform
-                    cmdcode <-- intermlang cmdcode ;
+  globalprolog_do (
+                    let* cmdcode = intermlang cmdcode in
                     doStagedCommand cmdcode)
 
 ;;

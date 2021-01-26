@@ -29,8 +29,8 @@ let new_builtin_predicate_from_functions s t fs =
   let open RunCtx.Monad in
   let isMeta p = match p.term with `LamMany(_, { term = `Meta(_) }) -> true | _ -> false in
   new_builtin_predicate s t
-  (fun _ -> fun args -> perform
-    args' <-- mapM (chasePattcanon ~deep:true []) args ;
+  (fun _ -> fun args ->
+    let* args' = mapM (chasePattcanon ~deep:true []) args in
     let f, args, meta =
       let n = List.length args' in
       try
@@ -40,7 +40,7 @@ let new_builtin_predicate_from_functions s t fs =
       with ExtList.NotFoundPartition ->
         List.nth fs (n-1), List.take (n-1) args', List.last args'
     in
-    res <-- f args ;
+    let* res = f args in
     pattcanonUnifyFull meta res)
 ;;
 
@@ -55,8 +55,7 @@ let _PofInt ?(loc = None) i : pattcanon = pattcanonInt i ~loc:loc ;;
 let _PtoList  (xs : pattcanon) : pattcanon list RunCtx.Monad.m =
   let open RunCtx.Monad in
   let rec aux s acc =
-    perform
-    s <-- chasePattcanon [] s ;
+    let* s = chasePattcanon [] s in
     match s.term with
       `LamMany([], { term = `AppMany( { term = `Var(_, (`Free, idx)) }, [], _) }) when idx = _eiNil ->
         return (List.rev acc)
@@ -86,8 +85,7 @@ let _PofList ?(loc = None) (t : typ) (xs : pattcanon list) : pattcanon =
 
 let _PtoBool (x : pattcanon) : bool RunCtx.Monad.m =
   let open RunCtx.Monad in
-   perform
-     x <-- chasePattcanon [] x ;
+     let* x = chasePattcanon [] x in
      match x.term with
          `LamMany([], { term = `AppMany( { term = `Var(_, (`Free, idx)) }, [], _) }) when idx = _eiTrue -> return true
        | `LamMany([], { term = `AppMany( { term = `Var(_, (`Free, idx)) }, [], _) }) when idx = _eiFalse -> return false
@@ -110,9 +108,8 @@ let _PtoDyn (d : pattcanon) (t : typ) : pattcanon RunCtx.Monad.m =
   let open RunCtx.Monad in
   match d.term with
       `LamMany([], { term = `AppMany( { term = `Var(_, (`Free, idx)) }, [ term ], _) }) when idx = _eiDyn ->
-        perform
-          b <-- inmonad ~statewrite:true (fun _ -> typUnifyBool t term.classifier) ;
-          moneOrMzero b ;
+          let* b = inmonad ~statewrite:true (fun _ -> typUnifyBool t term.classifier) in
+          let* _ = moneOrMzero b in
           return term
     | _ -> mzero
 ;;
@@ -138,9 +135,8 @@ let _PofDyn ?(loc = None) (x : pattcanon) : pattcanon =
 new_builtin_predicate_from_functions "plus" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
   let open RunCtx.Monad in
   let convertfunc f [ i1 ; i2 ] =
-    perform
-      i1' <-- _PtoInt i1 ;
-      i2' <-- _PtoInt i2 ;
+      let* i1' = _PtoInt i1 in
+      let* i2' = _PtoInt i2 in
       let res = f i1' i2' in
       return (_PofInt res ~loc:i1.loc)
   in
@@ -156,38 +152,41 @@ end;;
 
 
 new_builtin_predicate "mult" ( _tInt **> _tInt **> _tInt **> _tProp ) begin
-  
+
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ i1; i2; res ] -> perform
-    i1' <-- chasePattcanon [] i1 ;
-    i2' <-- chasePattcanon [] i2 ;
-    res' <-- chasePattcanon [] res ;
+  (fun _ -> fun [ i1; i2; res ] ->
+    let* i1' = chasePattcanon [] i1 in
+    let* i2' = chasePattcanon [] i2 in
+    let* res' = chasePattcanon [] res in
     if isMeta i1' || isMeta i2' then mzero
-    else (perform
-            i1'' <-- _PtoInt i1' ;
-            i2'' <-- _PtoInt i2' ;
+    else (
+            let* i1'' = _PtoInt i1' in
+            let* i2'' = _PtoInt i2' in
             pattcanonUnifyFull res' (_PofInt (Big_int.mul i1'' i2'') ~loc:res.loc)))
 
 end;;
 
 new_builtin_predicate "div" ( _tInt **> _tInt **> _tInt **> _tInt **> _tProp ) begin
-  
+
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ i1; i2; quo; rem ] -> perform
-    i1' <-- chasePattcanon [] i1 ;
-    i2' <-- chasePattcanon [] i2 ;
-    quo' <-- chasePattcanon [] quo ;
-    rem' <-- chasePattcanon [] rem ;
+  (fun _ -> fun [ i1; i2; quo; rem ] ->
+    let* i1' = chasePattcanon [] i1 in
+    let* i2' = chasePattcanon [] i2 in
+    let* quo' = chasePattcanon [] quo in
+    let* rem' = chasePattcanon [] rem in
     if isMeta i1' || isMeta i2' then mzero
-    else (perform
-            i1'' <-- _PtoInt i1' ;
-            i2'' <-- _PtoInt i2' ;
-            try (perform let (q'', r'') = Big_int.quomod_big_int i1'' i2'' in
-            pattcanonUnifyFull quo' (_PofInt q'' ~loc:quo.loc) ;
-            pattcanonUnifyFull rem' (_PofInt r'' ~loc:rem.loc))
-              with _ -> mzero))
+    else (
+            let* i1'' = _PtoInt i1' in
+            let* i2'' = _PtoInt i2' in
+            try begin
+                let (q'', r'') = Big_int.quomod_big_int i1'' i2'' in
+                let* _ = pattcanonUnifyFull quo' (_PofInt q'' ~loc:quo.loc) in
+                let* _ = pattcanonUnifyFull rem' (_PofInt r'' ~loc:rem.loc) in
+                return ()
+              end
+            with _ -> mzero))
 
 end;;
 
@@ -195,13 +194,13 @@ new_builtin_predicate "lessthan" ( _tInt **> _tInt **> _tBool **> _tProp ) begin
 
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ i1; i2; res ] -> perform
-    i1' <-- chasePattcanon [] i1 ;
-    i2' <-- chasePattcanon [] i2 ;
+  (fun _ -> fun [ i1; i2; res ] ->
+    let* i1' = chasePattcanon [] i1 in
+    let* i2' = chasePattcanon [] i2 in
     if isMeta i1' || isMeta i2' then mzero
-    else (perform
-            i1'' <-- _PtoInt i1' ;
-            i2'' <-- _PtoInt i2' ;
+    else (
+            let* i1'' = _PtoInt i1' in
+            let* i2'' = _PtoInt i2' in
             pattcanonUnifyFull res (_PofBool (Big_int.lt_big_int i1'' i2'') ~loc:i1.loc)))
 
 end;;
@@ -215,9 +214,8 @@ builtin_enter_module "string" ;;
 new_builtin_predicate_from_functions "append" ( _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
   let convertfunc f [ s1 ; s2 ] =
-    perform
-      s1' <-- _PtoString s1 ;
-      s2' <-- _PtoString s2 ;
+      let* s1' = _PtoString s1 in
+      let* s2' = _PtoString s2 in
       let res = f s1' s2' in
       match res with
         Some(s) -> return (_PofString s ~loc:s1.loc)
@@ -247,21 +245,20 @@ end
 new_builtin_predicate "headtail" ( _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ i; hd; tl ] -> perform
-    i' <-- chasePattcanon [] i ;
-    hd' <-- chasePattcanon [] hd ;
-    tl' <-- chasePattcanon [] tl ;
+  (fun _ -> fun [ i; hd; tl ] ->
+    let* i' = chasePattcanon [] i in
+    let* hd' = chasePattcanon [] hd in
+    let* tl' = chasePattcanon [] tl in
     if (not (isMeta i')) then
-      (perform
-         is <-- _PtoString i';
-         _ <-- if String.is_empty is then mzero else return ();
-         pattcanonUnifyFull hd' (_PofString (String.head is 1) ~loc:i.loc);
-         pattcanonUnifyFull tl' (_PofString (String.tail is 1) ~loc:i.loc))
+      (let* is = _PtoString i' in
+       let* _ = if String.is_empty is then mzero else return () in
+       let* _ = pattcanonUnifyFull hd' (_PofString (String.head is 1) ~loc:i.loc) in
+       let* _ = pattcanonUnifyFull tl' (_PofString (String.tail is 1) ~loc:i.loc) in
+       return ())
     else if (isMeta i' && not(isMeta hd') && not(isMeta tl')) then
-      (perform
-         hds <-- _PtoString hd';
-         tls <-- _PtoString tl';
-         pattcanonUnifyFull i' (_PofString (hds ^ tls) ~loc:hd.loc))
+      (let* hds = _PtoString hd' in
+       let* tls = _PtoString tl' in
+       pattcanonUnifyFull i' (_PofString (hds ^ tls) ~loc:hd.loc))
     else mzero)
 end
 ;;
@@ -269,20 +266,20 @@ end
 new_builtin_predicate "initlast" ( _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ i; init; last ] -> perform
-    i' <-- chasePattcanon [] i ;
-    init' <-- chasePattcanon [] init ;
-    last' <-- chasePattcanon [] last ;
+  (fun _ -> fun [ i; init; last ] ->
+    let* i' = chasePattcanon [] i in
+    let* init' = chasePattcanon [] init in
+    let* last' = chasePattcanon [] last in
     if (not (isMeta i')) then
-      (perform
-         is <-- _PtoString i';
-         _ <-- if String.is_empty is then mzero else return ();
-         pattcanonUnifyFull init' (_PofString (String.slice ~last:(-1) is) ~loc:i.loc);
-         pattcanonUnifyFull last' (_PofString (String.slice ~first:(-1) is) ~loc:i.loc))
+      (let* is = _PtoString i' in
+       let* _ = if String.is_empty is then mzero else return () in
+       let* _ = pattcanonUnifyFull init' (_PofString (String.slice ~last:(-1) is) ~loc:i.loc) in
+       let* _ = pattcanonUnifyFull last' (_PofString (String.slice ~first:(-1) is) ~loc:i.loc) in
+       return ())
     else if (isMeta i' && not(isMeta init') && not(isMeta last')) then
-      (perform
-         inits <-- _PtoString init';
-         lasts <-- _PtoString last';
+      (
+         let* inits = _PtoString init' in
+         let* lasts = _PtoString last' in
          pattcanonUnifyFull i' (_PofString (inits ^ lasts) ~loc:init.loc))
     else mzero)
 end
@@ -291,26 +288,29 @@ end
 new_builtin_predicate "split_at_first" ( _tString **> _tString **> _tString **> _tString **> _tProp) begin
   let open RunCtx.Monad in
   let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
-  (fun _ -> fun [ sep; full; splithd; splittl ] -> perform
-    sep' <-- chasePattcanon [] sep ;
-    full' <-- chasePattcanon [] full ;
-    splithd' <-- chasePattcanon [] splithd ;
-    splittl' <-- chasePattcanon [] splittl ;
+  (fun _ -> fun [ sep; full; splithd; splittl ] ->
+    let* sep' = chasePattcanon [] sep in
+    let* full' = chasePattcanon [] full in
+    let* splithd' = chasePattcanon [] splithd in
+    let* splittl' = chasePattcanon [] splittl in
     if (isMeta sep') then
       mzero
     else if (not (isMeta full')) then
-      (perform
-         seps <-- _PtoString sep';
-         fulls <-- _PtoString full';
-         (shd, stl) <--
-           (try return (String.split fulls seps) with Not_found -> mzero);
-         pattcanonUnifyFull splithd' (_PofString shd ~loc:full.loc);
+      (
+         let* seps = _PtoString sep' in
+         let* fulls = _PtoString full' in
+         let* (shd, stl) =
+           (try return (String.split fulls seps) with Not_found -> mzero)
+         in
+         let* _ =
+           pattcanonUnifyFull splithd' (_PofString shd ~loc:full.loc)
+         in
          pattcanonUnifyFull splittl' (_PofString stl ~loc:full.loc))
     else if (isMeta full' && not(isMeta splithd') && not(isMeta splittl')) then
-      (perform
-         seps <-- _PtoString sep';
-         hds <-- _PtoString splithd';
-         tls <-- _PtoString splittl';
+      (
+         let* seps = _PtoString sep' in
+         let* hds = _PtoString splithd' in
+         let* tls = _PtoString splittl' in
          pattcanonUnifyFull full' (_PofString (hds ^ seps ^ tls) ~loc:splithd.loc))
     else mzero)
 end
@@ -320,14 +320,12 @@ end
 new_builtin_predicate_from_functions "explode" (_tString **> _tList _tString **> _tProp) begin
   let open RunCtx.Monad in
   [ (function [ ls ] ->
-      perform
-        ls'  <-- _PtoList ls ;
-        ls'' <-- mapM _PtoString ls' ;
+        let* ls' = _PtoList ls in
+        let* ls'' = mapM _PtoString ls' in
         let s = String.concat "" ls'' in
         return (_PofString ~loc:ls.loc s));
     (function [ s ] ->
-      perform
-        s' <-- _PtoString s ;
+        let* s' = _PtoString s in
         let open UChannel in
         let span = match s.loc with Some { startloc = loc } -> Some loc | None -> None in
         let stream = UChannel.from_string ?initloc:span s' in
@@ -343,35 +341,35 @@ end
 
 new_builtin_predicate "capitalize" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ str; res ] -> perform
-    str  <-- chasePattcanon [] str ;
-    str' <-- _PtoString str ;
+  (fun _ -> fun [ str; res ] ->
+    let* str = chasePattcanon [] str in
+    let* str' = _PtoString str in
     pattcanonUnifyFull res (_PofString (String.capitalize str') ~loc:str.loc))
 end;;
 
 new_builtin_predicate "uppercase" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ str; res ] -> perform
-    str  <-- chasePattcanon [] str ;
-    str' <-- _PtoString str ;
+  (fun _ -> fun [ str; res ] ->
+    let* str = chasePattcanon [] str in
+    let* str' = _PtoString str in
     pattcanonUnifyFull res (_PofString (String.uppercase str') ~loc:str.loc))
 end;;
 
 new_builtin_predicate "lowercase" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ str; res ] -> perform
-    str  <-- chasePattcanon [] str ;
-    str' <-- _PtoString str ;
+  (fun _ -> fun [ str; res ] ->
+    let* str = chasePattcanon [] str in
+    let* str' = _PtoString str in
     pattcanonUnifyFull res (_PofString (String.lowercase str') ~loc:str.loc))
 end;;
 
 new_builtin_predicate "contains" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ str1; str2 ] -> perform
-    str1  <-- chasePattcanon [] str1 ;
-    str1' <-- _PtoString str1 ;
-    str2  <-- chasePattcanon [] str2 ;
-    str2' <-- _PtoString str2 ;
+  (fun _ -> fun [ str1; str2 ] ->
+    let* str1 = chasePattcanon [] str1 in
+    let* str1' = _PtoString str1 in
+    let* str2 = chasePattcanon [] str2 in
+    let* str2' = _PtoString str2 in
     moneOrMzero (String.exists str1' str2'))
 end;;
 
@@ -394,20 +392,19 @@ let readFileAsString ?(statehash_update = true) filename =
 
 new_builtin_predicate "readfile" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ filename; content ] -> perform
-    filename <-- chasePattcanon [] filename ;
-    filename <-- _PtoString filename ;
-    contentString <--
-      (try return (readFileAsString filename) with _ -> mzero);
+  (fun _ -> fun [ filename; content ] ->
+    let* filename = chasePattcanon [] filename in
+    let* filename = _PtoString filename in
+    let* contentString = (try return (readFileAsString filename) with _ -> mzero) in
     pattcanonUnifyFull content contentString)
 end;;
 
 new_builtin_predicate "readcachefile" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ filename; content ] -> perform
-    filename <-- chasePattcanon [] filename ;
-    filename <-- _PtoString filename ;
-    contentString <-- (
+  (fun _ -> fun [ filename; content ] ->
+    let* filename = chasePattcanon [] filename in
+    let* filename = _PtoString filename in
+    let* contentString = (
       let res =
         try
           let resolved = Termlangcanon.global_resolve_cache_filename (filename ^ ".makam-cache") in
@@ -415,17 +412,17 @@ new_builtin_predicate "readcachefile" ( _tString **> _tString **> _tProp ) begin
         with _ -> mzero
       in
       res
-    );
+    ) in
     pattcanonUnifyFull content contentString)
 end;;
 
 new_builtin_predicate "writefile" ( _tString **> _tString **> _tProp ) begin
   let open RunCtx.Monad in
-  (fun _ -> fun [ filename; content ] -> perform
-    filename <-- chasePattcanon [] filename ;
-    filename <-- _PtoString filename ;
-    content <-- chasePattcanon [] content ;
-    content <-- _PtoString content ;
+  (fun _ -> fun [ filename; content ] ->
+    let* filename = chasePattcanon [] filename in
+    let* filename = _PtoString filename in
+    let* content = chasePattcanon [] content in
+    let* content = _PtoString content in
     try
       let output = File.open_out filename in
       let _ = IO.nwrite output content in
@@ -439,17 +436,17 @@ new_builtin_predicate "writecachefile" ( _tString **> _tString **> _tProp ) begi
   let open RunCtx.Monad in
   (fun _ -> fun [ filename; content ] ->
     match global_get_cache_directory () with
-      Some makam_cache_dir -> perform begin
-        filename <-- chasePattcanon [] filename ;
-        filename <-- _PtoString filename ;
-        content <-- chasePattcanon [] content ;
-        content <-- _PtoString content ;
-        _ <-- (try
+      Some makam_cache_dir -> begin
+        let* filename = chasePattcanon [] filename in
+        let* filename = _PtoString filename in
+        let* content = chasePattcanon [] content in
+        let* content = _PtoString content in
+        let* _ = (try
                  if Sys.is_directory makam_cache_dir then return () else mzero
                with _ ->
                  (try
                     Unix.mkdir makam_cache_dir 0o775; return ()
-                  with _ -> mzero));
+                  with _ -> mzero)) in
         try
           let output = File.open_out (makam_cache_dir ^ "/" ^ filename ^ ".makam-cache") in
           let _ = IO.nwrite output content in
@@ -473,15 +470,14 @@ let _ =
     (let open RunCtx.Monad in
     let isMeta t = match t.term with `LamMany( _, { term = `Meta(_) } ) -> true | _ -> false in
     new_builtin_predicate s (_tString **> _tProp)
-    (fun _ -> fun [ c ] -> perform
-      c' <-- chasePattcanon ~deep:true [] c ;
+    (fun _ -> fun [ c ] ->
+      let* c' = chasePattcanon ~deep:true [] c in
       if isMeta c' then mzero
-      else (perform
-              c'' <-- _PtoString c' ;
-              let c'' = UString.gethd (UString.of_string c'') in
-              moneOrMzero (f c''))))
+      else (let* c'' = _PtoString c' in
+            let c'' = UString.gethd (UString.of_string c'') in
+            moneOrMzero (f c''))))
   in
-  new_char_class "char_latin1" (fun c -> try (ignore (UChar.char_of c); true) with _ -> false) ;
+  ignore(new_char_class "char_latin1" (fun c -> try (ignore (UChar.char_of c); true) with _ -> false));
   new_char_class "char_letter" (fun c -> match UString.category c with
     | `Ll | `Lm | `Lo | `Lt | `Lu -> true | _ -> false)
 ;;
@@ -491,9 +487,8 @@ let _ =
 new_builtin_predicate "print" ( ~* "A" **> _tProp )
   (fun _ -> fun [ e ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
      let _ = Printf.printf "%a\n%!" Pattcanon.alphaSanitizedPrint p in
      return ()))
 ;;
@@ -501,9 +496,8 @@ new_builtin_predicate "print" ( ~* "A" **> _tProp )
 new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
   (fun _ -> fun [ e ; s ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
      let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedPrint p in
      pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
 ;;
@@ -511,9 +505,8 @@ new_builtin_predicate "tostring" ( ~* "A" **> _tString **> _tProp )
 new_builtin_predicate "tostring_qualified" ( ~* "A" **> _tString **> _tProp )
   (fun _ -> fun [ e ; s ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
      let res = Printf.sprintf "%a" Pattcanon.alphaSanitizedQualifiedPrint p in
      pattcanonUnifyFull s (_PofString ~loc:e.loc res)))
 ;;
@@ -521,10 +514,9 @@ new_builtin_predicate "tostring_qualified" ( ~* "A" **> _tString **> _tProp )
 new_builtin_predicate "print_string" ( _tString **> _tProp )
   (fun _ -> fun [ e ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
-     s <-- _PtoString p ;
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
+     let* s = _PtoString p in
      let _ = Printf.printf "%s%!" s in
      return ()))
 ;;
@@ -532,11 +524,10 @@ new_builtin_predicate "print_string" ( _tString **> _tProp )
 new_builtin_predicate "cheapprint" ( _tInt **> ~* "A" **> _tProp )
   (fun _ -> fun [ depth ; e ] ->
     (let open RunCtx.Monad in
-     perform
-     e <-- pattcanonRenormalize e ;
-     p <-- chasePattcanon ~deep:true [] e ;
-     depth <-- chasePattcanon ~deep:true [] depth ;
-     depth <-- _PtoInt depth;
+     let* e = pattcanonRenormalize e in
+     let* p = chasePattcanon ~deep:true [] e in
+     let* depth = chasePattcanon ~deep:true [] depth in
+     let* depth = _PtoInt depth in
      inmonad ~statewrite:false (fun _ -> Printf.printf "%a\n%!" (CheapPrint.canondepth (Big_int.to_int depth)) p);
      return ()))
 ;;
@@ -544,9 +535,8 @@ new_builtin_predicate "cheapprint" ( _tInt **> ~* "A" **> _tProp )
 new_builtin_predicate "print_current_metalevel" ( _tProp )
   (fun _ -> fun [] ->
     (let open RunCtx.Monad in
-     perform
-       env <-- getenv;
-       \ Printf.printf "current metalevel: %a\n" (List.print (Pair.print CheapPrint.name Typ.print)) env.renvars ;
+       let* env = getenv in
+       let _ = Printf.printf "current metalevel: %a\n" (List.print (Pair.print CheapPrint.name Typ.print)) env.renvars  in
        return ()))
 ;;
 
@@ -557,83 +547,81 @@ new_builtin_predicate "print_current_metalevel" ( _tProp )
 new_builtin_predicate "debug" ( _tProp  **> _tProp )
   (fun _ -> fun [ p ] ->
     let open RunCtx.Monad in
-    perform
-      _ <-- return () ;
+      let* _ = return () in
       let prev = !_DEBUG_DEMAND in
       let _ = _DEBUG_DEMAND := true in
       let p = match p.term with `LamMany([], p) -> p | _ -> assert false in
-      _ <-- ifte (try demand p with e -> (_DEBUG_DEMAND := prev; raise e))
-            (fun _ -> _DEBUG_DEMAND := prev; return ())
-            (lazy(perform
-               _ <-- return () ;
-               let _ = _DEBUG_DEMAND := prev in
-               mzero)) ;
-      return ())
+      ifte (try demand p with e -> (_DEBUG_DEMAND := prev; raise e))
+           (fun _ -> _DEBUG_DEMAND := prev; return ())
+           (lazy(
+              let* _ = return () in
+              let _ = _DEBUG_DEMAND := prev in
+              mzero)) )
 ;;
 
 new_builtin_predicate "debugfull" ( _tProp  **> _tProp )
   (fun _ -> fun [ p ] ->
     let open RunCtx.Monad in
-    perform
-      _ <-- return () ;
+      let* _ = return () in
       let prev = !_DEBUG in
       let _ = _DEBUG := true in
       let p = match p.term with `LamMany([], p) -> p | _ -> assert false in
-      _ <-- ifte (try demand p with e -> (_DEBUG := prev; raise e))
-            (fun _ -> _DEBUG := prev; return ())
-            (lazy(perform
-               _ <-- return () ;
-               let _ = _DEBUG := prev in
-               mzero)) ;
-      return ())
+      ifte (try demand p with e -> (_DEBUG := prev; raise e))
+           (fun _ -> _DEBUG := prev; return ())
+           (lazy(
+              let* _ = return () in
+              let _ = _DEBUG := prev in
+              mzero)))
 ;;
 
 new_builtin_predicate "debugtypes" ( _tProp  **> _tProp )
   (fun _ -> fun [ p ] ->
     let open RunCtx.Monad in
-    perform
-      _ <-- return () ;
+      let* _ = return () in
       let prev = !_DEBUG_TYPES in
       let _ = _DEBUG_TYPES := true in
       let p = match p.term with `LamMany([], p) -> p | _ -> assert false in
-      _ <-- ifte (try demand p with e -> (_DEBUG_TYPES := prev; raise e))
-            (fun _ -> _DEBUG_TYPES := prev; return ())
-            (lazy(perform
-               _ <-- return () ;
-               let _ = _DEBUG_TYPES := prev in
-               mzero)) ;
-      return ())
+      ifte (try demand p with e -> (_DEBUG_TYPES := prev; raise e))
+           (fun _ -> _DEBUG_TYPES := prev; return ())
+           (lazy(
+              let* _ = return () in
+              let _ = _DEBUG_TYPES := prev in
+              mzero)) )
 ;;
 
 new_builtin_predicate "trace" ( (~* "A") **> _tProp **> _tProp )
   (fun _ -> fun [ g ; cont ] ->
     let open RunCtx.Monad in
-    perform
 
-      g' <-- pattcanonRenormalize g;
-      cont <-- pattcanonRenormalize cont ;
+      let* g' = pattcanonRenormalize g in
+      let* cont = pattcanonRenormalize cont in
       let cont = match cont.term with `LamMany([], cont) -> cont | _ -> assert false in
 
-      idx <--
-        (match g'.term with
+      let* idx = (match g'.term with
             `LamMany(_, ({ classifier = { term = `TVar(_, tidx, _) } } as p))
               when tidx = _tiProp ->
               return (headPredicate p)
-          | _ -> mzero) ;
+          | _ -> mzero)  in
 
-      oldval <-- inmonad (fun () -> isTraced_mutable idx) ;
-      inmonad ~statewrite:true (fun () -> setTracedIndex_mutable true idx) ;
+      let* oldval = inmonad (fun () -> isTraced_mutable idx) in
+      let* _ =
+        inmonad ~statewrite:true (fun () -> setTracedIndex_mutable true idx)
+      in
 
-      ifte (try perform
-                  r <-- demand cont ;
-                  return (`Left r)
-            with e -> return (`Right e))
-           (fun res -> perform
-             inmonad ~statewrite:true (fun () -> setTracedIndex_mutable oldval idx) ;
-             return (reflectexn res))
-           (lazy(perform
-                   inmonad ~statewrite:true (fun () -> setTracedIndex_mutable oldval idx) ;
-                   mzero)))
+      ifte
+        (try
+           let* r = demand cont in
+           return (`Left r)
+         with e -> return (`Right e))
+        (fun res ->
+          let* _ =
+            inmonad ~statewrite:true (fun () -> setTracedIndex_mutable oldval idx)
+          in
+          return (reflectexn res))
+        (lazy(
+             let* _ = inmonad ~statewrite:true (fun () -> setTracedIndex_mutable oldval idx)
+             in
+             mzero)))
 ;;
 
 
@@ -646,20 +634,20 @@ let _PofLoc ?(loc = None) s : pattcanon = pattcanonLoc s ~loc:loc ;;
 
 new_builtin_predicate "locget" ( ~* "A" **> _tLoc **> _tProp)
   (let open RunCtx.Monad in
-   fun _ -> fun [ which ; res ] -> perform
-      which <-- pattcanonRenormalize which ;
-      which <-- chasePattcanon [] which ;
+   fun _ -> fun [ which ; res ] ->
+      let* which = pattcanonRenormalize which in
+      let* which = chasePattcanon [] which in
       let loc = match which.term with `LamMany([], tm) -> tm.loc | _ -> which.loc in
       pattcanonUnifyFull res (_PofLoc loc))
 ;;
 
 new_builtin_predicate "locset" ( ~* "A" **> _tLoc **> ~* "A" **> _tProp)
   (let open RunCtx.Monad in
-   fun _ -> fun [ which ; loc ; res ] -> perform
-      which <-- pattcanonRenormalize which ;
-      which <-- chasePattcanon [] which ;
-      loc   <-- chasePattcanon [] loc ;
-      loc   <-- _PtoLoc loc ;
+   fun _ -> fun [ which ; loc ; res ] ->
+      let* which = pattcanonRenormalize which in
+      let* which = chasePattcanon [] which in
+      let* loc = chasePattcanon [] loc in
+      let* loc = _PtoLoc loc in
       let which' =
         match which.term with
           `LamMany(lamsinfo, body) -> { which with term = `LamMany(lamsinfo, { body with loc = loc }) ; loc = loc }

@@ -200,8 +200,7 @@ module RunCtx =
 
       let interleave (type a) =
         let rec interleave (e1 : a m) (e2 : (a m) Lazy.t) : a m =
-        perform
-          look1 <-- msplit e1 ;
+          let* look1 = msplit e1 in
           match look1 with
               None -> Lazy.force e2
             | Some (top1, rest1) -> (return top1) //
@@ -212,8 +211,7 @@ module RunCtx =
 
       let bfbind (type a) (type b) =
         let rec bfbind (x : a m) (f : a -> b m) : b m =
-        perform
-          look1 <-- msplit x ;
+          let* look1 = msplit x in
           match look1 with
               None -> mzero
             | Some (top1, rest1) -> interleave (f top1) (lazy(bfbind (Lazy.force rest1) f))
@@ -224,16 +222,14 @@ module RunCtx =
       let fairsum choices = List.fold_left interleave mzero choices ;;
 
       let ifte (type a) (type b) (cond : a m) (thn : a -> b m) (els : b m Lazy.t) : b m =
-        perform
-          look1 <-- msplit cond ;
+          let* look1 = msplit cond in
           match look1 with
               None -> Lazy.force els
             | Some (top1, rest1) -> (thn top1) // (lazy(bind (Lazy.force rest1) thn))
       ;;
 
       let once (type a) (e : a m) : a m =
-        perform
-          look1 <-- msplit e ;
+          let* look1 = msplit e in
           match look1 with
               None -> mzero
             | Some (top1, _) -> return top1
@@ -241,8 +237,8 @@ module RunCtx =
 
       let bindlist (type a) (l : (a m) list) : (a list) m =
         List.fold_left (fun mList mElm ->
-                          perform list <-- mList ;
-                                  elm  <-- mElm  ;
+                                  let* list = mList in
+                                  let* elm = mElm in
                                   return (list ++ [elm])) (return []) l ;;
 
       let mapM     (type a) (type b) (f : a -> b m) (l : a list) : (b list) m =
@@ -257,7 +253,7 @@ module RunCtx =
 
       let foldM    (type a) (type b) (f : a -> b -> a m) (s : a) (l : b list) : a m =
         List.fold_left (fun s e ->
-                        perform s' <-- s ;
+                                let* s' = s in
                                 f s' e) (return s) l ;;
 
       let benchM (type a) (s : string) (e : a m) : a m =
@@ -301,9 +297,9 @@ module RunCtx =
 
       let intermlang (type a) (e : unit -> a) : a m =
         lift (let open BaseMonad in
-              perform state <-- getstate ;
+                      let* state = getstate in
                       let (res, termstate') = runterm (fun _ -> typing_handler e) state.rstermstate in
-                      setstate { state with rstermstate = termstate' } ;
+                      let* _ = setstate { state with rstermstate = termstate' } in
                       return res)
       ;;
 
@@ -393,15 +389,14 @@ let tempenv = ref (empty_run_env ()) ;;
 
 let inmonad ?(statewrite = false) e =
   let open RunCtx.Monad in
-  perform
-    ctx <-- getctx ;
+    let* ctx = getctx in
     let res = (tempstate := ctx.state ;
                tempenv   := ctx.env ;
                e ())
     in
     if statewrite
-    then (perform setstate !tempstate ;
-                  return res)
+    then (let* _ = setstate !tempstate in
+          return res)
     else (return res)
 ;;
 
@@ -413,9 +408,8 @@ let intermlang e =
 
 let logM s e =
   let open RunCtx.Monad in
-  perform
-    state <-- getstate ;
-    \ tempstate := state ;
+    let* state = getstate in
+    let _ = tempstate := state  in
     logM s e
 ;;
 
@@ -2209,8 +2203,7 @@ let chasedPattUnify_mutable bound p1 p2 =
 
 let chasedPattUnify bound p1 p2 =
   let open RunCtx.Monad in
-  perform
-    res <-- inmonad ~statewrite:true (fun _ -> try Some (chasedPattUnify_mutable bound p1 p2) with PattUnifyError _ -> None) ;
+    let* res = inmonad ~statewrite:true (fun _ -> try Some (chasedPattUnify_mutable bound p1 p2) with PattUnifyError _ -> None) in
     match res with
     | Some cs -> return cs
     | None -> mzero
@@ -2422,8 +2415,7 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
 
 let pattUnify ?(bound = []) (p1 : pattneut) (p2 : pattneut) : (constraintT list) RunCtx.Monad.m =
   let open RunCtx.Monad in
-  perform
-    res <-- inmonad ~statewrite:true (fun _ -> try Some (pattUnify_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) ;
+    let* res = inmonad ~statewrite:true (fun _ -> try Some (pattUnify_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) in
     match res with
       | Some res -> return res
       | None -> mzero
@@ -2431,8 +2423,7 @@ let pattUnify ?(bound = []) (p1 : pattneut) (p2 : pattneut) : (constraintT list)
 
 let pattUnifyCanon ?(bound = []) (p1 : pattcanon) (p2 : pattcanon) : (constraintT list) RunCtx.Monad.m =
   let open RunCtx.Monad in
-  perform
-    res <-- inmonad ~statewrite:true (fun _ -> try Some (pattUnifyCanon_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) ;
+    let* res = inmonad ~statewrite:true (fun _ -> try Some (pattUnifyCanon_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) in
     match res with
       | Some res -> return res
       | None -> mzero
@@ -2492,8 +2483,7 @@ let pattcanonUnifyFull_mutable ?(bound = []) p1 p2 =
 
 let pattUnifyFull ?(bound = []) p1 p2 =
   let open RunCtx.Monad in
-  perform
-    res <-- inmonad ~statewrite:true (fun _ -> try Some (pattUnifyFull_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) ;
+    let* res = inmonad ~statewrite:true (fun _ -> try Some (pattUnifyFull_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) in
     match res with
       | Some res -> return res
       | None -> mzero
@@ -2501,8 +2491,7 @@ let pattUnifyFull ?(bound = []) p1 p2 =
 
 let pattcanonUnifyFull ?(bound = []) p1 p2 =
   let open RunCtx.Monad in
-  perform
-    res <-- inmonad ~statewrite:true (fun _ -> try Some (pattcanonUnifyFull_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) ;
+    let* res = inmonad ~statewrite:true (fun _ -> try Some (pattcanonUnifyFull_mutable ~bound:bound p1 p2) with PattUnifyError _ -> None) in
     match res with
       | Some res -> return res
       | None -> mzero
@@ -2835,8 +2824,7 @@ let convertAndAllocateExpr_mutable (e: expr): pattcanon =
 
 let allocateFvar s t =
   let open RunCtx.Monad in
-  perform
-      env <-- getenv ;
+      let* env = getenv in
       let env' = { env with renvars = env.renvars ++ [s,t] } in
       return env'
 ;;
@@ -2844,9 +2832,8 @@ let allocateFvar s t =
 
 let findConstructors pred =
   let open RunCtx.Monad in
-  perform
-    state <-- getstate ;
-    env   <-- getenv   ;
+    let* state = getstate in
+    let* env = getenv in
     let normal = try IMap.find pred state.rsconstr_for_pred with Not_found -> [] in
     let temp   = try IMap.find pred env.retemp_constr_for_pred with Not_found -> [] in
     return (temp ++ normal)
@@ -2856,8 +2843,7 @@ let addTempConstructor idx p =
 
   let open RunCtx.Monad in
   let newconstr = { patt = p ; propmetas = 0 ; proptmetas = 0 ; propnameunifs = [] ; prophasrunmetas = true } in
-  perform
-    env <-- getenv ;
+    let* env = getenv in
     return { env with retemp_constr_for_pred =
                          IMap.modify_def [] idx (fun l -> newconstr :: l)
                          env.retemp_constr_for_pred }
@@ -2866,8 +2852,7 @@ let addTempConstructor idx p =
 let resetTempConstructors idx =
 
   let open RunCtx.Monad in
-  perform
-    env <-- getenv ;
+    let* env = getenv in
     return { env with retemp_constr_for_pred = IMap.modify_def [] idx (fun _ -> [])
                                                env.retemp_constr_for_pred }
 ;;
@@ -2879,9 +2864,8 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
 
   let debugEnter pred =
     if !_DEBUG then
-      perform
           let _ = if !_DEBUG then Printf.printf "*** %a\n%!" Pattneut.print newgoal in
-          chased <-- chasePattneut ~deep:true [] newgoal ;
+          let* chased = chasePattneut ~deep:true [] newgoal in
           let _ = Printf.printf " *= %a\n%!" Pattneut.print chased in
           return ()
     else
@@ -2890,9 +2874,9 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
   let debugFailAppend initstate pred x =
     if !_DEBUG then
       List.append x
-        [lazy(perform
-            _ <-- setstate initstate ;
-            chased <-- chasePattneut ~deep:true [] newgoal ;
+        [lazy(
+            let* _ = setstate initstate in
+            let* chased = chasePattneut ~deep:true [] newgoal in
             let _ = Printf.printf " !! %a FAILURE\n%!" Pattneut.print chased in
             mzero)]
     else
@@ -2912,10 +2896,10 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
   in
   let debugTraceExit indebug goal f =
     if indebug then
-      (perform
-        res <-- ifte f (fun x -> return (Some x)) (lazy(return None)) ;
+      (
+        let* res = ifte f (fun x -> return (Some x)) (lazy(return None)) in
         let highlighted = highlightMetas goal in
-        chased <-- chasePattneut ~deep:true [] highlighted ;
+        let* chased = chasePattneut ~deep:true [] highlighted in
         match res with
             Some x -> Printf.printf "Exit %a\n%!" Pattneut.print chased ; return x
           | None -> Printf.printf "Failed %a\n%!" Pattneut.print chased ; mzero)
@@ -2929,8 +2913,7 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
   let eachConstructor initstate constructor = lazy(
     let indebug = ref false in
     let trace = ref "" in
-    perform
-      (result, ccond, cpremise, cg') <-- inmonad ~statewrite:true (fun _ -> try
+    let* (result, ccond, cpremise, cg') = inmonad ~statewrite:true (fun _ -> try
 
         tempstate := initstate ;
 
@@ -2952,30 +2935,32 @@ let rec _demandNormal (newgoal : pattneut) : unit RunCtx.Monad.m =
 
         true, ccond, Some cpremise, Some cg'
 
-        with PattUnifyError _ -> false, None, None, None) ;
-
-      moneOrMzero result ;
-      (match ccond with Some ccond -> demand ccond | None -> return ()) ;
-      \ Printf.printf "%s" !trace ;
+        with PattUnifyError _ -> false, None, None, None)
+    in
+    let* _ = moneOrMzero result in
+    let* _ =
+      (match ccond with Some ccond -> demand ccond | None -> return ())
+    in
+    let _ = Printf.printf "%s" !trace  in
 
       debugTraceExit !indebug (Option.get cg')
         (demand (Option.get cpremise)))
 
   in
 
-  perform
     let pred     =   headPredicate newgoal in
-    _            <-- debugEnter pred ;
-    constructors <-- findConstructors pred ;
-    initstate    <-- getbacktrackstate ;
-    _            <-- constructors |> List.map (eachConstructor initstate)
-                     |> debugFailAppend initstate pred
-                     |> msum ;
-
-    opengoals    <-- getOpenGoals () ;
-    _            <-- mapM (fun (p, env) -> perform
-                            \ if !_DEBUG_DEMAND then Printf.printf "Deferred goal:\n" ;
-                            inenv env (demand p)) opengoals ;
+    let* _ = debugEnter pred in
+    let* constructors = findConstructors pred in
+    let* initstate = getbacktrackstate in
+    let* _ = constructors |> List.map (eachConstructor initstate)
+                |> debugFailAppend initstate pred
+                |> msum
+    in
+    let* opengoals = getOpenGoals () in
+    let* _ = mapM (fun (p, env) ->
+                 let _ = if !_DEBUG_DEMAND then Printf.printf "Deferred goal:\n"  in
+                 inenv env (demand p)) opengoals
+    in
 
     return ()
 
@@ -2984,17 +2969,14 @@ and ensureStateRestored p =
   (* some builtin command doesn't backtrack properly --
      couldn't find it so this is a temporary remedy *)
   let open RunCtx.Monad in
-  perform
-    state <-- getbacktrackstate ;
-    ifte p return (lazy(perform
-                          setstate state ;
+    let* state = getbacktrackstate in
+    ifte p return (lazy(let* _ = setstate state in
                           mzero))
 
 and _demand (premise : pattneut) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
-  perform
-    premise <-- chasePattneut [] premise ;
+    let* premise = chasePattneut [] premise in
     let _ = headPredicate premise in
     let hd, args = match premise.term with `AppMany(hd, args, _) -> hd, args | _ -> assert false in
     let idx = match hd.term with `Var(_, (`Free, idx)) -> idx | _ -> assert false in
@@ -3013,11 +2995,9 @@ and demandNormal p =
 
 and constructorApplies initstate goal constructor =
   let open RunCtx.Monad in
-  perform
-    state <-- getbacktrackstate;
-    res <-- ifte
-      (perform
-         (result, ccond) <-- inmonad ~statewrite:true (fun _ -> try
+    let* state = getbacktrackstate in
+    let* res = ifte
+      (let* (result, ccond) = inmonad ~statewrite:true (fun _ -> try
               tempstate := initstate ;
 
               (try
@@ -3033,23 +3013,23 @@ and constructorApplies initstate goal constructor =
 
               true, ccond
 
-              with PattUnifyError _ -> false, None) ;
-
-         moneOrMzero result ;
-         (match ccond with Some ccond -> demand ccond | None -> return ()))
+              with PattUnifyError _ -> false, None)
+       in
+       let* _ = moneOrMzero result in
+       (match ccond with Some ccond -> demand ccond | None -> return ()))
       (fun _ -> return true)
-      (lazy(return false));
-    setstate state;
+      (lazy(return false))
+    in
+    let* _ = setstate state in
     return res
 ;;
 
 
 let defineClause (e : exprU) : unit RunCtx.Monad.m =
   let open RunCtx.Monad in
-  perform
-      (idx, clause) <-- intermlang (fun _ -> checkClause e) ;
-      state         <-- getstate ;
-      _             <-- setstate { state with rsconstr_for_pred = IMap.modify_def [] idx (fun l -> l++[clause]) state.rsconstr_for_pred } ;
+      let* (idx, clause) = intermlang (fun _ -> checkClause e) in
+      let* state = getstate in
+      let* _ = setstate { state with rsconstr_for_pred = IMap.modify_def [] idx (fun l -> l++[clause]) state.rsconstr_for_pred } in
       return ()
 ;;
 
@@ -3071,7 +3051,7 @@ module BuiltinProps = struct
 
   (* success *)
   let _eiSuccess = new_builtin_predicate "success" (_tProp)
-    (fun _ -> function [ ] -> begin perform
+    (fun _ -> function [ ] -> begin
 
         return ()
 
@@ -3080,7 +3060,7 @@ module BuiltinProps = struct
 
   (* failure *)
   let _eiFailure = new_builtin_predicate "failure" (_tProp)
-    (fun _ -> function [ ] -> begin perform
+    (fun _ -> function [ ] -> begin
 
         mzero
 
@@ -3090,10 +3070,10 @@ module BuiltinProps = struct
   (* p1, p2 *)
   let _eiAnd = new_builtin_predicate "and" (_tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
-                         { term = `LamMany([], p2) } ] -> begin perform
+                         { term = `LamMany([], p2) } ] -> begin
 
-        _ <-- demand p1 ;
-        _ <-- demand p2 ;
+        let* _ = demand p1 in
+        let* _ = demand p2 in
         return ()
 
     end | _ -> assert false)
@@ -3102,11 +3082,11 @@ module BuiltinProps = struct
   (* p1; p2 *)
   let _eiOr = new_builtin_predicate "or" (_tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
-                         { term = `LamMany([], p2) } ] -> begin perform
+                         { term = `LamMany([], p2) } ] -> begin
 
-        state <-- getbacktrackstate ;
-        (demand p1) // (lazy(perform
-                          _ <-- setstate state;
+        let* state = getbacktrackstate in
+        (demand p1) // (lazy(
+                          let* _ = setstate state in
                           demand p2))
 
     end | _ -> assert false)
@@ -3114,16 +3094,15 @@ module BuiltinProps = struct
 
   (* (x:t -> p) *)
   let _eiNewvar = new_builtin_predicate "newvar" (( ~* "A" **> _tProp) **> _tProp)
-    (fun _ -> function [ p ] -> begin perform
+    (fun _ -> function [ p ] -> begin
 
-        p     <-- pattcanonRenormalize p ;
-        p'    <-- chasePattcanon [] p ;
+        let* p = pattcanonRenormalize p in
+        let* p' = chasePattcanon [] p in
         (match p'.term with
           `LamMany( [ { term = name, typ } ], p'') ->
-            perform
-              env  <-- getenv;
-              env' <-- allocateFvar name typ;
-              _    <-- intermlang (fun _ -> kindcheck_type typ) ;
+              let* env = getenv in
+              let* env' = allocateFvar name typ in
+              let* _ = intermlang (fun _ -> kindcheck_type typ) in
               let p'' = freshenPatt (List.length env.renvars) p'' in
               inenv env' (demand p'')
         | _ -> assert false)
@@ -3133,15 +3112,14 @@ module BuiltinProps = struct
 
   (* [x:A]P *)
   let _eiNewmeta = new_builtin_predicate "newmeta" (( ~* "A" **> _tProp) **> _tProp)
-    (fun _ -> function [ p ] -> begin perform
+    (fun _ -> function [ p ] -> begin
 
-        p     <-- pattcanonRenormalize p ;
-        p'    <-- chasePattcanon [] p ;
+        let* p = pattcanonRenormalize p in
+        let* p' = chasePattcanon [] p in
         (match p'.term with
           `LamMany( [ { term = name, typ } ], p'') ->
-            perform
-              newvar <-- addRunMeta None ;
-              state  <-- getstate ;
+              let* newvar = addRunMeta None in
+              let* state = getstate in
               let meta = { term = `Meta("_"^(string_of_int newvar), newvar, `Subst([], Some (IMap.empty, IMap.empty), [], []), typ ) ; classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } in
               let subst' = [ { term = `LamMany( [], meta ); classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } ] in
               let p'' = pattneutSubstMany subst' p'' in
@@ -3154,15 +3132,14 @@ module BuiltinProps = struct
 
   (* [x:A]P *)
   let _eiNewFmeta = new_builtin_predicate "newfmeta" (( ~* "A" **> _tProp) **> _tProp)
-    (fun _ -> function [ p ] -> begin perform
+    (fun _ -> function [ p ] -> begin
 
-        p  <-- pattcanonRenormalize p ;
-        p' <-- chasePattcanon [] p ;
+        let* p = pattcanonRenormalize p in
+        let* p' = chasePattcanon [] p in
         (match p'.term with
           `LamMany( [ { term = name, typ } ], p'') ->
-            perform
-              newvar <-- addRunMeta ~mode:`Free None ;
-              state  <-- getstate ;
+              let* newvar = addRunMeta ~mode:`Free None in
+              let* state = getstate in
               let meta = { term = `Meta("_"^(string_of_int newvar), newvar, `Subst([], Some (IMap.empty, IMap.empty), [], []), typ) ; classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } in
               let subst' = [ { term = `LamMany( [], meta ); classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } ] in
               let p'' = pattneutSubstMany subst' p'' in
@@ -3175,15 +3152,14 @@ module BuiltinProps = struct
 
   (* [x:A]P *)
   let _eiNewNmeta = new_builtin_predicate "newnmeta" (( ~* "A" **> _tProp) **> _tProp)
-    (fun _ -> function [ p ] -> begin perform
+    (fun _ -> function [ p ] -> begin
 
-        p     <-- pattcanonRenormalize p ;
-        p'    <-- chasePattcanon [] p ;
+        let* p = pattcanonRenormalize p in
+        let* p' = chasePattcanon [] p in
         (match p'.term with
           `LamMany( [ { term = name, typ } ], p'') ->
-            perform
-              newvar <-- addRunMeta ~mode:`New None ;
-              state  <-- getstate ;
+              let* newvar = addRunMeta ~mode:`New None in
+              let* state = getstate in
               let meta = { term = `Meta("_"^(string_of_int newvar), newvar, `Subst([], Some (IMap.empty, IMap.empty), [], []), typ) ; classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } in
               let subst' = [ { term = `LamMany( [], meta ); classifier = typ ; loc = p'.loc ; extra = PattExtras.empty () } ] in
               let p'' = pattneutSubstMany subst' p'' in
@@ -3196,13 +3172,13 @@ module BuiltinProps = struct
 
   (* (c -> p) *)
   let _eiAssume = new_builtin_predicate "assume"  (_tClause **> _tProp **> _tProp)
-    (fun _ -> function [ c; { term = `LamMany([], p) } ] -> begin perform
+    (fun _ -> function [ c; { term = `LamMany([], p) } ] -> begin
 
-         c              <-- chasePattcanon [] c ;
+         let* c = chasePattcanon [] c in
          let c = match c.term with `LamMany([], body) -> body | _ -> assert false in
-         (idx, gl, a,b,c')  <-- inmonad ~statewrite:true (fun _ -> getInfoFromUnchasedClause_mutable c) ;
-         _                  <-- intermlang (fun _ -> checkClauseNotBuiltin c' idx) ;
-         env'               <-- addTempConstructor idx c' ;
+         let* (idx, gl, a,b,c') = inmonad ~statewrite:true (fun _ -> getInfoFromUnchasedClause_mutable c) in
+         let* _ = intermlang (fun _ -> checkClauseNotBuiltin c' idx) in
+         let* env' = addTempConstructor idx c' in
          inenv env' (demand p)
 
     end | _ -> assert false)
@@ -3212,13 +3188,13 @@ module BuiltinProps = struct
   let _eiIFTE = new_builtin_predicate "ifte" (_tProp **> _tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
                          { term = `LamMany([], p2) } ;
-                         { term = `LamMany([], p3) } ] -> begin perform
+                         { term = `LamMany([], p3) } ] -> begin
 
-          state    <-- getbacktrackstate ;
+          let* state = getbacktrackstate in
           ifte (demand p1)
                (fun _ -> demand p2)
-               (lazy(perform
-                  _ <-- setstate state;
+               (lazy(
+                  let* _ = setstate state in
                     demand p3))
 
     end | _ -> assert false)
@@ -3226,19 +3202,19 @@ module BuiltinProps = struct
 
   let _eiWithall = new_builtin_predicate "withall" (_tProp **> _tProp **> _tProp)
     (fun _ -> function [ { term = `LamMany([], p1) } ;
-                         { term = `LamMany([], p2) } ] -> begin perform
-          states <-- getall (perform
-                               _ <-- demand p1 ;
-                               state <-- getbacktrackstate ;
-                               return state);
-          msum (List.map (fun state -> lazy(perform
-                                              _ <-- setstate state;
-                                              demand p2)) states)
+                         { term = `LamMany([], p2) } ] -> begin
+          let* states = getall (
+                               let* _ = demand p1 in
+                               let* state = getbacktrackstate in
+                               return state)
+          in
+          msum (List.map (fun state -> lazy(let* _ = setstate state in
+                                            demand p2)) states)
     end | _ -> assert false)
   ;;
 
   let _eiOnce = new_builtin_predicate "once" (_tProp **> _tProp)
-    (fun _ -> function [ { term = `LamMany([], p) } ] -> begin perform
+    (fun _ -> function [ { term = `LamMany([], p) } ] -> begin
 
         once(demand p)
 
@@ -3246,14 +3222,13 @@ module BuiltinProps = struct
   ;;
 
   let _eiGuard = new_builtin_predicate "guard" ( ~* "A" **> _tProp **> _tProp )
-    (fun _ -> function [ g ; { term = `LamMany([], p) } ] -> begin perform
+    (fun _ -> function [ g ; { term = `LamMany([], p) } ] -> begin
 
-        g <-- chasePattcanon [] g ;
+        let* g = chasePattcanon [] g in
         match g.term with
 
           `LamMany(_, { term = `Meta(_,idx,_,_) }) ->
-            perform
-              env <-- getenv ;
+              let* env = getenv in
               addConstraint idx (`Demand(idx,None,p,env))
 
         | _ -> demand p
@@ -3262,19 +3237,23 @@ module BuiltinProps = struct
   ;;
 
   let _eiRemovableGuard = new_builtin_predicate "removableguard" ( _tUnit **> ~* "A" **> _tProp **> _tProp )
-    (fun _ -> function [ r ; g ; { term = `LamMany([], p) } ] -> begin perform
+    (fun _ -> function [ r ; g ; { term = `LamMany([], p) } ] -> begin
 
-        g <-- chasePattcanon [] g ;
-        r <-- chasePattcanon [] r ;
+        let* g = chasePattcanon [] g in
+        let* r = chasePattcanon [] r in
 
         match r.term, g.term with
 
           `LamMany(_, { term = `Meta(_,removeidx,_,_) }),
           `LamMany(_, { term = `Meta(_,guardidx,_,_) }) ->
-            perform
-              env <-- getenv ;
-              addConstraint guardidx (`Demand(guardidx,Some removeidx,p,env)) ;
-              addConstraint removeidx (`RemoveDemand(guardidx,removeidx))
+              let* env = getenv in
+              let* _ =
+                addConstraint guardidx (`Demand(guardidx,Some removeidx,p,env))
+              in
+              let* _ =
+                addConstraint removeidx (`RemoveDemand(guardidx,removeidx))
+              in
+              return ()
 
         | `LamMany(_, { term = `Meta(_,removeidx,_,_) }), _ -> demand p
 
@@ -3291,24 +3270,22 @@ end;;
 
 let getMetaBoundNames (i : int) : name list RunCtx.Monad.m =
   let open RunCtx.Monad in
-  perform
-    state  <-- getstate ;
+    let* state = getstate in
     let names = try IMap.find i state.rsmeta_boundnames with _ -> [] in
-    names' <-- mapM chaseName names ;
+    let* names' = mapM chaseName names in
     return names'
 ;;
 
 let getMeta s t (i : int) : pattcanon RunCtx.Monad.m =
   let interm = intermlang in
   let open RunCtx.Monad in
-  perform
-     p <-- getMetaParent i ;
+     let* p = getMetaParent i in
      match p with
-         Some (p, _) -> perform
-           _ <-- chasePattneut ~deep:true [] p ;
-           p <-- chasePattneut ~deep:true [] p ;
-           boundnames <-- getMetaBoundNames i ;
-           res <-- inmonad (fun _ -> interm (fun _ -> reconstructLambdas t boundnames p)) ;
+         Some (p, _) ->
+           let* _ = chasePattneut ~deep:true [] p in
+           let* p = chasePattneut ~deep:true [] p in
+           let* boundnames = getMetaBoundNames i in
+           let* res = inmonad (fun _ -> interm (fun _ -> reconstructLambdas t boundnames p)) in
            return res
        | None   ->
          (let meta = { term = `Meta(s,i,`Subst([],None,[],[]),t) ; classifier = t ; loc = None ; extra = PattExtras.empty () } in
@@ -3322,9 +3299,9 @@ let getOpenConstraints () : pattcanon list RunCtx.Monad.m =
 
   let fixConstraint (c : constraintT) : pattcanon option RunCtx.Monad.m =
     match c with
-      `Demand(_,_,c,_) -> perform
-                         c <-- pattneutRenormalize c ;
-                         c' <-- chasePattcanon [] c ;
+      `Demand(_,_,c,_) ->
+                         let* c = pattneutRenormalize c in
+                         let* c' = chasePattcanon [] c in
                          return (Some c')
     | `Unif(_,n1,n2) -> return (Some
                         { n1 with term = `LamMany([],
@@ -3339,11 +3316,10 @@ let getOpenConstraints () : pattcanon list RunCtx.Monad.m =
     | `RemoveDemand(_,_) -> return None
   in
 
-  perform
 
-    is <-- inmonad ~statewrite:false (fun _ -> (!tempstate).rsmetaswithconstraints) ;
-    c  <-- inmonad ~statewrite:false (fun _ -> List.map getConstraints_mutable (ISet.elements is)) ;
-    cs <-- mapM fixConstraint (List.flatten c) ;
+    let* is = inmonad ~statewrite:false (fun _ -> (!tempstate).rsmetaswithconstraints) in
+    let* c = inmonad ~statewrite:false (fun _ -> List.map getConstraints_mutable (ISet.elements is)) in
+    let* cs = mapM fixConstraint (List.flatten c) in
     return (List.filter_map id cs)
 
 
@@ -3358,9 +3334,8 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
 
   (* TODO: meta handling is weird here, figure out proper way to do it *)
   let open RunCtx.Monad in
-  perform
-    goal' <-- intermlang (fun _ -> checkQuery goal) ;
-    newmetas <-- intermlang (fun _ ->
+    let* goal' = intermlang (fun _ -> checkQuery goal) in
+    let* newmetas = intermlang (fun _ ->
                                 let state = !termstate in
                                 let newmetas =
                                   increasing state.metas |>
@@ -3374,39 +3349,41 @@ let queryGoal ?(print = false) (goal : exprU) : (string * pattcanon) list RunCtx
                                     newmetas
                                 in
                                 clearMetasInState () ;
-                                newmetas) ;
-    state <-- getstate ;
-    (goal'', nu) <-- inmonad ~statewrite:true (fun _ ->
+                                newmetas)
+    in
+    let* state = getstate in
+    let* (goal'', nu) = inmonad ~statewrite:true (fun _ ->
                                setRootQuery_mutable goal'.patt;
-                               allocateMetas_mutable goal') ;
+                               allocateMetas_mutable goal')
+    in
     let newmetas =
       List.map
         (fun (i, n, t) -> (i, n, shiftMetasTyp state.rstermstate.tmetas t))
         newmetas
     in
-    _ <-- mapM (uncurry nameUnify) nu ;
+    let* _ = mapM (uncurry nameUnify) nu in
     let _ =
       if print && not !is_interactive then
         Log.info_header goal.loc "Query result"
     in
 
-    _     <-- ifte
-                (perform
-                   _ <-- demand goal'';
-                   let _ = last_query_successful := Some true in
-                   return ())
+    let* _ = ifte
+                (let* _ = demand goal'' in
+                 let _ = last_query_successful := Some true in
+                 return ())
                 (fun _ -> return ())
-                (lazy(perform
-                         let _ = if print then Printf.printf "Impossible.\n\n" in
-                         let _ = last_query_successful := Some false in
-                         mzero)) ;
+                (lazy(let _ = if print then Printf.printf "Impossible.\n\n" in
+                      let _ = last_query_successful := Some false in
+                      mzero))
+    in
 
-    state <-- getstate ;
-    metas <-- mapM (fun (i, s, t) -> perform
-                                        p <-- getMeta s t i ;
-                                        return ((s, i), p)) newmetas ;
+    let* state = getstate in
+    let* metas = mapM (fun (i, s, t) ->
+                                        let* p = getMeta s t i in
+                                        return ((s, i), p)) newmetas
+    in
 
-    constraints <-- if print then getOpenConstraints () else return [] ;
+    let* constraints = if print then getOpenConstraints () else return [] in
 
     let dotOrColon = if List.is_empty metas then "." else ":" in
     let _ = if print then
@@ -3501,25 +3478,25 @@ let globalprolog_do ?(failure = lazy(raise PrologError)) e =
 
 let global_new_clause clause =
   let open RunCtx.Monad in
-  globalprolog_do (perform
-                     clause <-- intermlang clause ;
+  globalprolog_do (
+                     let* clause = intermlang clause in
                      defineClause clause)
 ;;
 
 let global_query goal =
   let open RunCtx.Monad in
   globalprolog_do
-    (perform
-       goal <-- intermlang goal ;
+    (
+       let* goal = intermlang goal in
        ifte (queryGoal ~print:true goal) (fun _ -> return ()) (lazy(return ())))
 ;;
 
 let global_trace b goal =
   let open RunCtx.Monad in
-  globalprolog_do (perform
-                     goal <-- intermlang goal ;
-                     goal <-- intermlang (fun _ -> typeof goal) ;
-                     idx  <-- (match goal.term with `Var(_, (`Free, idx)) -> return idx | _ -> mzero) ;
+  globalprolog_do (
+                     let* goal = intermlang goal in
+                     let* goal = intermlang (fun _ -> typeof goal) in
+                     let* idx = (match goal.term with `Var(_, (`Free, idx)) -> return idx | _ -> mzero) in
                      setTracedIndex b idx)
 ;;
 

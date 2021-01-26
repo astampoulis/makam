@@ -1936,8 +1936,7 @@ let incorporateName (n : name) (e : expr) : unit NameUnif.Monad.m =
   let open NameUnif.Monad in
   match e.term with
       `Var(n1, (`Bound, _)) | `Var((`Abstract(_) as n1), (`Free, _)) ->
-        perform
-          state <-- getstate ;
+          let* state = getstate in
           setstate ( (n1, n) :: state )
     | _ -> return ()
 ;;
@@ -1948,19 +1947,17 @@ let rec betashort (e : expr) : expr NameUnif.Monad.m =
   match e.term with
 
       `Lam( s, t, ebody ) ->
-        perform
-          ebody' <-- betashort ebody ;
+          let* ebody' = betashort ebody in
           return { e with term = `Lam( s, t, ebody' ) }
 
     | `App( efun, earg ) ->
 
-        (perform
-           efun <-- betashort efun ;
-           earg <-- betashort earg ;
+        (
+           let* efun = betashort efun in
+           let* earg = betashort earg in
            match efun.term with
             `Lam( s, t', ebody ) ->
-              perform
-                _ <-- incorporateName s earg ;
+                let* _ = incorporateName s earg in
                 let res = shift (-1) (subst (shift 1 earg) ebody) in
                 if is_val res then return res else betashort res
           | _ -> return { e with term = `App(efun, earg) })
@@ -2031,8 +2028,7 @@ let etalong e = Benchmark.cumulative "eta normalization" (lazy(etalong e));;
 let normalize e =
   let open NameUnif.Monad in
   inEmptyNameUnif begin
-      perform
-        e' <-- betashort e ;
+        let* e' = betashort e in
         return (etalong e')
   end
 ;;
