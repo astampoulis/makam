@@ -1,6 +1,6 @@
 {
   "name": "makam-webui",
-  "version": "0.7.38",
+  "version": "0.7.39",
   "description": "CodeMirror-based WebUI for Makam",
   "main": "makam-webui-bundle.js",
   "scripts": {
