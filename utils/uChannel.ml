@@ -27,10 +27,10 @@ let string_of_span span : string =
 let loc_compare loc1 loc2 =
   if loc1.description <> loc2.description then assert false
   else
-    Pervasives.compare loc1.offset loc2.offset
+    Stdlib.compare loc1.offset loc2.offset
     (*
-    (let res = Pervasives.compare loc1.lineno loc2.lineno in
-     if res = 0 then Pervasives.compare loc1.charno loc2.charno else res)
+    (let res = Stdlib.compare loc1.lineno loc2.lineno in
+     if res = 0 then Stdlib.compare loc1.charno loc2.charno else res)
     *)
 ;;
 
@@ -82,7 +82,7 @@ let from_filename ?(statehash_update = true) filename =
   let str   = IO.read_all input in
   let _     = IO.close_in input in
   let location = { description = "file " ^ filename ; lineno = 1 ; charno = 1; offset = 0 } in
-  { from_string ~initloc:location str with update_statehash = statehash_update }
+  { (from_string ~initloc:location str) with update_statehash = statehash_update }
 ;;
 
 let from_filename_buffered ?(buffersize = 1024) filename =

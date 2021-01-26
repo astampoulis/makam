@@ -231,7 +231,7 @@ module Const =
 
 module Typ =
   struct
-    let (print : 'a BatInnerIO.output -> typ -> unit) oc (typ : typ) =
+    let print oc (typ : typ) =
       let indexprint oc idx =
         if !_DEBUG then
         match idx with
@@ -1399,18 +1399,6 @@ let rec typecheck (e : exprU) : expr =
       { e with term = ebase.term }
 
     | `Unparsed(s) -> raise (NoGenericParsingYet)
-(*
-        perform
-          t <-- deepChaseType tRes ;
-          let parser_for_type t' s loc =
-            match t with `Unknown(_) -> failwith (Printf.sprintf "Cannot parse %s of unknown type at %s." s (UChannel.string_of_loc loc))
-            | _ -> try (get_expr_parser t) t' s loc with (Peg.IncompleteParse(_) as e) -> raise e | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc loc))
-          in
-          e <-- parser_for_type t s loc ;
-          env'' <-- setfocus e ;
-          _ <-- inenv env'' (typUnify e.classifier t) ;
-          typecheck e
-*)
 
   end
 
@@ -1617,19 +1605,6 @@ let mkUnparsed ?(loc = None) s () =
   let uA = newTMeta loc in
   { term = `Unparsed(s) ; classifier = uA ; loc = loc ; extra = ExprExtras.empty () }
 
-(*
-let mkBaseParsed ?(loc = None) s locstart =
-  let open Ctx.Monad in
-  perform
-    uA <-- newTMeta loc ;
-    e  <-- begin
-      try !default_expr_parser uA s locstart
-      with (Peg.IncompleteParse(_) as e) -> raise e
-           | _ -> failwith (Printf.sprintf "Parsing error at %s.\n" (UChannel.string_of_loc locstart))
-    end;
-    return e ;;
-*)
-
 let (%@) = mkApp;;
 let (~%) = mkVar;;
 let (~%%) = mkCapturingVar;;
@@ -1832,7 +1807,6 @@ let global_set_cache_directory dir =
 ;;
 
 let global_get_cache_directory dir =
-  let state = !globalstate in
   (!globalstate).cache_directory
 ;;
 
@@ -1962,8 +1936,7 @@ let incorporateName (n : name) (e : expr) : unit NameUnif.Monad.m =
   let open NameUnif.Monad in
   match e.term with
       `Var(n1, (`Bound, _)) | `Var((`Abstract(_) as n1), (`Free, _)) ->
-        perform
-          state <-- getstate ;
+          let* state = getstate in
           setstate ( (n1, n) :: state )
     | _ -> return ()
 ;;
@@ -1974,19 +1947,17 @@ let rec betashort (e : expr) : expr NameUnif.Monad.m =
   match e.term with
 
       `Lam( s, t, ebody ) ->
-        perform
-          ebody' <-- betashort ebody ;
+          let* ebody' = betashort ebody in
           return { e with term = `Lam( s, t, ebody' ) }
 
     | `App( efun, earg ) ->
 
-        (perform
-           efun <-- betashort efun ;
-           earg <-- betashort earg ;
+        (
+           let* efun = betashort efun in
+           let* earg = betashort earg in
            match efun.term with
             `Lam( s, t', ebody ) ->
-              perform
-                _ <-- incorporateName s earg ;
+                let* _ = incorporateName s earg in
                 let res = shift (-1) (subst (shift 1 earg) ebody) in
                 if is_val res then return res else betashort res
           | _ -> return { e with term = `App(efun, earg) })
@@ -2057,8 +2028,7 @@ let etalong e = Benchmark.cumulative "eta normalization" (lazy(etalong e));;
 let normalize e =
   let open NameUnif.Monad in
   inEmptyNameUnif begin
-      perform
-        e' <-- betashort e ;
+        let* e' = betashort e in
         return (etalong e')
   end
 ;;

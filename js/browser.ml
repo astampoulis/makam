@@ -25,9 +25,9 @@ builtin_enter_module "js" ;;
 
   new_builtin_predicate "eval" ( _tString **> _tString **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ script ; output ] -> begin perform
-         script <-- chasePattcanon [] script ;
-         script <-- _PtoString script ;
+     fun _ -> function [ script ; output ] -> begin
+         let* script = chasePattcanon [] script in
+         let* script = _PtoString script in
          pattcanonUnifyFull output (_PofString (jseval script) ~loc:output.loc)
     end | _ -> assert false)
   ;;
@@ -48,7 +48,7 @@ let _ =
       | _ -> res)
 ;;
 
-let (process_input : string -> unit) input =
+let process_input input =
 
   let old_debug = ref !Termlangcanon._DEBUG in
   let restore_debug () = Termlangcanon._DEBUG := !old_debug in
@@ -140,8 +140,8 @@ let main () =
 
 let js_process_input_batch s =
   let output = ref "" in
-  Sys_js.set_channel_flusher Pervasives.stdout (fun s -> output := (!output) ^ s) ;
-  Sys_js.set_channel_flusher Pervasives.stderr (fun s -> output := (!output) ^ s) ;
+  Sys_js.set_channel_flusher Stdlib.stdout (fun s -> output := (!output) ^ s) ;
+  Sys_js.set_channel_flusher Stdlib.stderr (fun s -> output := (!output) ^ s) ;
   process_input (Js.to_string s);
   Js.string !output
 ;;
@@ -151,7 +151,7 @@ let js_process_input_interactive s =
 ;;
 
 let define_as_worker () =
-  Sys_js.set_channel_flusher Pervasives.stdout (fun s ->
+  Sys_js.set_channel_flusher Stdlib.stdout (fun s ->
     Js.Unsafe.meth_call (Js.Unsafe.variable "self") "postMessage"
     [| Js.Unsafe.inject (Js.string s) |]);
   Js.Unsafe.meth_call (Js.Unsafe.variable "self") "addEventListener"

@@ -3,7 +3,7 @@ os: osx
 language: node_js
 node_js: 8
 env:
-  - OPAM_SWITCH=4.07.1
+  - OPAM_SWITCH=4.11.1
 
 install: true
 

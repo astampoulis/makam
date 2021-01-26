@@ -25,10 +25,9 @@ module Memotable =
 
     let find_in_memocell memocell offset =
       let open Option.Monad in
-      (perform
- 	 existingIdTbl <-- (match !memocell with MCLeft x -> Some x | MCRight _ -> None) ;
-         existingOffsetEntry <-- M.find_option existingIdTbl offset ;
-	 return existingOffsetEntry)
+      bind (match !memocell with MCLeft x -> Some x | MCRight _ -> None) (fun existingIdTbl ->
+      bind (M.find_option existingIdTbl offset) (fun existingOffsetEntry ->
+	 return existingOffsetEntry))
     ;;
 
     let add_in_memocell memocell offset what =
@@ -69,7 +68,7 @@ let compareLR (type a) (type b) (res1 : (a * UChannel.t) option) (res2 : (b * UC
     Some _, None -> 1
   | None, Some _ -> -1
   | None, None   -> 0
-  | Some (_, input1), Some (_, input2) -> Pervasives.compare (UChannel.offset input1) (UChannel.offset input2)
+  | Some (_, input1), Some (_, input2) -> Stdlib.compare (UChannel.offset input1) (UChannel.offset input2)
 ;;
     
 

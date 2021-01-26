@@ -64,8 +64,7 @@ module Make =
       include StateEnvMonad.Make(E) ;;
 
       let btdo redo undo =
-	perform
-	  state <-- getstate ;
+	  let* state = getstate in
 	  let bt  = E.getbt state in
 	  let bt', updatecode =
 	    if !(bt.btcheckpointed) then
@@ -79,21 +78,19 @@ module Make =
 	      bt, return ()
 	  in
 	  let _   = btdo bt' redo undo in
-	  _     <-- updatecode ;
+	  let* _ = updatecode in
 	  return ()
       ;;
 
       let getbacktrackstate =
-	perform
-	  state <-- getstate ;
+	  let* state = getstate in
 	  let bt = E.getbt state in
 	  let _  = bt.btcheckpointed := true in
 	  return state
       ;;
 
       let setstate state' =
-	perform
-	  state <-- getstate ;
+	  let* state = getstate in
 	  let bt  = E.getbt state in
 	  let bt' = E.getbt state' in
 	  let _   = if bt.btid != bt'.btid then Benchmark.cumulative "backtrack warping" (lazy(btwarp bt bt')) else () in
@@ -105,8 +102,7 @@ module Make =
       struct
 	include Ref ;;
 	let setM (type elm) (r : elm t) (w : elm) : unit m =
-	  perform
-	    x <-- return 42 ;
+	    let* x = return 42 in
 	    let p = !r in
 	    btdo (fun () -> r := w) (fun () -> r := p)
 	;;
@@ -126,11 +122,8 @@ module Make =
 	  else assert false
 	;;
 	let setM (type elm) (idx : int) (what : elm) (a : elm t) : unit m = 
-	  perform
-	    x <-- return 42 ;
-            _ <--
-	      begin
-		if DynArray.length a == idx then
+	    let* x = return 42 in
+            let* _ = (if DynArray.length a == idx then
 		  (DynArray.add a what;
 		   btdo (fun () -> DynArray.set a idx what) (fun () -> ()))
 		else if idx < DynArray.length a then
@@ -138,19 +131,15 @@ module Make =
 		   btdo (fun () -> DynArray.set a idx what)
 		        (fun () -> DynArray.set a idx p))
 		else
-		  (assert false)
-	      end;
+		  (assert false)) in
 	    return ()
 	;;
 	let modifyM (type elm) (idx : int) (f : elm -> elm) (a : elm t) : unit m =
-	  perform
-	    x <-- return 42 ;
-	    _ <-- begin
-	      let p = DynArray.get a idx in
+	    let* x = return 42 in
+	    let* _ = (let p = DynArray.get a idx in
 	      let p' = f p in
 	      btdo (fun () -> DynArray.set a idx p')
-		   (fun () -> DynArray.set a idx p)
-	    end ;
+		   (fun () -> DynArray.set a idx p))  in
 	    return ()
 	;;
 	let find (type elm) (idx : int) (a : elm t) : elm =
@@ -163,30 +152,22 @@ module Make =
 	include DictHash ;;
 	
 	let addM (type elm) (key : string) (v : elm) (a : elm t) : unit m =
-	  perform
-	    x <-- return 42 ;
-            _ <--
-	    begin
-	      let res = try Some(DictHash.find a key) with _ -> None in
+	    let* x = return 42 in
+            let* _ = (let res = try Some(DictHash.find a key) with _ -> None in
 	      match res with
 		Some p -> btdo (fun () -> DictHash.replace a key v)
 		               (fun () -> DictHash.replace a key p)
 	      | None   -> btdo (fun () -> DictHash.add a key v)
-	                       (fun () -> DictHash.remove a key)
-	    end ;
+	                       (fun () -> DictHash.remove a key))  in
 	    return ()
 	;;
 	
 	let modify_defM (type elm) (default : elm) (key : string) (f : elm -> elm) (a : elm t) : unit m =
-	  perform
-	    x <-- return 42 ;
-            _ <--
-	    begin
-	      let prev = try DictHash.find a key with _ -> (DictHash.add a key default; default) in
+	    let* x = return 42 in
+            let* _ = (let prev = try DictHash.find a key with _ -> (DictHash.add a key default; default) in
 	      let cur  = f prev in
 	      btdo (fun () -> DictHash.replace a key cur)
-	           (fun () -> DictHash.replace a key prev)
-	    end ;
+	           (fun () -> DictHash.replace a key prev))  in
 	    return ()
 	;;
 

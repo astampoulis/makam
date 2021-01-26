@@ -27,7 +27,7 @@ open Termlangext;;
 
 (* Parsing *)
 
-(* 
+(*
 
 This could be in termlangext, but separating it out so that
 we avoid a circular dependency between the grammar and termlangext.
@@ -35,15 +35,14 @@ we avoid a circular dependency between the grammar and termlangext.
 *)
 
 builtin_enter_module "refl";;
-  
+
 new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
   (fun _ -> fun [ str; e ] ->
     (let mut_intermlang = intermlang in
      let open RunCtx.Monad in
-     perform
-     str <-- pattcanonRenormalize str ;
-     pstr <-- chasePattcanon ~deep:true [] str ;
-     s <-- _PtoString pstr ;
+     let* str = pattcanonRenormalize str in
+     let* pstr = chasePattcanon ~deep:true [] str in
+     let* s = _PtoString pstr in
      let getExpr =
        try
          Some(Peg.parse_of_string (MakamGrammar.guard_nested_parser MakamGrammar.parse_lexpr) s)
@@ -52,14 +51,14 @@ new_builtin_predicate "fromstring" ( _tString **> ~* "A" **> _tProp )
      in
      match getExpr with
        None -> mzero
-     | Some getExpr -> perform
-         expr <-- intermlang getExpr.content ;
-         p <-- inmonad ~statewrite:true (fun _ ->
+     | Some getExpr ->
+         let* expr = intermlang getExpr.content in
+         let* p = inmonad ~statewrite:true (fun _ ->
            try
              let e = mut_intermlang (fun _ -> typecheck_and_normalize expr |> fst) in
              Some(e |> convertAndAllocateExpr_mutable)
            with _ -> None
-         );
+         ) in
          let _ = if (!_DEBUG) then Printf.printf "fromstring:: %s >> %a\n" s (Option.print Pattcanon.print) p in
          match p with Some p -> pattcanonUnifyFull e p | None -> mzero))
 ;;

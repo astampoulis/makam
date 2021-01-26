@@ -68,7 +68,7 @@ let cumulative s e =
   
 let cumulative_results () =
   let results = ConstStringHash.fold (fun fn_name fn_time cur -> (fn_name, fn_time) :: cur) cumulative_times [] in
-  let sorted = List.sort (fun (x1,y1) (x2,y2) -> -(Pervasives.compare y1 y2)) results in
+  let sorted = List.sort (fun (x1,y1) (x2,y2) -> -(Stdlib.compare y1 y2)) results in
   sorted
 ;;
 

@@ -104,13 +104,13 @@ available at:
 
 <http://opam.ocaml.org/doc/Install.html>
 
-We have been testing using the OCaml 4.07.1 configuration. Creating a
+We have been testing using the OCaml 4.11.1 configuration. Creating a
 local switch is the recommended way to keep the OCaml compiler
 configuration and dependencies separate from other OCaml projects you
 might have. To create a local switch, install all dependencies, and set
 up the environment variables you need, do:
 
-- `opam switch create ./ ocaml-base-compiler.4.07.1`
+- `opam switch create ./ ocaml-base-compiler.4.11.1`
 - `eval $(opam config env)`
 
 Makam also depends on Node.js, which is used for optimized parser

@@ -32,7 +32,7 @@ module Make =
     let printer_nodeset oc x = Printf.fprintf oc "%a" (NodeSet.print ~first:"[" ~sep:"," ~last:"]" printer_node) x ;;
     let printer_nodelist oc x = Printf.fprintf oc "%a" (List.print ~first:"[" ~sep:"," ~last:"]" printer_node) x ;;
 
-    let (reverse : dgraph -> dgraph) dg =
+    let reverse (dg: dgraph) =
     
       let edges'Empty = dg.nodes |> List.map (fun n -> n, NodeSet.empty) |> List.enum |> NodeMap.of_enum in
       let edges' =
@@ -47,7 +47,7 @@ module Make =
       in
       { nodes = dg.nodes; edges = edges' }
 
-    let (topo_sort : dgraph -> Node.t list) dg =
+    let topo_sort (dg: dgraph) =
 
       let processed = ref NodeSet.empty in
       let result = ref [] in
@@ -64,7 +64,7 @@ module Make =
       !result
 
 
-    let (cyclic_topo_sort : dgraph -> NodeSet.t list) dg =
+    let cyclic_topo_sort dg =
 
       let module NodeMap = 
 	  struct 
@@ -197,7 +197,7 @@ example code:
 
 module M = Graph.Make(struct
   type t = int * string
-  let compare (i1,_) (i2,_) = Pervasives.compare i1 i2
+  let compare (i1,_) (i2,_) = Stdlib.compare i1 i2
   let equal t1 t2 = compare t1 t2 == 0
   let hash (i,_) = Hashtbl.hash i
   let to_string (_,s) = s

@@ -48,9 +48,9 @@ builtin_enter_module "js" ;;
 
   new_builtin_predicate "eval" ( _tString **> _tString **> _tProp )
     (let open RunCtx.Monad in
-     fun _ -> function [ script ; output ] -> begin perform
-         script <-- chasePattcanon [] script ;
-         script <-- _PtoString script ;
+     fun _ -> function [ script ; output ] -> begin
+         let* script = chasePattcanon [] script in
+         let* script = _PtoString script in
          match jseval script with
            Some res -> pattcanonUnifyFull output (_PofString res ~loc:output.loc)
          | None -> mzero
