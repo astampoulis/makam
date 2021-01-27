@@ -67,9 +67,12 @@ provider:
             - Ref: S3CacheBucket
 
 plugins:
+  - serverless-offline
   - serverless-s3-remover
 
 custom:
+  serverless-offline:
+    host: 0.0.0.0
   remover:
     prompt: true
   cacheBucket: "makam-webservice-cache"

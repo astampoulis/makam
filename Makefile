@@ -116,6 +116,9 @@ webservice-test-deploy:
 webservice-prod-deploy:
 	bash -c "./scripts/webservice-deploy.sh prod"
 
+webservice-local:
+	bash -c "./scripts/webservice-deploy.sh local"
+
 # js_of_ocaml compilation
 
 OCAMLBUILD=ocamlbuild -use-ocamlfind -byte-plugin

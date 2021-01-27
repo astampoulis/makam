@@ -81,15 +81,19 @@ const _runAndPersist = input => {
 
   const readStateFile = _promisify(cb => fs.readFile(statePath, cb));
 
-  return Promise.all([
-    readStateFile.then(content => _saveToS3(stateFilename, content)),
-    _saveToS3(outputFilename, JSON.stringify(output))
-  ])
-    .then(_ => output)
-    .catch(_ => {
-      console.error(`could not persist state to s3`);
-      return output;
-    });
+  if (process.env.IS_OFFLINE == "true") {
+    return Promise.resolve(output);
+  } else {
+    return Promise.all([
+      readStateFile.then(content => _saveToS3(stateFilename, content)),
+      _saveToS3(outputFilename, JSON.stringify(output))
+    ])
+      .then(_ => output)
+      .catch(_ => {
+        console.error(`could not persist state to s3`);
+        return output;
+      });
+  }
 };
 
 const _cachedRun = input => {
@@ -101,12 +105,16 @@ const _cachedRun = input => {
   if (fs.existsSync(statePath) && fs.existsSync(outputPath)) {
     return Promise.resolve(JSON.parse(fs.readFileSync(outputPath, "utf8")));
   } else {
-    return Promise.all([
-      _loadFromS3(stateFilename, statePath),
-      _loadFromS3(outputFilename, outputPath)
-    ])
-      .then(() => JSON.parse(fs.readFileSync(outputPath, "utf8")))
-      .catch(e => _runAndPersist(input));
+    if (process.env.IS_OFFLINE == "true") {
+      return Promise.resolve(_runAndPersist(input));
+    } else {
+      return Promise.all([
+        _loadFromS3(stateFilename, statePath),
+        _loadFromS3(outputFilename, outputPath)
+      ])
+        .then(() => JSON.parse(fs.readFileSync(outputPath, "utf8")))
+        .catch(e => _runAndPersist(input));
+    }
   }
 };
 
