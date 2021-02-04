@@ -1,15 +1,20 @@
 (* An experimental feature that gives the option of transforming
-   top-level predicates before issuing them to Makam.
-   It works by turning all new clause commands to staged commands,
+   top-level predicates and queries before issuing them to Makam.
+   It works by turning all new clause and query commands to staged commands,
    which are transformed through `handle_toplevel_command`.
 
    This gives the ability to add new functionality to Makam
    by defining predicate transformers within Makam, which operate
-   on all predicates and transform them as needed.
+   on all predicates and queries and transform them as needed.
 
    Potential examples of the functionality are mode definitions;
    a macro facility; and testing support (which currently has
    built-in support).
+
+   An invariant that needs to hold for the transformers is that when
+   doing "term transformations" (e.g. substitute one term for another,
+   as part of a macro expansion transformer), these should happen identically
+   between clauses and queries.
 
    To use this, one needs to register a new `toplevel_command_transformer`:
 
@@ -18,7 +23,7 @@
    For an example of use, look at tests.makam.
 
    In the future, this could be extended to handle all top-level
-   commands rather than just new clauses.
+   commands rather than just new clauses and queries.
 
 *)
 

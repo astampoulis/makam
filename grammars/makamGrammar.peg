@@ -373,8 +373,10 @@ prologcmd1 ->
                             (Benchmark.cumulative "total clauses"
                               (lazy(global_typecheck_silent (t query).content)))
                            else
-                            (Benchmark.cumulative "total clauses"
-                              (lazy(Termlangprolog.global_new_clause (t query).content))))
+                            (let cmd = mkTm "cmd_newclause" [ t query ] in
+                             let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                             Benchmark.cumulative "total staged commands"
+                             (lazy(Termlangrefl.global_staged_command staged.content))))
                          >>
            / token("%") d:directive token(".") << fun () -> (global_set_last_query None; d ()) >>
            / c:block_mode << fun () -> flush IO.stdout >>
