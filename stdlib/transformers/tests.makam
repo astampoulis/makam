@@ -25,7 +25,6 @@ toplevel_command_transformer
       when eq Clause (clause (foo X) Premise) :-
     eq Clause' (clause (foo X) (ifte success Premise failure)).
 
-
 foo "foo".
 
 >> foo X ?

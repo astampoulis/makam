@@ -71,7 +71,8 @@ big/testf2tal \
 tinyml/tests
 
 SNAPSHOT_TESTS= \
-tests/snapshot/query_results
+tests/snapshot/query_results \
+stdlib/transformers/query.tests
 
 MAKAM ?= ./makam
 
@@ -85,10 +86,10 @@ makam-timing-tests:
 	./scripts/timing-test.sh
 
 makam-snapshot-tests:
-	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do if [ ! -e \$$i.snapshot ]; then (echo -e \"\nSnapshot does not exist for: \$$i\nPlease run make makam-generate-snapshots.\n\n\"; exit 1); fi; (($(MAKAM) \$$i | tail -n +4 | diff \$$i.snapshot -) || (echo -e \"\nSnapshot test failure for: \$$i\n\n\"; exit 1)); done"
+	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do if [ ! -e \$$i.snapshot ]; then (echo -e \"\nSnapshot does not exist for: \$$i\nPlease run make makam-generate-snapshots.\n\n\"; exit 1); fi; ((($(MAKAM) \$$i || true) | tail -n +4 | diff \$$i.snapshot -) || (echo -e \"\nSnapshot test failure for: \$$i\n\n\"; exit 1)); done"
 
 makam-generate-snapshots:
-	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do (($(MAKAM) \$$i | tail -n +4) > \$$i.snapshot) || echo -e \"\nExecution failure for: \$$i\n\n\"; done"
+	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do (($(MAKAM) \$$i || true) | tail -n +4) > \$$i.snapshot; done"
 
 makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output

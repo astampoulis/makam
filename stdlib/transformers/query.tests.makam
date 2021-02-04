@@ -1,0 +1,27 @@
+%use "init".
+
+tests : testsuite.
+%testsuite tests.
+
+(* Transformers apply to queries too.
+   Since queries are not possible to observe programmatically,
+   we use a snapshot test for making sure the transformation
+   works as expected. *)
+
+toplevel_command_transformer
+  "print_when_querying"
+    (cmd_query P)
+    (cmd_query {prop| tostring P _S, log_info_do P "Query result follows" `Query: ${_S}`, P |}).
+
+foo : string -> prop.
+
+foo "foo".
+
+foo X ?
+foo "bar" ?
+
+(* make sure that metavariables are generated hygienically,
+   by using a metavariable which shares a name with one introduced
+   by the transformation *)
+
+(foo X, eq _S "foo\n", print_string _S) ?
