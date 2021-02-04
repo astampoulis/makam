@@ -352,13 +352,17 @@ prologcmd1 ->
                  Benchmark.cumulative "total staged commands"
                  (lazy(Termlangrefl.global_staged_command staged.content)))
              ) >>
-           / p:hyp token("?") << fun () -> (global_set_last_query (Some p);
-                                            if !_ONLY_TYPECHECK then
-                                             (Benchmark.cumulative "total queries"
-                                               (lazy(global_typecheck_silent p.content)))
-                                           else
-                                             (Benchmark.cumulative "total queries"
-                                              (lazy(Termlangprolog.global_query p.content)))) >>
+           / p:hyp token("?")
+             << fun () ->
+                  (global_set_last_query (Some p);
+                   if !_ONLY_TYPECHECK then
+                    (Benchmark.cumulative "total queries"
+                      (lazy(global_typecheck_silent p.content)))
+                  else
+                   (let cmd = mkTm "cmd_query" [ p ] in
+                    let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                    Benchmark.cumulative "total staged commands"
+                    (lazy(Termlangrefl.global_staged_command staged.content)))) >>
            / p:quoteline(hyp) token("?") << fun () -> global_set_last_query (Some p) >>
 
            / t:querytest
