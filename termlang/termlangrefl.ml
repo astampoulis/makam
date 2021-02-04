@@ -613,14 +613,34 @@ let _eiCmdNone      = new_builtin "cmd_none"      _tCmd ;;
 let _eiCmdQuery     = new_builtin "cmd_query"     ( _tProp **> _tCmd ) ;;
 
 
-let exprRemoveUnresolved (e : expr) : exprU =
+let exprRemoveUnresolved (metanames: string list) (e : expr) : exprU =
+
+  let currentNames = ref (StringSet.of_list metanames) in
+  let metaToName = ref (IMap.empty: string IMap.t) in
+  let registerMeta s i =
+    currentNames := StringSet.add s !currentNames;
+    metaToName := IMap.add i s !metaToName
+  in
 
   let rec eaux e =
     let e = { e with classifier = taux e.classifier } in
     match e.term with
     | `Var(`Concrete(s), (`Meta, i)) ->
-        let s = if s = "" then "X" else s in
-        { e with term = `Var(`Concrete(s ^ "~" ^ (string_of_int i)), None) }
+        let s =
+          if IMap.mem i !metaToName
+          then IMap.find i !metaToName
+          else begin
+              let s = if s = "" then "X" else s in
+              let s =
+                if StringSet.mem s !currentNames
+                then s ^ "~" ^ (string_of_int i)
+                else s
+              in
+              registerMeta s i;
+              s
+            end
+        in
+        { e with term = `Var(`Concrete(s), None) }
     | `Var(_, (`Meta, i)) -> assert false
     | `App(e1,e2)  -> { e with term = `App(eaux e1, eaux e2) }
     | `Lam(s,t,e') -> { e with term = `Lam(s, taux t, eaux e') }
@@ -651,12 +671,13 @@ let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
     let* metas = ifte (queryGoal ~print:false code) (fun x -> return (Some x))
       (lazy(raise (StagingError(code))))
     in
+    let* metanames = intermlang allMetaNames in
     let* result = (match metas with Some metas -> intermlang (fun _ ->
       let result = List.assoc "Result~~" metas in
       let result =
         try
           result |> pattcanonToExpr (-1) |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true |>
-                    alphaSanitize |> exprRemoveUnresolved
+                    alphaSanitize |> exprRemoveUnresolved metanames
         with NewVarUsed -> assert false
       in
       Some result) | None -> return None) in

@@ -7,5 +7,5 @@ A := "foo".
 
 -- Query result in file ./tests/snapshot/query_results.makam:3:19-29:
 Yes:
-A~1 := "foo".
+A := "foo".
 

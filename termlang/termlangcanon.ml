@@ -734,6 +734,11 @@ let findMeta loc ?(makeNameMeta = false) s =
 
 ;;
 
+let allMetaNames (): string list =
+  let state = !termstate in
+  Dict.keys state.name_to_meta |> List.of_enum
+;;
+
 let substTPolys (t : typ) (tsubst : typ list) : typ =
   let rec aux t =
     let extra' = TypExtras.empty () in
