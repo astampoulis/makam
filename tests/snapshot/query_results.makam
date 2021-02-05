@@ -1,0 +1,3 @@
+(eq A "foo", eq B "bar") ?
+
+`( eq (cmd_query (eq A "foo")) ).

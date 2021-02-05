@@ -47,6 +47,7 @@ jobs:
           name: Run Tests
           command: |
             [[ -e skip ]] || make MAKAM=./node_modules/.bin/makam makam-timing-tests
+            [[ -e skip ]] || make MAKAM=./node_modules/.bin/makam makam-snapshot-tests
 
       - run: &compile-js
           name: Compile Makam.js
