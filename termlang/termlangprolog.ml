@@ -104,6 +104,7 @@ let _ONLY_TYPECHECK : bool ref = ref false ;;
 let last_query_successful : bool option ref = ref None ;;
 let is_interactive : bool ref = ref false ;;
 
+let metaname      (s, _, _, _) = s ;;
 let metaindex     (_, idx, _, _) = idx ;;
 let metasubst     (_, _, subst, _) = subst ;;
 let metasubstmain (_, _, `Subst(s, _, _, _), _) : pattcanon list = s ;;
@@ -2329,7 +2330,21 @@ let pattUnify_mutable, pattUnifyCanon_mutable =
 
             let l1 = getMetaLevel_mutable (metaindex m1) in
             let l2 = getMetaLevel_mutable (metaindex m2) in
-            let (pa, pb) = if l1 > l2 then p1', p2' else p2', p1' in
+            let (pa, pb) =
+
+              (* when p1's level is higher (so it can capture more variables than p2),
+                 make p1's parent be p2, to restrict the variables *)
+              if l1 > l2 then p1', p2'
+
+              (* here we have the choice to either make p1's parent be p2, or p2's parent be p1.
+                 heuristic:
+                   when p2 was introduced earlier than p1, make p1's parent be p2.
+                 This is useful for keeping query variables around as much as possible,
+                 since they are the first metavariables to be introduced *)
+              else if metaindex m2 < metaindex m1 then p1', p2'
+
+              else p2', p1'
+            in
 
             (try
 

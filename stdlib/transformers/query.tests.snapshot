@@ -25,3 +25,12 @@ foo
 Yes:
 X := "foo".
 
+
+-- Query result in file ./stdlib/transformers/query.tests.makam:44:1-6:
+
+-- Query result follows in <none>:
+   Query: foo S
+
+Yes:
+S := "foo".
+

@@ -25,3 +25,20 @@ foo "bar" ?
    by the transformation *)
 
 (foo X, eq _S "foo\n", print_string _S) ?
+
+
+(* make sure that a structural visit does not change unification variables in queries *)
+
+structural_id, structural_id_cases : [A] A -> A -> prop.
+structural_id X Y :-
+  demand.case_otherwise (structural_id_cases X Y)
+    (structural @structural_id X Y).
+
+structural_id_cases X X when refl.isunif X.
+
+toplevel_command_transformer
+  "structural_visit"
+    (cmd_query P)
+    (cmd_query P') :- structural_id P P'.
+
+foo S ?
