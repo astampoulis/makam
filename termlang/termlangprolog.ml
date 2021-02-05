@@ -104,7 +104,6 @@ let _ONLY_TYPECHECK : bool ref = ref false ;;
 let last_query_successful : bool option ref = ref None ;;
 let is_interactive : bool ref = ref false ;;
 
-let metaname      (s, _, _, _) = s ;;
 let metaindex     (_, idx, _, _) = idx ;;
 let metasubst     (_, _, subst, _) = subst ;;
 let metasubstmain (_, _, `Subst(s, _, _, _), _) : pattcanon list = s ;;
