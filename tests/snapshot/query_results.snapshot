@@ -5,7 +5,7 @@ B := "bar",
 A := "foo".
 
 
--- Query result in file ./tests/snapshot/query_results.makam:3:19-29:
+-- Query result in file ./tests/snapshot/query_results.makam:3:4-31:
 Yes:
 A := "foo".
 

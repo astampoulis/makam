@@ -703,7 +703,7 @@ let _EUtoList  (xs : exprU) : exprU list =
 
 let _DEBUG_STAGING = ref false ;;
 
-let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
+let rec doCommand loc (e : exprU) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
   let hd, args = ExprU.gatherApp e in
@@ -718,22 +718,25 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
   | `Var(_, Some (`Free, idx)), [ clause ] when idx = _eiCmdNewClause ->
 
     let _ = if !_DEBUG_STAGING then Printf.printf "new clause %a\n" (ExprU.print ~debug:true) clause in
+    let clause = { clause with loc = loc } in
     defineClause clause
 
   | `Var(_, Some (`Free, idx)), [ { term = `Const(o) } ; typterm ] when idx = _eiCmdNewTerm ->
 
     let _ = if !_DEBUG_STAGING then Printf.printf "new term %s : %a\n" (Obj.obj o) Typ.print typterm.classifier in
-    intermlang (fun _ -> typedecl (Obj.obj o) typterm.classifier () |> ignore)
+    let typ = { typterm.classifier with loc = loc } in
+    intermlang (fun _ -> typedecl (Obj.obj o) typ () |> ignore)
 
   | `Var(_, Some (`Free, idx)), [ list ] when idx = _eiCmdMany ->
 
-      let* _ = mapM doCommand (_EUtoList list) in
+      let* _ = mapM (doCommand loc) (_EUtoList list) in
       return ()
 
   | `Var(_, Some (`Free, idx)), [ code ] when idx = _eiCmdStage ->
 
+      let code = { code with loc = loc } in
       let* cmd = getQueryResult _tCmd code in
-      doCommand cmd
+      doCommand loc cmd
 
   | `Var(_, Some (`Free, idx)), [] when idx = _eiCmdNone ->
 
@@ -741,6 +744,7 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
 
   | `Var(_, Some (`Free, idx)), [ query ] when idx = _eiCmdQuery ->
 
+    let query = { query with loc = loc } in
     ifte (queryGoal ~print:true query) (fun _ -> return ()) (lazy(return ()))
 
   | _ -> mzero
@@ -753,7 +757,7 @@ let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
     let* cmd = getQueryResult _tCmd code in
-    ifte (doCommand cmd) return
+    ifte (doCommand code.loc cmd) return
       (lazy(Printf.printf "Error in staged code at %s.\n"
               (UChannel.string_of_span code.loc); mzero))
 

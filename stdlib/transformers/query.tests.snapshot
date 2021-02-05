@@ -1,5 +1,5 @@
 
--- Query result in file ./stdlib/transformers/query.tests.makam:14:23-92:
+-- Query result in file ./stdlib/transformers/query.tests.makam:20:1-6:
 
 -- Query result follows in file ./stdlib/transformers/query.tests.makam:20:1-6:
    Query: foo X
@@ -8,7 +8,7 @@ Yes:
 X := "foo".
 
 
--- Query result in file ./stdlib/transformers/query.tests.makam:14:23-92:
+-- Query result in file ./stdlib/transformers/query.tests.makam:21:1-10:
 
 -- Query result follows in file ./stdlib/transformers/query.tests.makam:21:1-10:
    Query: foo "bar"
@@ -16,7 +16,7 @@ X := "foo".
 Impossible.
 
 
--- Query result in file ./stdlib/transformers/query.tests.makam:14:23-92:
+-- Query result in file ./stdlib/transformers/query.tests.makam:27:2-39:
 
 -- Query result follows in file ./stdlib/transformers/query.tests.makam:27:2-39:
    Query: and (and (foo X) (eq _S "foo\n")) (print_string _S)
