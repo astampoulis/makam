@@ -42,3 +42,8 @@ toplevel_command_transformer
     (cmd_query P') :- structural_id P P'.
 
 foo S ?
+
+
+(* make sure that queries produced by staging are also transformed *)
+
+`( eq (cmd_query (foo S)) ).

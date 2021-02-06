@@ -27,14 +27,24 @@ toplevel_command_transformer
 
 foo "foo".
 
+(* Make sure that clauses produced by staging are transformed. *)
+
+`( eq (cmd_newclause (clause (foo "bar") success)) ).
+
 >> foo X ?
 >> Impossible.
 
 >> foo "foo" ?
 >> Yes.
 
+>> foo "bar" ?
+>> Yes.
+
 >> refl.rules_get foo X ?
 >> Yes:
->> X := [ clause (foo Z) {prop| if success
-                                then (pattern_match "foo" Z, success)
-                                else failure |} ].
+>> X := [ clause (foo Z1) {prop| if success
+                                 then (pattern_match "foo" Z1, success)
+                                 else failure |},
+          clause (foo Z2) {prop| if success
+                                 then (pattern_match "bar" Z2, success)
+                                 else failure |} ].

@@ -330,12 +330,15 @@ typebinding -> token("(") ids:repplusWHITE(ltoken(identnamed)) token(":") t:lmon
 
 prologcmd1 ->
              token("`(") p:hyp token(")") token(".")
-             << fun () -> (global_set_last_query None;
-                          if !_ONLY_TYPECHECK then
-                             (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
-                          else
-                             (Benchmark.cumulative "total staged commands"
-                                (lazy(Termlangrefl.global_staged_command p.content)))) >>
+             << fun () ->
+                  (global_set_last_query None;
+                   if !_ONLY_TYPECHECK then
+                     (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
+                   else
+                     (let cmd = mkTm "cmd_stage" [ p ] in
+                      let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                      Benchmark.cumulative "total staged commands"
+                      (lazy(Termlangrefl.global_staged_command staged.content)))) >>
 
            / d:defBM token(".") << fun () -> (
                 global_set_last_query None;
