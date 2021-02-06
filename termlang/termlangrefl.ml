@@ -626,11 +626,11 @@ let exprRemoveUnresolved (metanames: string list) (e : expr) : exprU =
     let e = { e with classifier = taux e.classifier } in
     match e.term with
     | `Var(`Concrete(s), (`Meta, i)) ->
+        let s = if s = "" then "X" else s in
         let s =
           if IMap.mem i !metaToName
           then IMap.find i !metaToName
           else begin
-              let s = if s = "" then "X" else s in
               let s =
                 if StringSet.mem s !currentNames
                 then s ^ "~" ^ (string_of_int i)
