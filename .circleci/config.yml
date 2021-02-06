@@ -49,6 +49,9 @@ jobs:
             [[ -e skip ]] || make MAKAM=./node_modules/.bin/makam makam-timing-tests
             [[ -e skip ]] || make MAKAM=./node_modules/.bin/makam makam-snapshot-tests
 
+      - store_artifacts:
+          path: /tmp/artifacts
+
       - run: &compile-js
           name: Compile Makam.js
           command: |

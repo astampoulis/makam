@@ -1,26 +1,16 @@
 #!/bin/bash
 
-TIMING_DEADLINE="120.0"
-NOCACHE_REFERENCE="180.0"
-
 set -eux
 set -o pipefail
 
 make cache-clean
-COMMAND="make makam-tests"
+COMMAND="make makam-tests-timed"
 
-node scripts/time.js 1 "$COMMAND" | tee nocache_time
-NOCACHE_TIME=$(tail -n 1 nocache_time)
+( time -p bash -c "$COMMAND; echo 'total time:'" ) 2>&1 | tee nocache_time
 
-# allow a 20% window (CircleCI speed is unpredictable)
-( eval $(node -e "console.log($NOCACHE_TIME / $NOCACHE_REFERENCE < 1.20 ? true : false)") ) ||
-( echo "Timing regression: everything got slower"; exit 1 )
+( time -p bash -c "$COMMAND; echo 'total time:'" ) 2>&1 | tee cache_time
 
-node scripts/time.js 1 "$COMMAND" | tee cache_time
-CACHE_TIME=$(tail -n 1 cache_time)
-
-rm nocache_time cache_time
-
-( eval $(node -e "console.log(($CACHE_TIME / $NOCACHE_TIME) < 0.75 ? true : false)") ) &&
-( eval $(node -e "console.log($CACHE_TIME < $TIMING_DEADLINE * Math.max(0.95, ($NOCACHE_TIME / $NOCACHE_REFERENCE)) ? true : false)") ) ||
-(echo "Timing regression: cached stuff got slower"; exit 1)
+if [[ "${CI-}" == "true" ]]; then
+  mkdir /tmp/artifacts
+  mv {no,}cache_time /tmp/artifacts/
+fi
