@@ -82,6 +82,9 @@ cache-clean:
 makam-tests:
 	bash -c "set -e; for i in $(TESTS); do ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
 
+time-each-test:
+	bash -c "set -e; for i in $(TESTS); do echo -n \$$i, | tee --append timing.csv; (time -p ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1))) 2>&1 | grep user | cut -f 2 -d ' ' | tee --append timing.csv; done"
+
 makam-timing-tests:
 	./scripts/timing-test.sh
 
