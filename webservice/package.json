@@ -11,6 +11,7 @@
   "devDependencies": {
     "aws-sdk": "^2.543.0",
     "serverless": "^1.53.0",
+    "serverless-offline": "^3.33.0",
     "serverless-s3-remover": "^0.6.0"
   },
   "dependencies": {

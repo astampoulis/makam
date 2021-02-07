@@ -8,7 +8,8 @@ import "./makam-webui.css";
 const makamWebServiceURLs = {
   dev: "https://0l0h0ccxff.execute-api.us-east-1.amazonaws.com/dev/makam/query",
   prod:
-    "https://hwtoumy97e.execute-api.us-east-1.amazonaws.com/prod/makam/query"
+    "https://hwtoumy97e.execute-api.us-east-1.amazonaws.com/prod/makam/query",
+  local: "http://127.0.0.1:3000/makam/query"
 };
 
 var highlightText = (text, mode, theme) => {

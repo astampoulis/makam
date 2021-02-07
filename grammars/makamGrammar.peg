@@ -330,31 +330,42 @@ typebinding -> token("(") ids:repplusWHITE(ltoken(identnamed)) token(":") t:lmon
 
 prologcmd1 ->
              token("`(") p:hyp token(")") token(".")
-             << fun () -> (global_set_last_query None;
-                          if !_ONLY_TYPECHECK then
-                             (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
-                          else
-                             (Benchmark.cumulative "total staged commands"
-                                (lazy(Termlangrefl.global_staged_command p.content)))) >>
+             << fun () ->
+                  (global_set_last_query None;
+                   if !_ONLY_TYPECHECK then
+                     (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
+                   else
+                     (let cmd = mkTm "cmd_stage" [ p ] in
+                      let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                      Benchmark.cumulative "total staged commands"
+                      (lazy(Termlangrefl.global_staged_command staged.content)))) >>
 
            / d:defBM token(".") << fun () -> (
                 global_set_last_query None;
                 Benchmark.cumulative "total defs"
                 (lazy(List.iter (uncurry global_define) d))) >>
-           / c:clauseBM token(".") << fun () -> (global_set_last_query None;
-                                                 if !_ONLY_TYPECHECK then
-                                                  (Benchmark.cumulative "total clauses"
-                                                    (lazy(global_typecheck_silent c.content)))
-                                                 else
-                                                  (Benchmark.cumulative "total clauses"
-                                                    (lazy(Termlangprolog.global_new_clause c.content)))) >>
-           / p:hyp token("?") << fun () -> (global_set_last_query (Some p);
-                                            if !_ONLY_TYPECHECK then
-                                             (Benchmark.cumulative "total queries"
-                                               (lazy(global_typecheck_silent p.content)))
-                                           else
-                                             (Benchmark.cumulative "total queries"
-                                              (lazy(Termlangprolog.global_query p.content)))) >>
+           / c:clauseBM token(".") << fun () ->
+             (global_set_last_query None;
+              if !_ONLY_TYPECHECK then
+                (Benchmark.cumulative "total clauses"
+                   (lazy(global_typecheck_silent c.content)))
+              else
+                (let cmd = mkTm "cmd_newclause" [ c ] in
+                 let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                 Benchmark.cumulative "total staged commands"
+                 (lazy(Termlangrefl.global_staged_command staged.content)))
+             ) >>
+           / p:hyp token("?")
+             << fun () ->
+                  (global_set_last_query (Some p);
+                   if !_ONLY_TYPECHECK then
+                    (Benchmark.cumulative "total queries"
+                      (lazy(global_typecheck_silent p.content)))
+                  else
+                   (let cmd = mkTm "cmd_query" [ p ] in
+                    let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                    Benchmark.cumulative "total staged commands"
+                    (lazy(Termlangrefl.global_staged_command staged.content)))) >>
            / p:quoteline(hyp) token("?") << fun () -> global_set_last_query (Some p) >>
 
            / t:querytest
@@ -365,8 +376,10 @@ prologcmd1 ->
                             (Benchmark.cumulative "total clauses"
                               (lazy(global_typecheck_silent (t query).content)))
                            else
-                            (Benchmark.cumulative "total clauses"
-                              (lazy(Termlangprolog.global_new_clause (t query).content))))
+                            (let cmd = mkTm "cmd_newclause" [ t query ] in
+                             let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                             Benchmark.cumulative "total staged commands"
+                             (lazy(Termlangrefl.global_staged_command staged.content))))
                          >>
            / token("%") d:directive token(".") << fun () -> (global_set_last_query None; d ()) >>
            / c:block_mode << fun () -> flush IO.stdout >>

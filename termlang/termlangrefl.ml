@@ -613,14 +613,34 @@ let _eiCmdNone      = new_builtin "cmd_none"      _tCmd ;;
 let _eiCmdQuery     = new_builtin "cmd_query"     ( _tProp **> _tCmd ) ;;
 
 
-let exprRemoveUnresolved (e : expr) : exprU =
+let exprRemoveUnresolved (metanames: string list) (e : expr) : exprU =
+
+  let currentNames = ref (StringSet.of_list metanames) in
+  let metaToName = ref (IMap.empty: string IMap.t) in
+  let registerMeta s i =
+    currentNames := StringSet.add s !currentNames;
+    metaToName := IMap.add i s !metaToName
+  in
 
   let rec eaux e =
     let e = { e with classifier = taux e.classifier } in
     match e.term with
     | `Var(`Concrete(s), (`Meta, i)) ->
         let s = if s = "" then "X" else s in
-        { e with term = `Var(`Concrete(s ^ "~" ^ (string_of_int i)), None) }
+        let s =
+          if IMap.mem i !metaToName
+          then IMap.find i !metaToName
+          else begin
+              let s =
+                if StringSet.mem s !currentNames
+                then s ^ "~" ^ (string_of_int i)
+                else s
+              in
+              registerMeta s i;
+              s
+            end
+        in
+        { e with term = `Var(`Concrete(s), None) }
     | `Var(_, (`Meta, i)) -> assert false
     | `App(e1,e2)  -> { e with term = `App(eaux e1, eaux e2) }
     | `Lam(s,t,e') -> { e with term = `Lam(s, taux t, eaux e') }
@@ -651,12 +671,13 @@ let getQueryResult (t : typ) (code : exprU) : exprU RunCtx.Monad.m =
     let* metas = ifte (queryGoal ~print:false code) (fun x -> return (Some x))
       (lazy(raise (StagingError(code))))
     in
+    let* metanames = intermlang allMetaNames in
     let* result = (match metas with Some metas -> intermlang (fun _ ->
       let result = List.assoc "Result~~" metas in
       let result =
         try
           result |> pattcanonToExpr (-1) |> chaseTypesInExpr ~replaceUninst:true ~metasAreFine:true |>
-                    alphaSanitize |> exprRemoveUnresolved
+                    alphaSanitize |> exprRemoveUnresolved metanames
         with NewVarUsed -> assert false
       in
       Some result) | None -> return None) in
@@ -682,7 +703,7 @@ let _EUtoList  (xs : exprU) : exprU list =
 
 let _DEBUG_STAGING = ref false ;;
 
-let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
+let rec doCommand loc (e : exprU) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
   let hd, args = ExprU.gatherApp e in
@@ -697,22 +718,25 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
   | `Var(_, Some (`Free, idx)), [ clause ] when idx = _eiCmdNewClause ->
 
     let _ = if !_DEBUG_STAGING then Printf.printf "new clause %a\n" (ExprU.print ~debug:true) clause in
+    let clause = { clause with loc = loc } in
     defineClause clause
 
   | `Var(_, Some (`Free, idx)), [ { term = `Const(o) } ; typterm ] when idx = _eiCmdNewTerm ->
 
     let _ = if !_DEBUG_STAGING then Printf.printf "new term %s : %a\n" (Obj.obj o) Typ.print typterm.classifier in
-    intermlang (fun _ -> typedecl (Obj.obj o) typterm.classifier () |> ignore)
+    let typ = { typterm.classifier with loc = loc } in
+    intermlang (fun _ -> typedecl (Obj.obj o) typ () |> ignore)
 
   | `Var(_, Some (`Free, idx)), [ list ] when idx = _eiCmdMany ->
 
-      let* _ = mapM doCommand (_EUtoList list) in
+      let* _ = mapM (doCommand loc) (_EUtoList list) in
       return ()
 
   | `Var(_, Some (`Free, idx)), [ code ] when idx = _eiCmdStage ->
 
+      let code = { code with loc = loc } in
       let* cmd = getQueryResult _tCmd code in
-      doCommand cmd
+      doCommand loc cmd
 
   | `Var(_, Some (`Free, idx)), [] when idx = _eiCmdNone ->
 
@@ -720,6 +744,7 @@ let rec doCommand (e : exprU) : unit RunCtx.Monad.m =
 
   | `Var(_, Some (`Free, idx)), [ query ] when idx = _eiCmdQuery ->
 
+    let query = { query with loc = loc } in
     ifte (queryGoal ~print:true query) (fun _ -> return ()) (lazy(return ()))
 
   | _ -> mzero
@@ -732,7 +757,7 @@ let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
 
   let open RunCtx.Monad in
     let* cmd = getQueryResult _tCmd code in
-    ifte (doCommand cmd) return
+    ifte (doCommand code.loc cmd) return
       (lazy(Printf.printf "Error in staged code at %s.\n"
               (UChannel.string_of_span code.loc); mzero))
 
@@ -746,4 +771,11 @@ let global_staged_command cmdcode =
                     let* cmdcode = intermlang cmdcode in
                     doStagedCommand cmdcode)
 
+;;
+
+new_builtin_predicate "handle_toplevel_command" ( _tCmd **> _tCmd **> _tProp)
+    (let open RunCtx.Monad in
+     fun _ -> function [ cmdin ; cmdout ] ->
+                pattcanonUnifyFull cmdin cmdout
+                     | _ -> assert false)
 ;;

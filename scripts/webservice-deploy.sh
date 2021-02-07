@@ -4,14 +4,17 @@ set -e
 
 TEST_BASE_URL=https://0l0h0ccxff.execute-api.us-east-1.amazonaws.com/dev
 PROD_BASE_URL=https://hwtoumy97e.execute-api.us-east-1.amazonaws.com/prod
+LOCAL_BASE_URL=http://127.0.0.1:3000/
 
 function usage {
   cat <<EOF
-Usage: $0 [prod|<stage>]
+Usage: $0 [local|prod|<stage>]
 
 $(basename $0)         -- Update test npm package, deploy webservice to dev and test
 $(basename $0) prod    -- Deploy webservice to prod
-$(basename $0) <stage> -- Deploy
+$(basename $0) <stage> -- Deploy webservice to other stage
+$(basename $0) local   -- Run webservice locally
+
 
 EOF
 }
@@ -31,7 +34,7 @@ if [[ ${PACKAGE_VERSION:-x} != "x" ]]; then
   fi
   DO_BUILD=0
 
-elif [[ ${1:-x} == "x" ]]; then
+elif [[ ${1:-x} == "x" || ${1:-x} == "local" ]]; then
 
   PACKAGE_VERSION=$(cd $TOPDIR; ./scripts/makam-version.sh npm-test-version)
 
@@ -49,6 +52,11 @@ fi
 if [[ ${1:x} == "prod" ]]; then
   STAGE=prod
   BASE_URL=$PROD_BASE_URL
+elif [[ ${1:-x} == "local" ]]; then
+  DO_BUILD=${DO_BUILD:-1}
+  DO_TEST=${DO_TEST:-0}
+  BASE_URL=$LOCAL_BASE_URL
+  STAGE=local
 elif [[ ${1:-x} == "x" ]]; then
   DO_BUILD=${DO_BUILD:-1}
   DO_TEST=${DO_TEST:-1}
@@ -69,6 +77,8 @@ fi
 
  if [[ $STAGE == dev ]]; then
    ./node_modules/.bin/sls deploy function --stage $STAGE -f makamQuery
+ elif [[ $STAGE == local ]]; then
+   ./node_modules/.bin/sls offline
  else
    ./node_modules/.bin/sls deploy --stage $STAGE
  fi)

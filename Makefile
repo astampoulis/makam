@@ -57,6 +57,7 @@ stdlib/syntax/syntax_syntax.tests \
 stdlib/syntax/layout_syntax.tests \
 stdlib/syntax/constructor_syntax.tests \
 stdlib/dyn_expansion \
+stdlib/transformers/tests \
 new/testocaml \
 new/testcases_ocaml \
 small/systemf \
@@ -69,6 +70,10 @@ big/testurweb \
 big/testf2tal \
 tinyml/tests
 
+SNAPSHOT_TESTS= \
+tests/snapshot/query_results \
+stdlib/transformers/query.tests
+
 MAKAM ?= ./makam
 
 cache-clean:
@@ -77,8 +82,17 @@ cache-clean:
 makam-tests:
 	bash -c "set -e; for i in $(TESTS); do ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1)); done"
 
+makam-tests-timed:
+	bash -c "set -e; for i in $(TESTS); do echo testfile: \$$i; (time -p ($(MAKAM) --run-tests \$$i || (echo -e \"\nTest failure for: \$$i\n\n\"; exit 1))) 2>&1; done"
+
 makam-timing-tests:
 	./scripts/timing-test.sh
+
+makam-snapshot-tests:
+	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do if [ ! -e \$$i.snapshot ]; then (echo -e \"\nSnapshot does not exist for: \$$i\nPlease run make makam-generate-snapshots.\n\n\"; exit 1); fi; ((($(MAKAM) \$$i || true) | tail -n +4 | diff \$$i.snapshot -) || (echo -e \"\nSnapshot test failure for: \$$i\n\n\"; exit 1)); done"
+
+makam-generate-snapshots:
+	bash -c "set -e; set -o pipefail; for i in $(SNAPSHOT_TESTS); do (($(MAKAM) \$$i || true) | tail -n +4) > \$$i.snapshot; done"
 
 makam-js-tests:
 	echo '%use "all_tests_js". (verbose_run_tests -> run_tests X) ?' | node --stack-size=65536 js/ | tee output
@@ -115,6 +129,9 @@ webservice-test-deploy:
 
 webservice-prod-deploy:
 	bash -c "./scripts/webservice-deploy.sh prod"
+
+webservice-local:
+	bash -c "./scripts/webservice-deploy.sh local"
 
 # js_of_ocaml compilation
 
