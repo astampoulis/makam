@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "makam"
-version: "0.7.39"
+version: "0.7.40"
 maintainer: "Antonis Stampoulis <antonis.stampoulis@gmail.com>"
 authors: [ "Antonis Stampoulis <antonis.stampoulis@gmail.com>" ]
 license: "GPL-3"

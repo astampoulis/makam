@@ -767,13 +767,12 @@ let doStagedCommand (code : exprU) : unit RunCtx.Monad.m =
 let global_staged_command cmdcode =
 
   let open RunCtx.Monad in
-  globalprolog_do (
-                    let* cmdcode = intermlang cmdcode in
-                    doStagedCommand cmdcode)
+  globalprolog_do (let* cmdcode = intermlang cmdcode in
+                   doStagedCommand cmdcode)
 
 ;;
 
-new_builtin_predicate "handle_toplevel_command" ( _tCmd **> _tCmd **> _tProp)
+new_builtin_predicate "builtin_handle_toplevel_command" ( _tCmd **> _tCmd **> _tProp)
     (let open RunCtx.Monad in
      fun _ -> function [ cmdin ; cmdout ] ->
                 pattcanonUnifyFull cmdin cmdout

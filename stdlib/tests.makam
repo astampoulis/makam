@@ -453,6 +453,27 @@ refl : testsuite. %testsuite refl.
 >> refl.isfun (tuple 1 2) ?
 >> Impossible.
 
+(* -------------------- refl.decompose_term and recompose_term *)
+
+>> refl.decompose_term (1, "foo") Head Args ?
+>> Yes:
+>> Head := (tuple: int -> string -> tuple int string),
+>> Args := [1, "foo"].
+
+foo : type.
+
+>> (f:(foo -> foo) -> (x:foo -> refl.decompose_term (f x) (Head f x) (Args f x))) ?
+>> Yes:
+>> Head := fun f => fun x => f,
+>> Args := fun f => fun x => [x].
+
+>> refl.decompose_term X Head Args ?
+>> Impossible.
+
+>> refl.recompose_term tuple [1, "foo"] X ?
+>> Yes:
+>> X := (1, "foo").
+
 (* -------------------- demand.case_otherwise *)
 
 demand : testsuite. %testsuite demand.

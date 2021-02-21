@@ -60,10 +60,7 @@ aux CmdInput CmdOutput :-
 
 %end.
 
-
-(* subtlety: this needs to be the first clause, so that the next rules
-   comprising the user-defined `handle_toplevel_command` can be handled
-   correctly *)
+handle_toplevel_command : cmd -> cmd -> prop.
 
 handle_toplevel_command Cmd Cmd'
   when not(refl.isunif Cmd),
@@ -88,3 +85,5 @@ handle_toplevel_command Cmd Cmd'
        eq Cmd (cmd_many Cmds) :-
   eq Cmd' (cmd_many Cmds'),
   map handle_toplevel_command Cmds Cmds'.
+
+%command_handler handle_toplevel_command.

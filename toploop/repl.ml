@@ -65,23 +65,25 @@ let get_full_state () =
   let doit _ x = !x in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9, a10, a11) = "", "", "", "", "", "", "", "", "", "", "", "" in
+       a6, a7, a8, a9, a10, a11, a12) = "", "", "", "", "", "", "", "", "", "", "", "", "" in
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
    doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
-   doit a10 last_query_successful, doit a11 UChannel.input_statehash)
+   doit a10 last_query_successful, doit a11 UChannel.input_statehash,
+   doit a12 command_handler)
 ;;
 
 let set_full_state st =
   let doit a x = x := a in
   let (a0, a1,
        a2, a3, a4, a5,
-       a6, a7, a8, a9, a10, a11) = st in
+       a6, a7, a8, a9, a10, a11, a12) = st in
   ignore
   (doit a0 globalstate, doit a1 globalprologstate,
    doit a2 _DEBUG, doit a3 _DEBUG_DEMAND, doit a4 _DEBUG_NAMES, doit a5 _DEBUG_TYPES,
    doit a6 _DEBUG_STAGING, doit a7 _BENCHMARK, doit a8 _LOGGING, doit a9 _ONLY_TYPECHECK,
-   doit a10 last_query_successful, doit a11 UChannel.input_statehash)
+   doit a10 last_query_successful, doit a11 UChannel.input_statehash,
+   doit a12 command_handler)
 ;;
 
 let next_state_name =

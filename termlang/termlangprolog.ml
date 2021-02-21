@@ -102,6 +102,7 @@ let _BENCHMARK      : bool ref = Benchmark.enabled ;;
 let _LOGGING        : bool ref = ref false ;;
 let _ONLY_TYPECHECK : bool ref = ref false ;;
 let last_query_successful : bool option ref = ref None ;;
+let command_handler : string ref = ref "builtin_handle_toplevel_command" ;;
 let is_interactive : bool ref = ref false ;;
 
 let metaindex     (_, idx, _, _) = idx ;;

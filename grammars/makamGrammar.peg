@@ -336,7 +336,7 @@ prologcmd1 ->
                      (Benchmark.cumulative "total queries" (lazy(global_typecheck_silent p.content)))
                    else
                      (let cmd = mkTm "cmd_stage" [ p ] in
-                      let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                      let staged = mkTm !command_handler [ cmd ] in
                       Benchmark.cumulative "total staged commands"
                       (lazy(Termlangrefl.global_staged_command staged.content)))) >>
 
@@ -351,7 +351,7 @@ prologcmd1 ->
                    (lazy(global_typecheck_silent c.content)))
               else
                 (let cmd = mkTm "cmd_newclause" [ c ] in
-                 let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                 let staged = mkTm !command_handler [ cmd ] in
                  Benchmark.cumulative "total staged commands"
                  (lazy(Termlangrefl.global_staged_command staged.content)))
              ) >>
@@ -363,7 +363,7 @@ prologcmd1 ->
                       (lazy(global_typecheck_silent p.content)))
                   else
                    (let cmd = mkTm "cmd_query" [ p ] in
-                    let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                    let staged = mkTm !command_handler [ cmd ] in
                     Benchmark.cumulative "total staged commands"
                     (lazy(Termlangrefl.global_staged_command staged.content)))) >>
            / p:quoteline(hyp) token("?") << fun () -> global_set_last_query (Some p) >>
@@ -377,7 +377,7 @@ prologcmd1 ->
                               (lazy(global_typecheck_silent (t query).content)))
                            else
                             (let cmd = mkTm "cmd_newclause" [ t query ] in
-                             let staged = mkTm "handle_toplevel_command" [ cmd ] in
+                             let staged = mkTm !command_handler [ cmd ] in
                              Benchmark.cumulative "total staged commands"
                              (lazy(Termlangrefl.global_staged_command staged.content))))
                          >>
@@ -437,6 +437,8 @@ directive -> "use" repplus(white) s:token(ident_or_str)
            << fun () -> Printf.printf "Current module: %a\n" (Option.print String.print) (!globalstate).current_module >>
            / "testsuite" repplus(white) s:token(ident)
            << fun () -> global_set_testsuite s >>
+           / "command_handler" repplus(white) s:token(ident)
+           << fun () -> command_handler := s >>
 
           / b:flag("debug") << fun () -> _DEBUG_DEMAND := b >>
           / b:flag("debugfull") << fun () -> _DEBUG := b >>

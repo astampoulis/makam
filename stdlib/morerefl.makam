@@ -64,6 +64,16 @@ isbasehead (F: T) :-
      only in the case where the head is completely unapplied will the types match. *)
   refl.headargs F_Body (F_HD: T) _.
 
+
+(* a typed version of `refl.headargs` *)
+decompose_term : [Full Head] Full -> Head -> args Head Full -> prop.
+decompose_term Term Head Args :-
+  refl.headargs Term Head ArgsDyn,
+  dyn.to_args ArgsDyn Args.
+
+(* the inverse of `decompose_term` *)
+recompose_term : [Full Head] Head -> args Head Full -> Full -> prop.
+recompose_term Head Args Term when not(refl.isunif Head) :-
+  args.applyfull Head Args Term.
+
 %end.
-
-
