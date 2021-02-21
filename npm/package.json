@@ -1,6 +1,6 @@
 {
   "name": "makam",
-  "version": "0.7.39",
+  "version": "0.7.40",
   "description": "The Makam metalanguage -- a tool for rapid language prototyping",
   "main": "lib/index.js",
   "scripts": {
