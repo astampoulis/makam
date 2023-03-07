@@ -18,7 +18,8 @@ pair : bindone A B -> bindone A C -> bindone A (B * C) -> prop.
 open (bind Name (F : A -> B)) (P : A -> B -> prop) :-
   (x:A -> nameofvar x Name -> P x (F x)).
 
-apply (bind _ F) X (F X).
+apply (bind _ F) X (F X) when not (nameofvar X _).
+apply (bind Name F) X (F X) :- nameofvar X Name.
 
 varname (bind S _) S.
 
@@ -48,7 +49,9 @@ open (bind Name (F : A -> bindmany A B)) (P : list A -> B -> prop) :-
   (x:A -> nameofvar x Name -> open (F x) (pfun l => P (x :: l))).
 
 apply (body Body) [] Body.
-apply (bind _ F) (HD :: TL) Result :- apply (F HD) TL Result.
+apply (bind _ F) (HD :: TL) Result when not (nameofvar HD _) :- apply (F HD) TL Result.
+apply (bind Name F) (HD :: TL) Result :- nameofvar HD Name, apply (F HD) TL Result.
+
 
 applysome (bind _ F) (HD :: TL) Result :- applysome (F HD) TL Result.
 applysome X [] X.
@@ -81,7 +84,8 @@ open (bind ID (F: VarType -> A)) P :-
   (x:VarType -> nameofvar x ID -> open (F x) (pfun vars body => P (x :: vars) body)).
 open (body Body) P :- P [] Body.
 
-apply (bind _ F) (HD :: TL) Result :- apply (F HD) TL Result.
+apply (bind _ F) (HD :: TL) Result when not (nameofvar HD _) :- apply (F HD) TL Result.
+apply (bind Name F) (HD :: TL) Result :- nameofvar HD Name, apply (F HD) TL Result.
 apply (body Body) [] Body.
 
 varnames XS_Body Names :-
